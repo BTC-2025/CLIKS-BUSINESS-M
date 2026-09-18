@@ -134,13 +134,16 @@ class _BetaClubPageState extends State<BetaClubPage> {
             children: [
               Icon(LucideIcons.trendingUp, color: Color(0xFF60A5FA), size: 12),
               SizedBox(width: 6),
-              Text(
-                'CAPITAL MATRIX & VENTURE CONNECT',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
+              Flexible(
+                child: Text(
+                  'CAPITAL MATRIX & VENTURE CONNECT',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
                 ),
               ),
             ],
@@ -403,35 +406,44 @@ class _BetaClubPageState extends State<BetaClubPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF), // Soft light blue
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  deal['sector']!,
-                  style: const TextStyle(
-                    color: Color(0xFF2563EB),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF), // Soft light blue
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    deal['sector']!,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF2563EB),
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('📍', style: TextStyle(fontSize: 11)),
-                  const SizedBox(width: 4),
-                  Text(
-                    deal['location']!,
-                    style: const TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('📍', style: TextStyle(fontSize: 11)),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        deal['location']!,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF6B7280),
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -513,41 +525,50 @@ class _BetaClubPageState extends State<BetaClubPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isAccepted ? const Color(0xFFF0FDF4) : const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isAccepted ? const Color(0xFFBBF7D0) : const Color(0xFFFECDD3),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isAccepted ? const Color(0xFFF0FDF4) : const Color(0xFFFFF1F2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isAccepted ? const Color(0xFFBBF7D0) : const Color(0xFFFECDD3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isAccepted ? LucideIcons.check : LucideIcons.triangleAlert,
+                        size: 11,
+                        color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          pitch['status']!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      isAccepted ? LucideIcons.check : LucideIcons.triangleAlert,
-                      size: 11,
-                      color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      pitch['status']!,
-                      style: TextStyle(
-                        color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ],
-                ),
               ),
-              Text(
-                pitch['sector']!,
-                style: const TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  pitch['sector']!,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Color(0xFF6B7280),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
             ],
@@ -584,11 +605,14 @@ class _BetaClubPageState extends State<BetaClubPage> {
           builder: (context, setModalState) {
             return Dialog(
               backgroundColor: Colors.white,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               child: Container(
-                constraints: const BoxConstraints(maxWidth: 560),
-                padding: const EdgeInsets.all(28),
+                constraints: BoxConstraints(
+                  maxWidth: 560,
+                  maxHeight: MediaQuery.of(context).size.height * 0.9,
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -599,27 +623,30 @@ class _BetaClubPageState extends State<BetaClubPage> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'List Your Venture',
-                                style: TextStyle(
-                                  fontSize: 19,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.darkText,
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'List Your Venture',
+                                  style: TextStyle(
+                                    fontSize: 19,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.darkText,
+                                  ),
                                 ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(
-                                'Submit your roadmap for Admin Review & Investor Connect',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xFF6B7280),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Submit your roadmap for Admin Review & Investor Connect',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF6B7280),
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           IconButton(
                             icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                             onPressed: () => Navigator.pop(ctx),
@@ -642,6 +669,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
                       _buildModalLabel('Sector *'),
                       DropdownButtonFormField<String>(
                         initialValue: selectedSector,
+                        isExpanded: true,
                         style: const TextStyle(fontSize: 13, color: AppColors.darkText),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -683,7 +711,8 @@ class _BetaClubPageState extends State<BetaClubPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildModalLabel('Description *'),
+                          Flexible(child: _buildModalLabel('Description *')),
+                          const SizedBox(width: 8),
                           Text(
                             '$wordCount / 300 words',
                             style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
@@ -854,29 +883,35 @@ class _BetaClubPageState extends State<BetaClubPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF022C22),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(LucideIcons.shieldCheck, color: AppColors.primaryGreen, size: 12),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'VERIFIED REGISTRANT INFO',
-                                    style: TextStyle(
-                                      color: AppColors.primaryGreen,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF022C22),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(LucideIcons.shieldCheck, color: AppColors.primaryGreen, size: 12),
+                                    SizedBox(width: 4),
+                                    Flexible(
+                                      child: Text(
+                                        'VERIFIED REGISTRANT INFO',
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: AppColors.primaryGreen,
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
+                            const SizedBox(width: 8),
                             IconButton(
                               icon: const Icon(LucideIcons.x, color: Colors.white70, size: 20),
                               onPressed: () => Navigator.pop(context),
@@ -1109,12 +1144,15 @@ class _BetaClubPageState extends State<BetaClubPage> {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    Text(
-                      value,
-                      style: TextStyle(
-                        color: showLinkIcon ? AppColors.primaryGreen : AppColors.darkText,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                    Flexible(
+                      child: Text(
+                        value,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: showLinkIcon ? AppColors.primaryGreen : AppColors.darkText,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     if (showLinkIcon) ...[
