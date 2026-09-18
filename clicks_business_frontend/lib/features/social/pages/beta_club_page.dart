@@ -12,7 +12,44 @@ class BetaClubPage extends StatefulWidget {
 }
 
 class _BetaClubPageState extends State<BetaClubPage> {
-  int _activeTab = 0; // 0 for Active Deals, 1 for My Studio
+  int _activeTab = 0; // 0 for Active Deals Marketplace, 1 for My Studio (Founder View)
+  String _selectedSectorFilter = 'All Sectors';
+
+  final List<Map<String, String>> _deals = [
+    {
+      'title': 'Ravi Kumar',
+      'sector': 'Technology',
+      'location': 'India',
+      'desc': 'Scaling AI-driven predictive supply chain & retail SaaS for emerging market merchants.',
+      'goal': '₹50,00,000',
+      'equity': '8%',
+      'quota': '1 Quota',
+    },
+    {
+      'title': 'usemeta',
+      'sector': 'Technology',
+      'location': 'India',
+      'desc': 'Unified enterprise omnichannel automation infrastructure for next-gen commerce.',
+      'goal': '₹25,00,000',
+      'equity': '6%',
+      'quota': '1 Quota',
+    },
+  ];
+
+  final List<Map<String, String>> _studioPitches = [
+    {
+      'status': 'admin accepted your idea',
+      'statusType': 'accepted',
+      'sector': 'Technology',
+      'body': 'wesdrcftvygbuhnijdcfvgbhnj',
+    },
+    {
+      'status': 'Needs Revision',
+      'statusType': 'revision',
+      'sector': 'Manufacturing',
+      'body': 'description of its in short',
+    },
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -27,31 +64,25 @@ class _BetaClubPageState extends State<BetaClubPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Banner
-            _buildHeaderBanner(context, isMobile).animate().fadeIn(duration: 450.ms).slideY(begin: -0.05, end: 0),
-            const SizedBox(height: 32),
-
-            // Segment Tabs & Search Bar (Responsive Layout)
-            if (isMobile)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildSegmentTabs(),
-                  const SizedBox(height: 16),
-                  _buildSearchBar(),
-                ],
-              ).animate().fadeIn(duration: 400.ms, delay: 100.ms)
-            else
-              Row(
-                children: [
-                  _buildSegmentTabs(),
-                  const Spacer(),
-                  _buildSearchBar(),
-                ],
-              ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+            _buildHeaderBanner(context, isMobile)
+                .animate()
+                .fadeIn(duration: 450.ms)
+                .slideY(begin: -0.05, end: 0),
             const SizedBox(height: 28),
 
-            // Deal Cards Wrap Layout (Zero Overflow)
-            _buildDealsGrid(isMobile).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+            // Segmented Tabs Row
+            _buildSegmentTabs().animate().fadeIn(duration: 400.ms, delay: 100.ms),
+            const SizedBox(height: 20),
+
+            // Search Bar & Filter Row
+            _buildSearchAndFilterRow(isMobile).animate().fadeIn(duration: 400.ms, delay: 150.ms),
+            const SizedBox(height: 28),
+
+            // Tab View Body
+            if (_activeTab == 0)
+              _buildActiveDealsView(isMobile).animate().fadeIn(duration: 450.ms, delay: 200.ms)
+            else
+              _buildMyStudioView(isMobile).animate().fadeIn(duration: 450.ms, delay: 200.ms),
           ],
         ),
       ),
@@ -63,7 +94,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 20 : 32),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E3A8A), // Dark royal blue background
+        color: const Color(0xFF1E3A8A), // Royal dark blue
         borderRadius: BorderRadius.circular(24),
       ),
       child: isMobile
@@ -76,6 +107,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
               ],
             )
           : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(child: _buildHeaderLeftSection()),
                 const SizedBox(width: 24),
@@ -90,8 +122,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Capital Matrix Tag Pill
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: Colors.white.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(20),
@@ -99,11 +132,16 @@ class _BetaClubPageState extends State<BetaClubPage> {
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(LucideIcons.briefcase, color: AppColors.primaryGreen, size: 12),
+              Icon(LucideIcons.trendingUp, color: Color(0xFF60A5FA), size: 12),
               SizedBox(width: 6),
               Text(
-                'VENTURE CONNECT',
-                style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                'CAPITAL MATRIX & VENTURE CONNECT',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.5,
+                ),
               ),
             ],
           ),
@@ -111,71 +149,101 @@ class _BetaClubPageState extends State<BetaClubPage> {
         const SizedBox(height: 16),
         const Text(
           'SME Deal Marketplace',
-          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
         const Text(
-          'Connect directly with verified founders, review pitches, and contact owners instantly.',
-          style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
+          'Connect directly with verified founders, review pitch decks, and unlock investment deals.',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 13,
+            height: 1.5,
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Select Region / Lock GPS button
+        InkWell(
+          onTap: () {
+            AppSnackbar.show(
+              context,
+              'Region locked to India (GPS Auto-Detected)',
+              type: SnackType.info,
+            );
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(LucideIcons.mapPin, color: Color(0xFF34D399), size: 13),
+                SizedBox(width: 8),
+                Text(
+                  'Select Region / Lock GPS',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(width: 6),
+                Icon(LucideIcons.chevronDown, color: Colors.white70, size: 12),
+              ],
+            ),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildHeaderRightSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(LucideIcons.mapPin, color: AppColors.primaryGreen, size: 14),
-              SizedBox(width: 8),
-              Text(
-                'Tiruvallur, Tamil Nadu',
-                style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+    return ElevatedButton.icon(
+      onPressed: () => _showListVentureDialog(context),
+      icon: const Icon(LucideIcons.rocket, size: 16, color: Colors.white),
+      label: const Text(
+        'List Your Venture',
+        style: TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 13.5,
+          color: Colors.white,
         ),
-        const SizedBox(height: 16),
-        ElevatedButton.icon(
-          onPressed: () => _showPublishVentureBottomSheet(context),
-          icon: const Icon(LucideIcons.plus, size: 16),
-          label: const Text('List Your Venture', style: TextStyle(fontWeight: FontWeight.bold)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.white.withValues(alpha: 0.12),
-            foregroundColor: Colors.white,
-            elevation: 0,
-            side: BorderSide(color: Colors.white.withValues(alpha: 0.15)),
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        ),
-      ],
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF00A86B), // Vibrant emerald green
+        foregroundColor: Colors.white,
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
   Widget _buildSegmentTabs() {
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppColors.hoverBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _buildTabButton('Active Deals', 0),
-          _buildTabButton('My Studio', 1),
-        ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE5E7EB), // Soft neutral pill background
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildTabButton('Active Deals Marketplace', 0),
+            _buildTabButton('My Studio (Founder View)', 1),
+          ],
+        ),
       ),
     );
   }
@@ -184,20 +252,27 @@ class _BetaClubPageState extends State<BetaClubPage> {
     final isActive = _activeTab == index;
     return GestureDetector(
       onTap: () => setState(() => _activeTab = index),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
         decoration: BoxDecoration(
           color: isActive ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(9),
           boxShadow: isActive
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 4, offset: const Offset(0, 2))]
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
               : null,
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: isActive ? AppColors.darkText : AppColors.secondaryText,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+            color: isActive ? AppColors.darkText : const Color(0xFF6B7280),
+            fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
             fontSize: 13,
           ),
         ),
@@ -205,25 +280,24 @@ class _BetaClubPageState extends State<BetaClubPage> {
     );
   }
 
-  Widget _buildSearchBar() {
-    return Container(
-      width: 240,
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+  Widget _buildSearchAndFilterRow(bool isMobile) {
+    final searchBox = Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: const Row(
         children: [
-          Icon(LucideIcons.search, color: AppColors.secondaryText, size: 16),
-          SizedBox(width: 8),
+          Icon(LucideIcons.search, color: Color(0xFF9CA3AF), size: 16),
+          SizedBox(width: 10),
           Expanded(
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search deals...',
-                hintStyle: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                hintText: 'Search deals by title, sector, problem, or keywords...',
+                hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,
@@ -236,198 +310,502 @@ class _BetaClubPageState extends State<BetaClubPage> {
         ],
       ),
     );
+
+    final sectorFilter = Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: PopupMenuButton<String>(
+        onSelected: (sector) {
+          setState(() => _selectedSectorFilter = sector);
+        },
+        itemBuilder: (context) => [
+          'All Sectors',
+          'Technology',
+          'Manufacturing',
+          'Retail & Commerce',
+          'Finance',
+          'Healthcare',
+        ].map((s) => PopupMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13)))).toList(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _selectedSectorFilter,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.darkText,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF6B7280)),
+          ],
+        ),
+      ),
+    );
+
+    if (isMobile) {
+      return Column(
+        children: [
+          searchBox,
+          const SizedBox(height: 12),
+          Align(alignment: Alignment.centerLeft, child: sectorFilter),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: searchBox),
+        const SizedBox(width: 14),
+        sectorFilter,
+      ],
+    );
   }
 
-  Widget _buildDealsGrid(bool isMobile) {
-    final deals = [
-      {
-        'title': 'beta',
-        'badge': 'RETAIL & COMMERCE',
-        'desc': 'memo of on',
-        'location': 'Chennai, Tamil Nadu',
-        'goal': '₹5,00,000',
-        'equity': '5%',
-      },
-      {
-        'title': 'fsdv',
-        'badge': 'TECHNOLOGY',
-        'desc': 'adfsc',
-        'location': 'Chennai, Tamil Nadu',
-        'goal': '₹23,232',
-        'equity': '4%',
-      },
-      {
-        'title': 'BETA',
-        'badge': 'TECHNOLOGY',
-        'desc': 'SOFTWARE',
-        'location': 'Chennai, Tamil Nadu',
-        'goal': '₹10,000',
-        'equity': '8%',
-      },
-      {
-        'title': 'Meta',
-        'badge': 'TECHNOLOGY',
-        'desc': 'Scaling AI-driven social engagement tools across emerging markets.',
-        'location': 'Chennai, Tamil Nadu',
-        'goal': '₹25,00,000',
-        'equity': '10%',
-      },
-      {
-        'title': 'Meta',
-        'badge': 'TECHNOLOGY',
-        'desc': 'Fight',
-        'location': 'Chennai, Tamil Nadu',
-        'goal': '₹8,00,000',
-        'equity': '6%',
-      },
-    ];
-
+  Widget _buildActiveDealsView(bool isMobile) {
     return Wrap(
       spacing: 24,
       runSpacing: 24,
-      children: deals.map((d) {
+      children: _deals.map((deal) {
         return SizedBox(
-          width: isMobile ? double.infinity : 340,
-          child: _buildDealCard(d),
+          width: isMobile ? double.infinity : 350,
+          child: _buildActiveDealCard(deal),
         );
       }).toList(),
     );
   }
 
-  Widget _buildDealCard(Map<String, String> deal) {
+  Widget _buildActiveDealCard(Map<String, String> deal) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Top Row: Sector Pill + Location
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.hoverBackground,
-                  borderRadius: BorderRadius.circular(6),
+                  color: const Color(0xFFEFF6FF), // Soft light blue
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  deal['badge']!,
-                  style: const TextStyle(color: AppColors.secondaryText, fontSize: 9, fontWeight: FontWeight.bold),
+                  deal['sector']!,
+                  style: const TextStyle(
+                    color: Color(0xFF2563EB),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-              const Spacer(),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.checkCircle, color: AppColors.primaryGreen, size: 12),
+                  const Text('📍', style: TextStyle(fontSize: 11)),
                   const SizedBox(width: 4),
-                  const Text(
-                    'VERIFIED',
-                    style: TextStyle(color: AppColors.primaryGreen, fontSize: 9, fontWeight: FontWeight.bold),
+                  Text(
+                    deal['location']!,
+                    style: const TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
+
+          // Title
           Text(
             deal['title']!,
-            style: const TextStyle(color: AppColors.darkText, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            deal['desc']!,
-            style: const TextStyle(color: AppColors.secondaryText, fontSize: 12, height: 1.4),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const Icon(LucideIcons.mapPin, color: AppColors.secondaryText, size: 12),
-              const SizedBox(width: 6),
-              Text(
-                deal['location']!,
-                style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
-
-          // Goal & Equity Card
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.hoverBackground,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'GOAL',
-                      style: TextStyle(color: AppColors.secondaryText, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      deal['goal']!,
-                      style: const TextStyle(color: AppColors.darkText, fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'EQUITY',
-                      style: TextStyle(color: AppColors.secondaryText, fontSize: 9, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      deal['equity']!,
-                      style: const TextStyle(color: AppColors.primaryGreen, fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-              ],
+            style: const TextStyle(
+              color: AppColors.darkText,
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
 
-          // Connect Button
+          // Connect / View Pitch Button
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton(
+            child: ElevatedButton.icon(
               onPressed: () => _showConnectDialog(context, deal),
+              icon: const Icon(LucideIcons.lock, size: 14, color: Colors.white),
+              label: Text(
+                'Connect / View Pitch (${deal['quota']})',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                  color: Colors.white,
+                ),
+              ),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F1A30), // Dark slate/navy
+                backgroundColor: const Color(0xFF1E3A8A), // Dark navy / blue
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Connect',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  SizedBox(width: 8),
-                  Icon(LucideIcons.arrowRight, size: 14),
-                ],
+                elevation: 0,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMyStudioView(bool isMobile) {
+    return Wrap(
+      spacing: 24,
+      runSpacing: 24,
+      children: _studioPitches.map((pitch) {
+        return SizedBox(
+          width: isMobile ? double.infinity : 350,
+          child: _buildStudioCard(pitch),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildStudioCard(Map<String, String> pitch) {
+    final isAccepted = pitch['statusType'] == 'accepted';
+
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Status badge on left, Sector on right
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isAccepted ? const Color(0xFFF0FDF4) : const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isAccepted ? const Color(0xFFBBF7D0) : const Color(0xFFFECDD3),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isAccepted ? LucideIcons.check : LucideIcons.triangleAlert,
+                      size: 11,
+                      color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      pitch['status']!,
+                      style: TextStyle(
+                        color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                pitch['sector']!,
+                style: const TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Content body
+          Text(
+            pitch['body']!,
+            style: const TextStyle(
+              color: AppColors.darkText,
+              fontSize: 13,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showListVentureDialog(BuildContext context) {
+    final businessNameController = TextEditingController();
+    final headlineController = TextEditingController();
+    final descriptionController = TextEditingController();
+    final pitchDeckUrlController = TextEditingController();
+    String selectedSector = 'Technology';
+    int wordCount = 0;
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 560),
+                padding: const EdgeInsets.all(28),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'List Your Venture',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.darkText,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              Text(
+                                'Submit your roadmap for Admin Review & Investor Connect',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                ),
+                              ),
+                            ],
+                          ),
+                          IconButton(
+                            icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
+                            onPressed: () => Navigator.pop(ctx),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Business / Venture Name *
+                      _buildModalLabel('Business / Venture Name *'),
+                      _buildModalTextField(
+                        controller: businessNameController,
+                        hint: '',
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Sector *
+                      _buildModalLabel('Sector *'),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedSector,
+                        style: const TextStyle(fontSize: 13, color: AppColors.darkText),
+                        decoration: InputDecoration(
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                          ),
+                        ),
+                        items: [
+                          'Technology',
+                          'Manufacturing',
+                          'Retail & Commerce',
+                          'Healthcare',
+                          'Finance',
+                          'Education',
+                          'Logistics & Mobility',
+                        ].map((sector) => DropdownMenuItem(value: sector, child: Text(sector))).toList(),
+                        onChanged: (val) {
+                          if (val != null) {
+                            setModalState(() => selectedSector = val);
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Headline Pitch *
+                      _buildModalLabel('Headline Pitch *'),
+                      _buildModalTextField(
+                        controller: headlineController,
+                        hint: 'e.g. Next-gen AI inventory platform for retail SMEs',
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Description * + Word count
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          _buildModalLabel('Description *'),
+                          Text(
+                            '$wordCount / 300 words',
+                            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+                          ),
+                        ],
+                      ),
+                      TextField(
+                        controller: descriptionController,
+                        maxLines: 4,
+                        style: const TextStyle(fontSize: 13),
+                        onChanged: (text) {
+                          final words = text.trim().isEmpty ? 0 : text.trim().split(RegExp(r'\s+')).length;
+                          setModalState(() => wordCount = words);
+                        },
+                        decoration: InputDecoration(
+                          hintText: 'Enter venture description (maximum 300 words)...',
+                          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(color: Color(0xFF00A86B), width: 1.5),
+                          ),
+                          contentPadding: const EdgeInsets.all(14),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Pitch Deck URL
+                      _buildModalLabel('Pitch Deck URL'),
+                      _buildModalTextField(
+                        controller: pitchDeckUrlController,
+                        hint: 'https://drive.google.com/...',
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Submit Pitch for Admin Review Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            AppSnackbar.show(
+                              context,
+                              'Venture pitch submitted successfully for Admin Review & Investor Connect!',
+                              type: SnackType.success,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF00A86B), // Vibrant Emerald
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            elevation: 0,
+                          ),
+                          child: const Text(
+                            'Submit Pitch for Admin Review',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildModalLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+          color: AppColors.darkText,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalTextField({
+    required TextEditingController controller,
+    required String hint,
+    int maxLines = 1,
+  }) {
+    return TextField(
+      controller: controller,
+      maxLines: maxLines,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: Color(0xFF00A86B), width: 1.5),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        isDense: true,
       ),
     );
   }
@@ -465,7 +843,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Dark Header (Midnight slate color)
+                  // Dark Header (Midnight navy slate)
                   Container(
                     width: double.infinity,
                     color: const Color(0xFF0F172A),
@@ -483,14 +861,18 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                 borderRadius: BorderRadius.circular(6),
                                 border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
                               ),
-                              child: Row(
+                              child: const Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(LucideIcons.shieldCheck, color: AppColors.primaryGreen, size: 12),
-                                  const SizedBox(width: 4),
-                                  const Text(
+                                  SizedBox(width: 4),
+                                  Text(
                                     'VERIFIED REGISTRANT INFO',
-                                    style: TextStyle(color: AppColors.primaryGreen, fontSize: 9, fontWeight: FontWeight.bold),
+                                    style: TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -506,17 +888,21 @@ class _BetaClubPageState extends State<BetaClubPage> {
                         const SizedBox(height: 16),
                         Text(
                           deal['title']!,
-                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          deal['desc']!,
+                          deal['desc'] ?? '',
                           style: const TextStyle(color: Colors.white70, fontSize: 13),
                         ),
                       ],
                     ),
                   ),
-                  
+
                   // Scrollable Body
                   Flexible(
                     child: SingleChildScrollView(
@@ -524,14 +910,18 @@ class _BetaClubPageState extends State<BetaClubPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Venture Details Heading
                           const Text(
                             'VENTURE DETAILS',
-                            style: TextStyle(color: AppColors.secondaryText, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            style: TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                           const SizedBox(height: 12),
-                          
-                          // Row with cards
+
+                          // Target & Equity Row
                           Row(
                             children: [
                               Expanded(
@@ -550,8 +940,12 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        '${deal['goal']!} for ${deal['equity']!}',
-                                        style: const TextStyle(color: AppColors.primaryGreen, fontSize: 14, fontWeight: FontWeight.bold),
+                                        '${deal['goal'] ?? '₹25,00,000'} for ${deal['equity'] ?? '8%'}',
+                                        style: const TextStyle(
+                                          color: AppColors.primaryGreen,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -574,8 +968,12 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
-                                        deal['badge']!,
-                                        style: const TextStyle(color: AppColors.darkText, fontSize: 14, fontWeight: FontWeight.bold),
+                                        deal['sector']!,
+                                        style: const TextStyle(
+                                          color: AppColors.darkText,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -584,32 +982,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          
-                          // Expansion Intent
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: AppColors.hoverBackground,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Expansion Intent / Roadmap',
-                                  style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  deal['desc']!,
-                                  style: const TextStyle(color: AppColors.darkText, fontSize: 13),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          
+
                           // Location Row
                           Row(
                             children: [
@@ -622,40 +995,39 @@ class _BetaClubPageState extends State<BetaClubPage> {
                             ],
                           ),
                           const SizedBox(height: 24),
-                          
-                          // Direct Founders Connect Heading
+
                           const Text(
                             'DIRECT FOUNDERS CONNECT',
-                            style: TextStyle(color: AppColors.secondaryText, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                            style: TextStyle(
+                              color: AppColors.secondaryText,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                           const SizedBox(height: 12),
-                          
-                          // Corporate Holder Row
-                          _buildConnectRow(
+
+                          _buildConnectInfoRow(
                             icon: LucideIcons.building,
                             label: 'Corporate Holder',
                             value: deal['title']!,
                           ),
                           const SizedBox(height: 8),
-                          
-                          // Email Address Row
-                          _buildConnectRow(
+                          _buildConnectInfoRow(
                             icon: LucideIcons.mail,
                             label: 'Email Address',
-                            value: '${deal['title']!.toLowerCase()}@bnxmail.com',
+                            value: '${deal['title']!.toLowerCase().replaceAll(' ', '')}@bnxmail.com',
                             showLinkIcon: true,
                           ),
                           const SizedBox(height: 8),
-                          
-                          // Registered Contact Row
-                          _buildConnectRow(
+                          _buildConnectInfoRow(
                             icon: LucideIcons.phone,
                             label: 'Registered Contact',
-                            value: '9566393028',
+                            value: '+91 95663 93028',
                             showLinkIcon: true,
                           ),
                           const SizedBox(height: 24),
-                          
+
                           // Submit Connect Request Button
                           SizedBox(
                             width: double.infinity,
@@ -664,7 +1036,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                 Navigator.pop(context);
                                 AppSnackbar.show(
                                   context,
-                                  "Connection request sent successfully! Deal coordinator will contact you shortly.",
+                                  'Connection request sent successfully! Deal coordinator will contact you shortly.',
                                   type: SnackType.success,
                                 );
                               },
@@ -674,7 +1046,10 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                               ),
-                              child: const Text('Submit Connect Request', style: TextStyle(fontWeight: FontWeight.bold)),
+                              child: const Text(
+                                'Submit Connect Request (1 Quota)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ],
@@ -702,7 +1077,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
     );
   }
 
-  Widget _buildConnectRow({
+  Widget _buildConnectInfoRow({
     required IconData icon,
     required String label,
     required String value,
@@ -753,305 +1128,6 @@ class _BetaClubPageState extends State<BetaClubPage> {
           ),
         ],
       ),
-    );
-  }
-
-  void _showPublishVentureBottomSheet(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final screenHeight = MediaQuery.of(context).size.height;
-    
-    showGeneralDialog(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: 'PublishVenture',
-      barrierColor: Colors.black.withValues(alpha: 0.4),
-      transitionDuration: const Duration(milliseconds: 300),
-      pageBuilder: (context, anim1, anim2) {
-        return Align(
-          alignment: Alignment.bottomCenter,
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                constraints: BoxConstraints(
-                  maxWidth: isMobile ? double.infinity : 800,
-                  maxHeight: screenHeight * 0.60,
-                ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
-                  ),
-                  boxShadow: [
-                    BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, -10)),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Drag Handle
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        margin: const EdgeInsets.only(top: 8, bottom: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    // Header Row
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Publish Venture Profile',
-                                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Broadcast your capital expansion targets immediately',
-                                  style: TextStyle(fontSize: 12, color: AppColors.secondaryText),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            icon: const Icon(LucideIcons.x, color: AppColors.secondaryText),
-                            onPressed: () => Navigator.pop(context),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1, color: AppColors.border),
-                    
-                    // Form Fields (Scrollable)
-                    Flexible(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Registry Business Name *
-                            _buildLabel('Registry Business Name *'),
-                            _buildTextField(hint: 'e.g., Beta Tech Solutions'),
-                            const SizedBox(height: 16),
-                            
-                            // Core Industry Tag
-                            _buildLabel('Core Industry Tag'),
-                            _buildDropdownField(
-                              items: ['Technology', 'Retail & Commerce', 'Finance', 'Healthcare', 'Education'],
-                              initialValue: 'Technology',
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Headline / Expansion Memo *
-                            _buildLabel('Headline / Expansion Memo *'),
-                            _buildTextField(hint: 'e.g., Disrupting regional supply chain with micro-automated routing'),
-                            const SizedBox(height: 16),
-                            
-                            // Funding Request Amount & Equity Transfer (Row)
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildLabel('Funding Request Amount (₹) *'),
-                                      _buildTextField(hint: 'e.g. 5000000', prefixIcon: LucideIcons.coins),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildLabel('Equity Transfer (%)'),
-                                      _buildTextField(hint: 'e.g. 10', prefixIcon: LucideIcons.percent),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Brief Expansion Intent / Roadmap
-                            _buildLabel('Brief Expansion Intent / Roadmap'),
-                            _buildTextField(
-                              hint: 'Briefly detail operational growth goals or capital allocation...',
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Investor Query Email & Founder Contact Phone (Row)
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildLabel('Investor Query Email *'),
-                                      _buildTextField(hint: 'founder@yourbiz.com', prefixIcon: LucideIcons.mail),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      _buildLabel('Founder Contact Phone *'),
-                                      _buildTextField(hint: '+9199999 99999', prefixIcon: LucideIcons.phone),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            
-                            // Business Location
-                            _buildLabel('Business Location (Optional - defaults to detected GPS)'),
-                            _buildTextField(hint: 'Tiruvallur, Tamil Nadu', prefixIcon: LucideIcons.mapPin),
-                            const SizedBox(height: 16),
-                            
-                            // Deck Link
-                            _buildLabel('Deck Link (Optional)'),
-                            _buildTextField(hint: 'https://drive.google.com/executive-deck.pdf', prefixIcon: LucideIcons.fileText),
-                            const SizedBox(height: 24),
-                            
-                            // Cancel & Publish Buttons Row
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                OutlinedButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  style: OutlinedButton.styleFrom(
-                                    foregroundColor: AppColors.darkText,
-                                    side: const BorderSide(color: AppColors.border),
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                                const SizedBox(width: 12),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    AppSnackbar.show(
-                                      context,
-                                      "Venture profile published successfully!",
-                                      type: SnackType.success,
-                                    );
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0F5B2E), // Dark Green matching Cliks headers
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                  ),
-                                  child: const Text('Publish Now', style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-      transitionBuilder: (context, anim1, anim2, child) {
-        return SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(0.0, 1.0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
-          child: child,
-        );
-      },
-    );
-  }
-
-  Widget _buildLabel(String text) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkText),
-      ),
-    );
-  }
-
-  Widget _buildTextField({
-    required String hint,
-    IconData? prefixIcon,
-    int maxLines = 1,
-  }) {
-    return TextField(
-      maxLines: maxLines,
-      style: const TextStyle(fontSize: 13),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
-        prefixIcon: prefixIcon != null ? Icon(prefixIcon, size: 16, color: AppColors.secondaryText) : null,
-        fillColor: AppColors.background.withValues(alpha: 0.5),
-        filled: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDropdownField({
-    required List<String> items,
-    required String initialValue,
-  }) {
-    return DropdownButtonFormField<String>(
-      initialValue: initialValue,
-      style: const TextStyle(fontSize: 13, color: AppColors.darkText),
-      onChanged: (val) {},
-      decoration: InputDecoration(
-        fillColor: AppColors.background.withValues(alpha: 0.5),
-        filled: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-      ),
-      items: items.map((val) => DropdownMenuItem(value: val, child: Text(val))).toList(),
     );
   }
 }

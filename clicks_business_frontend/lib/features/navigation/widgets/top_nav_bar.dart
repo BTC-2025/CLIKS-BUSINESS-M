@@ -198,6 +198,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                             return 'Attendance';
                           case AppRoute.staff: return 'Staff';
                           case AppRoute.hr: return 'Human Resources';
+                          case AppRoute.betaClub: return 'Partner Launch Desk';
                           default: return 'Cliks Business';
                         }
                       }(),

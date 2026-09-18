@@ -510,7 +510,7 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage>
           children: [
             Icon(icon, size: 11, color: const Color(0xFF6B7280)),
             const SizedBox(width: 4),
-            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: const Color(0xFF374151))),
+            Text(label, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
           ],
         ),
       ),

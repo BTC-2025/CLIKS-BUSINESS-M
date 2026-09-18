@@ -1065,7 +1065,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           const Text('DIRECTION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText)),
                           const SizedBox(height: 4),
                           DropdownButtonFormField<String>(
-                            value: direction,
+                            initialValue: direction,
                             items: ['I Borrowed Money (-)', 'I Lent Money (+)'].map((d) {
                               return DropdownMenuItem(value: d, child: Text(d, style: const TextStyle(fontSize: 12)));
                             }).toList(),

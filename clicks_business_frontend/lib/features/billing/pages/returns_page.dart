@@ -443,7 +443,7 @@ class _ReturnsPageState extends ConsumerState<ReturnsPage>
             ],
           ),
           const SizedBox(height: 24),
-          if (infoBanner != null) infoBanner,
+          ?infoBanner,
           _buildTableOrList(isMobile, headers, emptyMessage, emptyIcon),
         ],
       ),

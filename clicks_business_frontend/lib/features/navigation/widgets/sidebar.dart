@@ -480,13 +480,13 @@ class Sidebar extends ConsumerWidget {
                 ] else if (navigation.currentModule == AppModule.social) ...[
                   _SidebarItem(
                     icon: LucideIcons.userCheck,
-                    label: 'BETA Club',
+                    label: 'PARTNER LAUNCH DESK',
                     isSelected: navigation.currentRoute == AppRoute.betaClub,
                     onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.betaClub),
                   ),
                   _SidebarItem(
-                    icon: LucideIcons.fileText,
-                    label: 'Trading docs',
+                    icon: LucideIcons.trendingUp,
+                    label: 'Trading Docs',
                     isSelected: navigation.currentRoute == AppRoute.tradingDocs,
                     onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.tradingDocs),
                   ),
