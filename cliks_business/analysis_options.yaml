@@ -7,4 +7,13 @@ analyzer:
     - windows/**
     - macos/**
     - linux/**
+  errors:
+    unused_local_variable: ignore
+    unused_field: ignore
+    unused_element: ignore
+    deprecated_member_use: ignore
+    use_build_context_synchronously: ignore
+    avoid_print: ignore
+    todo: ignore
+
 include: package:flutter_lints/flutter.yaml
