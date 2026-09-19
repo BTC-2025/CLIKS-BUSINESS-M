@@ -51,39 +51,88 @@ class _BetaClubPageState extends State<BetaClubPage> {
     },
   ];
 
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
+    final bottomInset = isMobile ? 120.0 : 50.0;
 
     return Scaffold(
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(paddingVal),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header Banner
-            _buildHeaderBanner(context, isMobile)
-                .animate()
-                .fadeIn(duration: 450.ms)
-                .slideY(begin: -0.05, end: 0),
-            const SizedBox(height: 28),
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: RefreshIndicator(
+        color: AppColors.primaryGreen,
+        backgroundColor: Colors.white,
+        displacement: 25,
+        onRefresh: () async {
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (mounted) setState(() {});
+        },
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          padding: EdgeInsets.fromLTRB(paddingVal, paddingVal, paddingVal, bottomInset),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Banner
+              _buildHeaderBanner(context, isMobile)
+                  .animate()
+                  .fadeIn(duration: 400.ms)
+                  .slideY(begin: -0.04, end: 0),
+              const SizedBox(height: 24),
 
-            // Segmented Tabs Row
-            _buildSegmentTabs().animate().fadeIn(duration: 400.ms, delay: 100.ms),
-            const SizedBox(height: 20),
+              // Segmented Tabs Row
+              _buildSegmentTabs(isMobile).animate().fadeIn(duration: 350.ms, delay: 50.ms),
+              const SizedBox(height: 20),
 
-            // Search Bar & Filter Row
-            _buildSearchAndFilterRow(isMobile).animate().fadeIn(duration: 400.ms, delay: 150.ms),
-            const SizedBox(height: 28),
+              // Search Bar & Filter Row
+              _buildSearchAndFilterRow(isMobile).animate().fadeIn(duration: 350.ms, delay: 100.ms),
+              const SizedBox(height: 24),
 
-            // Tab View Body
-            if (_activeTab == 0)
-              _buildActiveDealsView(isMobile).animate().fadeIn(duration: 450.ms, delay: 200.ms)
-            else
-              _buildMyStudioView(isMobile).animate().fadeIn(duration: 450.ms, delay: 200.ms),
-          ],
+              // Tab View Body with smooth animated switcher
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0, 0.03),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _activeTab == 0
+                    ? KeyedSubtree(
+                        key: const ValueKey('active_deals'),
+                        child: _buildActiveDealsView(isMobile),
+                      )
+                    : KeyedSubtree(
+                        key: const ValueKey('my_studio'),
+                        child: _buildMyStudioView(isMobile),
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -210,74 +259,161 @@ class _BetaClubPageState extends State<BetaClubPage> {
   }
 
   Widget _buildHeaderRightSection() {
-    return ElevatedButton.icon(
-      onPressed: () => _showListVentureDialog(context),
-      icon: const Icon(LucideIcons.rocket, size: 16, color: Colors.white),
-      label: const Text(
-        'List Your Venture',
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 13.5,
-          color: Colors.white,
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF00A86B), Color(0xFF059669)],
         ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF00A86B).withValues(alpha: 0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF00A86B), // Vibrant emerald green
-        foregroundColor: Colors.white,
-        elevation: 0,
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-  }
-
-  Widget _buildSegmentTabs() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
-        padding: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: const Color(0xFFE5E7EB), // Soft neutral pill background
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _showListVentureDialog(context),
           borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTabButton('Active Deals Marketplace', 0),
-            _buildTabButton('My Studio (Founder View)', 1),
-          ],
+          child: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(LucideIcons.rocket, size: 16, color: Colors.white),
+                SizedBox(width: 8),
+                Text(
+                  'List Your Venture',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13.5,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTabButton(String label, int index) {
+  Widget _buildSegmentTabs(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9), // Soft slate pill background
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildTabButton(
+              title: isMobile ? 'Active Deals' : 'Active Deals Marketplace',
+              badge: _deals.length.toString(),
+              icon: LucideIcons.store,
+              index: 0,
+              isMobile: isMobile,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: _buildTabButton(
+              title: isMobile ? 'My Studio' : 'My Studio (Founder View)',
+              badge: _studioPitches.length.toString(),
+              icon: LucideIcons.sparkles,
+              index: 1,
+              isMobile: isMobile,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton({
+    required String title,
+    required String badge,
+    required IconData icon,
+    required int index,
+    required bool isMobile,
+  }) {
     final isActive = _activeTab == index;
     return GestureDetector(
-      onTap: () => setState(() => _activeTab = index),
+      onTap: () {
+        if (_activeTab != index) {
+          setState(() => _activeTab = index);
+        }
+      },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 16,
+          vertical: 11,
+        ),
         decoration: BoxDecoration(
           color: isActive ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(9),
+          borderRadius: BorderRadius.circular(12),
+          border: isActive
+              ? Border.all(color: const Color(0xFFE2E8F0), width: 1)
+              : Border.all(color: Colors.transparent, width: 1),
           boxShadow: isActive
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.06),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
                   ),
                 ]
               : null,
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isActive ? AppColors.darkText : const Color(0xFF6B7280),
-            fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
-            fontSize: 13,
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isActive ? const Color(0xFF00A86B) : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 7),
+            Flexible(
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: isActive ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                  fontSize: isMobile ? 12.5 : 13.5,
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? const Color(0xFF00A86B).withValues(alpha: 0.12)
+                    : const Color(0xFFE2E8F0),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                badge,
+                style: TextStyle(
+                  color: isActive ? const Color(0xFF00A86B) : const Color(0xFF64748B),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -386,16 +522,16 @@ class _BetaClubPageState extends State<BetaClubPage> {
 
   Widget _buildActiveDealCard(Map<String, String> deal) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -411,7 +547,8 @@ class _BetaClubPageState extends State<BetaClubPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF), // Soft light blue
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFDBEAFE)),
                   ),
                   child: Text(
                     deal['sector']!,
@@ -426,64 +563,163 @@ class _BetaClubPageState extends State<BetaClubPage> {
               ),
               const SizedBox(width: 8),
               Flexible(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('📍', style: TextStyle(fontSize: 11)),
-                    const SizedBox(width: 4),
-                    Flexible(
-                      child: Text(
-                        deal['location']!,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Color(0xFF6B7280),
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.mapPin, size: 11, color: Color(0xFF64748B)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          deal['location']!,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
 
           // Title
           Text(
             deal['title']!,
             style: const TextStyle(
-              color: AppColors.darkText,
+              color: Color(0xFF0F172A),
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 24),
+          if (deal['desc'] != null && deal['desc']!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              deal['desc']!,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 12.5,
+                height: 1.45,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
 
-          // Connect / View Pitch Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => _showConnectDialog(context, deal),
-              icon: const Icon(LucideIcons.lock, size: 14, color: Colors.white),
-              label: Text(
-                'Connect / View Pitch (${deal['quota']})',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12.5,
-                  color: Colors.white,
+          // Professional "Connect / View Pitch" Button
+          _buildConnectPitchButton(deal),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectPitchButton(Map<String, String> deal) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () => _showConnectDialog(context, deal),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.white.withValues(alpha: 0.15),
+        highlightColor: Colors.white.withValues(alpha: 0.08),
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF0F172A), // Midnight Slate Navy
+                Color(0xFF1E293B), // Charcoal Blue
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0F172A).withValues(alpha: 0.22),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.lockKeyhole, size: 14, color: Colors.white),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Connect / View Pitch',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      'Direct Founder Access',
+                      style: TextStyle(
+                        color: Colors.white60,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1E3A8A), // Dark navy / blue
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                elevation: 0,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF00A86B).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFF00A86B).withValues(alpha: 0.5)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.sparkles, size: 10, color: Color(0xFF34D399)),
+                    const SizedBox(width: 4),
+                    Text(
+                      deal['quota'] ?? '1 Quota',
+                      style: const TextStyle(
+                        color: Color(0xFF34D399),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+              const SizedBox(width: 6),
+              const Icon(LucideIcons.chevronRight, size: 15, color: Colors.white60),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

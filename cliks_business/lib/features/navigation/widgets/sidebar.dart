@@ -436,12 +436,6 @@ class Sidebar extends ConsumerWidget {
                     onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.people),
                   ),
                   _SidebarItem(
-                    icon: LucideIcons.wallet,
-                    label: 'Wallet',
-                    isSelected: navigation.currentRoute == AppRoute.wallet,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.wallet),
-                  ),
-                  _SidebarItem(
                     icon: LucideIcons.history,
                     label: 'Transaction',
                     isSelected: navigation.currentRoute == AppRoute.transaction,
@@ -464,12 +458,6 @@ class Sidebar extends ConsumerWidget {
                     label: 'Planner',
                     isSelected: navigation.currentRoute == AppRoute.planner,
                     onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.planner),
-                  ),
-                  _SidebarItem(
-                    icon: LucideIcons.gift,
-                    label: 'Rewards & Offers',
-                    isSelected: navigation.currentRoute == AppRoute.rewards,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.rewards),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.sparkles,
