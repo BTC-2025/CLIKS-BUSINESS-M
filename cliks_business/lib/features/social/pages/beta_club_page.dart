@@ -23,7 +23,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
       'location': 'India',
       'desc':
           'Scaling AI-driven predictive supply chain & retail SaaS for emerging market merchants.',
-      'goal': '₹50,00,999',
+      'goal': '₹50,00,000',
       'equity': '8%',
       'quota': '1 Quota',
     },
