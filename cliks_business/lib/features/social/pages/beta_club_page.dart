@@ -12,7 +12,8 @@ class BetaClubPage extends StatefulWidget {
 }
 
 class _BetaClubPageState extends State<BetaClubPage> {
-  int _activeTab = 0; // 0 for Active Deals Marketplace, 1 for My Studio (Founder View)
+  int _activeTab =
+      0; // 0 for Active Deals Marketplace, 1 for My Studio (Founder View)
   String _selectedSectorFilter = 'All Sectors';
 
   final List<Map<String, String>> _deals = [
@@ -20,8 +21,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
       'title': 'Ravi Kumar',
       'sector': 'Technology',
       'location': 'India',
-      'desc': 'Scaling AI-driven predictive supply chain & retail SaaS for emerging market merchants.',
-      'goal': '₹50,00,000',
+      'desc':
+          'Scaling AI-driven predictive supply chain & retail SaaS for emerging market merchants.',
+      'goal': '₹50,00,999',
       'equity': '8%',
       'quota': '1 Quota',
     },
@@ -29,7 +31,8 @@ class _BetaClubPageState extends State<BetaClubPage> {
       'title': 'usemeta',
       'sector': 'Technology',
       'location': 'India',
-      'desc': 'Unified enterprise omnichannel automation infrastructure for next-gen commerce.',
+      'desc':
+          'Unified enterprise omnichannel automation infrastructure for next-gen commerce.',
       'goal': '₹25,00,000',
       'equity': '6%',
       'quota': '1 Quota',
@@ -84,24 +87,35 @@ class _BetaClubPageState extends State<BetaClubPage> {
         },
         child: SingleChildScrollView(
           controller: _scrollController,
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-          padding: EdgeInsets.fromLTRB(paddingVal, paddingVal, paddingVal, bottomInset),
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            paddingVal,
+            paddingVal,
+            paddingVal,
+            bottomInset,
+          ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Banner
-              _buildHeaderBanner(context, isMobile)
-                  .animate()
-                  .fadeIn(duration: 400.ms)
-                  .slideY(begin: -0.04, end: 0),
+              _buildHeaderBanner(
+                context,
+                isMobile,
+              ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
               const SizedBox(height: 24),
 
               // Segmented Tabs Row
-              _buildSegmentTabs(isMobile).animate().fadeIn(duration: 350.ms, delay: 50.ms),
+              _buildSegmentTabs(
+                isMobile,
+              ).animate().fadeIn(duration: 350.ms, delay: 50.ms),
               const SizedBox(height: 20),
 
               // Search Bar & Filter Row
-              _buildSearchAndFilterRow(isMobile).animate().fadeIn(duration: 350.ms, delay: 100.ms),
+              _buildSearchAndFilterRow(
+                isMobile,
+              ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
               const SizedBox(height: 24),
 
               // Tab View Body with smooth animated switcher
@@ -211,11 +225,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
         const SizedBox(height: 8),
         const Text(
           'Connect directly with verified founders, review pitch decks, and unlock investment deals.',
-          style: TextStyle(
-            color: Colors.white70,
-            fontSize: 13,
-            height: 1.5,
-          ),
+          style: TextStyle(color: Colors.white70, fontSize: 13, height: 1.5),
         ),
         const SizedBox(height: 16),
         // Select Region / Lock GPS button
@@ -379,7 +389,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
             Icon(
               icon,
               size: 15,
-              color: isActive ? const Color(0xFF00A86B) : const Color(0xFF64748B),
+              color: isActive
+                  ? const Color(0xFF00A86B)
+                  : const Color(0xFF64748B),
             ),
             const SizedBox(width: 7),
             Flexible(
@@ -388,7 +400,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: isActive ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                  color: isActive
+                      ? const Color(0xFF0F172A)
+                      : const Color(0xFF64748B),
                   fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
                   fontSize: isMobile ? 12.5 : 13.5,
                   letterSpacing: -0.2,
@@ -407,7 +421,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
               child: Text(
                 badge,
                 style: TextStyle(
-                  color: isActive ? const Color(0xFF00A86B) : const Color(0xFF64748B),
+                  color: isActive
+                      ? const Color(0xFF00A86B)
+                      : const Color(0xFF64748B),
                   fontSize: 10.5,
                   fontWeight: FontWeight.bold,
                 ),
@@ -435,7 +451,8 @@ class _BetaClubPageState extends State<BetaClubPage> {
           Expanded(
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search deals by title, sector, problem, or keywords...',
+                hintText:
+                    'Search deals by title, sector, problem, or keywords...',
                 hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
@@ -462,14 +479,22 @@ class _BetaClubPageState extends State<BetaClubPage> {
         onSelected: (sector) {
           setState(() => _selectedSectorFilter = sector);
         },
-        itemBuilder: (context) => [
-          'All Sectors',
-          'Technology',
-          'Manufacturing',
-          'Retail & Commerce',
-          'Finance',
-          'Healthcare',
-        ].map((s) => PopupMenuItem(value: s, child: Text(s, style: const TextStyle(fontSize: 13)))).toList(),
+        itemBuilder: (context) =>
+            [
+                  'All Sectors',
+                  'Technology',
+                  'Manufacturing',
+                  'Retail & Commerce',
+                  'Finance',
+                  'Healthcare',
+                ]
+                .map(
+                  (s) => PopupMenuItem(
+                    value: s,
+                    child: Text(s, style: const TextStyle(fontSize: 13)),
+                  ),
+                )
+                .toList(),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -482,7 +507,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
               ),
             ),
             const SizedBox(width: 8),
-            const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF6B7280)),
+            const Icon(
+              LucideIcons.chevronDown,
+              size: 14,
+              color: Color(0xFF6B7280),
+            ),
           ],
         ),
       ),
@@ -544,7 +573,10 @@ class _BetaClubPageState extends State<BetaClubPage> {
             children: [
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF), // Soft light blue
                     borderRadius: BorderRadius.circular(10),
@@ -564,7 +596,10 @@ class _BetaClubPageState extends State<BetaClubPage> {
               const SizedBox(width: 8),
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3.5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
@@ -573,7 +608,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(LucideIcons.mapPin, size: 11, color: Color(0xFF64748B)),
+                      const Icon(
+                        LucideIcons.mapPin,
+                        size: 11,
+                        color: Color(0xFF64748B),
+                      ),
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
@@ -664,7 +703,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
                   color: Colors.white.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(LucideIcons.lockKeyhole, size: 14, color: Colors.white),
+                child: const Icon(
+                  LucideIcons.lockKeyhole,
+                  size: 14,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(width: 10),
               const Expanded(
@@ -684,10 +727,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
                     SizedBox(height: 1),
                     Text(
                       'Direct Founder Access',
-                      style: TextStyle(
-                        color: Colors.white60,
-                        fontSize: 10,
-                      ),
+                      style: TextStyle(color: Colors.white60, fontSize: 10),
                     ),
                   ],
                 ),
@@ -697,12 +737,18 @@ class _BetaClubPageState extends State<BetaClubPage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF00A86B).withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFF00A86B).withValues(alpha: 0.5)),
+                  border: Border.all(
+                    color: const Color(0xFF00A86B).withValues(alpha: 0.5),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.sparkles, size: 10, color: Color(0xFF34D399)),
+                    const Icon(
+                      LucideIcons.sparkles,
+                      size: 10,
+                      color: Color(0xFF34D399),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       deal['quota'] ?? '1 Quota',
@@ -716,7 +762,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
                 ),
               ),
               const SizedBox(width: 6),
-              const Icon(LucideIcons.chevronRight, size: 15, color: Colors.white60),
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 15,
+                color: Colors.white60,
+              ),
             ],
           ),
         ),
@@ -763,21 +813,32 @@ class _BetaClubPageState extends State<BetaClubPage> {
             children: [
               Flexible(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: isAccepted ? const Color(0xFFF0FDF4) : const Color(0xFFFFF1F2),
+                    color: isAccepted
+                        ? const Color(0xFFF0FDF4)
+                        : const Color(0xFFFFF1F2),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: isAccepted ? const Color(0xFFBBF7D0) : const Color(0xFFFECDD3),
+                      color: isAccepted
+                          ? const Color(0xFFBBF7D0)
+                          : const Color(0xFFFECDD3),
                     ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
-                        isAccepted ? LucideIcons.check : LucideIcons.triangleAlert,
+                        isAccepted
+                            ? LucideIcons.check
+                            : LucideIcons.triangleAlert,
                         size: 11,
-                        color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+                        color: isAccepted
+                            ? const Color(0xFF16A34A)
+                            : const Color(0xFFE11D48),
                       ),
                       const SizedBox(width: 4),
                       Flexible(
@@ -785,7 +846,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
                           pitch['status']!,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: isAccepted ? const Color(0xFF16A34A) : const Color(0xFFE11D48),
+                            color: isAccepted
+                                ? const Color(0xFF16A34A)
+                                : const Color(0xFFE11D48),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -841,14 +904,22 @@ class _BetaClubPageState extends State<BetaClubPage> {
           builder: (context, setModalState) {
             return Dialog(
               backgroundColor: Colors.white,
-              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 24,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               child: Container(
                 constraints: BoxConstraints(
                   maxWidth: 560,
                   maxHeight: MediaQuery.of(context).size.height * 0.9,
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 24,
+                ),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
@@ -884,7 +955,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
                           ),
                           const SizedBox(width: 8),
                           IconButton(
-                            icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
+                            icon: const Icon(
+                              LucideIcons.x,
+                              size: 18,
+                              color: Color(0xFF6B7280),
+                            ),
                             onPressed: () => Navigator.pop(ctx),
                             padding: EdgeInsets.zero,
                             constraints: const BoxConstraints(),
@@ -906,27 +981,45 @@ class _BetaClubPageState extends State<BetaClubPage> {
                       DropdownButtonFormField<String>(
                         initialValue: selectedSector,
                         isExpanded: true,
-                        style: const TextStyle(fontSize: 13, color: AppColors.darkText),
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppColors.darkText,
+                        ),
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD1D5DB),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD1D5DB),
+                            ),
                           ),
                         ),
-                        items: [
-                          'Technology',
-                          'Manufacturing',
-                          'Retail & Commerce',
-                          'Healthcare',
-                          'Finance',
-                          'Education',
-                          'Logistics & Mobility',
-                        ].map((sector) => DropdownMenuItem(value: sector, child: Text(sector))).toList(),
+                        items:
+                            [
+                                  'Technology',
+                                  'Manufacturing',
+                                  'Retail & Commerce',
+                                  'Healthcare',
+                                  'Finance',
+                                  'Education',
+                                  'Logistics & Mobility',
+                                ]
+                                .map(
+                                  (sector) => DropdownMenuItem(
+                                    value: sector,
+                                    child: Text(sector),
+                                  ),
+                                )
+                                .toList(),
                         onChanged: (val) {
                           if (val != null) {
                             setModalState(() => selectedSector = val);
@@ -939,7 +1032,8 @@ class _BetaClubPageState extends State<BetaClubPage> {
                       _buildModalLabel('Headline Pitch *'),
                       _buildModalTextField(
                         controller: headlineController,
-                        hint: 'e.g. Next-gen AI inventory platform for retail SMEs',
+                        hint:
+                            'e.g. Next-gen AI inventory platform for retail SMEs',
                       ),
                       const SizedBox(height: 16),
 
@@ -951,7 +1045,10 @@ class _BetaClubPageState extends State<BetaClubPage> {
                           const SizedBox(width: 8),
                           Text(
                             '$wordCount / 300 words',
-                            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 11),
+                            style: const TextStyle(
+                              color: Color(0xFF6B7280),
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ),
@@ -960,23 +1057,36 @@ class _BetaClubPageState extends State<BetaClubPage> {
                         maxLines: 4,
                         style: const TextStyle(fontSize: 13),
                         onChanged: (text) {
-                          final words = text.trim().isEmpty ? 0 : text.trim().split(RegExp(r'\s+')).length;
+                          final words = text.trim().isEmpty
+                              ? 0
+                              : text.trim().split(RegExp(r'\s+')).length;
                           setModalState(() => wordCount = words);
                         },
                         decoration: InputDecoration(
-                          hintText: 'Enter venture description (maximum 300 words)...',
-                          hintStyle: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 13),
+                          hintText:
+                              'Enter venture description (maximum 300 words)...',
+                          hintStyle: const TextStyle(
+                            color: Color(0xFF9CA3AF),
+                            fontSize: 13,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD1D5DB),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD1D5DB),
+                            ),
                           ),
                           focusedBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFF00A86B), width: 1.5),
+                            borderSide: const BorderSide(
+                              color: Color(0xFF00A86B),
+                              width: 1.5,
+                            ),
                           ),
                           contentPadding: const EdgeInsets.all(14),
                         ),
@@ -1004,10 +1114,14 @@ class _BetaClubPageState extends State<BetaClubPage> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF00A86B), // Vibrant Emerald
+                            backgroundColor: const Color(
+                              0xFF00A86B,
+                            ), // Vibrant Emerald
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                             elevation: 0,
                           ),
                           child: const Text(
@@ -1069,7 +1183,10 @@ class _BetaClubPageState extends State<BetaClubPage> {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: Color(0xFF00A86B), width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 12,
+        ),
         isDense: true,
       ),
     );
@@ -1121,16 +1238,27 @@ class _BetaClubPageState extends State<BetaClubPage> {
                           children: [
                             Flexible(
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF022C22),
                                   borderRadius: BorderRadius.circular(6),
-                                  border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.3)),
+                                  border: Border.all(
+                                    color: AppColors.primaryGreen.withValues(
+                                      alpha: 0.3,
+                                    ),
+                                  ),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(LucideIcons.shieldCheck, color: AppColors.primaryGreen, size: 12),
+                                    Icon(
+                                      LucideIcons.shieldCheck,
+                                      color: AppColors.primaryGreen,
+                                      size: 12,
+                                    ),
                                     SizedBox(width: 4),
                                     Flexible(
                                       child: Text(
@@ -1149,7 +1277,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
                             ),
                             const SizedBox(width: 8),
                             IconButton(
-                              icon: const Icon(LucideIcons.x, color: Colors.white70, size: 20),
+                              icon: const Icon(
+                                LucideIcons.x,
+                                color: Colors.white70,
+                                size: 20,
+                              ),
                               onPressed: () => Navigator.pop(context),
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(),
@@ -1168,7 +1300,10 @@ class _BetaClubPageState extends State<BetaClubPage> {
                         const SizedBox(height: 4),
                         Text(
                           deal['desc'] ?? '',
-                          style: const TextStyle(color: Colors.white70, fontSize: 13),
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 13,
+                          ),
                         ),
                       ],
                     ),
@@ -1203,11 +1338,15 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Target & Equity',
-                                        style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
+                                        style: TextStyle(
+                                          color: AppColors.secondaryText,
+                                          fontSize: 11,
+                                        ),
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
@@ -1231,11 +1370,15 @@ class _BetaClubPageState extends State<BetaClubPage> {
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       const Text(
                                         'Industry',
-                                        style: TextStyle(color: AppColors.secondaryText, fontSize: 11),
+                                        style: TextStyle(
+                                          color: AppColors.secondaryText,
+                                          fontSize: 11,
+                                        ),
                                       ),
                                       const SizedBox(height: 6),
                                       Text(
@@ -1257,11 +1400,18 @@ class _BetaClubPageState extends State<BetaClubPage> {
                           // Location Row
                           Row(
                             children: [
-                              const Icon(LucideIcons.mapPin, color: AppColors.secondaryText, size: 14),
+                              const Icon(
+                                LucideIcons.mapPin,
+                                color: AppColors.secondaryText,
+                                size: 14,
+                              ),
                               const SizedBox(width: 8),
                               Text(
                                 deal['location']!,
-                                style: const TextStyle(color: AppColors.secondaryText, fontSize: 12),
+                                style: const TextStyle(
+                                  color: AppColors.secondaryText,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -1287,7 +1437,8 @@ class _BetaClubPageState extends State<BetaClubPage> {
                           _buildConnectInfoRow(
                             icon: LucideIcons.mail,
                             label: 'Email Address',
-                            value: '${deal['title']!.toLowerCase().replaceAll(' ', '')}@bnxmail.com',
+                            value:
+                                '${deal['title']!.toLowerCase().replaceAll(' ', '')}@bnxmail.com',
                             showLinkIcon: true,
                           ),
                           const SizedBox(height: 8),
@@ -1314,8 +1465,12 @@ class _BetaClubPageState extends State<BetaClubPage> {
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: AppColors.primaryGreen,
                                 foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
                               ),
                               child: const Text(
                                 'Submit Connect Request (1 Quota)',
@@ -1339,10 +1494,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
             begin: const Offset(0.0, 0.4),
             end: Offset.zero,
           ).animate(CurvedAnimation(parent: anim1, curve: Curves.easeOutCubic)),
-          child: FadeTransition(
-            opacity: anim1,
-            child: child,
-          ),
+          child: FadeTransition(opacity: anim1, child: child),
         );
       },
     );
@@ -1376,7 +1528,13 @@ class _BetaClubPageState extends State<BetaClubPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: const TextStyle(color: AppColors.secondaryText, fontSize: 10)),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.secondaryText,
+                    fontSize: 10,
+                  ),
+                ),
                 const SizedBox(height: 2),
                 Row(
                   children: [
@@ -1385,7 +1543,9 @@ class _BetaClubPageState extends State<BetaClubPage> {
                         value,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          color: showLinkIcon ? AppColors.primaryGreen : AppColors.darkText,
+                          color: showLinkIcon
+                              ? AppColors.primaryGreen
+                              : AppColors.darkText,
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1393,7 +1553,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
                     ),
                     if (showLinkIcon) ...[
                       const SizedBox(width: 4),
-                      const Icon(LucideIcons.arrowUpRight, size: 12, color: AppColors.primaryGreen),
+                      const Icon(
+                        LucideIcons.arrowUpRight,
+                        size: 12,
+                        color: AppColors.primaryGreen,
+                      ),
                     ],
                   ],
                 ),
