@@ -3,10 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:clicks_business_frontend/core/theme/app_colors.dart';
-import 'package:clicks_business_frontend/core/theme/app_spacing.dart';
-import 'package:clicks_business_frontend/core/theme/app_radius.dart';
-import 'package:clicks_business_frontend/core/theme/text_styles.dart';
+import '../core/theme/app_colors.dart';
+import '../core/theme/app_spacing.dart';
+import '../core/theme/app_radius.dart';
+import '../core/theme/text_styles.dart';
 
 /// Maximum allowed transaction amount matching Zoho Books & Inventory standards:
 /// Up to 12 digits before decimal, 2 digits after decimal (₹9,99,99,99,99,999.99).

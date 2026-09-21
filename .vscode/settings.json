@@ -1,6 +1,18 @@
 {
-  "dart.projectSearchPaths": [
-    "cliks_business"
+  "dart.flutterSdkPath": "/Users/btrldev004/development/flutter",
+  "dart.projectSearchDepth": 3,
+  "dart.analysisExcludedFolders": [
+    "cliks_business/build",
+    "cliks_business/.dart_tool",
+    "cliks_business/android",
+    "cliks_business/ios",
+    "cliks_business/macos",
+    "cliks_business/linux",
+    "cliks_business/windows"
   ],
-  "dart.flutterSdkPath": "/Users/btrldev004/development/flutter"
+  "files.watcherExclude": {
+    "**/build/**": true,
+    "**/.dart_tool/**": true,
+    "**/.git/**": true
+  }
 }

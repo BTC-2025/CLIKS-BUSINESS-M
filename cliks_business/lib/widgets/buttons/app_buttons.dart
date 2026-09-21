@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:clicks_business_frontend/core/theme/app_colors.dart';
-import 'package:clicks_business_frontend/core/theme/app_radius.dart';
-import 'package:clicks_business_frontend/core/theme/app_spacing.dart';
-import 'package:clicks_business_frontend/core/theme/text_styles.dart';
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_radius.dart';
+import '../../core/theme/app_spacing.dart';
+import '../../core/theme/text_styles.dart';
 
 enum AppButtonVariant { primary, secondary, outline, ghost, danger }
 enum AppButtonSize { sm, md, lg }
