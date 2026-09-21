@@ -1850,6 +1850,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             );
             return;
           }
+          if (amt > kMaxAllowedAmount) {
+            AppSnackbar.show(
+              context,
+              'Amount cannot exceed $kMaxAllowedAmountText',
+              type: SnackType.warning,
+            );
+            return;
+          }
           final isLent = entryDirection.contains('Lent');
           final memo = memoCtrl.text.trim().isEmpty
               ? 'Direct peer transfer'
@@ -2095,8 +2103,11 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   decimal: true,
                 ),
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
-                  LengthLimitingTextInputFormatter(10),
+                  const CurrencyInputFormatter(
+                    integerDigits: 12,
+                    decimalDigits: 2,
+                  ),
+                  LengthLimitingTextInputFormatter(15),
                 ],
                 style: const TextStyle(
                   fontSize: 14,
@@ -2259,6 +2270,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                 AppSnackbar.show(
                   context,
                   'Please enter a valid amount greater than ₹0',
+                  type: SnackType.warning,
+                );
+                return;
+              }
+              if (amt > kMaxAllowedAmount) {
+                AppSnackbar.show(
+                  context,
+                  'Amount cannot exceed $kMaxAllowedAmountText',
                   type: SnackType.warning,
                 );
                 return;
@@ -2469,6 +2488,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                       keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
+                      inputFormatters: [
+                        const CurrencyInputFormatter(
+                          integerDigits: 12,
+                          decimalDigits: 2,
+                        ),
+                        LengthLimitingTextInputFormatter(15),
+                      ],
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -2609,6 +2635,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             );
             return;
           }
+          if (amt > kMaxAllowedAmount) {
+            AppSnackbar.show(
+              context,
+              'Amount cannot exceed $kMaxAllowedAmountText',
+              type: SnackType.warning,
+            );
+            return;
+          }
           final memo = memoCtrl.text.trim().isEmpty
               ? 'Repayment Due'
               : memoCtrl.text.trim();
@@ -2743,10 +2777,11 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                             decimal: true,
                           ),
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'^\d+\.?\d{0,2}'),
+                            const CurrencyInputFormatter(
+                              integerDigits: 12,
+                              decimalDigits: 2,
                             ),
-                            LengthLimitingTextInputFormatter(10),
+                            LengthLimitingTextInputFormatter(15),
                           ],
                           style: const TextStyle(
                             fontSize: 13,
@@ -3113,7 +3148,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   String _fmt(double val) {
     if (val == 0) return '0';
     final isNegative = val < 0;
-    final absVal = val.abs().round();
+    final clampedVal =
+        val.abs() > 999999999999.99 ? 999999999999.99 : val.abs();
+    final absVal = clampedVal.round();
     final s = absVal.toString();
     if (s.length <= 3) {
       return isNegative ? '-$s' : s;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
 
 class RecordTransactionDialog extends StatefulWidget {
   const RecordTransactionDialog({super.key});
@@ -173,6 +175,10 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                       controller: _amountController,
                       hint: '0.00',
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                        LengthLimitingTextInputFormatter(15),
+                      ],
                     ),
                     const SizedBox(height: 16),
                     
@@ -189,7 +195,23 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
                       height: 40,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: Handle transaction recording
+                          final amt = double.tryParse(_amountController.text.trim()) ?? 0.0;
+                          if (amt <= 0) {
+                            AppSnackbar.show(
+                              context,
+                              'Please enter a valid amount greater than ₹0',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
+                          if (amt > kMaxAllowedAmount) {
+                            AppSnackbar.show(
+                              context,
+                              'Amount cannot exceed $kMaxAllowedAmountText',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
@@ -234,11 +256,13 @@ class _RecordTransactionDialogState extends State<RecordTransactionDialog> {
     required String hint,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 13, color: AppColors.darkText, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
 
 class ScheduleReturnReminderPanel extends ConsumerStatefulWidget {
   const ScheduleReturnReminderPanel({super.key});
@@ -95,7 +97,15 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 _buildLabel('Cap Value'),
-                                _buildTextField(_capValueController, '0.00', keyboardType: TextInputType.number),
+                                _buildTextField(
+                                  _capValueController,
+                                  '0.00',
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  inputFormatters: [
+                                    const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                    LengthLimitingTextInputFormatter(15),
+                                  ],
+                                ),
                               ],
                             ),
                           ),
@@ -202,7 +212,12 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType keyboardType = TextInputType.text}) {
+  Widget _buildTextField(
+    TextEditingController controller,
+    String hint, {
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -212,6 +227,7 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         style: const TextStyle(fontSize: 13, color: AppColors.darkText),
         decoration: InputDecoration(
           hintText: hint,
@@ -265,6 +281,15 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
       width: double.infinity,
       child: ElevatedButton(
         onPressed: () {
+          final val = double.tryParse(_capValueController.text.trim()) ?? 0.0;
+          if (val > kMaxAllowedAmount) {
+            AppSnackbar.show(
+              context,
+              'Cap Value cannot exceed $kMaxAllowedAmountText',
+              type: SnackType.warning,
+            );
+            return;
+          }
           ref.read(navigationProvider.notifier).setRoute(AppRoute.people);
         },
         style: ElevatedButton.styleFrom(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:shimmer/shimmer.dart';
@@ -6,6 +7,51 @@ import 'package:clicks_business_frontend/core/theme/app_colors.dart';
 import 'package:clicks_business_frontend/core/theme/app_spacing.dart';
 import 'package:clicks_business_frontend/core/theme/app_radius.dart';
 import 'package:clicks_business_frontend/core/theme/text_styles.dart';
+
+/// Maximum allowed transaction amount matching Zoho Books & Inventory standards:
+/// Up to 12 digits before decimal, 2 digits after decimal (₹9,99,99,99,99,999.99).
+const double kMaxAllowedAmount = 999999999999.99;
+const String kMaxAllowedAmountText = '₹9,99,99,99,99,999.99';
+
+/// Currency & Amount input formatter matching Zoho Books / Zoho Inventory standards:
+/// - Maximum [integerDigits] digits before decimal point (default: 12, up to 999,999,999,999 or 99,999 Crores)
+/// - Maximum [decimalDigits] digits after decimal (default: 2)
+/// - Prevents multiple decimals, negative numbers, symbols, non-digits, and integer overflows.
+class CurrencyInputFormatter extends TextInputFormatter {
+  final int integerDigits;
+  final int decimalDigits;
+
+  const CurrencyInputFormatter({
+    this.integerDigits = 12,
+    this.decimalDigits = 2,
+  });
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    if (text.isEmpty) return newValue;
+
+    // Handle leading dot: automatically prepend 0
+    if (text == '.') {
+      return const TextEditingValue(
+        text: '0.',
+        selection: TextSelection.collapsed(offset: 2),
+      );
+    }
+
+    final pattern = decimalDigits > 0
+        ? '^\\d{0,$integerDigits}(\\.\\d{0,$decimalDigits})?\$'
+        : '^\\d{0,$integerDigits}\$';
+
+    if (RegExp(pattern).hasMatch(text)) {
+      return newValue;
+    }
+    return oldValue;
+  }
+}
 
 enum SnackType { success, error, warning, info }
 

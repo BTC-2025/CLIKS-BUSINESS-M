@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
 
 class SchedulePaymentDialog extends StatefulWidget {
   final Function(Map<String, dynamic>)? onScheduled;
@@ -193,6 +195,10 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                                 controller: _amountController,
                                 hint: '0.00',
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                  LengthLimitingTextInputFormatter(15),
+                                ],
                               ),
                             ],
                           ),
@@ -232,6 +238,23 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                               ? (_selectedPerson != 'Select Person...' ? _selectedPerson : 'Scheduled Transfer')
                               : _nameController.text.trim();
                           final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+
+                          if (amount <= 0) {
+                            AppSnackbar.show(
+                              context,
+                              'Please enter an amount greater than ₹0',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
+                          if (amount > kMaxAllowedAmount) {
+                            AppSnackbar.show(
+                              context,
+                              'Amount cannot exceed $kMaxAllowedAmountText',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
                           
                           final newSchedule = {
                             'id': widget.initialData?['id'] ?? DateTime.now().millisecondsSinceEpoch.toString(),
@@ -332,11 +355,13 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
     required String hint,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 14, color: AppColors.darkText, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,

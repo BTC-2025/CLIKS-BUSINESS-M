@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
 
 class CreateSplitTicketDialog extends StatefulWidget {
   const CreateSplitTicketDialog({super.key});
@@ -137,7 +139,11 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                               _buildTextField(
                                 controller: _budgetController,
                                 hint: 'e.g. 10000',
-                                keyboardType: TextInputType.number,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                  LengthLimitingTextInputFormatter(15),
+                                ],
                               ),
                             ],
                           ),
@@ -240,6 +246,12 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                             return;
                           }
                           final double budgetVal = double.tryParse(_budgetController.text.trim()) ?? 0.0;
+                          if (budgetVal > kMaxAllowedAmount) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Trip budget cannot exceed $kMaxAllowedAmountText')),
+                            );
+                            return;
+                          }
                           final newTicket = {
                             'id': DateTime.now().millisecondsSinceEpoch.toString(),
                             'title': title,
@@ -325,10 +337,12 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 14, color: AppColors.darkText, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,

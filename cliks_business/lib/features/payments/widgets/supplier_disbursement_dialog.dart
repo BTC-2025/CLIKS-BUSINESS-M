@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
 
 class RecordSupplierDisbursementDialog extends StatefulWidget {
   final Map<String, dynamic>? transaction;
@@ -149,7 +151,11 @@ class _RecordSupplierDisbursementDialogState extends State<RecordSupplierDisburs
                               _buildTextField(
                                 controller: _originalAmountController,
                                 hint: '0.00',
-                                keyboardType: TextInputType.number,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [
+                                  const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                  LengthLimitingTextInputFormatter(15),
+                                ],
                               ),
                             ],
                           ),
@@ -162,7 +168,11 @@ class _RecordSupplierDisbursementDialogState extends State<RecordSupplierDisburs
                     _buildTextField(
                       controller: _paidAmountController,
                       hint: '0.00',
-                      keyboardType: TextInputType.number,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                        LengthLimitingTextInputFormatter(15),
+                      ],
                     ),
                     const SizedBox(height: 20),
                     
@@ -206,6 +216,15 @@ class _RecordSupplierDisbursementDialogState extends State<RecordSupplierDisburs
                           final newTotal = double.tryParse(_originalAmountController.text) ?? 0.0;
                           final newPaid = double.tryParse(_paidAmountController.text) ?? 0.0;
                           
+                          if (newTotal > kMaxAllowedAmount || newPaid > kMaxAllowedAmount) {
+                            AppSnackbar.show(
+                              context,
+                              'Amount cannot exceed $kMaxAllowedAmountText',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
+
                           widget.onSave({
                             'id': widget.transaction?['id'] ?? 'TXN-NEW',
                             'date': widget.transaction?['date'] ?? '12-08-2026',
@@ -264,11 +283,13 @@ class _RecordSupplierDisbursementDialogState extends State<RecordSupplierDisburs
     required String hint,
     int maxLines = 1,
     TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       style: const TextStyle(fontSize: 14, color: AppColors.darkText, fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,

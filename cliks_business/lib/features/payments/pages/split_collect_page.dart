@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
@@ -115,7 +116,11 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
             const SizedBox(height: 16),
             TextFormField(
               controller: controller,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                LengthLimitingTextInputFormatter(15),
+              ],
               decoration: InputDecoration(
                 labelText: 'Trip Budget Amount (₹)',
                 hintText: 'e.g. 10000',
@@ -134,6 +139,14 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
           ElevatedButton(
             onPressed: () {
               final newBudget = double.tryParse(controller.text.trim()) ?? 0.0;
+              if (newBudget > kMaxAllowedAmount) {
+                AppSnackbar.show(
+                  context,
+                  'Trip budget cannot exceed $kMaxAllowedAmountText',
+                  type: SnackType.warning,
+                );
+                return;
+              }
               setState(() {
                 ticket['budget'] = newBudget;
               });
@@ -439,7 +452,11 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                     _buildInputLabel('AMOUNT (₹)'),
                                     TextFormField(
                                       controller: amountController,
-                                      keyboardType: TextInputType.number,
+                                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                      inputFormatters: [
+                                        const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                        LengthLimitingTextInputFormatter(15),
+                                      ],
                                       onChanged: (_) => setModalState(() {}),
                                       decoration: _inputDecoration('5000'),
                                     ),
@@ -610,7 +627,11 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                           child: isCustomSplit
                                               ? TextFormField(
                                                   controller: customShareControllers[p],
-                                                  keyboardType: TextInputType.number,
+                                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                                  inputFormatters: [
+                                                    const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                                    LengthLimitingTextInputFormatter(15),
+                                                  ],
                                                   onChanged: (_) => setModalState(() {}),
                                                   textAlign: TextAlign.center,
                                                   style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
@@ -686,11 +707,20 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                   AppSnackbar.show(context, "Please enter a valid amount.", type: SnackType.error);
                                   return;
                                 }
+                                if (totalAmount > kMaxAllowedAmount) {
+                                  AppSnackbar.show(context, "Amount cannot exceed $kMaxAllowedAmountText", type: SnackType.error);
+                                  return;
+                                }
 
                                 final Map<String, double> finalShares = {};
                                 if (isCustomSplit) {
                                   for (var p in participants) {
-                                    finalShares[p] = double.tryParse(customShareControllers[p]!.text.trim()) ?? 0.0;
+                                    final shareVal = double.tryParse(customShareControllers[p]!.text.trim()) ?? 0.0;
+                                    if (shareVal > kMaxAllowedAmount) {
+                                      AppSnackbar.show(context, "Share for $p cannot exceed $kMaxAllowedAmountText", type: SnackType.error);
+                                      return;
+                                    }
+                                    finalShares[p] = shareVal;
                                   }
                                 } else {
                                   for (var p in participants) {

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
+
+
 
 class AddMoneyDialog extends StatefulWidget {
   const AddMoneyDialog({super.key});
@@ -12,7 +16,7 @@ class AddMoneyDialog extends StatefulWidget {
 class _AddMoneyDialogState extends State<AddMoneyDialog> {
   final _amountController = TextEditingController(text: '500.00');
   final _noteController = TextEditingController();
-  int _selectedTabIndex = 0;
+  String _selectedPaymentMethod = 'UPI / NetBanking';
 
   @override
   void dispose() {
@@ -28,95 +32,72 @@ class _AddMoneyDialogState extends State<AddMoneyDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      alignment: Alignment.bottomCenter,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
-      ),
-      insetPadding: EdgeInsets.zero,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(isMobile ? 24 : 16)),
+      insetPadding: isMobile ? const EdgeInsets.all(16) : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: isMobile ? double.infinity : 450,
-          maxHeight: MediaQuery.of(context).size.height * 0.65,
-        ),
+        constraints: const BoxConstraints(maxWidth: 480),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Drag Handle
-            Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(top: 8, bottom: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 12, 8),
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Add Money to Wallet',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
+                  const Text(
+                    'Load Liquid Capital',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText),
                   ),
-                  const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(LucideIcons.x, size: 14, color: Colors.black54),
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100,
-                      shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(6),
-                    ),
+                    icon: const Icon(LucideIcons.x, size: 16, color: AppColors.secondaryText),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
                 ],
               ),
             ),
             const Divider(height: 1, color: AppColors.border),
-            
-            // Form Content
+
+            // Content
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Tab Selector
+                    _buildLabel('SOURCE / PAYMENT METHOD'),
+                    _buildDropdown(
+                      value: _selectedPaymentMethod,
+                      items: ['UPI / NetBanking', 'HDFC Primary Current A/c', 'ICICI Reserve A/c', 'Corporate Credit Card'],
+                      onChanged: (v) => setState(() => _selectedPaymentMethod = v!),
+                    ),
+                    const SizedBox(height: 12),
+                    
+                    // Quick info
                     Container(
-                      height: 32,
-                      padding: const EdgeInsets.all(3),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F4F9),
+                        color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: Row(
+                      child: const Row(
                         children: [
+                          Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF1E6F3F)),
+                          SizedBox(width: 8),
                           Expanded(
-                            child: _buildTabItem('UPI / Bank Load', 0),
-                          ),
-                          Expanded(
-                            child: _buildTabItem('Convert Points', 1),
+                            child: Text(
+                              'Instant node activation upon gateway handshake.',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF475569)),
+                            ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 16),
-                    
                     _buildLabel('LOAD AMOUNT (INR)'),
                     _buildAmountField(),
                     const SizedBox(height: 16),
@@ -133,7 +114,28 @@ class _AddMoneyDialogState extends State<AddMoneyDialog> {
                       height: 40,
                       child: ElevatedButton(
                         onPressed: () {
-                          // TODO: Handle load confirmation
+                          final amt = double.tryParse(_amountController.text.trim()) ?? 0.0;
+                          if (amt <= 0) {
+                            AppSnackbar.show(
+                              context,
+                              'Please enter a valid amount greater than ₹0',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
+                          if (amt > kMaxAllowedAmount) {
+                            AppSnackbar.show(
+                              context,
+                              'Amount cannot exceed $kMaxAllowedAmountText',
+                              type: SnackType.warning,
+                            );
+                            return;
+                          }
+                          AppSnackbar.show(
+                            context,
+                            '₹${amt.toStringAsFixed(2)} load initiated successfully',
+                            type: SnackType.success,
+                          );
                           Navigator.pop(context);
                         },
                         style: ElevatedButton.styleFrom(
@@ -143,8 +145,8 @@ class _AddMoneyDialogState extends State<AddMoneyDialog> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                         child: const Text(
-                          'Confirm Load',
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                          'Confirm & Authorize Load',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -158,26 +160,31 @@ class _AddMoneyDialogState extends State<AddMoneyDialog> {
     );
   }
 
-  Widget _buildTabItem(String label, int index) {
-    final isSelected = _selectedTabIndex == index;
-    return GestureDetector(
-      onTap: () => setState(() => _selectedTabIndex = index),
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: isSelected 
-              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4, offset: const Offset(0, 2))]
-              : null,
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-            color: isSelected ? const Color(0xFF084421) : const Color(0xFF5A7184),
-          ),
+  Widget _buildDropdown({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5EAF4)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF5A7184)),
+          items: items.map((String item) {
+            return DropdownMenuItem<String>(
+              value: item,
+              child: Text(item, style: const TextStyle(fontSize: 13, color: AppColors.darkText, fontWeight: FontWeight.w500)),
+            );
+          }).toList(),
+          onChanged: onChanged,
         ),
       ),
     );
@@ -215,6 +222,10 @@ class _AddMoneyDialogState extends State<AddMoneyDialog> {
             child: TextFormField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [
+                const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                LengthLimitingTextInputFormatter(15),
+              ],
               style: const TextStyle(fontSize: 14, color: AppColors.darkText, fontWeight: FontWeight.bold),
               decoration: const InputDecoration(
                 border: InputBorder.none,

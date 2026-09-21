@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/theme/app_colors.dart';
+import '../../../widgets/app_ui_kit.dart';
 
 class SetupTargetWalletDialog extends StatefulWidget {
   final Function(Map<String, dynamic>)? onWalletCreated;
@@ -13,8 +14,25 @@ class SetupTargetWalletDialog extends StatefulWidget {
 
 class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
   final _purposeController = TextEditingController();
-  final _amountController = TextEditingController(text: '5000');
+  // Field starts completely empty - no default 5000 prefilled
+  final _amountController = TextEditingController();
   final _notesController = TextEditingController();
+
+  static const List<String> _purposePresets = [
+    'Tax Reserve',
+    'Inventory Stock',
+    'Equipment Purchase',
+    'Emergency Buffer',
+    'Office Upgrade',
+  ];
+
+  static const List<Map<String, dynamic>> _amountPresets = [
+    {'label': '₹5,000', 'value': '5000'},
+    {'label': '₹10,000', 'value': '10000'},
+    {'label': '₹25,000', 'value': '25000'},
+    {'label': '₹50,000', 'value': '50000'},
+    {'label': '₹1,00,000', 'value': '100000'},
+  ];
 
   @override
   void dispose() {
@@ -26,23 +44,47 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
 
   void _submit() {
     final purpose = _purposeController.text.trim();
-    if (purpose.isNotEmpty) {
-      final amount = double.tryParse(_amountController.text.trim()) ?? 5000;
-      final newWallet = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'title': purpose,
-        'status': 'GROWING',
-        'statusColor': const Color(0xFF10B981),
-        'saved': 0.0,
-        'target': amount,
-        'notes': _notesController.text.trim().isEmpty ? 'Purpose-driven isolated container' : _notesController.text.trim(),
-        'isClaimed': false,
-      };
-      if (widget.onWalletCreated != null) {
-        widget.onWalletCreated!(newWallet);
-      }
-      Navigator.pop(context);
+    if (purpose.isEmpty) {
+      AppSnackbar.show(
+        context,
+        'Please enter a purpose or name for this wallet',
+        type: SnackType.warning,
+      );
+      return;
     }
+    final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+    if (amount <= 0) {
+      AppSnackbar.show(
+        context,
+        'Please enter a target amount greater than ₹0',
+        type: SnackType.warning,
+      );
+      return;
+    }
+    if (amount > kMaxAllowedAmount) {
+      AppSnackbar.show(
+        context,
+        'Target cap cannot exceed $kMaxAllowedAmountText',
+        type: SnackType.warning,
+      );
+      return;
+    }
+    final newWallet = {
+      'id': DateTime.now().millisecondsSinceEpoch.toString(),
+      'title': purpose,
+      'status': 'GROWING',
+      'statusColor': const Color(0xFF10B981),
+      'saved': 0.0,
+      'target': amount,
+      'notes': _notesController.text.trim().isEmpty
+          ? 'Purpose-driven isolated container'
+          : _notesController.text.trim(),
+      'isClaimed': false,
+    };
+    if (widget.onWalletCreated != null) {
+      widget.onWalletCreated!(newWallet);
+    }
+    Navigator.pop(context);
   }
 
   @override
@@ -52,58 +94,71 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      alignment: Alignment.bottomCenter,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
+      alignment: Alignment.center,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
       ),
-      insetPadding: EdgeInsets.zero,
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 40,
+        vertical: 24,
+      ),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: isMobile ? double.infinity : 450,
-          maxHeight: MediaQuery.of(context).size.height * 0.70,
+          maxWidth: isMobile ? double.infinity : 480,
+          maxHeight: MediaQuery.of(context).size.height * 0.82,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag Handle
-            Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(top: 8, bottom: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Header
+            // Header Bar
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(22, 18, 16, 14),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Setup Purpose Wallet',
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: const Icon(
+                      LucideIcons.walletCards,
+                      size: 20,
+                      color: Color(0xFF059669),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 14),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Setup Purpose Wallet',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Isolate and lock funds toward a dedicated business goal',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(LucideIcons.x, size: 18, color: Colors.black54),
+                    icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF64748B)),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100,
+                      backgroundColor: const Color(0xFFF1F5F9),
                       shape: const CircleBorder(),
                       padding: const EdgeInsets.all(8),
                     ),
@@ -111,50 +166,148 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
-            
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
             // Form Content
-            Expanded(
+            Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('PURPOSE / ITEM NAME'),
+                    // Purpose / Item Name
+                    _buildLabel('PURPOSE / CONTAINER NAME'),
                     _buildTextField(
                       controller: _purposeController,
-                      hint: 'e.g. Office Printer, Future Stock, Tax Deposit',
+                      hint: 'e.g. Tax Reserve, Equipment, Inventory',
+                      prefixIcon: LucideIcons.tag,
                     ),
-                    const SizedBox(height: 20),
-                    
+                    const SizedBox(height: 8),
+
+                    // Purpose Quick Chips
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _purposePresets.map((preset) {
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _purposeController.text = preset;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: Text(
+                              '+ $preset',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Target Cap Amount (INR)
                     _buildLabel('TARGET CAP AMOUNT (INR)'),
                     _buildAmountField(),
-                    const SizedBox(height: 20),
-                    
-                    _buildLabel('DESCRIPTIVE NOTES'),
+                    const SizedBox(height: 8),
+
+                    // Quick Amount Suggestions
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: _amountPresets.map((preset) {
+                        return InkWell(
+                          onTap: () {
+                            setState(() {
+                              _amountController.text = preset['value'] as String;
+                            });
+                          },
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: Text(
+                              preset['label'] as String,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF047857),
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Descriptive Notes
+                    _buildLabel('DESCRIPTIVE NOTES & MEMO'),
                     _buildTextField(
                       controller: _notesController,
-                      hint: 'Brief rationale for this segregation...',
+                      hint: 'Rationale or milestone conditions for this isolated reserve...',
                       maxLines: 2,
+                      prefixIcon: LucideIcons.fileText,
                     ),
                     const SizedBox(height: 24),
-                    
-                    SizedBox(
-                      width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton(
-                        onPressed: _submit,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF084421),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+
+                    // Action Buttons
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(context),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF475569),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                            ),
+                          ),
                         ),
-                        child: const Text(
-                          'Activate Purpose Wallet',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: ElevatedButton.icon(
+                            onPressed: _submit,
+                            icon: const Icon(LucideIcons.checkCircle2, size: 16),
+                            label: const Text(
+                              'Activate Purpose Wallet',
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F5B2E),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),
@@ -168,16 +321,16 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      padding: const EdgeInsets.only(bottom: 6.0, left: 2),
       child: Text(
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF5A7184),
-          letterSpacing: 0.5,
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF475569),
+          letterSpacing: 0.4,
         ),
       ),
     );
@@ -186,22 +339,51 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
   Widget _buildAmountField() {
     return Container(
       height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5EAF4)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
       ),
       child: Row(
         children: [
-          const Text('₹', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              '₹ INR',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F5B2E),
+              ),
+            ),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: TextFormField(
               controller: _amountController,
+              autofocus: false,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(fontSize: 15, color: AppColors.darkText, fontWeight: FontWeight.bold),
+              inputFormatters: [
+                const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                LengthLimitingTextInputFormatter(15),
+              ],
+              style: const TextStyle(
+                fontSize: 16,
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w700,
+              ),
               decoration: const InputDecoration(
+                hintText: '0.00',
+                hintStyle: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 15,
+                  fontWeight: FontWeight.normal,
+                ),
                 border: InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
@@ -216,30 +398,38 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
+    IconData? prefixIcon,
     int maxLines = 1,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
-      style: const TextStyle(fontSize: 14, color: AppColors.darkText, fontWeight: FontWeight.w500),
+      style: const TextStyle(
+        fontSize: 14,
+        color: Color(0xFF0F172A),
+        fontWeight: FontWeight.w500,
+      ),
       decoration: InputDecoration(
+        prefixIcon: prefixIcon != null
+            ? Icon(prefixIcon, size: 16, color: const Color(0xFF94A3B8))
+            : null,
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFC1C7D0), fontSize: 13),
+        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
         filled: true,
         fillColor: Colors.white,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE5EAF4)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE5EAF4)),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF084421), width: 1.5),
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF0F5B2E), width: 1.5),
         ),
       ),
     );
