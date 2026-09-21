@@ -1815,7 +1815,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       builder: (context) => EnrollContactDialog(
         onContactCreated: (newContact) {
           setState(() {
-            _contacts.add(newContact);
+            _contacts.insert(0, newContact);
           });
           AppSnackbar.show(
             context,
@@ -2011,8 +2011,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                     );
                                   }).toList(),
                               onChanged: (v) {
-                                if (v != null)
+                                if (v != null) {
                                   setModalState(() => entryDirection = v);
+                                }
                               },
                             ),
                           ),
@@ -2042,8 +2043,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                               firstDate: DateTime(2000),
                               lastDate: DateTime(2101),
                             );
-                            if (picked != null)
+                            if (picked != null) {
                               setModalState(() => selectedDate = picked);
+                            }
                           },
                           child: Container(
                             height: 42,
@@ -2092,6 +2094,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                  LengthLimitingTextInputFormatter(10),
+                ],
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -2141,6 +2147,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               TextField(
                 controller: memoCtrl,
                 maxLines: 2,
+                inputFormatters: [LengthLimitingTextInputFormatter(100)],
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'e.g. Advance for inventory supplier',
@@ -2376,8 +2383,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                           );
                                         }).toList(),
                                     onChanged: (v) {
-                                      if (v != null)
+                                      if (v != null) {
                                         setModalState(() => entryDirection = v);
+                                      }
                                     },
                                   ),
                                 ),
@@ -2407,8 +2415,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                     firstDate: DateTime(2000),
                                     lastDate: DateTime(2101),
                                   );
-                                  if (picked != null)
+                                  if (picked != null) {
                                     setModalState(() => selectedDate = picked);
+                                  }
                                 },
                                 child: Container(
                                   height: 42,
@@ -2733,6 +2742,12 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp(r'^\d+\.?\d{0,2}'),
+                            ),
+                            LengthLimitingTextInputFormatter(10),
+                          ],
                           style: const TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
@@ -2792,8 +2807,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                               firstDate: DateTime.now(),
                               lastDate: DateTime(2101),
                             );
-                            if (picked != null)
+                            if (picked != null) {
                               setModalState(() => selectedDate = picked);
+                            }
                           },
                           child: Container(
                             height: 42,
@@ -2840,6 +2856,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               TextField(
                 controller: memoCtrl,
                 maxLines: 2,
+                inputFormatters: [LengthLimitingTextInputFormatter(100)],
                 style: const TextStyle(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: 'e.g. Expected loan repayment settlement',
