@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
+import 'macos_barcode_gen_page.dart';
 
 class BarcodeGenPage extends StatefulWidget {
   const BarcodeGenPage({super.key});
@@ -57,6 +58,9 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    if (isMacOS) {
+      return const MacOsBarcodeGenPage();
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
