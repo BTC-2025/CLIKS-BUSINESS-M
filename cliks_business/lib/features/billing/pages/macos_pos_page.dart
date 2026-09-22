@@ -12,7 +12,7 @@ class _PosProductItem {
   String category;
   double price;
   int stock;
-  final String unit;
+  final String unit = 'PCS';
 
   _PosProductItem({
     required this.id,
@@ -21,7 +21,6 @@ class _PosProductItem {
     required this.category,
     required this.price,
     required this.stock,
-    this.unit = 'PCS',
   });
 }
 
