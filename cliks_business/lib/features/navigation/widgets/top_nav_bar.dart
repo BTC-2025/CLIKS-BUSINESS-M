@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -28,18 +29,25 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     final ref = this.ref;
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
+    final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+    if (isMacOS) {
+      return _buildMacOSNavBar(context, ref, isDesktop, navigation);
+    }
 
     if (_isSearchExpanded && !isDesktop) {
       return Container(
         height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: const BoxDecoration(
-          color: AppColors.primaryGreen,
-        ),
+        decoration: const BoxDecoration(color: AppColors.primaryGreen),
         child: Row(
           children: [
             IconButton(
-              icon: const Icon(LucideIcons.arrowLeft, color: Colors.white, size: 24),
+              icon: const Icon(
+                LucideIcons.arrowLeft,
+                color: Colors.white,
+                size: 24,
+              ),
               onPressed: () => setState(() => _isSearchExpanded = false),
             ),
             const SizedBox(width: 4),
@@ -57,9 +65,17 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                   cursorColor: Colors.white,
                   decoration: InputDecoration(
-                    prefixIcon: const Icon(LucideIcons.search, color: Colors.white70, size: 16),
+                    prefixIcon: const Icon(
+                      LucideIcons.search,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
                     suffixIcon: IconButton(
-                      icon: const Icon(LucideIcons.x, color: Colors.white70, size: 16),
+                      icon: const Icon(
+                        LucideIcons.x,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() => _isSearchExpanded = false);
@@ -68,7 +84,10 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                       constraints: const BoxConstraints(),
                     ),
                     hintText: 'Search transactions, bills...',
-                    hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.55), fontSize: 13),
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontSize: 13,
+                    ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
@@ -91,9 +110,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         left: isDesktop ? 16 : 8,
         right: 0, // Shifting icons closer to the right edge
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.primaryGreen,
-      ),
+      decoration: const BoxDecoration(color: AppColors.primaryGreen),
       child: Row(
         children: [
           // Logo and Menu section
@@ -103,12 +120,18 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
               if (!isDesktop && navigation.currentModule != AppModule.profile)
                 Builder(
                   builder: (ctx) => IconButton(
-                    icon: const Icon(LucideIcons.menu, color: Colors.white, size: 24),
+                    icon: const Icon(
+                      LucideIcons.menu,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                     onPressed: () => Scaffold.of(ctx).openDrawer(),
                   ),
                 ),
               InkWell(
-                onTap: () => ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.books, AppRoute.dashboard),
+                onTap: () => ref
+                    .read(navigationProvider.notifier)
+                    .setModuleAndRoute(AppModule.books, AppRoute.dashboard),
                 child: Row(
                   children: [
                     if (![
@@ -164,30 +187,54 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     Text(
                       () {
                         switch (navigation.currentRoute) {
-                          case AppRoute.people: return 'People';
-                          case AppRoute.wallet: return 'Wallet';
-                          case AppRoute.transaction: return 'Transaction';
-                          case AppRoute.segregation: return 'Segregation';
-                          case AppRoute.splitCollect: return 'Split and Collect';
-                          case AppRoute.planner: return 'Planner';
-                          case AppRoute.accounting: return 'Accounting';
-                          case AppRoute.expenses: return 'Expenses';
-                          case AppRoute.gst: return 'GST Compliance';
-                          case AppRoute.billing: return 'Sales Invoice';
-                          case AppRoute.sales: return 'Sales Orders';
-                          case AppRoute.customers: return 'Customers';
-                          case AppRoute.returns: return 'Returns';
-                          case AppRoute.purchase: return 'Purchase Invoice';
-                          case AppRoute.suppliers: return 'Suppliers';
-                          case AppRoute.products: return 'Products';
-                          case AppRoute.stock: return 'Stock & Inventory';
-                          case AppRoute.warehouse: return 'Warehouse';
-                          case AppRoute.inventory: return 'Inventory';
-                          case AppRoute.pos: return 'Point of Sale (POS)';
-                          case AppRoute.reports: return 'Reports & Analytics';
-                          case AppRoute.marketing: return 'Marketing Hub';
-                          case AppRoute.barcodeGen: return 'Barcode Generator';
-                          case AppRoute.auditHub: return 'Audit Hub';
+                          case AppRoute.people:
+                            return 'People';
+                          case AppRoute.wallet:
+                            return 'Wallet';
+                          case AppRoute.transaction:
+                            return 'Transaction';
+                          case AppRoute.segregation:
+                            return 'Segregation';
+                          case AppRoute.splitCollect:
+                            return 'Split and Collect';
+                          case AppRoute.planner:
+                            return 'Planner';
+                          case AppRoute.accounting:
+                            return 'Accounting';
+                          case AppRoute.expenses:
+                            return 'Expenses';
+                          case AppRoute.gst:
+                            return 'GST Compliance';
+                          case AppRoute.billing:
+                            return 'Sales Invoice';
+                          case AppRoute.sales:
+                            return 'Sales Orders';
+                          case AppRoute.customers:
+                            return 'Customers';
+                          case AppRoute.returns:
+                            return 'Returns';
+                          case AppRoute.purchase:
+                            return 'Purchase Invoice';
+                          case AppRoute.suppliers:
+                            return 'Suppliers';
+                          case AppRoute.products:
+                            return 'Products';
+                          case AppRoute.stock:
+                            return 'Stock & Inventory';
+                          case AppRoute.warehouse:
+                            return 'Warehouse';
+                          case AppRoute.inventory:
+                            return 'Inventory';
+                          case AppRoute.pos:
+                            return 'Point of Sale (POS)';
+                          case AppRoute.reports:
+                            return 'Reports & Analytics';
+                          case AppRoute.marketing:
+                            return 'Marketing Hub';
+                          case AppRoute.barcodeGen:
+                            return 'Barcode Generator';
+                          case AppRoute.auditHub:
+                            return 'Audit Hub';
                           case AppRoute.payroll:
                           case AppRoute.allocateEmployeeLoan:
                           case AppRoute.processMonthlyPayroll:
@@ -196,10 +243,14 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                           case AppRoute.manualPunchEntry:
                           case AppRoute.regularizeMissedPunch:
                             return 'Attendance';
-                          case AppRoute.staff: return 'Staff';
-                          case AppRoute.hr: return 'Human Resources';
-                          case AppRoute.betaClub: return 'Partner Launch Desk';
-                          default: return 'Cliks Business';
+                          case AppRoute.staff:
+                            return 'Staff';
+                          case AppRoute.hr:
+                            return 'Human Resources';
+                          case AppRoute.betaClub:
+                            return 'Partner Launch Desk';
+                          default:
+                            return 'Cliks Business';
                         }
                       }(),
                       style: TextStyle(
@@ -241,55 +292,91 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
                       ),
                       child: TextField(
                         controller: _searchController,
                         autofocus: true,
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                         decoration: InputDecoration(
                           hintText: 'Search analytics, people or documents...',
-                          hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.4)),
-                          prefixIcon: const Icon(LucideIcons.search, color: Colors.white70, size: 18),
+                          hintStyle: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.4),
+                          ),
+                          prefixIcon: const Icon(
+                            LucideIcons.search,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
                           suffixIcon: IconButton(
-                            icon: const Icon(LucideIcons.x, color: Colors.white70, size: 18),
-                            onPressed: () => setState(() => _isSearchExpanded = false),
+                            icon: const Icon(
+                              LucideIcons.x,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
+                            onPressed: () =>
+                                setState(() => _isSearchExpanded = false),
                           ),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 10,
+                          ),
                         ),
                       ),
                     )
                   : isDesktop
-                      ? Container(
-                          key: const ValueKey('module_selector'),
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(30),
+                  ? Container(
+                      key: const ValueKey('module_selector'),
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _ModulePill(
+                            label: 'Books',
+                            isActive:
+                                navigation.currentModule == AppModule.books,
+                            onTap: () => ref
+                                .read(navigationProvider.notifier)
+                                .setModuleAndRoute(
+                                  AppModule.books,
+                                  AppRoute.dashboard,
+                                ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              _ModulePill(
-                                label: 'Books',
-                                isActive: navigation.currentModule == AppModule.books,
-                                onTap: () => ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.books, AppRoute.dashboard),
-                              ),
-                              _ModulePill(
-                                label: 'Payments',
-                                isActive: navigation.currentModule == AppModule.payments,
-                                onTap: () => ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.payments, AppRoute.people),
-                              ),
-                              _ModulePill(
-                                label: 'Social',
-                                isActive: navigation.currentModule == AppModule.social,
-                                onTap: () => ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.social, AppRoute.meetup),
-                              ),
-                            ],
+                          _ModulePill(
+                            label: 'Payments',
+                            isActive:
+                                navigation.currentModule == AppModule.payments,
+                            onTap: () => ref
+                                .read(navigationProvider.notifier)
+                                .setModuleAndRoute(
+                                  AppModule.payments,
+                                  AppRoute.people,
+                                ),
                           ),
-                        )
-                      : const SizedBox.shrink(key: ValueKey('empty')),
+                          _ModulePill(
+                            label: 'Social',
+                            isActive:
+                                navigation.currentModule == AppModule.social,
+                            onTap: () => ref
+                                .read(navigationProvider.notifier)
+                                .setModuleAndRoute(
+                                  AppModule.social,
+                                  AppRoute.meetup,
+                                ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : const SizedBox.shrink(key: ValueKey('empty')),
             ),
           ),
 
@@ -306,7 +393,11 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   if (isDesktop) const _PointsChip(),
                   if (isDesktop) const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(LucideIcons.search, color: Colors.white, size: 22),
+                    icon: const Icon(
+                      LucideIcons.search,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                     onPressed: () => setState(() => _isSearchExpanded = true),
                     tooltip: 'Search',
                   ),
@@ -349,11 +440,17 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                 ].contains(navigation.currentRoute))
                   PopupMenuButton<String>(
                     offset: const Offset(0, 48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     icon: Stack(
                       alignment: Alignment.topRight,
                       children: [
-                        const Icon(LucideIcons.bell, color: Colors.white, size: 22),
+                        const Icon(
+                          LucideIcons.bell,
+                          color: Colors.white,
+                          size: 22,
+                        ),
                         Positioned(
                           right: 2,
                           top: 2,
@@ -363,7 +460,10 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                               color: Colors.redAccent,
                               shape: BoxShape.circle,
                             ),
-                            constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                            constraints: const BoxConstraints(
+                              minWidth: 8,
+                              minHeight: 8,
+                            ),
                           ),
                         ),
                       ],
@@ -401,17 +501,451 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     );
   }
 
+  Widget _buildMacOSNavBar(
+    BuildContext context,
+    WidgetRef ref,
+    bool isDesktop,
+    NavigationState navigation,
+  ) {
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(color: AppColors.primaryGreen),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // Left and Right content row
+          Row(
+            children: [
+              // Left: Logo + Brand Name (strictly 'Cliks Business', no section titles)
+              InkWell(
+                onTap: () => ref
+                    .read(navigationProvider.notifier)
+                    .setModuleAndRoute(AppModule.books, AppRoute.dashboard),
+                borderRadius: BorderRadius.circular(8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      clipBehavior: Clip.antiAlias,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8F5E9),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Image.asset(
+                        'assets/images/icon.png',
+                        width: 24,
+                        height: 24,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Cliks Business',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const Spacer(),
+
+              // Right: Action items matching reference image
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // 1. Search button
+                  _buildMacOSCircleButton(
+                    icon: LucideIcons.search,
+                    tooltip: 'Search',
+                    onTap: () =>
+                        setState(() => _isSearchExpanded = !_isSearchExpanded),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 2. Notifications Bell button
+                  PopupMenuButton<String>(
+                    offset: const Offset(0, 46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    itemBuilder: (context) => [
+                      _buildNotificationItem(
+                        title: 'New Invoice Created',
+                        subtitle: 'INV-158091 was saved successfully.',
+                        time: '2 mins ago',
+                        icon: LucideIcons.fileCheck,
+                        iconColor: AppColors.primaryGreen,
+                      ),
+                      _buildNotificationItem(
+                        title: 'Points Updated',
+                        subtitle: 'You collected 500 referral points!',
+                        time: '1 hour ago',
+                        icon: LucideIcons.sparkles,
+                        iconColor: const Color(0xFFF2C94C),
+                      ),
+                      _buildNotificationItem(
+                        title: 'Backup Successful',
+                        subtitle: 'Cloud reconciliation database synced.',
+                        time: 'Yesterday',
+                        icon: LucideIcons.database,
+                        iconColor: const Color(0xFF2F80ED),
+                      ),
+                    ],
+                    child: _buildMacOSCircleButton(
+                      icon: LucideIcons.bell,
+                      tooltip: 'Notifications',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 3. FIN-PRO Capsule button
+                  _buildMacOSCapsuleButton(
+                    onTap: () {
+                      ref.read(navigationProvider.notifier).setModuleAndRoute(
+                            AppModule.books,
+                            AppRoute.auditHub,
+                          );
+                    },
+                    tooltip: 'FIN-PRO Audit Hub',
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.landmark,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        SizedBox(width: 7),
+                        Text(
+                          'FIN-PRO',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 4. User Profile Capsule button (ravinew2004 ▾)
+                  PopupMenuButton<String>(
+                    offset: const Offset(0, 46),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    onSelected: (val) {
+                      if (val == 'profile') {
+                        ref.read(navigationProvider.notifier).setModuleAndRoute(
+                              AppModule.profile,
+                              AppRoute.profile,
+                            );
+                      } else if (val == 'settings') {
+                        ref.read(navigationProvider.notifier).setModuleAndRoute(
+                              AppModule.books,
+                              AppRoute.settings,
+                            );
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'profile',
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.circleUser,
+                              size: 18,
+                              color: AppColors.primaryGreen,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Profile (ravinew2004)'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'settings',
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.settings,
+                              size: 18,
+                              color: AppColors.primaryGreen,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Settings'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    child: _buildMacOSCapsuleButton(
+                      tooltip: 'ravinew2004',
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            LucideIcons.circleUser,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'ravinew2004',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(
+                            LucideIcons.chevronDown,
+                            color: Colors.white70,
+                            size: 14,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+
+                  // 5. Sliders / Settings Button
+                  _buildMacOSCircleButton(
+                    icon: LucideIcons.slidersHorizontal,
+                    tooltip: 'Settings',
+                    onTap: () {
+                      ref.read(navigationProvider.notifier).setModuleAndRoute(
+                            AppModule.books,
+                            AppRoute.settings,
+                          );
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          // Center: Module Selector (or expanded search input)
+          Align(
+            alignment: Alignment.center,
+            child: _isSearchExpanded
+                ? Container(
+                    width: 380,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13.5,
+                      ),
+                      cursorColor: Colors.white,
+                      decoration: InputDecoration(
+                        hintText: 'Search analytics, people, documents...',
+                        hintStyle: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 13,
+                        ),
+                        prefixIcon: const Icon(
+                          LucideIcons.search,
+                          color: Colors.white70,
+                          size: 18,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            color: Colors.white70,
+                            size: 18,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _isSearchExpanded = false);
+                          },
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                        ),
+                      ),
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.35),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildMacOSModulePill(
+                          label: 'Books',
+                          isActive:
+                              navigation.currentModule == AppModule.books,
+                          onTap: () => ref
+                              .read(navigationProvider.notifier)
+                              .setModuleAndRoute(
+                                AppModule.books,
+                                AppRoute.dashboard,
+                              ),
+                        ),
+                        _buildMacOSModulePill(
+                          label: 'Payments',
+                          isActive:
+                              navigation.currentModule == AppModule.payments,
+                          onTap: () => ref
+                              .read(navigationProvider.notifier)
+                              .setModuleAndRoute(
+                                AppModule.payments,
+                                AppRoute.people,
+                              ),
+                        ),
+                        _buildMacOSModulePill(
+                          label: 'Social',
+                          isActive:
+                              navigation.currentModule == AppModule.social,
+                          onTap: () => ref
+                              .read(navigationProvider.notifier)
+                              .setModuleAndRoute(
+                                AppModule.social,
+                                AppRoute.meetup,
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacOSCircleButton({
+    required IconData icon,
+    String? tooltip,
+    VoidCallback? onTap,
+  }) {
+    final button = Material(
+      color: Colors.transparent,
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.black.withValues(alpha: 0.2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.22),
+              width: 1,
+            ),
+          ),
+          child: Icon(
+            icon,
+            color: Colors.white,
+            size: 18,
+          ),
+        ),
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildMacOSCapsuleButton({
+    required Widget child,
+    String? tooltip,
+    VoidCallback? onTap,
+  }) {
+    final button = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            color: Colors.black.withValues(alpha: 0.2),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.22),
+              width: 1,
+            ),
+          ),
+          alignment: Alignment.center,
+          child: child,
+        ),
+      ),
+    );
+
+    if (tooltip != null) {
+      return Tooltip(message: tooltip, child: button);
+    }
+    return button;
+  }
+
+  Widget _buildMacOSModulePill({
+    required String label,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(25),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF1E5B3A) : Colors.transparent,
+          borderRadius: BorderRadius.circular(25),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isActive ? Colors.white : Colors.white70,
+            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+            fontSize: 13.5,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildExpenseHeaderActionButton(BuildContext context, WidgetRef ref) {
     final activeTab = ref.watch(expenseActiveTabProvider);
     String label = 'Record';
     IconData icon = LucideIcons.plus;
-    VoidCallback onTap = () => _openExpenseModal(context, const RecordExpenseModal());
+    VoidCallback onTap = () =>
+        _openExpenseModal(context, const RecordExpenseModal());
 
     switch (activeTab) {
       case 1:
         label = 'Add Subs';
         icon = LucideIcons.plus;
-        onTap = () => _openExpenseModal(context, const AddRecurringSubscriptionModal());
+        onTap = () =>
+            _openExpenseModal(context, const AddRecurringSubscriptionModal());
         break;
       case 2:
         label = 'Set Budget';
@@ -520,12 +1054,19 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.darkText),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      color: AppColors.darkText,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
-                    style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: AppColors.secondaryText,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -585,11 +1126,16 @@ class _PointsChip extends ConsumerWidget {
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     return InkWell(
       onTap: () {
-        ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.payments, AppRoute.marketing);
+        ref
+            .read(navigationProvider.notifier)
+            .setModuleAndRoute(AppModule.payments, AppRoute.marketing);
       },
       borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isDesktop ? 10 : 6, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: isDesktop ? 10 : 6,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: AppColors.yellow.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(8),
@@ -601,7 +1147,11 @@ class _PointsChip extends ConsumerWidget {
             SizedBox(width: 6),
             Text(
               '1,000 Pts',
-              style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
