@@ -85,7 +85,7 @@ class _AppCardState extends State<AppCard> {
       ),
     );
 
-    if (widget.withAnimation) {
+    if (widget.withAnimation && Theme.of(context).platform != TargetPlatform.macOS) {
       return card
           .animate()
           .fadeIn(duration: 300.ms)

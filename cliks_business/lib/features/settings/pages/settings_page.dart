@@ -127,6 +127,9 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   void initState() {
     super.initState();
     _tabController = TabController(length: 10, vsync: this);
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -265,21 +268,37 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               ),
             ];
           },
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              _buildOrgProfileTab(),
-              _buildGeneralTab(),
-              _buildTransactionTab(),
-              _buildPrintTab(),
-              _buildTaxesGstTab(),
-              _buildContactsTab(),
-              _buildAccountingTab(),
-              _buildPaymentTab(),
-              _buildFinProTab(),
-              _buildBetaClubTab(),
-            ],
-          ),
+          body: Theme.of(context).platform == TargetPlatform.macOS
+              ? IndexedStack(
+                  index: _tabController.index,
+                  children: [
+                    _buildOrgProfileTab(),
+                    _buildGeneralTab(),
+                    _buildTransactionTab(),
+                    _buildPrintTab(),
+                    _buildTaxesGstTab(),
+                    _buildContactsTab(),
+                    _buildAccountingTab(),
+                    _buildPaymentTab(),
+                    _buildFinProTab(),
+                    _buildBetaClubTab(),
+                  ],
+                )
+              : TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildOrgProfileTab(),
+                    _buildGeneralTab(),
+                    _buildTransactionTab(),
+                    _buildPrintTab(),
+                    _buildTaxesGstTab(),
+                    _buildContactsTab(),
+                    _buildAccountingTab(),
+                    _buildPaymentTab(),
+                    _buildFinProTab(),
+                    _buildBetaClubTab(),
+                  ],
+                ),
         ),
       ),
     );

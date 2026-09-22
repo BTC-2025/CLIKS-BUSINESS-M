@@ -22,6 +22,135 @@ class SocialPage extends ConsumerWidget {
     final isMobile = screenWidth < 768;
     final paddingVal = isMobile ? AppSpacing.lg : AppSpacing.xxxl;
     final locState = ref.watch(locationStateProvider);
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    final heroBanner = Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? AppSpacing.lg : AppSpacing.xxl),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.blue, Color(0xFF1E40AF)], // Premium Blue gradient
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: AppRadius.lg,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: AppRadius.round,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.globe, color: Colors.white, size: 14),
+                const SizedBox(width: 8),
+                Text(
+                  'BUSINESS NETWORKING HUB',
+                  style: AppTextStyles.overline.copyWith(
+                    color: Colors.white,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(height: AppSpacing.md),
+          Text(
+            'Connect. Collaborate. Grow.',
+            style: AppTextStyles.h1.copyWith(
+              color: Colors.white,
+              fontSize: isMobile ? 24 : 32,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Discover exclusive offline business meetups, trade summits, and high-impact founder circles.',
+            style: AppTextStyles.bodyMedium.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+              fontSize: isMobile ? 13 : 15,
+            ),
+          ),
+          SizedBox(height: AppSpacing.xl),
+          if (isMobile)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _LocationSelector(),
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const MeetupScheduleDialog(),
+                    );
+                  },
+                  icon: const Icon(LucideIcons.plus, size: 16, color: AppColors.blue),
+                  label: const Text(
+                    'Schedule Board',
+                    style: TextStyle(
+                      color: AppColors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.blue, width: 1.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                const _LocationSelector(),
+                const Spacer(),
+                OutlinedButton.icon(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => const MeetupScheduleDialog(),
+                    );
+                  },
+                  icon: const Icon(LucideIcons.plus, size: 16, color: AppColors.blue),
+                  label: const Text(
+                    'Schedule Board',
+                    style: TextStyle(
+                      color: AppColors.blue,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: AppColors.blue, width: 1.5),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -31,189 +160,128 @@ class SocialPage extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Hero Banner
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(isMobile ? AppSpacing.lg : AppSpacing.xxl),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [AppColors.blue, Color(0xFF1E40AF)], // Premium Blue gradient
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: AppRadius.lg,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 16,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: AppRadius.round,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
+            isMacOS
+                ? heroBanner
+                : heroBanner.animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+            SizedBox(height: AppSpacing.xxl),
+            
+            // Tabs & Search
+            if (isMobile)
+              (isMacOS
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Icon(LucideIcons.globe, color: Colors.white, size: 14),
-                        const SizedBox(width: 8),
-                        Text(
-                          'BUSINESS NETWORKING HUB',
-                          style: AppTextStyles.overline.copyWith(
-                            color: Colors.white,
-                            letterSpacing: 1.2,
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: _CategoryTabs(),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search events...',
+                            prefixIcon: const Icon(LucideIcons.search, size: 18),
+                            fillColor: Colors.white,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: AppRadius.sm,
+                              borderSide: const BorderSide(color: AppColors.border),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: AppRadius.sm,
+                              borderSide: const BorderSide(color: AppColors.border),
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Text(
-                    'Founders Meetup & Executive Events',
-                    style: AppTextStyles.h1.copyWith(
-                      color: Colors.white,
-                      fontSize: isMobile ? 22 : 32,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  if (isMobile)
-                    Column(
+                    )
+                  : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const _LocationSelector(),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => const MeetupScheduleDialog(),
-                              );
-                            },
-                            icon: const Icon(LucideIcons.plus, size: 16, color: AppColors.blue),
-                            label: const Text(
-                              'Schedule Board',
-                              style: TextStyle(
-                                color: AppColors.blue,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                              ),
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: _CategoryTabs(),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                        TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search events...',
+                            prefixIcon: const Icon(LucideIcons.search, size: 18),
+                            fillColor: Colors.white,
+                            filled: true,
+                            border: OutlineInputBorder(
+                              borderRadius: AppRadius.sm,
+                              borderSide: const BorderSide(color: AppColors.border),
                             ),
-                            style: OutlinedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              side: const BorderSide(color: AppColors.blue, width: 1.5),
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: AppRadius.sm,
+                              borderSide: const BorderSide(color: AppColors.border),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ).animate().fadeIn(duration: 400.ms, delay: 100.ms))
+            else
+              (isMacOS
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: _CategoryTabs(),
+                          ),
+                        ),
+                        SizedBox(width: AppSpacing.lg),
+                        SizedBox(
+                          width: 300,
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Search events...',
+                              prefixIcon: const Icon(LucideIcons.search, size: 18),
+                              fillColor: Colors.white,
+                              filled: true,
+                              border: OutlineInputBorder(
+                                borderRadius: AppRadius.sm,
+                                borderSide: const BorderSide(color: AppColors.border),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.sm,
+                                borderSide: const BorderSide(color: AppColors.border),
                               ),
                             ),
                           ),
                         ),
                       ],
                     )
-                  else
-                    Row(
+                  : Row(
                       children: [
-                        const _LocationSelector(),
-                        const Spacer(),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (context) => const MeetupScheduleDialog(),
-                            );
-                          },
-                          icon: const Icon(LucideIcons.plus, size: 16, color: AppColors.blue),
-                          label: const Text(
-                            'Schedule Board',
-                            style: TextStyle(
-                              color: AppColors.blue,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
+                        Expanded(
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: _CategoryTabs(),
                           ),
-                          style: OutlinedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            side: const BorderSide(color: AppColors.blue, width: 1.5),
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                        ),
+                        SizedBox(width: AppSpacing.lg),
+                        SizedBox(
+                          width: 300,
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Search events...',
+                              prefixIcon: const Icon(LucideIcons.search, size: 18),
+                              fillColor: Colors.white,
+                              filled: true,
+                              border: OutlineInputBorder(
+                                borderRadius: AppRadius.sm,
+                                borderSide: const BorderSide(color: AppColors.border),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: AppRadius.sm,
+                                borderSide: const BorderSide(color: AppColors.border),
+                              ),
                             ),
                           ),
                         ),
                       ],
-                    ),
-                ],
-              ),
-            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
-            SizedBox(height: AppSpacing.xxl),
-            
-            // Tabs & Search
-            if (isMobile)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: _CategoryTabs(),
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search events...',
-                      prefixIcon: const Icon(LucideIcons.search, size: 18),
-                      fillColor: Colors.white,
-                      filled: true,
-                      border: OutlineInputBorder(
-                        borderRadius: AppRadius.sm,
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: AppRadius.sm,
-                        borderSide: const BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                  ),
-                ],
-              ).animate().fadeIn(duration: 400.ms, delay: 100.ms)
-            else
-              Row(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: _CategoryTabs(),
-                    ),
-                  ),
-                  SizedBox(width: AppSpacing.lg),
-                  SizedBox(
-                    width: 300,
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Search events...',
-                        prefixIcon: const Icon(LucideIcons.search, size: 18),
-                        fillColor: Colors.white,
-                        filled: true,
-                        border: OutlineInputBorder(
-                          borderRadius: AppRadius.sm,
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: AppRadius.sm,
-                          borderSide: const BorderSide(color: AppColors.border),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+                    ).animate().fadeIn(duration: 400.ms, delay: 100.ms)),
             SizedBox(height: AppSpacing.xxl),
 
             // Active location tag displaying city
@@ -258,10 +326,12 @@ class SocialPage extends ConsumerWidget {
                     childAspectRatio: aspectRatio,
                   ),
                   itemCount: 6,
-                  itemBuilder: (context, index) => const EventCard()
-                      .animate(delay: (index * 80).ms)
-                      .fadeIn(duration: 400.ms)
-                      .slideY(begin: 0.1, end: 0),
+                  itemBuilder: (context, index) => isMacOS
+                      ? const EventCard()
+                      : const EventCard()
+                          .animate(delay: (index * 80).ms)
+                          .fadeIn(duration: 400.ms)
+                          .slideY(begin: 0.1, end: 0),
                 );
               },
             ),

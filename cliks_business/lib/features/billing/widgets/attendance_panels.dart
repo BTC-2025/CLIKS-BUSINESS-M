@@ -35,91 +35,96 @@ class _ManualPunchPanelState extends ConsumerState<ManualPunchPanel> {
     final isMobile = screenWidth < 950;
     final isNarrow = screenWidth < 480;
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final panelContent = Container(
+      constraints: BoxConstraints(
+        maxWidth: isMobile ? double.infinity : 600,
+        maxHeight: screenHeight * 0.65,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDragHandle(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: _buildHeader('Log Manual Punch Entry'),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Employee Name'),
+                  _buildDropdown(['Select Employee', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'], _selectedEmployee, (val) => setState(() => _selectedEmployee = val!)),
+                  const SizedBox(height: 20),
+                  
+                  // Responsive row for times
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 20,
+                    children: [
+                      _buildWrapField(
+                        width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
+                        label: 'Check-In Time',
+                        child: _buildTimeField(_checkInController, '--:--'),
+                      ),
+                      _buildWrapField(
+                        width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
+                        label: 'Check-Out Time',
+                        child: _buildTimeField(_checkOutController, '--:--'),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Responsive row for duration and location
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 20,
+                    children: [
+                      _buildWrapField(
+                        width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
+                        label: 'Late Duration (Mins)',
+                        child: _buildTextField(_lateDurationController, '0', keyboardType: TextInputType.number),
+                      ),
+                      _buildWrapField(
+                        width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
+                        label: 'Check-In Location (Optional)',
+                        child: _buildTextField(_locationController, 'Main Office, Mumbai'),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  _buildActionButton('Settle Timesheet Punch', const Color(0xFFD63384)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Align(
         alignment: Alignment.bottomCenter,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 600,
-            maxHeight: screenHeight * 0.65,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
-            ),
-            boxShadow: [
-              BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10)),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDragHandle(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: _buildHeader('Log Manual Punch Entry'),
-              ),
-              const Divider(height: 16, color: AppColors.border),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Employee Name'),
-                      _buildDropdown(['Select Employee', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'], _selectedEmployee, (val) => setState(() => _selectedEmployee = val!)),
-                      const SizedBox(height: 20),
-                      
-                      // Responsive row for times
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 20,
-                        children: [
-                          _buildWrapField(
-                            width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
-                            label: 'Check-In Time',
-                            child: _buildTimeField(_checkInController, '--:--'),
-                          ),
-                          _buildWrapField(
-                            width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
-                            label: 'Check-Out Time',
-                            child: _buildTimeField(_checkOutController, '--:--'),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      
-                      // Responsive row for duration and location
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 20,
-                        children: [
-                          _buildWrapField(
-                            width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
-                            label: 'Late Duration (Mins)',
-                            child: _buildTextField(_lateDurationController, '0', keyboardType: TextInputType.number),
-                          ),
-                          _buildWrapField(
-                            width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
-                            label: 'Check-In Location (Optional)',
-                            child: _buildTextField(_locationController, 'Main Office, Mumbai'),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      _buildActionButton('Settle Timesheet Punch', const Color(0xFFD63384)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.02, end: 0),
+        child: isMacOS
+            ? panelContent
+            : panelContent.animate().fadeIn(duration: 400.ms).slideY(begin: 0.02, end: 0),
       ),
     );
   }
@@ -310,78 +315,82 @@ class _RegularizePunchPanelState extends ConsumerState<RegularizePunchPanel> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isNarrow = screenWidth < 480;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final panelContent = Container(
+      constraints: BoxConstraints(
+        maxWidth: isMobile ? double.infinity : 600,
+        maxHeight: screenHeight * 0.65,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(32),
+          topRight: Radius.circular(32),
+        ),
+        boxShadow: [
+          BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _buildDragHandle(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: _buildHeader('Regularize Missed Punch'),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Employee Name'),
+                  _buildDropdown(['Select Employee', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'], _selectedEmployee, (val) => setState(() => _selectedEmployee = val!)),
+                  const SizedBox(height: 20),
+                  _buildLabel('Timesheet Date'),
+                  _buildDateField(_dateController, 'dd-mm-yyyy'),
+                  const SizedBox(height: 20),
+                  _buildLabel('Reason for Regularization'),
+                  _buildTextField(_reasonController, 'Biometric mismatch/Travel delay'),
+                  const SizedBox(height: 20),
+                  
+                  // Responsive row for proposed times
+                  Wrap(
+                    spacing: 16,
+                    runSpacing: 20,
+                    children: [
+                      _buildWrapField(
+                        width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
+                        label: 'Proposed Check-In',
+                        child: _buildTimeField(_proposedCheckInController, '--:--'),
+                      ),
+                      _buildWrapField(
+                        width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
+                        label: 'Proposed Check-Out',
+                        child: _buildTimeField(_proposedCheckOutController, '--:--'),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  _buildActionButton('Settle Regularization Request', const Color(0xFF2563EB)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Align(
         alignment: Alignment.bottomCenter,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 600,
-            maxHeight: screenHeight * 0.65,
-          ),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(32),
-              topRight: Radius.circular(32),
-            ),
-            boxShadow: [
-              BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 10)),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildDragHandle(),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                child: _buildHeader('Regularize Missed Punch'),
-              ),
-              const Divider(height: 16, color: AppColors.border),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Employee Name'),
-                      _buildDropdown(['Select Employee', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'], _selectedEmployee, (val) => setState(() => _selectedEmployee = val!)),
-                      const SizedBox(height: 20),
-                      _buildLabel('Timesheet Date'),
-                      _buildDateField(_dateController, 'dd-mm-yyyy'),
-                      const SizedBox(height: 20),
-                      _buildLabel('Reason for Regularization'),
-                      _buildTextField(_reasonController, 'Biometric mismatch/Travel delay'),
-                      const SizedBox(height: 20),
-                      
-                      // Responsive row for proposed times
-                      Wrap(
-                        spacing: 16,
-                        runSpacing: 20,
-                        children: [
-                          _buildWrapField(
-                            width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
-                            label: 'Proposed Check-In',
-                            child: _buildTimeField(_proposedCheckInController, '--:--'),
-                          ),
-                          _buildWrapField(
-                            width: isNarrow ? double.infinity : (screenWidth - 80) / 2,
-                            label: 'Proposed Check-Out',
-                            child: _buildTimeField(_proposedCheckOutController, '--:--'),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      _buildActionButton('Settle Regularization Request', const Color(0xFF2563EB)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.02, end: 0),
+        child: isMacOS
+            ? panelContent
+            : panelContent.animate().fadeIn(duration: 400.ms).slideY(begin: 0.02, end: 0),
       ),
     );
   }

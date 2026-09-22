@@ -31,17 +31,19 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       floatingActionButton: isMobile
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
+              padding: const EdgeInsets.only(bottom: 72),
               child: FloatingActionButton.extended(
-                onPressed: _triggerPrimaryAction,
-                backgroundColor: const Color(0xFF166534),
-                foregroundColor: Colors.white,
-                elevation: 4,
-                icon: const Icon(LucideIcons.plus, size: 18),
+                onPressed: () {
+                  ref.read(navigationProvider.notifier).setRoute(AppRoute.newInvoice);
+                },
+                backgroundColor: AppColors.primaryGreen,
+                icon: const Icon(LucideIcons.plus, color: Colors.white, size: 18),
                 label: const Text('Generate Invoice', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
               ),
             )
@@ -51,10 +53,12 @@ class _BillingPageState extends ConsumerState<BillingPage> {
         slivers: [
           // HERO
           SliverToBoxAdapter(
-            child: _buildHeroSummary(isMobile)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
+            child: isMacOS
+                ? _buildHeroSummary(isMobile)
+                : _buildHeroSummary(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
           ),
           
           const SliverToBoxAdapter(
@@ -92,7 +96,9 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                 children: [
                   _buildDesktopActions(isMobile),
                   if (!isMobile) const SizedBox(height: 12),
-                  _buildMainContent(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
+                  isMacOS
+                      ? _buildMainContent(isMobile)
+                      : _buildMainContent(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
                 ],
               ),
             ),
@@ -289,7 +295,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                 onTap: () => setState(() => _activeTab = index),
                 borderRadius: BorderRadius.circular(20),
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
+                  duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 250),
                   padding: EdgeInsets.symmetric(
                     horizontal: isMobile ? 14 : 18,
                     vertical: isMobile ? 6 : 8,

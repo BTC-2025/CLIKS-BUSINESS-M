@@ -200,6 +200,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -215,28 +216,36 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Hero Summary Card (Gradient Card styled exactly like Transaction Page)
-            _buildHeroSummary(
-              context,
-              isMobile,
-            ).animate().fadeIn(duration: 350.ms).slideY(begin: -0.04, end: 0),
+            isMacOS
+                ? _buildHeroSummary(context, isMobile)
+                : _buildHeroSummary(context, isMobile)
+                    .animate()
+                    .fadeIn(duration: 350.ms)
+                    .slideY(begin: -0.04, end: 0),
             SizedBox(height: isMobile ? 14 : 24),
 
             // 2. Segment Tabs Row (Pills styled like Transaction Page)
-            _buildTabsRow(
-              isMobile,
-            ).animate().fadeIn(duration: 400.ms, delay: 80.ms),
+            isMacOS
+                ? _buildTabsRow(isMobile)
+                : _buildTabsRow(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms, delay: 80.ms),
             SizedBox(height: isMobile ? 12 : 18),
 
             // 3. Search & Contextual Action Bar
-            _buildSearchBar(
-              isMobile,
-            ).animate().fadeIn(duration: 400.ms, delay: 120.ms),
+            isMacOS
+                ? _buildSearchBar(isMobile)
+                : _buildSearchBar(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms, delay: 120.ms),
             SizedBox(height: isMobile ? 14 : 20),
 
             // 4. Card-Based Content Records (NO Tables)
-            _buildActiveContent(
-              isMobile,
-            ).animate().fadeIn(duration: 450.ms, delay: 160.ms),
+            isMacOS
+                ? _buildActiveContent(isMobile)
+                : _buildActiveContent(isMobile)
+                    .animate()
+                    .fadeIn(duration: 450.ms, delay: 160.ms),
           ],
         ),
       ),
@@ -448,7 +457,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             child: GestureDetector(
               onTap: () => setState(() => _activeTab = index),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
+                duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 12 : 16,

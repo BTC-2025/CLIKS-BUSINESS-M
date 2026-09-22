@@ -354,6 +354,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     _activeTab = ref.watch(expenseActiveTabProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final activeModule = _modules[_activeTab];
 
     return Scaffold(
@@ -367,17 +368,21 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ─── HERO FINANCIAL CARD ───
-            _buildHeroSummary(isMobile)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
+            isMacOS
+                ? _buildHeroSummary(isMobile)
+                : _buildHeroSummary(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
 
             const SizedBox(height: 12),
 
             // ─── MOBILE-FIRST MODULE SELECTOR BAR (Replaces Desktop Tabs!) ───
-            _buildMobileModuleBar(context, isMobile, activeModule)
-                .animate()
-                .fadeIn(duration: 350.ms, delay: 80.ms),
+            isMacOS
+                ? _buildMobileModuleBar(context, isMobile, activeModule)
+                : _buildMobileModuleBar(context, isMobile, activeModule)
+                    .animate()
+                    .fadeIn(duration: 350.ms, delay: 80.ms),
 
             const SizedBox(height: 12),
 

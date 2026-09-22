@@ -34,11 +34,8 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
     final screenHeight = MediaQuery.of(context).size.height;
     final isMobile = screenWidth < 768;
 
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Align(
-        alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
-        child: Container(
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final panelContent = Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : 550,
             maxHeight: isMobile ? screenHeight * 0.65 : 520,
@@ -124,7 +121,15 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
               ),
             ],
           ),
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
+        );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Align(
+        alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
+        child: isMacOS
+            ? panelContent
+            : panelContent.animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
       ),
     );
   }

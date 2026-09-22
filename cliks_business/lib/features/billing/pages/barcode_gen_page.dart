@@ -56,6 +56,7 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -64,10 +65,12 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
         slivers: [
           // ─── HERO SUMMARY CARD (Accounting Style Header with Top Action Buttons) ───
           SliverToBoxAdapter(
-            child: _buildHeroSummary(isMobile)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
+            child: isMacOS
+                ? _buildHeroSummary(isMobile)
+                : _buildHeroSummary(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
           ),
 
           const SliverToBoxAdapter(
@@ -83,9 +86,11 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
               isMobile ? 40 : 40,
             ),
             sliver: SliverToBoxAdapter(
-              child: _buildMainContent(isMobile)
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: 150.ms),
+              child: isMacOS
+                  ? _buildMainContent(isMobile)
+                  : _buildMainContent(isMobile)
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 150.ms),
             ),
           ),
         ],

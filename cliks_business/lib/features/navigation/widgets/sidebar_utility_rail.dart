@@ -18,7 +18,8 @@ class UtilityRailState {
     this.isEditing = false,
     this.expandedTab,
     Set<String>? pinnedUtilityNames,
-  }) : pinnedUtilityNames = pinnedUtilityNames ?? {'Calculator', 'Calendar', 'Contacts'};
+  }) : pinnedUtilityNames =
+           pinnedUtilityNames ?? {'Calculator', 'Calendar', 'Contacts'};
 
   UtilityRailState copyWith({
     int? displayState,
@@ -68,9 +69,10 @@ class UtilityRailNotifier extends StateNotifier<UtilityRailState> {
   }
 }
 
-final utilityRailProvider = StateNotifierProvider<UtilityRailNotifier, UtilityRailState>((ref) {
-  return UtilityRailNotifier();
-});
+final utilityRailProvider =
+    StateNotifierProvider<UtilityRailNotifier, UtilityRailState>((ref) {
+      return UtilityRailNotifier();
+    });
 
 class SidebarUtilityRail extends ConsumerStatefulWidget {
   const SidebarUtilityRail({super.key});
@@ -82,17 +84,21 @@ class SidebarUtilityRail extends ConsumerStatefulWidget {
 class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   DateTime _selectedCalendarDate = DateTime.now();
 
-  final List<String> _keepNotes = ['Review Q3 invoices', 'Finalize tax filings', 'Call vendor team'];
+  final List<String> _keepNotes = [
+    'Review Q3 invoices',
+    'Finalize tax filings',
+    'Call vendor team',
+  ];
   final List<Map<String, String>> _contacts = [
     {'name': 'Sarah Jenkins', 'email': 'sarah@cliks.com'},
     {'name': 'Alex Rivera', 'email': 'alex@cliks.com'},
-    {'name': 'James Miller', 'email': 'james@cliks.com'}
+    {'name': 'James Miller', 'email': 'james@cliks.com'},
   ];
 
   final List<Map<String, String>> _shortcuts = [
     {'keys': 'Ctrl + I', 'action': 'New Invoice'},
     {'keys': 'Ctrl + P', 'action': 'Payment Setup'},
-    {'keys': 'Shift + S', 'action': 'Split Billing'}
+    {'keys': 'Shift + S', 'action': 'Split Billing'},
   ];
 
   String _targetLanguage = 'Spanish';
@@ -104,7 +110,7 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   final List<String> _newsItems = [
     'Cliks Business launches automated GST reconciliation',
     'New real-time payout capabilities rolled out',
-    'Financial trends shifting towards hybrid credit terms'
+    'Financial trends shifting towards hybrid credit terms',
   ];
 
   late final TextEditingController _noteInputController;
@@ -125,7 +131,7 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     try {
       final srcFile = File('assets/bit_tool_logo.png');
       final destFile = File('user_logo.png');
-      
+
       if (srcFile.existsSync()) {
         destFile.writeAsBytesSync(srcFile.readAsBytesSync());
         setState(() {
@@ -174,11 +180,19 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: isActive
-                        ? [itemColor.withValues(alpha: 0.24), itemColor.withValues(alpha: 0.06)]
-                        : [Colors.white.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.04)],
+                        ? [
+                            itemColor.withValues(alpha: 0.24),
+                            itemColor.withValues(alpha: 0.06),
+                          ]
+                        : [
+                            Colors.white.withValues(alpha: 0.12),
+                            Colors.white.withValues(alpha: 0.04),
+                          ],
                   ),
                   border: Border.all(
-                    color: isActive ? itemColor : Colors.white.withValues(alpha: 0.15),
+                    color: isActive
+                        ? itemColor
+                        : Colors.white.withValues(alpha: 0.15),
                     width: isActive ? 2.0 : 1.0,
                   ),
                   boxShadow: [
@@ -202,9 +216,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                     if (isEditingUtilities) {
                       ref.read(utilityRailProvider.notifier).togglePin(label);
                     } else {
-                      ref.read(utilityRailProvider.notifier).setExpandedTab(
-                        expandedUtilityTab == label ? null : label,
-                      );
+                      ref
+                          .read(utilityRailProvider.notifier)
+                          .setExpandedTab(
+                            expandedUtilityTab == label ? null : label,
+                          );
                     }
                   },
                   borderRadius: BorderRadius.circular(18),
@@ -212,7 +228,9 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                     child: Icon(
                       item['icon'] as IconData,
                       size: isActive ? 16 : 15,
-                      color: isActive ? itemColor : Colors.white.withValues(alpha: 0.45),
+                      color: isActive
+                          ? itemColor
+                          : Colors.white.withValues(alpha: 0.45),
                     ),
                   ),
                 ),
@@ -225,7 +243,10 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
               top: 0,
               child: Container(
                 padding: const EdgeInsets.all(2),
-                decoration: const BoxDecoration(color: AppColors.primaryGreen, shape: BoxShape.circle),
+                decoration: const BoxDecoration(
+                  color: AppColors.primaryGreen,
+                  shape: BoxShape.circle,
+                ),
                 child: const Icon(Icons.check, size: 8, color: Colors.white),
               ),
             ),
@@ -244,15 +265,51 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     final pinnedUtilityNames = railState.pinnedUtilityNames;
 
     final List<Map<String, dynamic>> utilities = [
-      {'icon': LucideIcons.calculator, 'color': const Color(0xFF27AE60), 'label': 'Calculator'},
-      {'icon': LucideIcons.calendar, 'color': const Color(0xFFF2994A), 'label': 'Calendar'},
-      {'icon': LucideIcons.users, 'color': const Color(0xFF2F80ED), 'label': 'Contacts'},
-      {'icon': LucideIcons.messageSquare, 'color': const Color(0xFF56CCF2), 'label': 'Messages'},
-      {'icon': LucideIcons.keyboard, 'color': const Color(0xFF9B51E0), 'label': 'Shortcuts'},
-      {'icon': LucideIcons.languages, 'color': const Color(0xFFEB5757), 'label': 'Translate'},
-      {'icon': LucideIcons.scan, 'color': const Color(0xFF8E44AD), 'label': 'Lens OCR'},
-      {'icon': LucideIcons.cloudSun, 'color': const Color(0xFFF2C94C), 'label': 'Weather'},
-      {'icon': LucideIcons.newspaper, 'color': const Color(0xFF56CCF2), 'label': 'News'},
+      {
+        'icon': LucideIcons.calculator,
+        'color': const Color(0xFF27AE60),
+        'label': 'Calculator',
+      },
+      {
+        'icon': LucideIcons.calendar,
+        'color': const Color(0xFFF2994A),
+        'label': 'Calendar',
+      },
+      {
+        'icon': LucideIcons.users,
+        'color': const Color(0xFF2F80ED),
+        'label': 'Contacts',
+      },
+      {
+        'icon': LucideIcons.messageSquare,
+        'color': const Color(0xFF56CCF2),
+        'label': 'Messages',
+      },
+      {
+        'icon': LucideIcons.keyboard,
+        'color': const Color(0xFF9B51E0),
+        'label': 'Shortcuts',
+      },
+      {
+        'icon': LucideIcons.languages,
+        'color': const Color(0xFFEB5757),
+        'label': 'Translate',
+      },
+      {
+        'icon': LucideIcons.scan,
+        'color': const Color(0xFF8E44AD),
+        'label': 'Lens OCR',
+      },
+      {
+        'icon': LucideIcons.cloudSun,
+        'color': const Color(0xFFF2C94C),
+        'label': 'Weather',
+      },
+      {
+        'icon': LucideIcons.newspaper,
+        'color': const Color(0xFF56CCF2),
+        'label': 'News',
+      },
     ];
 
     final List<Map<String, dynamic>> displayList = [];
@@ -266,8 +323,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
 
       // 2. Append other user-pinned items (excluding the default 3)
       final Set<String> defaultLabels = {'Calculator', 'Calendar', 'Contacts'};
-      final customPinned = utilities.where((u) =>
-          pinnedUtilityNames.contains(u['label']) && !defaultLabels.contains(u['label']));
+      final customPinned = utilities.where(
+        (u) =>
+            pinnedUtilityNames.contains(u['label']) &&
+            !defaultLabels.contains(u['label']),
+      );
       displayList.addAll(customPinned);
     }
 
@@ -279,9 +339,7 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
           height: 52,
           margin: const EdgeInsets.only(left: 0, right: 16, top: 4, bottom: 4),
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-          decoration: const BoxDecoration(
-            color: Colors.transparent,
-          ),
+          decoration: const BoxDecoration(color: Colors.transparent),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -293,8 +351,12 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                       ref.read(utilityRailProvider.notifier).setDisplayState(1);
                     } else {
                       ref.read(utilityRailProvider.notifier).setDisplayState(0);
-                      ref.read(utilityRailProvider.notifier).setExpandedTab(null);
-                      ref.read(utilityRailProvider.notifier).setIsEditing(false);
+                      ref
+                          .read(utilityRailProvider.notifier)
+                          .setExpandedTab(null);
+                      ref
+                          .read(utilityRailProvider.notifier)
+                          .setIsEditing(false);
                     }
                   },
                   child: Container(
@@ -318,7 +380,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                                   return const Center(
                                     child: Text(
                                       'C',
-                                      style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16),
+                                      style: TextStyle(
+                                        color: AppColors.primaryGreen,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   );
                                 },
@@ -326,34 +392,47 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                             },
                           )
                         : (_logoLoaded && _logoFile != null
-                            ? Image.file(
-                                _logoFile!,
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
-                                    child: Text(
-                                      'C',
-                                      style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16),
-                                    ),
-                                  );
-                                },
-                              )
-                            : Image.asset(
-                                'assets/bit_tool_logo.png',
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Center(
-                                    child: Text(
-                                      'C',
-                                      style: TextStyle(color: AppColors.primaryGreen, fontWeight: FontWeight.bold, fontSize: 16),
-                                    ),
-                                  );
-                                },
-                              )),
+                              ? Image.file(
+                                  _logoFile!,
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Text(
+                                        'C',
+                                        style: TextStyle(
+                                          color: AppColors.primaryGreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Image.asset(
+                                  'assets/bit_tool_logo.png',
+                                  fit: BoxFit.contain,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const Center(
+                                      child: Text(
+                                        'C',
+                                        style: TextStyle(
+                                          color: AppColors.primaryGreen,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )),
                   ),
                 ),
                 const SizedBox(width: 8),
-                ...displayList.map((item) => _buildUtilityIconBtn(item, railState.pinnedUtilityNames.contains(item['label']))),
+                ...displayList.map(
+                  (item) => _buildUtilityIconBtn(
+                    item,
+                    railState.pinnedUtilityNames.contains(item['label']),
+                  ),
+                ),
                 const SizedBox(width: 4),
                 Tooltip(
                   message: isEditingUtilities ? 'Done' : 'Add Utility',
@@ -371,10 +450,15 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                           : LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [Colors.white.withValues(alpha: 0.12), Colors.white.withValues(alpha: 0.04)],
+                              colors: [
+                                Colors.white.withValues(alpha: 0.12),
+                                Colors.white.withValues(alpha: 0.04),
+                              ],
                             ),
                       border: Border.all(
-                        color: isEditingUtilities ? AppColors.border.withValues(alpha: 0.7) : Colors.white.withValues(alpha: 0.15),
+                        color: isEditingUtilities
+                            ? AppColors.border.withValues(alpha: 0.7)
+                            : Colors.white.withValues(alpha: 0.15),
                         width: 1.0,
                       ),
                       boxShadow: [
@@ -388,15 +472,23 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                     ),
                     child: InkWell(
                       onTap: () {
-                        ref.read(utilityRailProvider.notifier).setIsEditing(!isEditingUtilities);
-                        ref.read(utilityRailProvider.notifier).setDisplayState(isEditingUtilities ? 1 : 2);
+                        ref
+                            .read(utilityRailProvider.notifier)
+                            .setIsEditing(!isEditingUtilities);
+                        ref
+                            .read(utilityRailProvider.notifier)
+                            .setDisplayState(isEditingUtilities ? 1 : 2);
                       },
                       borderRadius: BorderRadius.circular(18),
                       child: Center(
                         child: Icon(
-                          isEditingUtilities ? LucideIcons.check : LucideIcons.plus,
+                          isEditingUtilities
+                              ? LucideIcons.check
+                              : LucideIcons.plus,
                           size: 16,
-                          color: isEditingUtilities ? AppColors.primaryGreen : Colors.white.withValues(alpha: 0.45),
+                          color: isEditingUtilities
+                              ? AppColors.primaryGreen
+                              : Colors.white.withValues(alpha: 0.45),
                         ),
                       ),
                     ),
@@ -409,7 +501,12 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
 
         // Sliding Detail Panel
         if (expandedUtilityTab != null)
-          _buildSlidingTabPanel().animate().fadeIn(duration: 200.ms).slideY(begin: -0.05, end: 0),
+          (Theme.of(context).platform == TargetPlatform.macOS
+              ? _buildSlidingTabPanel()
+              : _buildSlidingTabPanel()
+                  .animate()
+                  .fadeIn(duration: 200.ms)
+                  .slideY(begin: -0.05, end: 0)),
       ],
     );
   }
@@ -460,7 +557,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 3)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
         ],
       ),
       child: Column(
@@ -472,10 +573,15 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
             children: [
               Text(
                 expandedUtilityTab,
-                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText),
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  color: AppColors.darkText,
+                ),
               ),
               GestureDetector(
-                onTap: () => ref.read(utilityRailProvider.notifier).setExpandedTab(null),
+                onTap: () =>
+                    ref.read(utilityRailProvider.notifier).setExpandedTab(null),
                 child: const Icon(LucideIcons.x, size: 14, color: Colors.grey),
               ),
             ],
@@ -501,7 +607,10 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(monthLabel, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+            Text(
+              monthLabel,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+            ),
             const Row(
               children: [
                 Icon(LucideIcons.chevronLeft, size: 14, color: Colors.black54),
@@ -514,10 +623,22 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: weekdays.map((w) => SizedBox(
-            width: 24,
-            child: Text(w, textAlign: TextAlign.center, style: const TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
-          )).toList(),
+          children: weekdays
+              .map(
+                (w) => SizedBox(
+                  width: 24,
+                  child: Text(
+                    w,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.grey,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              )
+              .toList(),
         ),
         const SizedBox(height: 6),
         Column(
@@ -534,17 +655,25 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   return GestureDetector(
                     onTap: () {
                       setState(() {
-                        _selectedCalendarDate = DateTime(now.year, now.month, dayNumber);
+                        _selectedCalendarDate = DateTime(
+                          now.year,
+                          now.month,
+                          dayNumber,
+                        );
                       });
                     },
                     child: Container(
                       width: 24,
                       height: 24,
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryGreen : Colors.transparent,
+                        color: isSelected
+                            ? AppColors.primaryGreen
+                            : Colors.transparent,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: isSelected ? Colors.transparent : Colors.grey.shade200,
+                          color: isSelected
+                              ? Colors.transparent
+                              : Colors.grey.shade200,
                           width: 0.8,
                         ),
                       ),
@@ -553,7 +682,9 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                         '$dayNumber',
                         style: TextStyle(
                           fontSize: 10,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.normal,
                           color: isSelected ? Colors.white : Colors.black87,
                         ),
                       ),
@@ -574,8 +705,8 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _selectedCalendarDate.day % 2 == 0 
-                      ? 'No business scheduled for today.' 
+                  _selectedCalendarDate.day % 2 == 0
+                      ? 'No business scheduled for today.'
                       : 'Payout run execution @ 3:00 PM',
                   style: const TextStyle(fontSize: 10, color: Colors.grey),
                   maxLines: 1,
@@ -601,7 +732,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                 backgroundColor: AppColors.hoverBackground,
                 child: Text(
                   c['name']![0],
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryGreen),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -611,7 +746,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   children: [
                     Text(
                       c['name']!,
-                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkText,
+                      ),
                     ),
                     Text(
                       c['email']!,
@@ -620,7 +759,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   ],
                 ),
               ),
-              const Icon(LucideIcons.messageSquare, size: 14, color: AppColors.primaryGreen),
+              const Icon(
+                LucideIcons.messageSquare,
+                size: 14,
+                color: AppColors.primaryGreen,
+              ),
             ],
           ),
         );
@@ -640,7 +783,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                 backgroundColor: AppColors.hoverBackground,
                 child: const Text(
                   'S',
-                  style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.primaryGreen),
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -650,7 +797,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   children: [
                     Text(
                       'Support Team',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkText,
+                      ),
                     ),
                     Text(
                       'How can we help you today?',
@@ -687,7 +838,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                 ),
                 child: Text(
                   s['keys']!,
-                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.primaryGreen),
+                  style: const TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryGreen,
+                  ),
                 ),
               ),
             ],
@@ -704,7 +859,10 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Translate to: ', style: TextStyle(fontSize: 10, color: Colors.grey)),
+            const Text(
+              'Translate to: ',
+              style: TextStyle(fontSize: 10, color: Colors.grey),
+            ),
             DropdownButton<String>(
               value: _targetLanguage,
               style: const TextStyle(fontSize: 11, color: AppColors.darkText),
@@ -770,10 +928,15 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
               backgroundColor: AppColors.primaryGreen,
               foregroundColor: Colors.white,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
-            child: const Text('Translate', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Translate',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
@@ -801,7 +964,8 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   if (mounted) {
                     setState(() {
                       _ocrScanRunning = false;
-                      _ocrOutputText = "Extracted: 'Amount: ₹24,500.00, Date: 08-Jul-2026'";
+                      _ocrOutputText =
+                          "Extracted: 'Amount: ₹24,500.00, Date: 08-Jul-2026'";
                     });
                   }
                 });
@@ -810,12 +974,20 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                 backgroundColor: AppColors.primaryGreen,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
               ),
               child: Text(
                 _ocrScanRunning ? 'Analyzing...' : 'Scan invoice',
-                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],
@@ -831,7 +1003,14 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Mumbai', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+            Text(
+              'Mumbai',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkText,
+              ),
+            ),
             Text('Rainy', style: TextStyle(fontSize: 10, color: Colors.grey)),
           ],
         ),
@@ -839,7 +1018,14 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
           children: [
             Icon(LucideIcons.cloudRain, size: 20, color: Colors.blueAccent),
             SizedBox(width: 8),
-            Text('29°C', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+            Text(
+              '29°C',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.darkText,
+              ),
+            ),
           ],
         ),
       ],
@@ -857,13 +1043,20 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
             children: [
               const Padding(
                 padding: EdgeInsets.only(top: 3.0),
-                child: Icon(LucideIcons.newspaper, size: 10, color: Colors.grey),
+                child: Icon(
+                  LucideIcons.newspaper,
+                  size: 10,
+                  color: Colors.grey,
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   item,
-                  style: const TextStyle(fontSize: 10, color: AppColors.darkText),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.darkText,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),

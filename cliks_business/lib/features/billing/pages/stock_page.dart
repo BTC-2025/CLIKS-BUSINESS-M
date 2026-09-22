@@ -42,6 +42,7 @@ class _StockPageState extends ConsumerState<StockPage>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -60,10 +61,12 @@ class _StockPageState extends ConsumerState<StockPage>
         slivers: [
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
-            child: _buildHeroSummary(isMobile)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
+            child: isMacOS
+                ? _buildHeroSummary(isMobile)
+                : _buildHeroSummary(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
           ),
 
           const SliverToBoxAdapter(
@@ -101,9 +104,11 @@ class _StockPageState extends ConsumerState<StockPage>
                 children: [
                   _buildDesktopActions(isMobile),
                   if (!isMobile) const SizedBox(height: 12),
-                  _buildMainContent(isMobile)
-                      .animate()
-                      .fadeIn(duration: 500.ms, delay: 150.ms),
+                  isMacOS
+                      ? _buildMainContent(isMobile)
+                      : _buildMainContent(isMobile)
+                          .animate()
+                          .fadeIn(duration: 500.ms, delay: 150.ms),
                 ],
               ),
             ),
@@ -334,7 +339,7 @@ class _StockPageState extends ConsumerState<StockPage>
             child: GestureDetector(
               onTap: () => setState(() => _activeTab = index),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
+                duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 12 : 18,

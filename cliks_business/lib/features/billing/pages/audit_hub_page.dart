@@ -48,6 +48,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -56,10 +57,12 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
         slivers: [
           // ─── HERO SUMMARY CARD WITH INTEGRATED WORKPLACE BUTTONS ───
           SliverToBoxAdapter(
-            child: _buildHeroSummary(isMobile)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
+            child: isMacOS
+                ? _buildHeroSummary(isMobile)
+                : _buildHeroSummary(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
           ),
 
           const SliverToBoxAdapter(
@@ -94,9 +97,11 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               isMobile ? 40 : 40,
             ),
             sliver: SliverToBoxAdapter(
-              child: _buildMainContent(isMobile)
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: 150.ms),
+              child: isMacOS
+                  ? _buildMainContent(isMobile)
+                  : _buildMainContent(isMobile)
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: 150.ms),
             ),
           ),
         ],
@@ -196,7 +201,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 child: GestureDetector(
                   onTap: () => setState(() => _activeWorkplace = 0),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.15),
@@ -237,7 +242,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 child: GestureDetector(
                   onTap: () => setState(() => _activeWorkplace = 1),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
+                    duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 200),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                     decoration: BoxDecoration(
                       color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.15),
@@ -352,7 +357,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             child: GestureDetector(
               onTap: () => setState(() => _activeAdvisoryTab = index),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
+                duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 12 : 18,

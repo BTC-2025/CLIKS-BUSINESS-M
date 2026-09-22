@@ -149,11 +149,8 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
     final previewColumn = _buildLivePreviewCard(isMobile);
 
     final screenHeight = MediaQuery.of(context).size.height;
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Align(
-        alignment: Alignment.bottomCenter,
-        child: Container(
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final sheetContent = Container(
           constraints: BoxConstraints(
             maxWidth: isMobile ? double.infinity : (_livePreview && !isMobile ? 1200 : 800),
             maxHeight: screenHeight * 0.65,
@@ -184,9 +181,10 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
                   ),
                 ),
               ),
-              // Header
+
+              // Header Bar with Close & Live Preview button
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 8),
                 child: _buildHeader(context, isMobile),
               ),
               const Divider(height: 16, color: AppColors.border),
@@ -219,7 +217,15 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
               ),
             ],
           ),
-        ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.02, end: 0),
+        );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Align(
+        alignment: Alignment.bottomCenter,
+        child: isMacOS
+            ? sheetContent
+            : sheetContent.animate().fadeIn(duration: 400.ms).slideY(begin: 0.02, end: 0),
       ),
     );
   }

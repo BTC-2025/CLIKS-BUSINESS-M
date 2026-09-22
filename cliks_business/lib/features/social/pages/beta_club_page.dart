@@ -100,51 +100,61 @@ class _BetaClubPageState extends State<BetaClubPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header Banner
-              _buildHeaderBanner(
-                context,
-                isMobile,
-              ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
+              Theme.of(context).platform == TargetPlatform.macOS
+                  ? _buildHeaderBanner(context, isMobile)
+                  : _buildHeaderBanner(
+                      context,
+                      isMobile,
+                    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
               const SizedBox(height: 24),
 
               // Segmented Tabs Row
-              _buildSegmentTabs(
-                isMobile,
-              ).animate().fadeIn(duration: 350.ms, delay: 50.ms),
+              Theme.of(context).platform == TargetPlatform.macOS
+                  ? _buildSegmentTabs(isMobile)
+                  : _buildSegmentTabs(
+                      isMobile,
+                    ).animate().fadeIn(duration: 350.ms, delay: 50.ms),
               const SizedBox(height: 20),
 
               // Search Bar & Filter Row
-              _buildSearchAndFilterRow(
-                isMobile,
-              ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
+              Theme.of(context).platform == TargetPlatform.macOS
+                  ? _buildSearchAndFilterRow(isMobile)
+                  : _buildSearchAndFilterRow(
+                      isMobile,
+                    ).animate().fadeIn(duration: 350.ms, delay: 100.ms),
               const SizedBox(height: 24),
 
-              // Tab View Body with smooth animated switcher
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 250),
-                switchInCurve: Curves.easeOutCubic,
-                switchOutCurve: Curves.easeInCubic,
-                transitionBuilder: (child, animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: SlideTransition(
-                      position: Tween<Offset>(
-                        begin: const Offset(0, 0.03),
-                        end: Offset.zero,
-                      ).animate(animation),
-                      child: child,
+              // Tab View Body (instant without animation on macOS)
+              Theme.of(context).platform == TargetPlatform.macOS
+                  ? (_activeTab == 0
+                      ? _buildActiveDealsView(isMobile)
+                      : _buildMyStudioView(isMobile))
+                  : AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 250),
+                      switchInCurve: Curves.easeOutCubic,
+                      switchOutCurve: Curves.easeInCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 0.03),
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: _activeTab == 0
+                          ? KeyedSubtree(
+                              key: const ValueKey('active_deals'),
+                              child: _buildActiveDealsView(isMobile),
+                            )
+                          : KeyedSubtree(
+                              key: const ValueKey('my_studio'),
+                              child: _buildMyStudioView(isMobile),
+                            ),
                     ),
-                  );
-                },
-                child: _activeTab == 0
-                    ? KeyedSubtree(
-                        key: const ValueKey('active_deals'),
-                        child: _buildActiveDealsView(isMobile),
-                      )
-                    : KeyedSubtree(
-                        key: const ValueKey('my_studio'),
-                        child: _buildMyStudioView(isMobile),
-                      ),
-              ),
             ],
           ),
         ),
@@ -361,7 +371,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
         }
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
+        duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         padding: EdgeInsets.symmetric(
           horizontal: isMobile ? 8 : 16,

@@ -33,88 +33,93 @@ class _EmployeeLoanPanelState extends ConsumerState<EmployeeLoanPanel> {
     final isMobile = screenWidth < 950;
     final isNarrow = screenWidth < 400;
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final panelContent = Container(
+      constraints: BoxConstraints(
+        maxWidth: isMobile ? double.infinity : 500,
+        maxHeight: screenHeight * 0.8,
+      ),
+      margin: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: isMobile
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              )
+            : BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isMobile) _buildDragHandle(),
+          Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+            child: _buildHeader('Grant Employee Loan'),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Employee Name'),
+                  _buildDropdown(
+                    ['-- Select Employee --', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'],
+                    _selectedEmployee,
+                    (val) => setState(() => _selectedEmployee = val!),
+                  ),
+                  const SizedBox(height: 20),
+                  
+                  // Responsive fields side-by-side on desktop, stacked on narrow screens
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Loan Amount (₹)'),
+                            _buildTextField(_loanAmountController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Monthly EMI'),
+                            _buildTextField(_emiController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 20),
+                  _buildLabel('Immediate Salary Advance (₹)'),
+                  _buildTextField(_advanceController, '0', keyboardType: TextInputType.number),
+                  const SizedBox(height: 32),
+                  _buildActionButton('Settle Granted Loan Allocation', const Color(0xFF7C3AED)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Align(
         alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 500,
-            maxHeight: screenHeight * 0.8,
-          ),
-          margin: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: isMobile
-                ? const BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
-                  )
-                : BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isMobile) _buildDragHandle(),
-              Padding(
-                padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
-                child: _buildHeader('Grant Employee Loan'),
-              ),
-              const Divider(height: 16, color: AppColors.border),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Employee Name'),
-                      _buildDropdown(
-                        ['-- Select Employee --', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'],
-                        _selectedEmployee,
-                        (val) => setState(() => _selectedEmployee = val!),
-                      ),
-                      const SizedBox(height: 20),
-                      
-                      // Responsive fields side-by-side on desktop, stacked on narrow screens
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Loan Amount (₹)'),
-                                _buildTextField(_loanAmountController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Monthly EMI'),
-                                _buildTextField(_emiController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      _buildLabel('Immediate Salary Advance (₹)'),
-                      _buildTextField(_advanceController, '0', keyboardType: TextInputType.number),
-                      const SizedBox(height: 32),
-                      _buildActionButton('Settle Granted Loan Allocation', const Color(0xFF7C3AED)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
+        child: isMacOS
+            ? panelContent
+            : panelContent.animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
       ),
     );
   }
@@ -273,173 +278,178 @@ class _ProcessPayrollPanelState extends ConsumerState<ProcessPayrollPanel> {
     final isMobile = screenWidth < 950;
     final isNarrow = screenWidth < 480;
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final panelContent = Container(
+      constraints: BoxConstraints(
+        maxWidth: isMobile ? double.infinity : 550,
+        maxHeight: screenHeight * 0.85,
+      ),
+      margin: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: isMobile
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              )
+            : BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isMobile) _buildDragHandle(),
+          Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+            child: _buildHeader('Process Monthly Payroll'),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Select Employee'),
+                  _buildDropdown(
+                    ['-- Select Staff Member --', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'],
+                    _selectedEmployee,
+                    (val) => setState(() => _selectedEmployee = val!),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // First Row: Basic & HRA
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Basic Base Salary (₹)'),
+                            _buildTextField(_baseSalaryController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('HRA Allowance (₹)'),
+                            _buildTextField(_hraController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Second Row: Special & Bonus
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Special Allowance'),
+                            _buildTextField(_specialAllowanceController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Bonus / Incentives'),
+                            _buildTextField(_bonusController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Third Row: PF, ESI, TDS
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // PF Checkbox column
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _deductPF,
+                                    onChanged: (val) => setState(() => _deductPF = val!),
+                                    activeColor: const Color(0xFF7C3AED),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Expanded(
+                                  child: Text('Deduct 12% PF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                                ),
+                              ],
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(left: 32, top: 4),
+                              child: Text('Est: ₹0', style: TextStyle(fontSize: 10, color: AppColors.secondaryText)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // ESI Field
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('ESI Deduction'),
+                            _buildTextField(_esiController, '325', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // TDS Field
+                      Expanded(
+                        flex: 1,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Estimated TDS'),
+                            _buildTextField(_tdsController, '0', keyboardType: TextInputType.number),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  _buildActionButton('Settle Monthly Take-Home Salary', const Color(0xFF7C3AED)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Align(
         alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
-        child: Container(
-          constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 550,
-            maxHeight: screenHeight * 0.85,
-          ),
-          margin: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: isMobile
-                ? const BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
-                  )
-                : BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isMobile) _buildDragHandle(),
-              Padding(
-                padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
-                child: _buildHeader('Process Monthly Payroll'),
-              ),
-              const Divider(height: 16, color: AppColors.border),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildLabel('Select Employee'),
-                      _buildDropdown(
-                        ['-- Select Staff Member --', 'Rahul Dev', 'Michael Scott', 'Jim Halpert'],
-                        _selectedEmployee,
-                        (val) => setState(() => _selectedEmployee = val!),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // First Row: Basic & HRA
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Basic Base Salary (₹)'),
-                                _buildTextField(_baseSalaryController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('HRA Allowance (₹)'),
-                                _buildTextField(_hraController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Second Row: Special & Bonus
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Special Allowance'),
-                                _buildTextField(_specialAllowanceController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Bonus / Incentives'),
-                                _buildTextField(_bonusController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-
-                      // Third Row: PF, ESI, TDS
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // PF Checkbox column
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    SizedBox(
-                                      width: 24,
-                                      height: 24,
-                                      child: Checkbox(
-                                        value: _deductPF,
-                                        onChanged: (val) => setState(() => _deductPF = val!),
-                                        activeColor: const Color(0xFF7C3AED),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Expanded(
-                                      child: Text('Deduct 12% PF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                                    ),
-                                  ],
-                                ),
-                                const Padding(
-                                  padding: EdgeInsets.only(left: 32, top: 4),
-                                  child: Text('Est: ₹0', style: TextStyle(fontSize: 10, color: AppColors.secondaryText)),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // ESI Field
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('ESI Deduction'),
-                                _buildTextField(_esiController, '325', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          // TDS Field
-                          Expanded(
-                            flex: 1,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Estimated TDS'),
-                                _buildTextField(_tdsController, '0', keyboardType: TextInputType.number),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 32),
-                      _buildActionButton('Settle Monthly Take-Home Salary', const Color(0xFF7C3AED)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ).animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
+        child: isMacOS
+            ? panelContent
+            : panelContent.animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
       ),
     );
   }

@@ -115,6 +115,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    Widget maybeAnim(Widget w, Widget Function(Widget) fn) => isMacOS ? w : fn(w);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -129,7 +131,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Profile Header Card - Full Bleed
-              _buildProfileHeader(isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+              maybeAnim(_buildProfileHeader(isMobile), (w) => w.animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0)),
               
               Center(
                 child: ConstrainedBox(
@@ -143,157 +145,184 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                         const SizedBox(height: 12),
 
                         // Created On Info Card
-                        _buildCreatedOnCard().animate().fadeIn(duration: 450.ms, delay: 50.ms),
+                        maybeAnim(_buildCreatedOnCard(), (w) => w.animate().fadeIn(duration: 450.ms, delay: 50.ms)),
 
                         // Security Protocols Section
                         _buildSectionHeader('SECURITY PROTOCOLS'),
-                        _buildCardTile(
-                          icon: LucideIcons.shieldCheck,
-                          title: 'Two-Factor Authentication (Coming Soon)',
-                          subtitle: 'Double-layer MFA is currently unsupported by platform',
-                          isComingSoon: true,
-                          trailing: const Switch(
-                            value: false,
-                            onChanged: null,
-                            inactiveThumbColor: Color(0xFF9CA3AF),
-                            inactiveTrackColor: Color(0xFFE5E7EB),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.shieldCheck,
+                            title: 'Two-Factor Authentication (Coming Soon)',
+                            subtitle: 'Double-layer MFA is currently unsupported by platform',
+                            isComingSoon: true,
+                            trailing: const Switch(
+                              value: false,
+                              onChanged: null,
+                              inactiveThumbColor: Color(0xFF9CA3AF),
+                              inactiveTrackColor: Color(0xFFE5E7EB),
+                            ),
                           ),
-                        ).animate().fadeIn(duration: 450.ms, delay: 100.ms),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 100.ms),
+                        ),
 
-                        _buildCardTile(
-                          icon: LucideIcons.fingerprint,
-                          title: 'Biometric Hardware Login',
-                          subtitle: 'Unlock with FaceID / TouchID',
-                          trailing: Switch(
-                            value: _biometricLogin,
-                            onChanged: (val) {
-                              setState(() => _biometricLogin = val);
-                              AppSnackbar.show(
-                                context,
-                                val ? "Biometric login enabled." : "Biometric login disabled.",
-                                type: SnackType.success,
-                              );
-                            },
-                            activeThumbColor: AppColors.primaryGreen,
-                            activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
-                            inactiveThumbColor: const Color(0xFF6B7280),
-                            inactiveTrackColor: const Color(0xFFE6EBEF),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.fingerprint,
+                            title: 'Biometric Hardware Login',
+                            subtitle: 'Unlock with FaceID / TouchID',
+                            trailing: Switch(
+                              value: _biometricLogin,
+                              onChanged: (val) {
+                                setState(() => _biometricLogin = val);
+                                AppSnackbar.show(
+                                  context,
+                                  val ? "Biometric login enabled." : "Biometric login disabled.",
+                                  type: SnackType.success,
+                                );
+                              },
+                              activeThumbColor: AppColors.primaryGreen,
+                              activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
+                              inactiveThumbColor: const Color(0xFF6B7280),
+                              inactiveTrackColor: const Color(0xFFE6EBEF),
+                            ),
                           ),
-                        ).animate().fadeIn(duration: 450.ms, delay: 150.ms),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 150.ms),
+                        ),
 
-                        _buildCardTile(
-                          icon: LucideIcons.lock,
-                          title: 'Update Corporate Password',
-                          subtitle: 'Securely rotate access credentials',
-                          onTap: () => _showUpdatePasswordDialog(context),
-                          trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
-                        ).animate().fadeIn(duration: 450.ms, delay: 200.ms),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.lock,
+                            title: 'Update Corporate Password',
+                            subtitle: 'Securely rotate access credentials',
+                            onTap: () => _showUpdatePasswordDialog(context),
+                            trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
+                          ),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 200.ms),
+                        ),
 
                         // Notifications Section
                         _buildSectionHeader('NOTIFICATIONS & PREFERENCES'),
-                        _buildCardTile(
-                          icon: LucideIcons.messageSquare,
-                          title: 'SMS Real-time Gateway',
-                          subtitle: 'Receive accounting confirmations via SMS',
-                          trailing: Switch(
-                            value: _smsGateway,
-                            onChanged: (val) {
-                              setState(() => _smsGateway = val);
-                              AppSnackbar.show(
-                                context,
-                                val ? "SMS confirmations activated." : "SMS confirmations deactivated.",
-                                type: SnackType.success,
-                              );
-                            },
-                            activeThumbColor: AppColors.primaryGreen,
-                            activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
-                            inactiveThumbColor: const Color(0xFF6B7280),
-                            inactiveTrackColor: const Color(0xFFE6EBEF),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.messageSquare,
+                            title: 'SMS Real-time Gateway',
+                            subtitle: 'Receive accounting confirmations via SMS',
+                            trailing: Switch(
+                              value: _smsGateway,
+                              onChanged: (val) {
+                                setState(() => _smsGateway = val);
+                                AppSnackbar.show(
+                                  context,
+                                  val ? "SMS confirmations activated." : "SMS confirmations deactivated.",
+                                  type: SnackType.success,
+                                );
+                              },
+                              activeThumbColor: AppColors.primaryGreen,
+                              activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
+                              inactiveThumbColor: const Color(0xFF6B7280),
+                              inactiveTrackColor: const Color(0xFFE6EBEF),
+                            ),
                           ),
-                        ).animate().fadeIn(duration: 450.ms, delay: 250.ms),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 250.ms),
+                        ),
 
-                        _buildCardTile(
-                          icon: LucideIcons.mail,
-                          title: 'Email Reports Sync',
-                          subtitle: 'Receive monthly reconciliations dynamically',
-                          trailing: Switch(
-                            value: _emailSync,
-                            onChanged: (val) {
-                              setState(() => _emailSync = val);
-                              AppSnackbar.show(
-                                context,
-                                val ? "Email reports sync activated." : "Email reports sync deactivated.",
-                                type: SnackType.success,
-                              );
-                            },
-                            activeThumbColor: AppColors.primaryGreen,
-                            activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
-                            inactiveThumbColor: const Color(0xFF6B7280),
-                            inactiveTrackColor: const Color(0xFFE6EBEF),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.mail,
+                            title: 'Email Reports Sync',
+                            subtitle: 'Receive monthly reconciliations dynamically',
+                            trailing: Switch(
+                              value: _emailSync,
+                              onChanged: (val) {
+                                setState(() => _emailSync = val);
+                                AppSnackbar.show(
+                                  context,
+                                  val ? "Email reports sync activated." : "Email reports sync deactivated.",
+                                  type: SnackType.success,
+                                );
+                              },
+                              activeThumbColor: AppColors.primaryGreen,
+                              activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
+                              inactiveThumbColor: const Color(0xFF6B7280),
+                              inactiveTrackColor: const Color(0xFFE6EBEF),
+                            ),
                           ),
-                        ).animate().fadeIn(duration: 450.ms, delay: 300.ms),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 300.ms),
+                        ),
 
-                        _buildCardTile(
-                          icon: LucideIcons.bell,
-                          title: 'Direct Push Notifications',
-                          subtitle: 'Instant alerts for invoice settlements',
-                          trailing: Switch(
-                            value: _pushNotifications,
-                            onChanged: (val) {
-                              setState(() => _pushNotifications = val);
-                              AppSnackbar.show(
-                                context,
-                                val ? "Push notifications activated." : "Push notifications deactivated.",
-                                type: SnackType.success,
-                              );
-                            },
-                            activeThumbColor: AppColors.primaryGreen,
-                            activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
-                            inactiveThumbColor: const Color(0xFF6B7280),
-                            inactiveTrackColor: const Color(0xFFE6EBEF),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.bell,
+                            title: 'Direct Push Notifications',
+                            subtitle: 'Instant alerts for invoice settlements',
+                            trailing: Switch(
+                              value: _pushNotifications,
+                              onChanged: (val) {
+                                setState(() => _pushNotifications = val);
+                                AppSnackbar.show(
+                                  context,
+                                  val ? "Push notifications activated." : "Push notifications deactivated.",
+                                  type: SnackType.success,
+                                );
+                              },
+                              activeThumbColor: AppColors.primaryGreen,
+                              activeTrackColor: AppColors.primaryGreen.withValues(alpha: 0.4),
+                              inactiveThumbColor: const Color(0xFF6B7280),
+                              inactiveTrackColor: const Color(0xFFE6EBEF),
+                            ),
                           ),
-                        ).animate().fadeIn(duration: 450.ms, delay: 350.ms),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 350.ms),
+                        ),
 
                         // System & Support Section
                         _buildSectionHeader('SYSTEM & SUPPORT'),
-                        _buildCardTile(
-                          icon: LucideIcons.settings,
-                          title: 'Settings',
-                          subtitle: 'Manage configurations and app settings',
-                          onTap: () {
-                            ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.settings);
-                          },
-                          trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
-                        ).animate().fadeIn(duration: 450.ms, delay: 400.ms),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.settings,
+                            title: 'Settings',
+                            subtitle: 'Manage configurations and app settings',
+                            onTap: () {
+                              ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.settings);
+                            },
+                            trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
+                          ),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 400.ms),
+                        ),
 
-                        _buildCardTile(
-                          icon: LucideIcons.helpCircle,
-                          title: 'Help & Support',
-                          subtitle: 'View FAQs and contact support',
-                          onTap: () {
-                            ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.help);
-                          },
-                          trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
-                        ).animate().fadeIn(duration: 450.ms, delay: 450.ms),
+                        maybeAnim(
+                          _buildCardTile(
+                            icon: LucideIcons.helpCircle,
+                            title: 'Help & Support',
+                            subtitle: 'View FAQs and contact support',
+                            onTap: () {
+                              ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.help);
+                            },
+                            trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
+                          ),
+                          (w) => w.animate().fadeIn(duration: 450.ms, delay: 450.ms),
+                        ),
 
                         const SizedBox(height: 24),
 
                         // Terminate Secure Session Button
-                        _buildTerminateButton(context).animate().fadeIn(duration: 500.ms, delay: 500.ms),
+                        maybeAnim(_buildTerminateButton(context), (w) => w.animate().fadeIn(duration: 500.ms, delay: 500.ms)),
 
                         const SizedBox(height: 32),
 
                         // Footer Version Label
-                        const Center(
-                          child: Text(
-                            'CLIKS Business v2.4.0 • Enterprise Core',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: AppColors.secondaryText,
-                              fontWeight: FontWeight.w500,
+                        maybeAnim(
+                          const Center(
+                            child: Text(
+                              'CLIKS Business v2.4.0 • Enterprise Core',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.secondaryText,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
-                        ).animate().fadeIn(duration: 500.ms, delay: 450.ms),
+                          (w) => w.animate().fadeIn(duration: 500.ms, delay: 450.ms),
+                        ),
                         const SizedBox(height: 32),
                       ],
                     ),

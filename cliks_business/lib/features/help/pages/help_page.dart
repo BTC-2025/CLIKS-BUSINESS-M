@@ -43,6 +43,7 @@ class _HelpPageState extends ConsumerState<HelpPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       body: SingleChildScrollView(
@@ -51,74 +52,140 @@ class _HelpPageState extends ConsumerState<HelpPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Row with Back Button & Badge
-            Row(
-              children: [
-                IconButton(
-                  icon: const Icon(LucideIcons.arrowLeft, color: AppColors.darkText),
-                  onPressed: () {
-                    ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.books, AppRoute.dashboard);
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  tooltip: 'Back to Dashboard',
-                ),
-                const SizedBox(width: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.hoverBackground,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.2)),
-                  ),
-                  child: const Text(
-                    'Faq',
-                    style: TextStyle(color: AppColors.primaryGreen, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'HELP CENTER',
-                    style: TextStyle(color: AppColors.blue, fontSize: 10, fontWeight: FontWeight.bold),
-                  ),
-                ),
-              ],
-            ).animate().fadeIn(duration: 400.ms),
+            isMacOS
+                ? Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(LucideIcons.arrowLeft, color: AppColors.darkText),
+                        onPressed: () {
+                          ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.books, AppRoute.dashboard);
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Back to Dashboard',
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.hoverBackground,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.2)),
+                        ),
+                        child: const Text(
+                          'Faq',
+                          style: TextStyle(color: AppColors.primaryGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'HELP CENTER',
+                          style: TextStyle(color: AppColors.blue, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(LucideIcons.arrowLeft, color: AppColors.darkText),
+                        onPressed: () {
+                          ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.books, AppRoute.dashboard);
+                        },
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        tooltip: 'Back to Dashboard',
+                      ),
+                      const SizedBox(width: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.hoverBackground,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: AppColors.primaryGreen.withValues(alpha: 0.2)),
+                        ),
+                        child: const Text(
+                          'Faq',
+                          style: TextStyle(color: AppColors.primaryGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.blue.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'HELP CENTER',
+                          style: TextStyle(color: AppColors.blue, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ).animate().fadeIn(duration: 400.ms),
             const SizedBox(height: 16),
-            const Text(
-              'Help & Customer Support',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkText),
-            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
+            isMacOS
+                ? const Text(
+                    'Help & Customer Support',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  )
+                : const Text(
+                    'Help & Customer Support',
+                    style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
             const SizedBox(height: 8),
-            const Text(
-              'Access common guides or log direct tickets to our dedicated customer support squad.',
-              style: TextStyle(fontSize: 14, color: AppColors.secondaryText),
-            ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+            isMacOS
+                ? const Text(
+                    'Access common guides or log direct tickets to our dedicated customer support squad.',
+                    style: TextStyle(fontSize: 14, color: AppColors.secondaryText),
+                  )
+                : const Text(
+                    'Access common guides or log direct tickets to our dedicated customer support squad.',
+                    style: TextStyle(fontSize: 14, color: AppColors.secondaryText),
+                  ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
             const SizedBox(height: 32),
 
             // Main Columns
             if (isMobile)
-              Column(
-                children: [
-                  _buildTicketForm(),
-                  const SizedBox(height: 32),
-                  _buildFaqSection(),
-                ],
-              ).animate().fadeIn(duration: 500.ms, delay: 200.ms)
+              (isMacOS
+                  ? Column(
+                      children: [
+                        _buildTicketForm(),
+                        const SizedBox(height: 32),
+                        _buildFaqSection(),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        _buildTicketForm(),
+                        const SizedBox(height: 32),
+                        _buildFaqSection(),
+                      ],
+                    ).animate().fadeIn(duration: 500.ms, delay: 200.ms))
             else
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 5, child: _buildTicketForm()),
-                  const SizedBox(width: 32),
-                  Expanded(flex: 5, child: _buildFaqSection()),
-                ],
-              ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+              (isMacOS
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 5, child: _buildTicketForm()),
+                        const SizedBox(width: 32),
+                        Expanded(flex: 5, child: _buildFaqSection()),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 5, child: _buildTicketForm()),
+                        const SizedBox(width: 32),
+                        Expanded(flex: 5, child: _buildFaqSection()),
+                      ],
+                    ).animate().fadeIn(duration: 500.ms, delay: 200.ms)),
           ],
         ),
       ),

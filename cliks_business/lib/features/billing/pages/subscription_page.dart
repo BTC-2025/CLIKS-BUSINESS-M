@@ -18,6 +18,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -27,38 +28,53 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Title & Billing Cycle Header
-            _buildHeader(isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+            isMacOS
+                ? _buildHeader(isMobile)
+                : _buildHeader(isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
             const SizedBox(height: 24),
 
             // Active Plan Summary Card
-            _buildActivePlanSummaryCard(isMobile)
-                .animate()
-                .fadeIn(duration: 450.ms, delay: 80.ms),
+            isMacOS
+                ? _buildActivePlanSummaryCard(isMobile)
+                : _buildActivePlanSummaryCard(isMobile)
+                    .animate()
+                    .fadeIn(duration: 450.ms, delay: 80.ms),
             const SizedBox(height: 24),
 
             // Tabs Selector Center Row
-            _buildTabsSelector(isMobile)
-                .animate()
-                .fadeIn(duration: 450.ms, delay: 120.ms),
+            isMacOS
+                ? _buildTabsSelector(isMobile)
+                : _buildTabsSelector(isMobile)
+                    .animate()
+                    .fadeIn(duration: 450.ms, delay: 120.ms),
             const SizedBox(height: 32),
 
             // Section: Upgrade Workspace Tier
-            const Text(
-              'Upgrade Workspace Tier',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
-            ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
+            isMacOS
+                ? const Text(
+                    'Upgrade Workspace Tier',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  )
+                : const Text(
+                    'Upgrade Workspace Tier',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  ).animate().fadeIn(duration: 400.ms, delay: 160.ms),
             const SizedBox(height: 20),
 
             // Plan Upgrade Cards Grid (desktop layout side-by-side, mobile stacked)
-            _buildPlanUpgradeGrid(isMobile)
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 200.ms),
+            isMacOS
+                ? _buildPlanUpgradeGrid(isMobile)
+                : _buildPlanUpgradeGrid(isMobile)
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 200.ms),
             const SizedBox(height: 40),
 
             // Section: Billing & Statement History
-            _buildBillingHistorySection(isMobile)
-                .animate()
-                .fadeIn(duration: 500.ms, delay: 240.ms),
+            isMacOS
+                ? _buildBillingHistorySection(isMobile)
+                : _buildBillingHistorySection(isMobile)
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: 240.ms),
           ],
         ),
       ),

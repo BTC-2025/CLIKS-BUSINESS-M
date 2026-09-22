@@ -264,25 +264,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                 onTap: () {
                                   FocusScope.of(context).unfocus();
                                 },
-                                child: AnimatedSwitcher(
-                                  duration: const Duration(milliseconds: 300),
-                                  transitionBuilder: (child, animation) {
-                                    final slideAnimation = Tween<Offset>(
-                                      begin: _slideForward ? const Offset(0.08, 0) : const Offset(-0.08, 0),
-                                      end: Offset.zero,
-                                    ).animate(CurvedAnimation(
-                                      parent: animation,
-                                      curve: Curves.easeOutCubic,
-                                    ));
-                                    return FadeTransition(
-                                      opacity: animation,
-                                      child: SlideTransition(
-                                        position: slideAnimation,
-                                        child: child,
-                                      ),
-                                    );
-                                  },
-                                  child: () {
+                                child: () {
+                                  final content = () {
                                     final baseRoute = () {
                                       if (navigation.currentRoute == AppRoute.recordExpense ||
                                           navigation.currentRoute == AppRoute.lodgeStaffClaim) {
@@ -364,8 +347,36 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                       );
                                     }
                                     return _getPage(navigation.currentRoute);
-                                  }(),
-                                ),
+                                  }();
+
+                                  if (isMacOS) {
+                                    return KeyedSubtree(
+                                      key: ValueKey('${navigation.currentRoute}_$_refreshKey'),
+                                      child: content,
+                                    );
+                                  }
+
+                                  return AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 300),
+                                    transitionBuilder: (child, animation) {
+                                      final slideAnimation = Tween<Offset>(
+                                        begin: _slideForward ? const Offset(0.08, 0) : const Offset(-0.08, 0),
+                                        end: Offset.zero,
+                                      ).animate(CurvedAnimation(
+                                        parent: animation,
+                                        curve: Curves.easeOutCubic,
+                                      ));
+                                      return FadeTransition(
+                                        opacity: animation,
+                                        child: SlideTransition(
+                                          position: slideAnimation,
+                                          child: child,
+                                        ),
+                                      );
+                                    },
+                                    child: content,
+                                  );
+                                }(),
                               ),
                             ),
                           ),
