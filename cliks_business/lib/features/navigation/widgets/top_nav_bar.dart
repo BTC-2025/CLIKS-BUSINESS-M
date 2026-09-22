@@ -146,6 +146,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                       AppRoute.expenses,
                       AppRoute.gst,
                       AppRoute.billing,
+                      AppRoute.simpleBilling,
                       AppRoute.sales,
                       AppRoute.customers,
                       AppRoute.returns,
@@ -208,6 +209,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                             return 'GST Compliance';
                           case AppRoute.billing:
                             return 'Sales Invoice';
+                          case AppRoute.simpleBilling:
+                            return 'Simple Billing';
                           case AppRoute.sales:
                             return 'Sales Orders';
                           case AppRoute.customers:
@@ -418,6 +421,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   AppRoute.expenses,
                   AppRoute.gst,
                   AppRoute.billing,
+                  AppRoute.simpleBilling,
                   AppRoute.sales,
                   AppRoute.customers,
                   AppRoute.returns,

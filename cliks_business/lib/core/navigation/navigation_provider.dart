@@ -12,6 +12,7 @@ enum AppRoute {
   profile,
   meetup,
   billing,
+  simpleBilling,
   people,
   accounting,
   expenses,

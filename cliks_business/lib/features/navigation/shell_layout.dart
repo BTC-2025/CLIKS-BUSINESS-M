@@ -11,6 +11,7 @@ import 'widgets/top_nav_bar.dart';
 import 'widgets/macos_right_utility_rail.dart';
 import '../social/pages/social_page.dart';
 import '../billing/pages/billing_page.dart';
+import '../billing/pages/simple_billing_page.dart';
 import '../people/pages/people_page.dart';
 import '../dashboard/dashboard_page.dart';
 import '../help/pages/help_page.dart';
@@ -502,6 +503,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return SocialPage(key: ValueKey(route));
       case AppRoute.billing:
         return BillingPage(key: ValueKey(route));
+      case AppRoute.simpleBilling:
+        return SimpleBillingPage(key: ValueKey(route));
       case AppRoute.people:
         return PeoplePage(key: ValueKey(route));
       case AppRoute.help:

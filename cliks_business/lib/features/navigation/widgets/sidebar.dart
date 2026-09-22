@@ -822,8 +822,8 @@ class Sidebar extends ConsumerWidget {
                   _buildMacOSItem(
                     icon: LucideIcons.receiptText,
                     label: 'Simple Billing',
-                    isSelected: false,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.billing),
+                    isSelected: navigation.currentRoute == AppRoute.simpleBilling,
+                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.simpleBilling),
                   ),
 
                   _buildMacOSItem(
