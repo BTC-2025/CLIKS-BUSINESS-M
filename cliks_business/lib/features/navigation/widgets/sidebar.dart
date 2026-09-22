@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../payments/widgets/add_money_dialog.dart';
 import 'sidebar_utility_rail.dart';
+import 'storage_breakdown_dialog.dart';
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -14,7 +15,8 @@ class Sidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navigation = ref.watch(navigationProvider);
-    final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
 
     if (isMacOS) {
       return _buildMacOSSidebar(context, ref, navigation);
@@ -978,60 +980,71 @@ class Sidebar extends ConsumerWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         // 1. Storage Card
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFD4EED1)),
-          ),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 18),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Text(
-                      'Storage',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11.5,
-                        color: Color(0xFF1E293B),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () {
+                MacOsStorageBreakdownDialog.show(context);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFD4EED1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text(
+                            'Storage',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11.5,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            '3.00 MB of 1.00 GB used',
+                            style: TextStyle(
+                              fontSize: 9.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SizedBox(height: 2),
-                    Text(
-                      '3.00 MB of 1.00 GB used',
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        color: Color(0xFF64748B),
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Text(
+                        '0%',
+                        style: TextStyle(
+                          fontSize: 8.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF2563EB),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
-                ),
-                alignment: Alignment.center,
-                child: const Text(
-                  '0%',
-                  style: TextStyle(
-                    fontSize: 8.5,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2563EB),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
 
