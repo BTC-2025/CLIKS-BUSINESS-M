@@ -194,7 +194,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                         child: ListView.separated(
                           shrinkWrap: true,
                           itemCount: _catalogProducts.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                          separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
                           itemBuilder: (context, idx) {
                             final prod = _catalogProducts[idx];
                             final isChecked = selectedIndices.contains(idx);
@@ -445,7 +445,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Total Items / Qty:', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                            Text('${validItems.length} items (${_totalQuantity} pcs)', style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text('${validItems.length} items ($_totalQuantity pcs)', style: const TextStyle(fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const Divider(height: 20, color: Color(0xFFE2E8F0)),
@@ -1090,7 +1090,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => const SizedBox(height: 10),
           itemBuilder: (context, index) {
             final item = _items[index];
 
