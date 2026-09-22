@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 
 class ReferralPage extends StatefulWidget {
   const ReferralPage({super.key});
@@ -192,19 +193,15 @@ class _ReferralPageState extends State<ReferralPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF064E3B), // Deep Forest Emerald
-            Color(0xFF047857), // Rich Emerald
-            Color(0xFF0F5B2E), // Classic CLIKS Green
-          ],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF064E3B).withValues(alpha: 0.28),
+            color: AppColors.heroShadowColor,
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

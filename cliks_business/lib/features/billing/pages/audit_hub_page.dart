@@ -112,15 +112,15 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F5B2E).withValues(alpha: 0.25),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -211,7 +211,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                       children: [
                         Icon(
                           LucideIcons.monitor,
-                          color: _activeWorkplace == 0 ? const Color(0xFF0F5B2E) : Colors.white,
+                          color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
@@ -221,7 +221,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: _activeWorkplace == 0 ? const Color(0xFF0F5B2E) : Colors.white,
+                              color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
                               fontSize: isMobile ? 11 : 12.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -252,7 +252,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                       children: [
                         Icon(
                           LucideIcons.userCheck,
-                          color: _activeWorkplace == 1 ? const Color(0xFF0F5B2E) : Colors.white,
+                          color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
                           size: 14,
                         ),
                         const SizedBox(width: 6),
@@ -262,7 +262,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              color: _activeWorkplace == 1 ? const Color(0xFF0F5B2E) : Colors.white,
+                              color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
                               fontSize: isMobile ? 11 : 12.5,
                               fontWeight: FontWeight.bold,
                             ),
@@ -417,12 +417,12 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Expanded(
+                Expanded(
                   child: Text(
                     'FIN-PRO Business Command Centre',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E)),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen),
                   ),
                 ),
               ],
@@ -489,7 +489,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                   'FIN-PRO Advisory: ${_advisoryTabs[_activeAdvisoryTab].label}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen),
                 ),
               ),
             ],
@@ -1628,9 +1628,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             ),
             child: Column(
               children: [
-                const Text(
+                Text(
                   '00:00:00',
-                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: Color(0xFF0F5B2E), letterSpacing: 2),
+                  style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppColors.stylishDarkGreen, letterSpacing: 2),
                 ),
                 const SizedBox(height: 6),
                 Row(

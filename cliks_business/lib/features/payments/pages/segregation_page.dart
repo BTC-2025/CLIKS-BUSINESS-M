@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../widgets/setup_target_wallet_dialog.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SegregationPage extends StatefulWidget {
   const SegregationPage({super.key});
@@ -179,7 +180,7 @@ class _SegregationPageState extends State<SegregationPage> {
                       style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F5B2E),
+                      backgroundColor: AppColors.stylishDarkGreen,
                       foregroundColor: Colors.white,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 13),
@@ -889,15 +890,15 @@ class _SegregationPageState extends State<SegregationPage> {
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF0F5B2E) : Colors.white,
+                  color: isSelected ? AppColors.stylishDarkGreen : Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF0F5B2E) : const Color(0xFFE2E8F0),
+                    color: isSelected ? AppColors.stylishDarkGreen : const Color(0xFFE2E8F0),
                   ),
                   boxShadow: isSelected
                       ? [
                           BoxShadow(
-                            color: const Color(0xFF0F5B2E).withValues(alpha: 0.2),
+                            color: AppColors.heroShadowColor,
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -964,7 +965,7 @@ class _SegregationPageState extends State<SegregationPage> {
       ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF0F5B2E),
+        foregroundColor: AppColors.stylishDarkGreen,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 0,
@@ -975,15 +976,15 @@ class _SegregationPageState extends State<SegregationPage> {
       width: double.infinity,
       padding: EdgeInsets.all(isMobile ? 18 : 24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF06381B), Color(0xFF0D542B), Color(0xFF14753D)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF06381B).withValues(alpha: 0.35),
+            color: AppColors.heroShadowColor,
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),

@@ -359,15 +359,15 @@ class _GstPageState extends ConsumerState<GstPage> {
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)],
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F5B2E).withValues(alpha: 0.3),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -736,7 +736,7 @@ class _GstPageState extends ConsumerState<GstPage> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: SizedBox(
-                width: 950,
+                width: AppColors.isMacOS ? 1050 : 950,
                 child: Column(
                   children: [
                     Table(
@@ -745,7 +745,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                         1: FlexColumnWidth(1.2),
                         2: FlexColumnWidth(1.0),
                         3: FlexColumnWidth(0.9),
-                        4: FlexColumnWidth(1.2),
+                        4: FlexColumnWidth(1.3),
                         5: FlexColumnWidth(1.3),
                         6: FlexColumnWidth(1.1),
                         7: FlexColumnWidth(1.1),
@@ -760,7 +760,14 @@ class _GstPageState extends ConsumerState<GstPage> {
                             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                             child: Row(
                               children: [
-                                Text(h, style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: AppColors.secondaryText)),
+                                Flexible(
+                                  child: Text(
+                                    h,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: AppColors.secondaryText),
+                                  ),
+                                ),
                                 const SizedBox(width: 2),
                                 const Icon(LucideIcons.chevronDown, size: 9, color: AppColors.secondaryText),
                               ],

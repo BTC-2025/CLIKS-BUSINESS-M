@@ -159,15 +159,15 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F5B2E).withValues(alpha: 0.25),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -408,7 +408,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Registered Godowns & Facility Locations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+        Text('Registered Godowns & Facility Locations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
         const SizedBox(height: 24),
         _buildTable(headers, isMobile, 'No godowns registered yet.'),
       ],
@@ -420,7 +420,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Warehouse Stock Registry', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+        Text('Warehouse Stock Registry', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
         const SizedBox(height: 24),
         _buildTable(headers, isMobile, 'No recorded inventory in facilities.'),
       ],
@@ -432,7 +432,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Goods Inwards Audit Trail', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+        Text('Goods Inwards Audit Trail', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
         const SizedBox(height: 24),
         _buildTable(headers, isMobile, 'No inward receipts audited.'),
       ],
@@ -447,7 +447,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
       icon: const Icon(LucideIcons.plus, size: 14),
       label: const Text('Inter-Warehouse Transfer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF0F5B2E),
+        backgroundColor: AppColors.stylishDarkGreen,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         elevation: 0,
@@ -461,7 +461,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Branch Dispatch & Inter-Transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+              Text('Branch Dispatch & Inter-Transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
               const SizedBox(height: 12),
               headerAction,
             ],
@@ -470,7 +470,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Branch Dispatch & Inter-Transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+              Text('Branch Dispatch & Inter-Transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
               headerAction,
             ],
           ),

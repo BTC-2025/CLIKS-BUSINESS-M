@@ -95,15 +95,15 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF065F46), Color(0xFF047857), Color(0xFF10B981)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF047857).withValues(alpha: 0.25),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),

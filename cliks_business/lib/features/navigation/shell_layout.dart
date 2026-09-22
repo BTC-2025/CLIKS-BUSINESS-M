@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -7,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/navigation/navigation_provider.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/top_nav_bar.dart';
+import 'widgets/macos_right_utility_rail.dart';
 import '../social/pages/social_page.dart';
 import '../billing/pages/billing_page.dart';
 import '../people/pages/people_page.dart';
@@ -78,6 +80,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
   Widget build(BuildContext context) {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
+    final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
     // Track directional animations
     if (_lastModule != navigation.currentModule) {
@@ -184,7 +187,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             }
             return navigation.currentModule == AppModule.payments
                 ? AppRoute.people
-                : (navigation.currentModule == AppModule.social ? AppRoute.meetup : AppRoute.dashboard);
+                : (navigation.currentModule == AppModule.social ? (isMacOS ? AppRoute.betaClub : AppRoute.meetup) : AppRoute.dashboard);
           }();
           ref.read(navigationProvider.notifier).setRoute(baseRoute);
           return;
@@ -197,7 +200,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             case AppModule.payments:
               return AppRoute.people;
             case AppModule.social:
-              return AppRoute.meetup;
+              return isMacOS ? AppRoute.betaClub : AppRoute.meetup;
             case AppModule.profile:
               return AppRoute.profile;
           }
@@ -335,7 +338,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                       }
                                       return navigation.currentModule == AppModule.payments
                                           ? AppRoute.people
-                                          : (navigation.currentModule == AppModule.social ? AppRoute.meetup : AppRoute.dashboard);
+                                          : (navigation.currentModule == AppModule.social ? (isMacOS ? AppRoute.betaClub : AppRoute.meetup) : AppRoute.dashboard);
                                     }();
 
                                     if (isOverlay) {
@@ -366,6 +369,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                               ),
                             ),
                           ),
+                          if (isMacOS && isDesktop && navigation.currentModule != AppModule.profile && ref.watch(macosBetaAppsVisibleProvider))
+                            const MacOSRightUtilityRail(),
                         ],
                       ),
                     ),
@@ -628,7 +633,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     } else if (module == AppModule.payments) {
       ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.payments, AppRoute.people);
     } else if (module == AppModule.social) {
-      ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.social, AppRoute.meetup);
+      final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
+      ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.social, isMacOS ? AppRoute.betaClub : AppRoute.meetup);
     } else if (module == AppModule.profile) {
       ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.profile);
     }

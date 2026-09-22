@@ -134,7 +134,7 @@ class _RegisterProductModalState extends ConsumerState<RegisterProductModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF0F5B2E) : const Color(0xFFF3F4F6),
+          color: isActive ? AppColors.stylishDarkGreen : const Color(0xFFF3F4F6),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
@@ -152,10 +152,10 @@ class _RegisterProductModalState extends ConsumerState<RegisterProductModal> {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF0F5B2E),
+        color: AppColors.stylishDarkGreen,
         letterSpacing: 0.5,
       ),
     );
@@ -805,7 +805,7 @@ class _InterWarehouseTransferModalState extends ConsumerState<InterWarehouseTran
               child: ElevatedButton(
                 onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.warehouse),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F5B2E),
+                  backgroundColor: AppColors.stylishDarkGreen,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,

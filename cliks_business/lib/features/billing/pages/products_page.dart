@@ -164,15 +164,15 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F5B2E).withValues(alpha: 0.25),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -431,9 +431,9 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Product Movement & Stock Audits',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E)),
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen),
           ),
           const SizedBox(height: 4),
           const Text(
@@ -561,7 +561,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
         Container(
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
-            color: const Color(0xFF0F5B2E),
+            color: AppColors.stylishDarkGreen,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(

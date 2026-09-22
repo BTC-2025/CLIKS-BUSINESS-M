@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/modals/finance_modals.dart';
 import '../../billing/providers/expenses_provider.dart';
+import 'macos_right_utility_rail.dart';
 
 class TopNavBar extends ConsumerStatefulWidget {
   const TopNavBar({super.key});
@@ -370,7 +371,9 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                                 .read(navigationProvider.notifier)
                                 .setModuleAndRoute(
                                   AppModule.social,
-                                  AppRoute.meetup,
+                                  Theme.of(context).platform == TargetPlatform.macOS
+                                      ? AppRoute.betaClub
+                                      : AppRoute.meetup,
                                 ),
                           ),
                         ],
@@ -510,7 +513,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(color: AppColors.primaryGreen),
+      decoration: const BoxDecoration(color: Color(0xFF135029)),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -530,7 +533,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                       clipBehavior: Clip.antiAlias,
                       padding: const EdgeInsets.all(3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9),
+                        color: const Color(0xFFEAFAE3),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Image.asset(
@@ -581,7 +584,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                         subtitle: 'INV-158091 was saved successfully.',
                         time: '2 mins ago',
                         icon: LucideIcons.fileCheck,
-                        iconColor: AppColors.primaryGreen,
+                        iconColor: const Color(0xFF135029),
                       ),
                       _buildNotificationItem(
                         title: 'Points Updated',
@@ -664,7 +667,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                             Icon(
                               LucideIcons.circleUser,
                               size: 18,
-                              color: AppColors.primaryGreen,
+                              color: Color(0xFF135029),
                             ),
                             SizedBox(width: 10),
                             Text('Profile (ravinew2004)'),
@@ -678,7 +681,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                             Icon(
                               LucideIcons.settings,
                               size: 18,
-                              color: AppColors.primaryGreen,
+                              color: Color(0xFF135029),
                             ),
                             SizedBox(width: 10),
                             Text('Settings'),
@@ -717,15 +720,13 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   ),
                   const SizedBox(width: 8),
 
-                  // 5. Sliders / Settings Button
+                  // 5. Beta Apps View Button
                   _buildMacOSCircleButton(
                     icon: LucideIcons.slidersHorizontal,
-                    tooltip: 'Settings',
+                    tooltip: 'Beta Apps',
+                    isActive: ref.watch(macosBetaAppsVisibleProvider),
                     onTap: () {
-                      ref.read(navigationProvider.notifier).setModuleAndRoute(
-                            AppModule.books,
-                            AppRoute.settings,
-                          );
+                      ref.read(macosBetaAppsVisibleProvider.notifier).update((v) => !v);
                     },
                   ),
                 ],
@@ -823,7 +824,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                               .read(navigationProvider.notifier)
                               .setModuleAndRoute(
                                 AppModule.social,
-                                AppRoute.meetup,
+                                AppRoute.betaClub,
                               ),
                         ),
                       ],
@@ -839,6 +840,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     required IconData icon,
     String? tooltip,
     VoidCallback? onTap,
+    bool isActive = false,
   }) {
     final button = Material(
       color: Colors.transparent,
@@ -851,15 +853,15 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: Colors.black.withValues(alpha: 0.2),
+            color: isActive ? Colors.white : Colors.black.withValues(alpha: 0.2),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.22),
+              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.22),
               width: 1,
             ),
           ),
           child: Icon(
             icon,
-            color: Colors.white,
+            color: isActive ? const Color(0xFF135029) : Colors.white,
             size: 18,
           ),
         ),
@@ -918,8 +920,9 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF1E5B3A) : Colors.transparent,
+          color: isActive ? const Color(0xFF135029) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
+          border: isActive ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1) : null,
         ),
         child: Text(
           label,

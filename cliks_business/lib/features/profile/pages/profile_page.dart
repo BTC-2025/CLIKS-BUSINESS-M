@@ -317,17 +317,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         isMobile ? 20 : 28
       ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [AppColors.primaryGreen, Color(0xFF0F5B2E)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
         ),
         boxShadow: [
-          BoxShadow(color: AppColors.primaryGreen.withValues(alpha: 0.2), blurRadius: 15, offset: const Offset(0, 8)),
+          BoxShadow(color: AppColors.heroShadowColor, blurRadius: 15, offset: const Offset(0, 8)),
         ],
       ),
       child: Column(

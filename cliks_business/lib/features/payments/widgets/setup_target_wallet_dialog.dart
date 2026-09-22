@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../core/theme/app_colors.dart';
 
 class SetupTargetWalletDialog extends StatefulWidget {
   final Function(Map<String, dynamic>)? onWalletCreated;
@@ -297,7 +298,7 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF0F5B2E),
+                              backgroundColor: AppColors.stylishDarkGreen,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               padding: const EdgeInsets.symmetric(vertical: 13),
@@ -353,12 +354,12 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
               color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: const Text(
+            child: Text(
               '₹ INR',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0F5B2E),
+                color: AppColors.stylishDarkGreen,
               ),
             ),
           ),
@@ -429,7 +430,7 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF0F5B2E), width: 1.5),
+          borderSide: BorderSide(color: AppColors.stylishDarkGreen, width: 1.5),
         ),
       ),
     );

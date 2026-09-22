@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,6 +13,7 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -20,7 +22,9 @@ class DashboardPage extends ConsumerWidget {
         slivers: [
           // ─── FINANCIAL SUMMARY HERO CARD ───
           SliverToBoxAdapter(
-            child: _buildHeroSummary(context, isMobile)
+            child: (isMacOS
+                    ? _buildMacOSBusinessOverview(context, isMobile)
+                    : _buildHeroSummary(context, isMobile))
                 .animate()
                 .fadeIn(duration: 400.ms)
                 .slideY(begin: -0.05, end: 0),
@@ -129,20 +133,245 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildMacOSBusinessOverview(BuildContext context, bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(
+        isMobile ? 14 : 24,
+        isMobile ? 12 : 20,
+        isMobile ? 14 : 24,
+        0,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row: Business Overview title & subtitle + Customise button
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Business Overview',
+                      style: TextStyle(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF135029),
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Monitor your enterprise performance and operations.',
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: () {},
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF135029),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.slidersHorizontal, size: 15, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        'Customise',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // 3 Statistics Cards
+          if (isMobile)
+            Column(
+              children: [
+                _buildMacOSStatCard(
+                  icon: LucideIcons.trendingUp,
+                  iconColor: const Color(0xFF135029),
+                  iconBg: const Color(0xFFEAFAE3),
+                  hasLiveBadge: true,
+                  label: 'Total Sales Revenue',
+                  amount: '₹10,21,25,50,71,294',
+                ),
+                const SizedBox(height: 12),
+                _buildMacOSStatCard(
+                  icon: LucideIcons.shoppingCart,
+                  iconColor: const Color(0xFF2563EB),
+                  iconBg: const Color(0xFFEFF6FF),
+                  hasLiveBadge: true,
+                  label: 'Total Purchases',
+                  amount: '₹13,84,791',
+                ),
+                const SizedBox(height: 12),
+                _buildMacOSStatCard(
+                  icon: LucideIcons.banknote,
+                  iconColor: const Color(0xFFEA580C),
+                  iconBg: const Color(0xFFFFF7ED),
+                  hasLiveBadge: false,
+                  label: 'Total Expenses',
+                  amount: '₹3,14,61,64,99,53,93,93,80,00,00,00,00,00,00,00,00,00,00,000',
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMacOSStatCard(
+                    icon: LucideIcons.trendingUp,
+                    iconColor: const Color(0xFF135029),
+                    iconBg: const Color(0xFFEAFAE3),
+                    hasLiveBadge: true,
+                    label: 'Total Sales Revenue',
+                    amount: '₹10,21,25,50,71,294',
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildMacOSStatCard(
+                    icon: LucideIcons.shoppingCart,
+                    iconColor: const Color(0xFF2563EB),
+                    iconBg: const Color(0xFFEFF6FF),
+                    hasLiveBadge: true,
+                    label: 'Total Purchases',
+                    amount: '₹13,84,791',
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildMacOSStatCard(
+                    icon: LucideIcons.banknote,
+                    iconColor: const Color(0xFFEA580C),
+                    iconBg: const Color(0xFFFFF7ED),
+                    hasLiveBadge: false,
+                    label: 'Total Expenses',
+                    amount: '₹3,14,61,64,99,53,93,93,80,00,00,00,00,00,00,00,00,00,00,000',
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacOSStatCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required bool hasLiveBadge,
+    required String label,
+    required String amount,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              if (hasLiveBadge)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEAFAE3),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Live',
+                    style: TextStyle(
+                      color: Color(0xFF135029),
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            amount,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+              letterSpacing: -0.3,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHeroSummary(BuildContext context, bool isMobile) {
     return Container(
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)], // Accounting Green theme
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F5B2E).withValues(alpha: 0.25),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -287,11 +516,23 @@ class DashboardPage extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8F5E9),
+                  color: AppColors.isMacOS ? const Color(0xFFEAFAE3) : const Color(0xFFE8F5E9),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF81C784), width: 0.5),
+                  border: Border.all(
+                    color: AppColors.isMacOS
+                        ? const Color(0xFF135029).withValues(alpha: 0.3)
+                        : const Color(0xFF81C784),
+                    width: 0.5,
+                  ),
                 ),
-                child: const Text('Live Stream', style: TextStyle(color: Color(0xFF2E7D32), fontSize: 9.5, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Live Stream',
+                  style: TextStyle(
+                    color: AppColors.isMacOS ? const Color(0xFF135029) : const Color(0xFF2E7D32),
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -507,13 +748,14 @@ class _QuickActionTile extends ConsumerWidget {
 class _ChartLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
+    final chartGreen = AppColors.isMacOS ? const Color(0xFF135029) : const Color(0xFF2E7D32);
     final paintLine = Paint()
-      ..color = const Color(0xFF2E7D32)
+      ..color = chartGreen
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
 
     final paintDot = Paint()
-      ..color = const Color(0xFF2E7D32)
+      ..color = chartGreen
       ..style = PaintingStyle.fill;
 
     final paintDotInner = Paint()

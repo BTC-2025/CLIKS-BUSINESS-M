@@ -167,7 +167,7 @@ class _ComposeEmailCampaignDialogState extends State<ComposeEmailCampaignDialog>
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F5B2E),
+                    backgroundColor: AppColors.stylishDarkGreen,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -187,7 +187,7 @@ class _ComposeEmailCampaignDialogState extends State<ComposeEmailCampaignDialog>
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Row(
         children: [
-          const Icon(LucideIcons.sparkles, color: Color(0xFF0F5B2E), size: 24),
+          Icon(LucideIcons.sparkles, color: AppColors.stylishDarkGreen, size: 24),
           const SizedBox(width: 12),
           const Expanded(
             child: Text(
@@ -269,7 +269,7 @@ class _ComposeEmailCampaignDialogState extends State<ComposeEmailCampaignDialog>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF0F5B2E), width: 1.5),
+              borderSide: BorderSide(color: AppColors.stylishDarkGreen, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
@@ -317,7 +317,7 @@ class _ComposeEmailCampaignDialogState extends State<ComposeEmailCampaignDialog>
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Color(0xFF0F5B2E), width: 1.5),
+              borderSide: BorderSide(color: AppColors.stylishDarkGreen, width: 1.5),
             ),
           ),
           items: items.map((String item) {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 
 class ReferEarnDialog extends StatelessWidget {
   const ReferEarnDialog({super.key});
@@ -79,14 +80,11 @@ class ReferEarnDialog extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF0F5B2E),
-            Color(0xFF133C24),
-          ],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(32),
@@ -130,7 +128,7 @@ class ReferEarnDialog extends StatelessWidget {
                   color: const Color(0xFFF2C94C),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(LucideIcons.gift, color: Color(0xFF0F5B2E), size: 32),
+                child: Icon(LucideIcons.gift, color: AppColors.stylishDarkGreen, size: 32),
               ),
               const SizedBox(height: 16),
               const Text(

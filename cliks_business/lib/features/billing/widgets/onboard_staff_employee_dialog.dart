@@ -132,8 +132,8 @@ class _OnboardStaffEmployeeDialogState extends State<OnboardStaffEmployeeDialog>
         children: [
           Container(
             padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Color(0xFF0F5B2E),
+            decoration: BoxDecoration(
+              color: AppColors.stylishDarkGreen,
               shape: BoxShape.circle,
             ),
             child: const Icon(LucideIcons.userPlus, color: Colors.white, size: 20),
@@ -408,7 +408,7 @@ class _OnboardStaffEmployeeDialogState extends State<OnboardStaffEmployeeDialog>
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F5B2E),
+                  backgroundColor: AppColors.stylishDarkGreen,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -459,7 +459,7 @@ class _OnboardStaffEmployeeDialogState extends State<OnboardStaffEmployeeDialog>
               }
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F5B2E),
+              backgroundColor: AppColors.stylishDarkGreen,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

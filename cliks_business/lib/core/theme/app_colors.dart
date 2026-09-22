@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class AppColors {
@@ -20,4 +21,27 @@ class AppColors {
   
   static const Color hoverBackground = Color(0xFFEEF7F0);
   static const Color sidebarBackground = Color(0xFFEAF6EC);
+
+  // macOS-specific palette tokens
+  static const Color macosDarkGreen = Color(0xFF135029);
+  static const Color macosLightGreen = Color(0xFFEAFAE3);
+
+  static bool get isMacOS => !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+  /// Returns stylish dark green #135029 on macOS, and #0F5B2E on other platforms
+  static Color get stylishDarkGreen => isMacOS ? macosDarkGreen : primaryGreen;
+
+  /// Returns light green highlight #EAFAE3 on macOS, and #E8F5E9 on other platforms
+  static Color get lightGreenHighlight => isMacOS ? macosLightGreen : const Color(0xFFE8F5E9);
+
+  /// Gradient colors for statistics hero cards across sections.
+  /// On macOS: strictly NO gradient, pure solid dark green #135029.
+  static List<Color> get heroGradientColors => isMacOS
+      ? const [Color(0xFF135029), Color(0xFF135029)]
+      : const [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)];
+
+  /// Shadow color for statistics hero cards across sections
+  static Color get heroShadowColor => isMacOS
+      ? const Color(0xFF135029).withValues(alpha: 0.25)
+      : const Color(0xFF0F5B2E).withValues(alpha: 0.25);
 }

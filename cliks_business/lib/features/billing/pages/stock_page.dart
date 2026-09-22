@@ -159,15 +159,15 @@ class _StockPageState extends ConsumerState<StockPage>
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF0F5B2E), Color(0xFF1A7A42), Color(0xFF22905A)],
+          colors: AppColors.heroGradientColors,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F5B2E).withValues(alpha: 0.25),
+            color: AppColors.heroShadowColor,
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -417,7 +417,7 @@ class _StockPageState extends ConsumerState<StockPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Registry & Valuation Summary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+        Text('Registry & Valuation Summary', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
         const SizedBox(height: 24),
         _buildTable(headers, isMobile, 'No recorded inventory items.'),
       ],
@@ -444,7 +444,7 @@ class _StockPageState extends ConsumerState<StockPage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Stock Inward / Outward running ledger', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+              Text('Stock Inward / Outward running ledger', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
               const SizedBox(height: 12),
               headerAction,
             ],
@@ -453,7 +453,7 @@ class _StockPageState extends ConsumerState<StockPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Stock Inward / Outward running ledger', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+              Text('Stock Inward / Outward running ledger', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
               headerAction,
             ],
           ),
@@ -483,7 +483,7 @@ class _StockPageState extends ConsumerState<StockPage>
       icon: const Icon(LucideIcons.plus, size: 14),
       label: const Text('Transfer Stock', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF0F5B2E),
+        backgroundColor: AppColors.stylishDarkGreen,
         foregroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         elevation: 0,
@@ -497,7 +497,7 @@ class _StockPageState extends ConsumerState<StockPage>
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Warehouse Branch transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+              Text('Warehouse Branch transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
               const SizedBox(height: 12),
               headerAction,
             ],
@@ -506,7 +506,7 @@ class _StockPageState extends ConsumerState<StockPage>
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Warehouse Branch transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+              Text('Warehouse Branch transfers', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
               headerAction,
             ],
           ),
@@ -529,7 +529,7 @@ class _StockPageState extends ConsumerState<StockPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Batch-Wise & Expiry Tracking (FIFO Engine)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F5B2E))),
+        Text('Batch-Wise & Expiry Tracking (FIFO Engine)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen)),
         const SizedBox(height: 24),
         _buildTable(headers, isMobile, 'No batched stock items found.'),
       ],
