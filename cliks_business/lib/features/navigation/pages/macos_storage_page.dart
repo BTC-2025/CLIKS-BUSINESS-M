@@ -29,6 +29,45 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   String _lastUpdatedText = 'Just now';
   bool _isRefreshing = false;
 
+  String _selectedRecycleFilter = 'ALL';
+  int _recycleCurrentPage = 1;
+  static const int _recycleItemsPerPage = 3;
+  late List<_RecycleBinItem> _recycleItems;
+  final TextEditingController _recycleSearchController = TextEditingController();
+  String _recycleSearchQuery = '';
+
+  // Manage Apps state
+  final TextEditingController _poolSizeController = TextEditingController(text: '5');
+  String _manageAppsStatusText = 'Preferences saved successfully';
+
+  // Settings state
+  String _settingsSubSection = 'privacy'; // 'general', 'privacy', 'apps'
+  String _selectedLanguage = 'English';
+  String _selectedStorageUnit = 'GB'; // 'GB', 'TB'
+  String _selectedDecimalPrecision = '2 digits';
+  bool _showUsagePercentage = true;
+  bool _showAvailableStorage = true;
+  String _selectedDefaultView = 'Storage Overview';
+  bool _showAppStatus = true;
+  bool _showRecentActivity = true;
+  bool _showStorageAlerts = true;
+  String _selectedTheme = 'System'; // 'Light', 'System', 'Dark'
+  String _storageAccessOption = 'only_me'; // 'only_me', 'connected', 'shared'
+  String _settingsStatusText = 'Preferences saved successfully';
+
+  @override
+  void initState() {
+    super.initState();
+    _recycleItems = _createDefaultRecycleItems();
+  }
+
+  @override
+  void dispose() {
+    _recycleSearchController.dispose();
+    _poolSizeController.dispose();
+    super.dispose();
+  }
+
   void _triggerRefresh() {
     setState(() {
       _isRefreshing = true;
@@ -143,45 +182,47 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           ),
           const SizedBox(width: 14),
 
-          // Beta Logo
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF2563EB), Color(0xFF1D4ED8)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
+          // Beta Logo (Matching Screenshot)
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    'B',
+                    style: GoogleFonts.playfairDisplay(
+                      color: const Color(0xFF2563EB),
+                      fontWeight: FontWeight.w900,
+                      fontSize: 22,
+                      height: 1.0,
+                    ),
+                  ),
+                  Text(
+                    'BETA',
+                    style: GoogleFonts.outfit(
+                      color: const Color(0xFF2563EB),
+                      fontWeight: FontWeight.w800,
+                      fontSize: 7.5,
+                      letterSpacing: 0.8,
+                      height: 1.0,
+                    ),
+                  ),
+                ],
               ),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.25),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
+              const SizedBox(width: 10),
+              Text(
+                'Beta',
+                style: GoogleFonts.outfit(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                  letterSpacing: -0.3,
                 ),
-              ],
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'B',
-              style: GoogleFonts.outfit(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-                fontSize: 19,
-                fontStyle: FontStyle.italic,
               ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            'Beta',
-            style: GoogleFonts.outfit(
-              fontSize: 18,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF0F172A),
-              letterSpacing: -0.3,
-            ),
+            ],
           ),
 
           const Spacer(),
@@ -444,11 +485,38 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
         children: [
-          // Home
-          _buildSidebarItem(
-            tab: _StorageTab.home,
-            icon: LucideIcons.home,
-            title: 'Home',
+          // Home (Prominent blue button matching reference screenshots)
+          InkWell(
+            onTap: () => setState(() => _activeTab = _StorageTab.home),
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2563EB),
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.home, size: 16, color: Colors.white),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Home',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
 
           const SizedBox(height: 18),
@@ -457,17 +525,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
           _buildSidebarItem(
             tab: _StorageTab.bnxMail,
-            icon: LucideIcons.send,
+            customIconWidget: _buildBnxMailLogo(
+              size: 16,
+              color: _activeTab == _StorageTab.bnxMail ? Colors.white : const Color(0xFF2563EB),
+            ),
             title: 'BNX Mail',
           ),
           _buildSidebarItem(
             tab: _StorageTab.cliks,
-            icon: LucideIcons.checkCircle2,
+            icon: LucideIcons.circleCheck,
+            customIconColor: const Color(0xFF16A34A),
             title: 'Cliks',
           ),
           _buildSidebarItem(
             tab: _StorageTab.cliksBusiness,
-            icon: LucideIcons.checkCircle2,
+            icon: LucideIcons.circleCheck,
+            customIconColor: const Color(0xFF16A34A),
             title: 'Cliks Business',
           ),
 
@@ -522,8 +595,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
   Widget _buildSidebarItem({
     required _StorageTab tab,
-    required IconData icon,
+    IconData? icon,
+    Widget? customIconWidget,
     required String title,
+    Color? customIconColor,
   }) {
     final isSelected = _activeTab == tab;
 
@@ -540,11 +615,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           ),
           child: Row(
             children: [
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected ? Colors.white : const Color(0xFF475569),
-              ),
+              if (customIconWidget != null)
+                customIconWidget
+              else if (icon != null)
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : (customIconColor ?? const Color(0xFF475569)),
+                ),
               const SizedBox(width: 12),
               Text(
                 title,
@@ -1645,164 +1723,3203 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   }
 
   Widget _buildRecycleBinView() {
+    final bnxCount = _recycleItems.where((i) => i.app == 'BNX Mail').length;
+    final bnxSize = _recycleItems.where((i) => i.app == 'BNX Mail').fold<double>(0.0, (s, i) => s + i.sizeMb);
+
+    final cliksBizCount = _recycleItems.where((i) => i.app == 'Cliks Business').length;
+    final cliksBizSize = _recycleItems.where((i) => i.app == 'Cliks Business').fold<double>(0.0, (s, i) => s + i.sizeMb);
+
+    final cliksCount = _recycleItems.where((i) => i.app == 'Cliks').length;
+    final cliksSize = _recycleItems.where((i) => i.app == 'Cliks').fold<double>(0.0, (s, i) => s + i.sizeMb);
+
+    List<_RecycleBinItem> filtered;
+    switch (_selectedRecycleFilter) {
+      case 'BNX MAIL':
+        filtered = _recycleItems.where((i) => i.app == 'BNX Mail').toList();
+        break;
+      case 'CLIKS BUSINESS':
+        filtered = _recycleItems.where((i) => i.app == 'Cliks Business').toList();
+        break;
+      case 'CLIKS':
+        filtered = _recycleItems.where((i) => i.app == 'Cliks').toList();
+        break;
+      case 'EXPIRING SOON':
+        filtered = _recycleItems.where((i) => i.daysRemaining <= 10).toList();
+        break;
+      case 'ALL':
+      default:
+        filtered = _recycleItems.toList();
+        break;
+    }
+
+    if (_recycleSearchQuery.trim().isNotEmpty) {
+      final q = _recycleSearchQuery.trim().toLowerCase();
+      filtered = filtered.where((i) =>
+        i.name.toLowerCase().contains(q) ||
+        i.app.toLowerCase().contains(q) ||
+        i.type.toLowerCase().contains(q)
+      ).toList();
+    }
+
+    final totalPages = (filtered.length / _recycleItemsPerPage).ceil().clamp(1, 999);
+    final currentPage = _recycleCurrentPage.clamp(1, totalPages);
+    final startIndex = (currentPage - 1) * _recycleItemsPerPage;
+    final endIndex = math.min(startIndex + _recycleItemsPerPage, filtered.length);
+    final pageItems = startIndex < filtered.length ? filtered.sublist(startIndex, endIndex) : <_RecycleBinItem>[];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ─── 1. BREADCRUMBS (Image 1) ───
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Recycle Bin', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
-                const SizedBox(height: 4),
-                Text('Items in trash are automatically purged after 30 days.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
-              ],
+            InkWell(
+              onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+              child: Text(
+                'Storage Management',
+                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+              ),
             ),
-            ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Recycle bin emptied.', style: GoogleFonts.outfit()),
-                    backgroundColor: const Color(0xFFEF4444),
-                    behavior: SnackBarBehavior.floating,
-                    width: 320,
-                  ),
-                );
-              },
-              icon: const Icon(LucideIcons.trash2, size: 14),
-              label: Text('Empty Bin', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFEF4444),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            Text(
+              '  ›  ',
+              style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+            ),
+            Text(
+              'Recycle Bin',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF0F172A),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
-          child: Column(
-            children: [
-              _buildTrashItem('invoice_backup_july2026.zip', '12.4 MB', 'Deleted 4 days ago'),
-              const Divider(height: 16, color: Color(0xFFF1F5F9)),
-              _buildTrashItem('product_catalog_export_v1.xlsx', '3.8 MB', 'Deleted 11 days ago'),
-              const Divider(height: 16, color: Color(0xFFF1F5F9)),
-              _buildTrashItem('temp_audit_session_cache.log', '820 KB', 'Deleted 18 days ago'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
+        const SizedBox(height: 12),
 
-  Widget _buildTrashItem(String name, String size, String date) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
+        // ─── 2. TITLE ROW WITH ICON + SEARCH BAR (Image 1) ───
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const Icon(LucideIcons.file, size: 16, color: Color(0xFF64748B)),
-            const SizedBox(width: 10),
-            Text(name, style: GoogleFonts.outfit(fontSize: 13, fontWeight: FontWeight.w600, color: const Color(0xFF1E293B))),
-          ],
-        ),
-        Row(
-          children: [
-            Text(size, style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B))),
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFFECACA)),
+              ),
+              alignment: Alignment.center,
+              child: const Icon(LucideIcons.trash2, size: 20, color: Color(0xFFEF4444)),
+            ),
             const SizedBox(width: 14),
-            Text(date, style: GoogleFonts.outfit(fontSize: 11.5, color: const Color(0xFF94A3B8))),
-            const SizedBox(width: 14),
-            TextButton(
-              onPressed: () {},
-              child: Text('Restore', style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB))),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Recycle Bin',
+                    style: GoogleFonts.outfit(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'Recover deleted files across your applications',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            // Search Box
+            Container(
+              width: 240,
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _recycleSearchController,
+                      onChanged: (val) {
+                        setState(() {
+                          _recycleSearchQuery = val;
+                          _recycleCurrentPage = 1;
+                        });
+                      },
+                      style: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFF0F172A)),
+                      decoration: InputDecoration(
+                        hintText: 'Search deleted files...',
+                        hintStyle: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  if (_recycleSearchQuery.isNotEmpty)
+                    InkWell(
+                      onTap: () {
+                        setState(() {
+                          _recycleSearchController.clear();
+                          _recycleSearchQuery = '';
+                          _recycleCurrentPage = 1;
+                        });
+                      },
+                      child: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                    ),
+                ],
+              ),
             ),
           ],
         ),
-      ],
-    );
-  }
 
-  Widget _buildManageAppsView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Manage Connected Apps', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
-        const SizedBox(height: 4),
-        Text('Control storage access and quota caps for ecosystem applications.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
         const SizedBox(height: 20),
+
+        // ─── 3. TOP RECYCLE BIN CAPACITY CARD (245 MB used) ───
         Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
-          child: Column(
-            children: [
-              _buildAppManagerTile('Cliks Business', 'Dedicated: 1.00 GB cap', true),
-              const Divider(height: 16, color: Color(0xFFF1F5F9)),
-              _buildAppManagerTile('BNX Mail', 'Pooled: Dynamic allocation', true),
-              const Divider(height: 16, color: Color(0xFFF1F5F9)),
-              _buildAppManagerTile('Cliks Messenger', 'Pooled: Dynamic allocation', true),
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
             ],
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAppManagerTile(String name, String desc, bool isEnabled) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(name, style: GoogleFonts.outfit(fontSize: 14, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
-            Text(desc, style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B))),
-          ],
-        ),
-        Switch(
-          value: isEnabled,
-          activeColor: const Color(0xFF2563EB),
-          onChanged: (_) {},
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSettingsView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Storage Settings & Preferences', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
-        const SizedBox(height: 4),
-        Text('Configure automated warning thresholds and cache management.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
-        const SizedBox(height: 20),
-        Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Alert Thresholds', style: GoogleFonts.outfit(fontSize: 14.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+              Text(
+                'RECYCLE BIN',
+                style: GoogleFonts.outfit(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF64748B),
+                  letterSpacing: 0.5,
+                ),
+              ),
               const SizedBox(height: 6),
-              Text('Notify when Cliks Business crosses 90% capacity (Active: Critical Alert).', style: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFF64748B))),
-              const SizedBox(height: 14),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: const Color(0xFFFEF2F2), borderRadius: BorderRadius.circular(6), border: Border.all(color: const Color(0xFFFECACA))),
-                    child: Text('Critical Trigger: 90%', style: GoogleFonts.outfit(fontSize: 11, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+                  Text(
+                    '245 MB',
+                    style: GoogleFonts.outfit(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFFEF4444),
+                    ),
                   ),
-                  const SizedBox(width: 10),
-                  Text('Active on macOS Notification Center', style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B))),
+                  const SizedBox(width: 6),
+                  Text(
+                    'used',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              // Thin Red Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: const SizedBox(
+                  height: 5,
+                  child: LinearProgressIndicator(
+                    value: 0.05,
+                    backgroundColor: Color(0xFFF1F5F9),
+                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFEF4444)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '5 GB allocated space',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11.5,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    '4.76 GB free',
+                    style: GoogleFonts.outfit(
+                      fontSize: 11.5,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
                 ],
               ),
             ],
           ),
         ),
+
+        const SizedBox(height: 24),
+
+        // ─── 4. APPLICATION STORAGE SECTION TITLE ───
+        Text(
+          'APPLICATION STORAGE',
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF64748B),
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // ─── 5. TOP 3 APP RECYCLE SUMMARY CARDS (Matching Image 1) ───
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 650;
+            final cardBnx = _buildRecycleSummaryCard(
+              title: 'BNX Mail',
+              iconWidget: _buildBnxMailLogo(size: 16, color: const Color(0xFF2563EB)),
+              iconBgColor: const Color(0xFFEFF6FF),
+              deletedCount: bnxCount,
+              sizeText: '${bnxSize.round()} MB',
+              accentColor: const Color(0xFF2563EB),
+              onTapViewDetails: () {
+                setState(() {
+                  _selectedRecycleFilter = 'BNX MAIL';
+                  _recycleCurrentPage = 1;
+                });
+              },
+            );
+            final cardCliksBiz = _buildRecycleSummaryCard(
+              title: 'Cliks Business',
+              icon: LucideIcons.circleCheck,
+              iconColor: const Color(0xFF16A34A),
+              iconBgColor: const Color(0xFFF5F3FF),
+              deletedCount: cliksBizCount,
+              sizeText: '${cliksBizSize.round()} MB',
+              accentColor: const Color(0xFF7C3AED),
+              onTapViewDetails: () {
+                setState(() {
+                  _selectedRecycleFilter = 'CLIKS BUSINESS';
+                  _recycleCurrentPage = 1;
+                });
+              },
+            );
+            final cardCliks = _buildRecycleSummaryCard(
+              title: 'Cliks',
+              icon: LucideIcons.circleCheck,
+              iconColor: const Color(0xFF16A34A),
+              iconBgColor: const Color(0xFFF0FDFA),
+              deletedCount: cliksCount,
+              sizeText: '${cliksSize.round()} MB',
+              accentColor: const Color(0xFF0D9488),
+              onTapViewDetails: () {
+                setState(() {
+                  _selectedRecycleFilter = 'CLIKS';
+                  _recycleCurrentPage = 1;
+                });
+              },
+            );
+
+            if (isNarrow) {
+              return Column(
+                children: [
+                  cardBnx,
+                  const SizedBox(height: 12),
+                  cardCliksBiz,
+                  const SizedBox(height: 12),
+                  cardCliks,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                cardBnx,
+                const SizedBox(width: 16),
+                cardCliksBiz,
+                const SizedBox(width: 16),
+                cardCliks,
+              ],
+            );
+          },
+        ),
+
+        const SizedBox(height: 28),
+
+        // ─── 6. RECYCLE BIN SECTION HEADER (Images 1, 3, 4) ───
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recycle Bin',
+              style: GoogleFonts.outfit(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+            Text(
+              '${filtered.length} ITEMS',
+              style: GoogleFonts.outfit(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF64748B),
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 14),
+
+        // ─── 7. FILTER TABS (ALL, BNX MAIL, CLIKS BUSINESS, CLIKS, EXPIRING SOON) ───
+        _buildRecycleFilterTabs(),
+
+        const SizedBox(height: 20),
+
+        // ─── 8. LIST OF DELETED ITEM CARDS ───
+        if (filtered.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                const Icon(LucideIcons.trash2, size: 36, color: Color(0xFF94A3B8)),
+                const SizedBox(height: 12),
+                Text(
+                  'No deleted items found.',
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          for (final item in pageItems) _buildRecycleItemCard(item),
+
+        // ─── 9. PAGINATION ROW ───
+        _buildPaginationRow(filtered.length, totalPages),
       ],
+    );
+  }
+
+  Widget _buildRecycleSummaryCard({
+    required String title,
+    Widget? iconWidget,
+    IconData? icon,
+    Color? iconColor,
+    required Color iconBgColor,
+    required int deletedCount,
+    required String sizeText,
+    required Color accentColor,
+    required VoidCallback onTapViewDetails,
+  }) {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                width: 4,
+                color: accentColor,
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(7),
+                        decoration: BoxDecoration(
+                          color: iconBgColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: iconWidget ??
+                            Icon(
+                              icon ?? LucideIcons.circleCheck,
+                              size: 16,
+                              color: iconColor ?? accentColor,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        title,
+                        style: GoogleFonts.outfit(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '$deletedCount deleted items',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            sizeText,
+                            style: GoogleFonts.outfit(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: accentColor,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: onTapViewDetails,
+                            borderRadius: BorderRadius.circular(6),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              child: Text(
+                                'View Details →',
+                                style: GoogleFonts.outfit(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: accentColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecycleFilterTabs() {
+    final tabs = ['ALL', 'BNX MAIL', 'CLIKS BUSINESS', 'CLIKS', 'EXPIRING SOON'];
+
+    return Container(
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: tabs.map((tab) {
+            final isSelected = _selectedRecycleFilter == tab;
+            return InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedRecycleFilter = tab;
+                  _recycleCurrentPage = 1;
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(
+                      color: isSelected ? const Color(0xFF0F172A) : Colors.transparent,
+                      width: 2.0,
+                    ),
+                  ),
+                ),
+                child: Text(
+                  tab,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRecycleItemCard(_RecycleBinItem item) {
+    final bool isExpiringSoon = item.daysRemaining <= 10;
+    final Color appColor = item.app == 'BNX Mail'
+        ? const Color(0xFF2563EB)
+        : item.app == 'Cliks Business'
+            ? const Color(0xFF7C3AED)
+            : const Color(0xFF0D9488);
+
+    IconData fileIcon;
+    Color iconColor = const Color(0xFF64748B);
+    switch (item.type.toLowerCase()) {
+      case 'audio':
+        fileIcon = LucideIcons.music;
+        break;
+      case 'archive':
+        fileIcon = LucideIcons.package;
+        iconColor = const Color(0xFFD97706);
+        break;
+      case 'video':
+        fileIcon = LucideIcons.video;
+        break;
+      case 'spreadsheet':
+        fileIcon = LucideIcons.table;
+        iconColor = const Color(0xFF059669);
+        break;
+      case 'text':
+        fileIcon = LucideIcons.file;
+        break;
+      default:
+        fileIcon = LucideIcons.fileText;
+        break;
+    }
+
+    final double progress = (item.daysRemaining / 30.0).clamp(0.02, 1.0);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row 1: File icon + File Name + Subtitle (Left), File Size (Right)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                ),
+                alignment: Alignment.center,
+                child: Icon(fileIcon, size: 20, color: iconColor),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        Text(
+                          item.app,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: appColor,
+                          ),
+                        ),
+                        Text(
+                          '  •  ',
+                          style: GoogleFonts.outfit(fontSize: 11, color: const Color(0xFF94A3B8)),
+                        ),
+                        Text(
+                          item.type,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                        Text(
+                          '  •  ',
+                          style: GoogleFonts.outfit(fontSize: 11, color: const Color(0xFF94A3B8)),
+                        ),
+                        Text(
+                          item.deletedDate,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${item.sizeMb.toStringAsFixed(2)} MB',
+                style: GoogleFonts.outfit(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          // Row 2: Retention details
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Retention',
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+              Text(
+                '${item.daysRemaining} days remaining',
+                style: GoogleFonts.outfit(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: isExpiringSoon ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+
+          // Progress Bar
+          ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: SizedBox(
+              height: 3.5,
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: const Color(0xFFF1F5F9),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFF2563EB),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Row 3: Action Buttons (Right-aligned)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _recycleItems.removeWhere((i) => i.id == item.id);
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Restored "${item.name}" to ${item.app}.', style: GoogleFonts.outfit()),
+                      backgroundColor: const Color(0xFF10B981),
+                      behavior: SnackBarBehavior.floating,
+                      width: 360,
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  child: Text(
+                    'Restore',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              PopupMenuButton<String>(
+                icon: const Icon(LucideIcons.moreVertical, size: 16, color: Color(0xFF94A3B8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                onSelected: (val) {
+                  if (val == 'delete') {
+                    setState(() {
+                      _recycleItems.removeWhere((i) => i.id == item.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Permanently deleted "${item.name}".', style: GoogleFonts.outfit()),
+                        backgroundColor: const Color(0xFFEF4444),
+                        behavior: SnackBarBehavior.floating,
+                        width: 360,
+                      ),
+                    );
+                  } else if (val == 'restore') {
+                    setState(() {
+                      _recycleItems.removeWhere((i) => i.id == item.id);
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Restored "${item.name}".', style: GoogleFonts.outfit()),
+                        backgroundColor: const Color(0xFF10B981),
+                        behavior: SnackBarBehavior.floating,
+                        width: 360,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Downloading "${item.name}"...', style: GoogleFonts.outfit()),
+                        backgroundColor: const Color(0xFF2563EB),
+                        behavior: SnackBarBehavior.floating,
+                        width: 360,
+                      ),
+                    );
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'restore',
+                    child: Text('Restore file', style: GoogleFonts.outfit(fontSize: 12.5)),
+                  ),
+                  PopupMenuItem(
+                    value: 'download',
+                    child: Text('Download file', style: GoogleFonts.outfit(fontSize: 12.5)),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Text('Permanently delete', style: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFFEF4444))),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaginationRow(int totalFilteredItems, int totalPages) {
+    if (totalFilteredItems == 0) return const SizedBox.shrink();
+
+    final int startItem = (_recycleCurrentPage - 1) * _recycleItemsPerPage + 1;
+    final int endItem = math.min(_recycleCurrentPage * _recycleItemsPerPage, totalFilteredItems);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Showing $startItem-$endItem of $totalFilteredItems',
+            style: GoogleFonts.outfit(
+              fontSize: 12.5,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Prev button '<'
+                InkWell(
+                  onTap: _recycleCurrentPage > 1
+                      ? () => setState(() => _recycleCurrentPage--)
+                      : null,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: _recycleCurrentPage > 1 ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      LucideIcons.chevronLeft,
+                      size: 14,
+                      color: _recycleCurrentPage > 1 ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+
+                // Page number buttons
+                for (int p = 1; p <= totalPages; p++) ...[
+                  InkWell(
+                    onTap: () => setState(() => _recycleCurrentPage = p),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: p == _recycleCurrentPage ? const Color(0xFF0F172A) : Colors.white,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: p == _recycleCurrentPage ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                        ),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        '$p',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: p == _recycleCurrentPage ? Colors.white : const Color(0xFF334155),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                ],
+
+                // Next button '>'
+                InkWell(
+                  onTap: _recycleCurrentPage < totalPages
+                      ? () => setState(() => _recycleCurrentPage++)
+                      : null,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(
+                        color: _recycleCurrentPage < totalPages ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      LucideIcons.chevronRight,
+                      size: 14,
+                      color: _recycleCurrentPage < totalPages ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<_RecycleBinItem> _createDefaultRecycleItems() {
+    return [
+      // ── BNX Mail (14 items, 82 MB) ──
+      const _RecycleBinItem(
+        id: 'bnx-1',
+        name: 'invoice.pdf',
+        app: 'BNX Mail',
+        type: 'PDF',
+        deletedDate: 'Deleted today',
+        sizeMb: 4.20,
+        daysRemaining: 29,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-2',
+        name: 'customer_feedback_call.mp3',
+        app: 'BNX Mail',
+        type: 'Audio',
+        deletedDate: 'Deleted Aug 20',
+        sizeMb: 12.00,
+        daysRemaining: 24,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-3',
+        name: 'notes_todo.txt',
+        app: 'BNX Mail',
+        type: 'Text',
+        deletedDate: 'Deleted Aug 10',
+        sizeMb: 1.50,
+        daysRemaining: 14,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-4',
+        name: 'contract_draft_final.docx',
+        app: 'BNX Mail',
+        type: 'Document',
+        deletedDate: 'Deleted Aug 05',
+        sizeMb: 14.00,
+        daysRemaining: 9,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-5',
+        name: 'annual_audit_draft.pdf',
+        app: 'BNX Mail',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 28',
+        sizeMb: 50.30,
+        daysRemaining: 2,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-6',
+        name: 'archive_part_1.zip',
+        app: 'BNX Mail',
+        type: 'Archive',
+        deletedDate: 'Deleted Jul 25',
+        sizeMb: 0.00,
+        daysRemaining: 5,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-7',
+        name: 'marketing_q3_brief.docx',
+        app: 'BNX Mail',
+        type: 'Document',
+        deletedDate: 'Deleted Jul 22',
+        sizeMb: 1.20,
+        daysRemaining: 4,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-8',
+        name: 'weekly_sync_recording.mp3',
+        app: 'BNX Mail',
+        type: 'Audio',
+        deletedDate: 'Deleted Jul 20',
+        sizeMb: 8.40,
+        daysRemaining: 3,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-9',
+        name: 'sales_newsletter_template.html',
+        app: 'BNX Mail',
+        type: 'Document',
+        deletedDate: 'Deleted Jul 19',
+        sizeMb: 0.80,
+        daysRemaining: 2,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-10',
+        name: 'onboarding_deck_v3.pdf',
+        app: 'BNX Mail',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 18',
+        sizeMb: 5.10,
+        daysRemaining: 2,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-11',
+        name: 'customer_tickets_export.csv',
+        app: 'BNX Mail',
+        type: 'Spreadsheet',
+        deletedDate: 'Deleted Jul 17',
+        sizeMb: 1.30,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-12',
+        name: 'server_log_incident.txt',
+        app: 'BNX Mail',
+        type: 'Text',
+        deletedDate: 'Deleted Jul 16',
+        sizeMb: 0.40,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-13',
+        name: 'branding_assets_pack.zip',
+        app: 'BNX Mail',
+        type: 'Archive',
+        deletedDate: 'Deleted Jul 15',
+        sizeMb: 6.20,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'bnx-14',
+        name: 'voicemail_lead_gen.m4a',
+        app: 'BNX Mail',
+        type: 'Audio',
+        deletedDate: 'Deleted Jul 14',
+        sizeMb: 2.50,
+        daysRemaining: 1,
+      ),
+
+      // ── Cliks Business (16 items, 113 MB) ──
+      const _RecycleBinItem(
+        id: 'biz-1',
+        name: 'financial_audit_export_2025.xlsx',
+        app: 'Cliks Business',
+        type: 'Spreadsheet',
+        deletedDate: 'Deleted Aug 19',
+        sizeMb: 22.40,
+        daysRemaining: 25,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-2',
+        name: 'vendor_bills_batch_august.pdf',
+        app: 'Cliks Business',
+        type: 'PDF',
+        deletedDate: 'Deleted Aug 15',
+        sizeMb: 18.60,
+        daysRemaining: 20,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-3',
+        name: 'gst_returns_gstr1_filed.json',
+        app: 'Cliks Business',
+        type: 'Document',
+        deletedDate: 'Deleted Aug 11',
+        sizeMb: 4.30,
+        daysRemaining: 15,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-4',
+        name: 'inventory_warehouse_stock.csv',
+        app: 'Cliks Business',
+        type: 'Spreadsheet',
+        deletedDate: 'Deleted Aug 04',
+        sizeMb: 8.50,
+        daysRemaining: 8,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-5',
+        name: 'payroll_pension_draft_july.pdf',
+        app: 'Cliks Business',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 30',
+        sizeMb: 11.20,
+        daysRemaining: 4,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-6',
+        name: 'pos_sales_cache_backup.zip',
+        app: 'Cliks Business',
+        type: 'Archive',
+        deletedDate: 'Deleted Jul 27',
+        sizeMb: 15.00,
+        daysRemaining: 5,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-7',
+        name: 'e_way_bill_register_q1.pdf',
+        app: 'Cliks Business',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 24',
+        sizeMb: 6.40,
+        daysRemaining: 3,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-8',
+        name: 'tax_computation_final.xlsx',
+        app: 'Cliks Business',
+        type: 'Spreadsheet',
+        deletedDate: 'Deleted Jul 22',
+        sizeMb: 5.80,
+        daysRemaining: 3,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-9',
+        name: 'purchase_order_archive.pdf',
+        app: 'Cliks Business',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 19',
+        sizeMb: 3.10,
+        daysRemaining: 2,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-10',
+        name: 'receipts_scans_batch3.zip',
+        app: 'Cliks Business',
+        type: 'Archive',
+        deletedDate: 'Deleted Jul 18',
+        sizeMb: 7.20,
+        daysRemaining: 2,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-11',
+        name: 'employee_attendance_log.csv',
+        app: 'Cliks Business',
+        type: 'Spreadsheet',
+        deletedDate: 'Deleted Jul 16',
+        sizeMb: 1.80,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-12',
+        name: 'balance_sheet_preliminary.pdf',
+        app: 'Cliks Business',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 15',
+        sizeMb: 2.90,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-13',
+        name: 'delivery_challan_copies.pdf',
+        app: 'Cliks Business',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 14',
+        sizeMb: 1.60,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-14',
+        name: 'customer_statement_export.csv',
+        app: 'Cliks Business',
+        type: 'Spreadsheet',
+        deletedDate: 'Deleted Jul 13',
+        sizeMb: 0.90,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-15',
+        name: 'daily_collection_log.txt',
+        app: 'Cliks Business',
+        type: 'Text',
+        deletedDate: 'Deleted Jul 12',
+        sizeMb: 0.40,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'biz-16',
+        name: 'ledger_audit_notes.docx',
+        app: 'Cliks Business',
+        type: 'Document',
+        deletedDate: 'Deleted Jul 11',
+        sizeMb: 1.30,
+        daysRemaining: 1,
+      ),
+
+      // ── Cliks (8 items, 50 MB) ──
+      const _RecycleBinItem(
+        id: 'clk-1',
+        name: 'team_meeting_audio_aug.m4a',
+        app: 'Cliks',
+        type: 'Audio',
+        deletedDate: 'Deleted Aug 18',
+        sizeMb: 14.50,
+        daysRemaining: 22,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-2',
+        name: 'group_media_backup_2025.zip',
+        app: 'Cliks',
+        type: 'Archive',
+        deletedDate: 'Deleted Aug 13',
+        sizeMb: 16.80,
+        daysRemaining: 17,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-3',
+        name: 'product_demo_recording.mp4',
+        app: 'Cliks',
+        type: 'Video',
+        deletedDate: 'Deleted Aug 06',
+        sizeMb: 9.20,
+        daysRemaining: 10,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-4',
+        name: 'chat_transcript_support.txt',
+        app: 'Cliks',
+        type: 'Text',
+        deletedDate: 'Deleted Jul 29',
+        sizeMb: 1.40,
+        daysRemaining: 3,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-5',
+        name: 'channel_emojis_custom.zip',
+        app: 'Cliks',
+        type: 'Archive',
+        deletedDate: 'Deleted Jul 26',
+        sizeMb: 3.10,
+        daysRemaining: 4,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-6',
+        name: 'shared_catalog_sheet.pdf',
+        app: 'Cliks',
+        type: 'PDF',
+        deletedDate: 'Deleted Jul 21',
+        sizeMb: 2.60,
+        daysRemaining: 2,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-7',
+        name: 'voice_briefing_client.mp3',
+        app: 'Cliks',
+        type: 'Audio',
+        deletedDate: 'Deleted Jul 17',
+        sizeMb: 1.90,
+        daysRemaining: 1,
+      ),
+      const _RecycleBinItem(
+        id: 'clk-8',
+        name: 'contact_sync_backup.vcf',
+        app: 'Cliks',
+        type: 'Document',
+        deletedDate: 'Deleted Jul 14',
+        sizeMb: 0.50,
+        daysRemaining: 1,
+      ),
+    ];
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // VIEW: MANAGE APPS (Screenshot 2)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildManageAppsView({bool showBreadcrumbs = true}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (showBreadcrumbs) ...[
+          // Breadcrumbs
+          Row(
+            children: [
+              InkWell(
+                onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                child: Text(
+                  'Storage Management',
+                  style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                ),
+              ),
+              Text(
+                '  ›  ',
+                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+              ),
+              Text(
+                'Manage Apps',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
+
+        // Title & Description
+        Text(
+          'Manage Apps',
+          style: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 3),
+        Text(
+          'Manage storage boundaries and partition sizing limits',
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            color: const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Color(0xFF059669),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _manageAppsStatusText,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF059669),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 22),
+
+        // Top Pool Sizing Card (Screenshot 2)
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                alignment: Alignment.center,
+                child: const Icon(LucideIcons.server, size: 22, color: Color(0xFF2563EB)),
+              ),
+              const SizedBox(width: 16),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Total Capacity Pool Size (GB)',
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 90,
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    alignment: Alignment.centerLeft,
+                    child: TextField(
+                      controller: _poolSizeController,
+                      keyboardType: TextInputType.number,
+                      style: GoogleFonts.outfit(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    'Unallocated Space:',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '2 GB',
+                    style: GoogleFonts.outfit(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF059669),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 28),
+
+        // Section Title: Connected App Allocation Limits
+        Text(
+          'Connected App Allocation Limits',
+          style: GoogleFonts.outfit(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF0F172A),
+          ),
+        ),
+        const SizedBox(height: 14),
+
+        // Row of 3 Connected App Cards (Screenshot 2)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 650;
+            final cardBnx = _buildConnectedAppCard(
+              title: 'BNX Mail',
+              iconWidget: _buildBnxMailLogo(size: 18, color: const Color(0xFF2563EB)),
+              iconBgColor: const Color(0xFFEFF6FF),
+              onTap: () => setState(() => _activeTab = _StorageTab.bnxMail),
+            );
+            final cardCliks = _buildConnectedAppCard(
+              title: 'Cliks',
+              icon: LucideIcons.circleCheck,
+              iconColor: const Color(0xFF16A34A),
+              iconBgColor: const Color(0xFFF0FDF4),
+              onTap: () => setState(() => _activeTab = _StorageTab.cliks),
+            );
+            final cardCliksBiz = _buildConnectedAppCard(
+              title: 'Cliks Business',
+              icon: LucideIcons.circleCheck,
+              iconColor: const Color(0xFF16A34A),
+              iconBgColor: const Color(0xFFF0FDF4),
+              onTap: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
+            );
+
+            if (isNarrow) {
+              return Column(
+                children: [
+                  cardBnx,
+                  const SizedBox(height: 12),
+                  cardCliks,
+                  const SizedBox(height: 12),
+                  cardCliksBiz,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: cardBnx),
+                const SizedBox(width: 16),
+                Expanded(child: cardCliks),
+                const SizedBox(width: 16),
+                Expanded(child: cardCliksBiz),
+              ],
+            );
+          },
+        ),
+
+        const SizedBox(height: 32),
+
+        // Bottom Save Changes Button (Right-aligned)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _manageAppsStatusText = 'Preferences saved successfully';
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'App quota limits and storage boundaries saved.',
+                      style: GoogleFonts.outfit(),
+                    ),
+                    backgroundColor: const Color(0xFF2563EB),
+                    behavior: SnackBarBehavior.floating,
+                    width: 380,
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.save, size: 16, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Save Changes',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildConnectedAppCard({
+    required String title,
+    Widget? iconWidget,
+    IconData? icon,
+    Color? iconColor,
+    required Color iconBgColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: iconWidget ?? Icon(icon ?? LucideIcons.circleCheck, size: 18, color: iconColor ?? const Color(0xFF16A34A)),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+            const Icon(LucideIcons.externalLink, size: 16, color: Color(0xFF94A3B8)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // VIEW: SETTINGS (Screenshots 3, 4, 5)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildSettingsView() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Breadcrumbs
+        Row(
+          children: [
+            InkWell(
+              onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+              child: Text(
+                'Storage Management',
+                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+              ),
+            ),
+            Text(
+              '  ›  ',
+              style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+            ),
+            Text(
+              'Settings',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 20),
+
+        // Unified Card Layout (Inner Sidebar + Right Panel matching screenshots)
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 800;
+
+              Widget rightContent;
+              if (_settingsSubSection == 'privacy') {
+                rightContent = _buildSettingsPrivacyContent();
+              } else if (_settingsSubSection == 'apps') {
+                rightContent = _buildManageAppsView(showBreadcrumbs: false);
+              } else {
+                rightContent = _buildSettingsGeneralContent();
+              }
+
+              final innerSidebar = Container(
+                width: isNarrow ? double.infinity : 240,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  border: isNarrow
+                      ? const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0))
+                      : const Border(right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SETTINGS',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF94A3B8),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    _buildSettingsNavTile(
+                      id: 'general',
+                      icon: LucideIcons.settings,
+                      title: 'General',
+                      subtitle: 'Manage your workspace preferences',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildSettingsNavTile(
+                      id: 'privacy',
+                      icon: LucideIcons.shield,
+                      title: 'Privacy & Data Control',
+                      subtitle: 'Manage privacy and access to your stored data',
+                    ),
+                    const SizedBox(height: 8),
+                    _buildSettingsNavTile(
+                      id: 'apps',
+                      icon: LucideIcons.layoutGrid,
+                      title: 'Manage Apps',
+                      subtitle: 'Manage storage boundaries and partition sizing limits',
+                    ),
+                  ],
+                ),
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    innerSidebar,
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: rightContent,
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  innerSidebar,
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(28),
+                      child: rightContent,
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsNavTile({
+    required String id,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+  }) {
+    final isSelected = _settingsSubSection == id;
+
+    return InkWell(
+      onTap: () => setState(() => _settingsSubSection = id),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.outfit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.only(left: 26),
+              child: Text(
+                subtitle,
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  color: isSelected ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsGeneralContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header
+        Text(
+          'General',
+          style: GoogleFonts.outfit(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+            letterSpacing: -0.4,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          'Manage your workspace preferences',
+          style: GoogleFonts.outfit(
+            fontSize: 13,
+            color: const Color(0xFF64748B),
+          ),
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: const BoxDecoration(
+                color: Color(0xFF059669),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              _settingsStatusText,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF059669),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        // Card 1: REGIONAL
+        _buildSettingsCard(
+          title: 'REGIONAL',
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Language',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  initialValue: _selectedLanguage,
+                  onSelected: (val) => setState(() => _selectedLanguage = val),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  itemBuilder: (context) => ['English', 'Spanish', 'French', 'German', 'Japanese'].map((l) =>
+                    PopupMenuItem(value: l, child: Text(l, style: GoogleFonts.outfit(fontSize: 12.5)))
+                  ).toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _selectedLanguage,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Card 2: STORAGE DISPLAY
+        _buildSettingsCard(
+          title: 'STORAGE DISPLAY',
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Storage Unit',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                Row(
+                  children: [
+                    _buildRadioChoice(
+                      label: 'GB',
+                      isSelected: _selectedStorageUnit == 'GB',
+                      onTap: () => setState(() => _selectedStorageUnit = 'GB'),
+                    ),
+                    const SizedBox(width: 16),
+                    _buildRadioChoice(
+                      label: 'TB',
+                      isSelected: _selectedStorageUnit == 'TB',
+                      onTap: () => setState(() => _selectedStorageUnit = 'TB'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Decimal Precision',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  initialValue: _selectedDecimalPrecision,
+                  onSelected: (val) => setState(() => _selectedDecimalPrecision = val),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  itemBuilder: (context) => ['0 digits', '1 digit', '2 digits', '3 digits'].map((d) =>
+                    PopupMenuItem(value: d, child: Text(d, style: GoogleFonts.outfit(fontSize: 12.5)))
+                  ).toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _selectedDecimalPrecision,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Show Usage Percentage',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                _buildToggleIndicator(
+                  isOn: _showUsagePercentage,
+                  onTap: () => setState(() => _showUsagePercentage = !_showUsagePercentage),
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Show Available Storage',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                _buildToggleIndicator(
+                  isOn: _showAvailableStorage,
+                  onTap: () => setState(() => _showAvailableStorage = !_showAvailableStorage),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Card 3: DASHBOARD
+        _buildSettingsCard(
+          title: 'DASHBOARD',
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Default View',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  initialValue: _selectedDefaultView,
+                  onSelected: (val) => setState(() => _selectedDefaultView = val),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  itemBuilder: (context) => ['Storage Overview', 'App Breakdown', 'Activity Stream'].map((v) =>
+                    PopupMenuItem(value: v, child: Text(v, style: GoogleFonts.outfit(fontSize: 12.5)))
+                  ).toList(),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _selectedDefaultView,
+                          style: GoogleFonts.outfit(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Show Application Status',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                _buildToggleIndicator(
+                  isOn: _showAppStatus,
+                  onTap: () => setState(() => _showAppStatus = !_showAppStatus),
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Show Recent Activity',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                _buildToggleIndicator(
+                  isOn: _showRecentActivity,
+                  onTap: () => setState(() => _showRecentActivity = !_showRecentActivity),
+                ),
+              ],
+            ),
+            const Divider(height: 24, color: Color(0xFFF1F5F9)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Show Storage Alerts',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                _buildToggleIndicator(
+                  isOn: _showStorageAlerts,
+                  onTap: () => setState(() => _showStorageAlerts = !_showStorageAlerts),
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // Card 4: APPEARANCE (Image 4)
+        _buildSettingsCard(
+          title: 'APPEARANCE',
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Theme',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                Row(
+                  children: [
+                    _buildRadioChoice(
+                      label: 'Light',
+                      isSelected: _selectedTheme == 'Light',
+                      onTap: () => setState(() => _selectedTheme = 'Light'),
+                    ),
+                    const SizedBox(width: 16),
+                    _buildRadioChoice(
+                      label: 'System',
+                      isSelected: _selectedTheme == 'System',
+                      onTap: () => setState(() => _selectedTheme = 'System'),
+                    ),
+                    const SizedBox(width: 16),
+                    _buildRadioChoice(
+                      label: 'Dark',
+                      isSelected: _selectedTheme == 'Dark',
+                      onTap: () => setState(() => _selectedTheme = 'Dark'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Bottom Action Buttons: Reset & Save Changes (Image 4)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _selectedLanguage = 'English';
+                  _selectedStorageUnit = 'GB';
+                  _selectedDecimalPrecision = '2 digits';
+                  _showUsagePercentage = true;
+                  _showAvailableStorage = true;
+                  _selectedDefaultView = 'Storage Overview';
+                  _showAppStatus = true;
+                  _showRecentActivity = true;
+                  _showStorageAlerts = true;
+                  _selectedTheme = 'System';
+                  _settingsStatusText = 'Preferences reset to defaults';
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Preferences reset to default values.', style: GoogleFonts.outfit()),
+                    backgroundColor: const Color(0xFF334155),
+                    behavior: SnackBarBehavior.floating,
+                    width: 320,
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.rotateCcw, size: 14, color: Color(0xFF334155)),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Reset',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _settingsStatusText = 'Preferences saved successfully';
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('General preferences saved successfully.', style: GoogleFonts.outfit()),
+                    backgroundColor: const Color(0xFF2563EB),
+                    behavior: SnackBarBehavior.floating,
+                    width: 350,
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.save, size: 15, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Save Changes',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsPrivacyContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header Row
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Privacy & Data Control',
+                  style: GoogleFonts.outfit(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.4,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Manage privacy and access to your stored data',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF059669),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _settingsStatusText,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF059669),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            // Protected Pill Badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFA7F3D0)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF059669),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(LucideIcons.shieldCheck, size: 14, color: Color(0xFF059669)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Protected',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF059669),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // PRIVACY OVERVIEW Section Header
+        Text(
+          'PRIVACY OVERVIEW',
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF64748B),
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Two Cards Side-by-Side (Screenshot 5)
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 600;
+
+            final card1 = Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                children: [
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(LucideIcons.shield, size: 24, color: Color(0xFF059669)),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '98%',
+                    style: GoogleFonts.outfit(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '✓ Privacy Protected',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF059669),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+            final card2 = Container(
+              padding: const EdgeInsets.all(22),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.lock, size: 16, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Storage Privacy',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Your storage is currently private and accessible only to you.',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  CustomPaint(
+                    size: const Size(double.infinity, 1),
+                    painter: const _DottedLinePainter(color: Color(0xFFCBD5E1)),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      const Icon(LucideIcons.clock, size: 13, color: Color(0xFF94A3B8)),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Last checked: Today',
+                        style: GoogleFonts.outfit(
+                          fontSize: 11.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+
+            if (isNarrow) {
+              return Column(
+                children: [
+                  card1,
+                  const SizedBox(height: 14),
+                  card2,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 4, child: card1),
+                const SizedBox(width: 16),
+                Expanded(flex: 6, child: card2),
+              ],
+            );
+          },
+        ),
+
+        const SizedBox(height: 26),
+
+        // Section: STORAGE ACCESS
+        Text(
+          'STORAGE ACCESS',
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF64748B),
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Who can access your storage?',
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Option 1: Only me
+              _buildStorageAccessTile(
+                id: 'only_me',
+                icon: LucideIcons.lock,
+                title: 'Only me',
+                badgeText: 'Recommended',
+              ),
+              const SizedBox(height: 10),
+
+              // Option 2: Connected applications
+              _buildStorageAccessTile(
+                id: 'connected',
+                icon: LucideIcons.layers,
+                title: 'Connected applications',
+              ),
+              const SizedBox(height: 10),
+
+              // Option 3: Shared users
+              _buildStorageAccessTile(
+                id: 'shared',
+                icon: LucideIcons.users,
+                title: 'Shared users',
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 26),
+
+        // Section: APPLICATION ACCESS (Screenshot 2)
+        Text(
+          'APPLICATION ACCESS',
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF64748B),
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            children: [
+              _buildAppAccessRow(
+                title: 'BNX Mail',
+                subtitle: 'Emails & attachments',
+                iconWidget: _buildBnxMailLogo(size: 18, color: const Color(0xFF2563EB)),
+                iconBgColor: const Color(0xFFEFF6FF),
+                onManage: () => setState(() => _activeTab = _StorageTab.bnxMail),
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              _buildAppAccessRow(
+                title: 'Cliks',
+                subtitle: 'Files & documents',
+                icon: LucideIcons.circleCheck,
+                iconColor: const Color(0xFF16A34A),
+                iconBgColor: const Color(0xFFF0FDF4),
+                onManage: () => setState(() => _activeTab = _StorageTab.cliks),
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              _buildAppAccessRow(
+                title: 'Cliks Business',
+                subtitle: 'Business files',
+                icon: LucideIcons.circleCheck,
+                iconColor: const Color(0xFF16A34A),
+                iconBgColor: const Color(0xFFF0FDF4),
+                onManage: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 26),
+
+        // Section: DATA CONTROLS (Screenshot 2)
+        Text(
+          'DATA CONTROLS',
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF64748B),
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isNarrow = constraints.maxWidth < 650;
+            final cardRetention = _buildDataControlCard(
+              icon: LucideIcons.trash2,
+              iconColor: const Color(0xFFD97706),
+              iconBgColor: const Color(0xFFFEF3C7),
+              title: 'Retention',
+              subtitle: 'Retention limit: 30 days',
+              actionText: 'Manage',
+              onAction: () => setState(() => _activeTab = _StorageTab.recycleBin),
+            );
+            final cardExport = _buildDataControlCard(
+              icon: LucideIcons.download,
+              iconColor: const Color(0xFF2563EB),
+              iconBgColor: const Color(0xFFEFF6FF),
+              title: 'Data Export',
+              subtitle: 'Download a copy of your data',
+              actionText: 'Export',
+              onAction: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Exporting complete workspace storage archive...', style: GoogleFonts.outfit()),
+                    backgroundColor: const Color(0xFF2563EB),
+                    behavior: SnackBarBehavior.floating,
+                    width: 360,
+                  ),
+                );
+              },
+            );
+            final cardActivity = _buildDataControlCard(
+              icon: LucideIcons.clock,
+              iconColor: const Color(0xFF7C3AED),
+              iconBgColor: const Color(0xFFF5F3FF),
+              title: 'Activity',
+              subtitle: '5 audit log entries',
+              actionText: 'View',
+              onAction: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Displaying recent storage audit logs.', style: GoogleFonts.outfit()),
+                    backgroundColor: const Color(0xFF334155),
+                    behavior: SnackBarBehavior.floating,
+                    width: 340,
+                  ),
+                );
+              },
+            );
+
+            if (isNarrow) {
+              return Column(
+                children: [
+                  cardRetention,
+                  const SizedBox(height: 12),
+                  cardExport,
+                  const SizedBox(height: 12),
+                  cardActivity,
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: cardRetention),
+                const SizedBox(width: 16),
+                Expanded(child: cardExport),
+                const SizedBox(width: 16),
+                Expanded(child: cardActivity),
+              ],
+            );
+          },
+        ),
+
+        const SizedBox(height: 28),
+
+        // Bottom Save Changes Button (Right-aligned)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            InkWell(
+              onTap: () {
+                setState(() {
+                  _settingsStatusText = 'Preferences saved successfully';
+                });
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Privacy and access preferences saved successfully.', style: GoogleFonts.outfit()),
+                    backgroundColor: const Color(0xFF2563EB),
+                    behavior: SnackBarBehavior.floating,
+                    width: 380,
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2563EB),
+                  borderRadius: BorderRadius.circular(10),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.save, size: 15, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Save Changes',
+                      style: GoogleFonts.outfit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildAppAccessRow({
+    required String title,
+    required String subtitle,
+    Widget? iconWidget,
+    IconData? icon,
+    Color? iconColor,
+    required Color iconBgColor,
+    required VoidCallback onManage,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 14),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: iconWidget ?? Icon(icon ?? LucideIcons.circleCheck, size: 20, color: iconColor ?? const Color(0xFF16A34A)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.outfit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'STORAGE ACCESS',
+                style: GoogleFonts.outfit(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF94A3B8),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFECFDF5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFA7F3D0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF059669),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      'Allowed',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF059669),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: 28),
+          InkWell(
+            onTap: onManage,
+            borderRadius: BorderRadius.circular(6),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Manage',
+                    style: GoogleFonts.outfit(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF2563EB),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF2563EB)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDataControlCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String title,
+    required String subtitle,
+    required String actionText,
+    required VoidCallback onAction,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconBgColor,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Icon(icon, size: 16, color: iconColor),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                title,
+                style: GoogleFonts.outfit(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 16),
+          InkWell(
+            onTap: onAction,
+            borderRadius: BorderRadius.circular(6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  actionText,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF2563EB)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStorageAccessTile({
+    required String id,
+    required IconData icon,
+    required String title,
+    String? badgeText,
+  }) {
+    final isSelected = _storageAccessOption == id;
+
+    return InkWell(
+      onTap: () {
+        setState(() => _storageAccessOption = id);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Storage access set to "$title".', style: GoogleFonts.outfit()),
+            backgroundColor: const Color(0xFF2563EB),
+            behavior: SnackBarBehavior.floating,
+            width: 320,
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF8FAFF) : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isSelected ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              alignment: Alignment.center,
+              child: Icon(
+                icon,
+                size: 16,
+                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(width: 14),
+            Text(
+              title,
+              style: GoogleFonts.outfit(
+                fontSize: 13.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+            if (badgeText != null) ...[
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDBEAFE),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  badgeText,
+                  style: GoogleFonts.outfit(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            ],
+            const Spacer(),
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1),
+                  width: isSelected ? 2 : 1.5,
+                ),
+              ),
+              padding: const EdgeInsets.all(2.5),
+              child: isSelected
+                  ? Container(
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Color(0xFF2563EB),
+                      ),
+                    )
+                  : null,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard({
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.outfit(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 14),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRadioChoice({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isSelected ? LucideIcons.circleDot : LucideIcons.circle,
+              size: 15,
+              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: GoogleFonts.outfit(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleIndicator({
+    required bool isOn,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(
+                color: isOn ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              isOn ? 'ON' : 'OFF',
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isOn ? const Color(0xFF059669) : const Color(0xFF94A3B8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBnxMailLogo({double size = 16, Color color = const Color(0xFF2563EB)}) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _BnxMailIconPainter(color: color),
+      ),
     );
   }
 }
@@ -1896,3 +5013,97 @@ class _EcosystemDonutChartPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+class _RecycleBinItem {
+  final String id;
+  final String name;
+  final String app;
+  final String type;
+  final String deletedDate;
+  final double sizeMb;
+  final int daysRemaining;
+
+  const _RecycleBinItem({
+    required this.id,
+    required this.name,
+    required this.app,
+    required this.type,
+    required this.deletedDate,
+    required this.sizeMb,
+    required this.daysRemaining,
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CUSTOM PAINTER: BNX MAIL LOGO (Envelope + Flying Wing / Plane)
+// ═══════════════════════════════════════════════════════════════
+class _BnxMailIconPainter extends CustomPainter {
+  final Color color;
+  const _BnxMailIconPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokePaint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.6
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    final w = size.width;
+    final h = size.height;
+
+    // Envelope outline (bottom rounded rectangle)
+    final envPath = Path()
+      ..moveTo(w * 0.12, h * 0.44)
+      ..lineTo(w * 0.88, h * 0.44)
+      ..lineTo(w * 0.88, h * 0.84)
+      ..quadraticBezierTo(w * 0.88, h * 0.92, w * 0.80, h * 0.92)
+      ..lineTo(w * 0.20, h * 0.92)
+      ..quadraticBezierTo(w * 0.12, h * 0.92, w * 0.12, h * 0.84)
+      ..close();
+
+    // Envelope V fold lines
+    final foldPath = Path()
+      ..moveTo(w * 0.12, h * 0.44)
+      ..lineTo(w * 0.50, h * 0.70)
+      ..lineTo(w * 0.88, h * 0.44);
+
+    // Wing / paper plane swoop ascending to top right
+    final wingPath = Path()
+      ..moveTo(w * 0.22, h * 0.36)
+      ..cubicTo(w * 0.38, h * 0.16, w * 0.62, h * 0.08, w * 0.88, h * 0.10)
+      ..cubicTo(w * 0.66, h * 0.20, w * 0.52, h * 0.30, w * 0.46, h * 0.42);
+
+    canvas.drawPath(envPath, strokePaint);
+    canvas.drawPath(foldPath, strokePaint);
+    canvas.drawPath(wingPath, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _BnxMailIconPainter oldDelegate) => oldDelegate.color != color;
+}
+
+class _DottedLinePainter extends CustomPainter {
+  final Color color;
+  const _DottedLinePainter({this.color = const Color(0xFFE2E8F0)});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1.0
+      ..strokeCap = StrokeCap.round;
+    const dashWidth = 3.0;
+    const dashSpace = 4.0;
+    double startX = 0;
+    while (startX < size.width) {
+      canvas.drawLine(Offset(startX, 0), Offset(startX + dashWidth, 0), paint);
+      startX += dashWidth + dashSpace;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
