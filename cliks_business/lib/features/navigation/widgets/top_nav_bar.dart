@@ -7,6 +7,7 @@ import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/modals/finance_modals.dart';
 import '../../billing/providers/expenses_provider.dart';
 import 'macos_right_utility_rail.dart';
+import 'macos_account_menu_card.dart';
 
 class TopNavBar extends ConsumerStatefulWidget {
   const TopNavBar({super.key});
@@ -646,82 +647,39 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   ),
                   const SizedBox(width: 8),
 
-                  // 4. User Profile Capsule button (ravinew2004 ▾)
-                  PopupMenuButton<String>(
-                    offset: const Offset(0, 46),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onSelected: (val) {
-                      if (val == 'profile') {
-                        ref.read(navigationProvider.notifier).setModuleAndRoute(
-                              AppModule.profile,
-                              AppRoute.profile,
-                            );
-                      } else if (val == 'settings') {
-                        ref.read(navigationProvider.notifier).setModuleAndRoute(
-                              AppModule.books,
-                              AppRoute.settings,
-                            );
-                      }
+                  // 4. User Profile Capsule button (ravinew2004 ▾ / ▴)
+                  _buildMacOSCapsuleButton(
+                    tooltip: 'Account Settings',
+                    onTap: () {
+                      ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
+                      ref.read(macosAccountMenuVisibleProvider.notifier).update((v) => !v);
                     },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'profile',
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.circleUser,
-                              size: 18,
-                              color: Color(0xFF135029),
-                            ),
-                            SizedBox(width: 10),
-                            Text('Profile (ravinew2004)'),
-                          ],
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.circleUser,
+                          color: Colors.white,
+                          size: 18,
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'settings',
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.settings,
-                              size: 18,
-                              color: Color(0xFF135029),
-                            ),
-                            SizedBox(width: 10),
-                            Text('Settings'),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: _buildMacOSCapsuleButton(
-                      tooltip: 'ravinew2004',
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            LucideIcons.circleUser,
+                        const SizedBox(width: 8),
+                        const Text(
+                          'ravinew2004',
+                          style: TextStyle(
                             color: Colors.white,
-                            size: 18,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
                           ),
-                          SizedBox(width: 8),
-                          Text(
-                            'ravinew2004',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(width: 6),
-                          Icon(
-                            LucideIcons.chevronDown,
-                            color: Colors.white70,
-                            size: 14,
-                          ),
-                        ],
-                      ),
+                        ),
+                        const SizedBox(width: 6),
+                        Icon(
+                          ref.watch(macosAccountMenuVisibleProvider)
+                              ? LucideIcons.chevronUp
+                              : LucideIcons.chevronDown,
+                          color: Colors.white70,
+                          size: 14,
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -732,6 +690,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     tooltip: ref.watch(macosBetaAppsVisibleProvider) ? 'Close Toolbar' : 'Open Toolbar',
                     isActive: ref.watch(macosBetaAppsVisibleProvider),
                     onTap: () {
+                      ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
                       ref.read(macosBetaAppsVisibleProvider.notifier).update((v) => !v);
                     },
                   ),
