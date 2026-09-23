@@ -9,6 +9,7 @@ import '../../core/navigation/navigation_provider.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/macos_right_utility_rail.dart';
+import 'widgets/macos_account_menu_card.dart';
 import '../social/pages/social_page.dart';
 import '../billing/pages/billing_page.dart';
 import '../billing/pages/simple_billing_page.dart';
@@ -83,6 +84,12 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
+    ref.listen(navigationProvider, (prev, next) {
+      if (prev != next && ref.read(macosAccountMenuVisibleProvider)) {
+        ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+      }
+    });
 
     // Track directional animations
     if (_lastModule != navigation.currentModule) {
@@ -408,6 +415,24 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                     ),
                   ),
                 ),
+
+              // macOS Top-Right Account Dropdown Menu Overlay
+              if (isMacOS && ref.watch(macosAccountMenuVisibleProvider)) ...[
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+                    },
+                    child: const ColoredBox(color: Colors.transparent),
+                  ),
+                ),
+                Positioned(
+                  top: 68 + MediaQuery.of(context).padding.top,
+                  right: 50,
+                  child: const MacOSAccountMenuCard(),
+                ),
+              ],
             ],
           ),
           drawer: (isDesktop || navigation.currentModule == AppModule.profile) ? null : const Drawer(child: Sidebar()),
