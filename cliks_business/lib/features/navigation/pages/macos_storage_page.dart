@@ -1664,26 +1664,467 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ─── Breadcrumbs & Header ───
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildBnxMailLogo(size: 32),
-            const SizedBox(width: 12),
-            Text('BNX Mail Storage', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A), letterSpacing: -0.4)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                      child: Text(
+                        'Storage Management',
+                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                      ),
+                    ),
+                    Text(
+                      '  ›  ',
+                      style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                    ),
+                    Text(
+                      'BNX Mail',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _buildBnxMailLogo(size: 26),
+                    const SizedBox(width: 10),
+                    Text(
+                      'BNX Mail Storage',
+                      style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Track how your 1.00 GB storage is used in BNX Mail.',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+
+            // Last Updated Pill with Refresh Action
+            InkWell(
+              onTap: _triggerRefresh,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Last Updated: $_lastUpdatedText',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11.5,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    AnimatedRotation(
+                      turns: _isRefreshing ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 600),
+                      child: const Icon(LucideIcons.refreshCw, size: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text('Storage allocation and message attachments for BNX Mail.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
-        const SizedBox(height: 20),
+
+        const SizedBox(height: 24),
+
+        // ─── SUMMARY STATS CARD ───
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final statsRow = Row(
+                children: [
+                  // Circular Donut Progress Meter (100% USED)
+                  SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: CustomPaint(
+                      painter: _DonutRingPainter(
+                        progress: 1.0,
+                        color: const Color(0xFF2563EB),
+                        trackColor: const Color(0xFFDBEAFE),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '100%',
+                              style: GoogleFonts.outfit(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF0F172A),
+                                height: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'USED',
+                              style: GoogleFonts.outfit(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF64748B),
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 28),
+
+                  // Stat 1: 1.32 GB USED
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '1.32 GB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF2563EB),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'USED',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '100% Used',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stat 2: 0.00 MB AVAILABLE
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '0.00 MB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF10B981),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'AVAILABLE',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stat 3: 1.00 GB TOTAL CAPACITY
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '1.00 GB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF0F172A),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'TOTAL CAPACITY',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stat 4: Critical
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFEF4444),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'Critical',
+                              style: GoogleFonts.outfit(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFFEF4444),
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'STORAGE CRITICALLY FULL.\nACTION REQUIRED.',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            height: 1.25,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              if (constraints.maxWidth < 650) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 650),
+                    child: statsRow,
+                  ),
+                );
+              }
+              return statsRow;
+            },
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // ─── STORAGE BY CATEGORY TABLE CARD ───
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Column(
             children: [
-              _buildCategoryRow(dotColor: const Color(0xFF2563EB), name: 'Inbox & Threads', percent: '48%', badgeBg: const Color(0xFFEFF6FF), badgeBorder: const Color(0xFFBFDBFE), badgeText: const Color(0xFF2563EB), typeDesc: 'Email bodies and conversation text'),
+              // Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Text(
+                        'Storage by Category',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        'USED',
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF64748B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          '% OF 1.00 GB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+              // Category Rows
+              _buildBnxCategoryRow(
+                icon: LucideIcons.mail,
+                iconColor: const Color(0xFF2563EB),
+                iconBg: const Color(0xFFEFF6FF),
+                name: 'Emails',
+                used: '420 MB',
+                percent: '41%',
+              ),
               const Divider(height: 1, color: Color(0xFFF8FAFC)),
-              _buildCategoryRow(dotColor: const Color(0xFF7C3AED), name: 'Attachments & Files', percent: '36%', badgeBg: const Color(0xFFF5F3FF), badgeBorder: const Color(0xFFDDD6FE), badgeText: const Color(0xFF7C3AED), typeDesc: 'PDFs, images, ZIP files'),
+
+              _buildBnxCategoryRow(
+                icon: LucideIcons.paperclip,
+                iconColor: const Color(0xFF059669),
+                iconBg: const Color(0xFFECFDF5),
+                name: 'Attachments',
+                used: '700 MB',
+                percent: '68%',
+              ),
               const Divider(height: 1, color: Color(0xFFF8FAFC)),
-              _buildCategoryRow(dotColor: const Color(0xFF10B981), name: 'Sent & Drafts', percent: '16%', badgeBg: const Color(0xFFECFDF5), badgeBorder: const Color(0xFFA7F3D0), badgeText: const Color(0xFF059669), typeDesc: 'Outbox transmissions and temporary drafts'),
+
+              _buildBnxCategoryRow(
+                icon: LucideIcons.trash2,
+                iconColor: const Color(0xFF9333EA),
+                iconBg: const Color(0xFFFAF5FF),
+                name: 'Recycle Bin',
+                used: '0 MB',
+                percent: '0%',
+              ),
+              const Divider(height: 1, color: Color(0xFFF8FAFC)),
+
+              _buildBnxCategoryRow(
+                icon: LucideIcons.send,
+                iconColor: const Color(0xFFEF4444),
+                iconBg: const Color(0xFFFEF2F2),
+                name: 'Sent',
+                used: '0 MB',
+                percent: '0%',
+              ),
+              const Divider(height: 1, color: Color(0xFFF8FAFC)),
+
+              _buildBnxCategoryRow(
+                icon: LucideIcons.fileText,
+                iconColor: const Color(0xFFD97706),
+                iconBg: const Color(0xFFFFFBEB),
+                name: 'Drafts',
+                used: '30 MB',
+                percent: '3%',
+              ),
+              const Divider(height: 1, color: Color(0xFFF8FAFC)),
+
+              _buildBnxCategoryRow(
+                icon: LucideIcons.folder,
+                iconColor: const Color(0xFF64748B),
+                iconBg: const Color(0xFFF1F5F9),
+                name: 'Others',
+                used: '200 MB',
+                percent: '20%',
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // ─── BOTTOM INFO BANNER ───
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDBEAFE)),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.info, size: 16, color: Color(0xFF2563EB)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Keep your mailbox light! Review and remove large attachments or empty trash to free up more space.',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1E40AF),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -1691,34 +2132,628 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     );
   }
 
+  Widget _buildBnxCategoryRow({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String name,
+    required String used,
+    required String percent,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      child: Row(
+        children: [
+          // Left: Icon + Name
+          Expanded(
+            flex: 5,
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Icon(icon, size: 16, color: iconColor),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    name,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Middle: Used
+          Expanded(
+            flex: 3,
+            child: Text(
+              used,
+              style: GoogleFonts.outfit(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+
+          // Right: % + Chevron
+          Expanded(
+            flex: 2,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  percent,
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 15,
+                  color: Color(0xFF94A3B8),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCliksAppView() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // ─── Breadcrumbs & Header ───
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildCliksLogo(size: 26),
-            const SizedBox(width: 10),
-            Text('Cliks Chat & Channel Storage', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A), letterSpacing: -0.4)),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                      child: Text(
+                        'Storage Management',
+                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                      ),
+                    ),
+                    Text(
+                      '  ›  ',
+                      style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                    ),
+                    Text(
+                      'Cliks',
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    _buildCliksLogo(size: 26),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Cliks Storage',
+                      style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  'Track how your 1.00 GB storage is used in Cliks.',
+                  style: GoogleFonts.outfit(
+                    fontSize: 13,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+
+            // Last Updated Pill with Refresh Action
+            InkWell(
+              onTap: _triggerRefresh,
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Last Updated: $_lastUpdatedText',
+                      style: GoogleFonts.outfit(
+                        fontSize: 11.5,
+                        color: const Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    AnimatedRotation(
+                      turns: _isRefreshing ? 1.0 : 0.0,
+                      duration: const Duration(milliseconds: 600),
+                      child: const Icon(LucideIcons.refreshCw, size: 12, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
         ),
-        const SizedBox(height: 4),
-        Text('Shared media, voice notes, and group history for Cliks Messenger.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
-        const SizedBox(height: 20),
+
+        const SizedBox(height: 24),
+
+        // ─── SUMMARY STATS CARD ───
         Container(
+          width: double.infinity,
           padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE2E8F0))),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final statsRow = Row(
+                children: [
+                  // Circular Donut Progress Meter (56% USED)
+                  SizedBox(
+                    width: 90,
+                    height: 90,
+                    child: CustomPaint(
+                      painter: _DonutRingPainter(
+                        progress: 0.56,
+                        color: const Color(0xFF0D9488),
+                        trackColor: const Color(0xFFCCFBF1),
+                      ),
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '56%',
+                              style: GoogleFonts.outfit(
+                                fontSize: 19,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF0F172A),
+                                height: 1.0,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'USED',
+                              style: GoogleFonts.outfit(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF64748B),
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 28),
+
+                  // Stat 1: 570.00 MB USED
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '570.00 MB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF0D9488),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'USED',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '56% Used',
+                          style: GoogleFonts.outfit(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stat 2: 454.00 MB AVAILABLE
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '454.00 MB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF10B981),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'AVAILABLE',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stat 3: 1.00 GB TOTAL CAPACITY
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '1.00 GB',
+                          style: GoogleFonts.outfit(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            color: const Color(0xFF0F172A),
+                            letterSpacing: -0.4,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'TOTAL CAPACITY',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Stat 4: Healthy
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 7,
+                              height: 7,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF10B981),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'Healthy',
+                              style: GoogleFonts.outfit(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w900,
+                                color: const Color(0xFF10B981),
+                                letterSpacing: -0.4,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'PLENTY OF SPACE AVAILABLE',
+                          style: GoogleFonts.outfit(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF64748B),
+                            height: 1.25,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+
+              if (constraints.maxWidth < 650) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 650),
+                    child: statsRow,
+                  ),
+                );
+              }
+              return statsRow;
+            },
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // ─── TYPICAL STORAGE SHARE TABLE CARD ───
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
           child: Column(
             children: [
-              _buildCategoryRow(dotColor: const Color(0xFF0D9488), name: 'Media & Videos', percent: '62%', badgeBg: const Color(0xFFF0FDFA), badgeBorder: const Color(0xFF99F6E4), badgeText: const Color(0xFF0D9488), typeDesc: 'Photos, videos, shared links'),
+              // Header Row
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        'Typical Storage Share',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        'TYPICAL STORAGE SHARE',
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF64748B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 5,
+                      child: Text(
+                        'MAIN FILE TYPES',
+                        style: GoogleFonts.outfit(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF64748B),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+
+              // Category Share Rows
+              _buildCliksShareRow(
+                dotColor: const Color(0xFF2563EB),
+                name: 'Books & Accounting',
+                percent: '35%',
+                badgeBg: const Color(0xFFEFF6FF),
+                badgeText: const Color(0xFF2563EB),
+                fileTypes: 'Sales Invoices, Purchase Bills, Money Trackers',
+              ),
               const Divider(height: 1, color: Color(0xFFF8FAFC)),
-              _buildCategoryRow(dotColor: const Color(0xFF6366F1), name: 'Voice Notes', percent: '22%', badgeBg: const Color(0xFFEEF2FF), badgeBorder: const Color(0xFFC7D2FE), badgeText: const Color(0xFF4F46E5), typeDesc: 'Recorded audio clips'),
+
+              _buildCliksShareRow(
+                dotColor: const Color(0xFF10B981),
+                name: 'Finance & Investments',
+                percent: '25%',
+                badgeBg: const Color(0xFFECFDF5),
+                badgeText: const Color(0xFF059669),
+                fileTypes: 'Wallet Statements, Bank Accounts, Portfolio Docs',
+              ),
               const Divider(height: 1, color: Color(0xFFF8FAFC)),
-              _buildCategoryRow(dotColor: const Color(0xFFF59E0B), name: 'Channel History', percent: '16%', badgeBg: const Color(0xFFFFFBEB), badgeBorder: const Color(0xFFFDE68A), badgeText: const Color(0xFFD97706), typeDesc: 'Archived team discussions'),
+
+              _buildCliksShareRow(
+                dotColor: const Color(0xFF8B5CF6),
+                name: 'Tax & Deductions',
+                percent: '20%',
+                badgeBg: const Color(0xFFF5F3FF),
+                badgeText: const Color(0xFF7C3AED),
+                fileTypes: 'ITR Worksheets, Form 16, Audit Files',
+              ),
+              const Divider(height: 1, color: Color(0xFFF8FAFC)),
+
+              _buildCliksShareRow(
+                dotColor: const Color(0xFFF59E0B),
+                name: 'People & Reminders',
+                percent: '10%',
+                badgeBg: const Color(0xFFFFFBEB),
+                badgeText: const Color(0xFFD97706),
+                fileTypes: 'Contact Records, Reminders, Debt Statements',
+              ),
+              const Divider(height: 1, color: Color(0xFFF8FAFC)),
+
+              _buildCliksShareRow(
+                dotColor: const Color(0xFF0284C7),
+                name: 'Social & Media',
+                percent: '10%',
+                badgeBg: const Color(0xFFF0F9FF),
+                badgeText: const Color(0xFF0284C7),
+                fileTypes: 'Profile Photos, Media Posts, Trading Attachments',
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 24),
+
+        // ─── BOTTOM INFO BANNER ───
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFDBEAFE)),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.info, size: 16, color: Color(0xFF2563EB)),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'Keep your storage light! Review cache logs, large attachments, or database backups inside Cliks.',
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1E40AF),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCliksShareRow({
+    required Color dotColor,
+    required String name,
+    required String percent,
+    required Color badgeBg,
+    required Color badgeText,
+    required String fileTypes,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Row(
+        children: [
+          // Column 1: Dot + Category Name
+          Expanded(
+            flex: 4,
+            child: Row(
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: dotColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    name,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.outfit(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Column 2: Typical Storage Share Pill Badge
+          Expanded(
+            flex: 3,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                decoration: BoxDecoration(
+                  color: badgeBg,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  percent,
+                  style: GoogleFonts.outfit(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: badgeText,
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Column 3: Main File Types
+          Expanded(
+            flex: 5,
+            child: Text(
+              fileTypes,
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF475569),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -5097,8 +6132,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 class _DonutRingPainter extends CustomPainter {
   final double progress;
   final Color color;
+  final Color trackColor;
 
-  _DonutRingPainter({required this.progress, required this.color});
+  _DonutRingPainter({
+    required this.progress,
+    required this.color,
+    this.trackColor = const Color(0xFFEDE9FE),
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -5107,7 +6147,7 @@ class _DonutRingPainter extends CustomPainter {
 
     // Track
     final trackPaint = Paint()
-      ..color = const Color(0xFFEDE9FE)
+      ..color = trackColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 10;
     canvas.drawCircle(center, radius, trackPaint);
@@ -5131,7 +6171,9 @@ class _DonutRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _DonutRingPainter oldDelegate) {
-    return oldDelegate.progress != progress || oldDelegate.color != color;
+    return oldDelegate.progress != progress ||
+        oldDelegate.color != color ||
+        oldDelegate.trackColor != trackColor;
   }
 }
 
