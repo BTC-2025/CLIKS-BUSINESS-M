@@ -14,8 +14,8 @@ class MacOSRightUtilityRail extends ConsumerStatefulWidget {
 }
 
 class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
-  // Currently open panel: null (closed), 'beta', 'calendar', 'calculator', 'contacts', 'security', 'notes'
-  String? _activeTool = 'beta';
+  // Currently open panel: null (closed - only thin rail visible), 'beta', 'calendar', 'calculator', 'contacts', 'security', 'notes'
+  String? _activeTool;
   int _betaTab = 0; // 0 = FAVORITES, 1 = RECENT
   DateTime _selectedCalendarDate = DateTime.now();
 
@@ -50,6 +50,12 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(macosBetaAppsVisibleProvider, (prev, next) {
+      if (!next && _activeTool != null) {
+        setState(() => _activeTool = null);
+      }
+    });
+
     final hasOpenPanel = _activeTool != null;
 
     return Row(
@@ -82,7 +88,7 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
             children: [
               const SizedBox(height: 12),
 
-              // 1. Beta Icon Button
+              // 1. Beta Icon Button (Script B)
               _buildBetaCircleBtn(),
               const SizedBox(height: 12),
 
@@ -106,7 +112,7 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
               ),
               const SizedBox(height: 10),
 
-              // 4. Contacts Button
+              // 4. Contacts / ID Card Button
               _buildRailBoxBtn(
                 tool: 'contacts',
                 icon: LucideIcons.users,
@@ -131,8 +137,9 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 tool: 'add',
                 icon: LucideIcons.plus,
                 tooltip: 'More Utilities',
-                bgColor: const Color(0xFFF3F4F6),
-                iconColor: const Color(0xFF6B7280),
+                bgColor: Colors.white,
+                iconColor: const Color(0xFF94A3B8),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
                 customTap: () {
                   _showAddUtilityDialog();
                 },
@@ -145,23 +152,23 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 tool: 'notes',
                 icon: LucideIcons.squarePen,
                 tooltip: 'Quick Notes',
-                bgColor: Colors.transparent,
+                bgColor: Colors.white,
                 iconColor: _activeTool == 'notes' ? const Color(0xFF2563EB) : const Color(0xFF9CA3AF),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
               const SizedBox(height: 10),
 
-              // 8. Sliders / Settings Button
+              // 8. Sliders / Close Toolbar Button
               _buildRailBoxBtn(
                 tool: 'settings',
                 icon: LucideIcons.slidersHorizontal,
-                tooltip: 'Settings',
-                bgColor: Colors.transparent,
+                tooltip: 'Close Toolbar',
+                bgColor: Colors.white,
                 iconColor: const Color(0xFF9CA3AF),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
                 customTap: () {
-                  ref.read(navigationProvider.notifier).setModuleAndRoute(
-                        AppModule.books,
-                        AppRoute.settings,
-                      );
+                  setState(() => _activeTool = null);
+                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
               ),
               const SizedBox(height: 14),
@@ -203,11 +210,13 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
           ),
           alignment: Alignment.center,
           child: const Text(
-            'β',
+            'ℬ',
             style: TextStyle(
-              fontSize: 19,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF135029),
+              color: Color(0xFF0F766E),
+              fontFamily: 'serif',
+              fontStyle: FontStyle.italic,
               height: 1.05,
             ),
           ),
@@ -222,6 +231,7 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
     required String tooltip,
     required Color bgColor,
     required Color iconColor,
+    Border? border,
     VoidCallback? customTap,
   }) {
     final isActive = _activeTool == tool;
@@ -232,15 +242,16 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
         onTap: customTap ?? () => _toggleTool(tool),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          width: 34,
-          height: 34,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: isActive ? bgColor.withValues(alpha: 0.9) : bgColor,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: isActive ? iconColor : Colors.transparent,
-              width: 1.5,
-            ),
+            borderRadius: BorderRadius.circular(10),
+            border: border ??
+                Border.all(
+                  color: isActive ? iconColor : Colors.transparent,
+                  width: 1.5,
+                ),
             boxShadow: isActive
                 ? [
                     BoxShadow(
@@ -252,7 +263,7 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 : null,
           ),
           alignment: Alignment.center,
-          child: Icon(icon, color: iconColor, size: 17),
+          child: Icon(icon, color: iconColor, size: 18),
         ),
       ),
     );
@@ -340,7 +351,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -364,7 +374,17 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                   child: Row(
                     children: [
                       _buildUnderlineTab('FAVORITES', 0),
-                      const SizedBox(width: 24),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        child: Text(
+                          '|',
+                          style: TextStyle(
+                            color: Color(0xFFE5E7EB),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w300,
+                          ),
+                        ),
+                      ),
                       _buildUnderlineTab('RECENT', 1),
                     ],
                   ),
@@ -430,14 +450,30 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                       _buildAppLauncherTile(
                         label: 'Cliks',
                         iconWidget: Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                           alignment: Alignment.center,
-                          child: const Icon(LucideIcons.circleCheck, color: Color(0xFF16A34A), size: 24),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.asset(
+                              'assets/images/icon2_image.png',
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
                         onTap: () {
                           ref.read(navigationProvider.notifier).setModuleAndRoute(
@@ -449,14 +485,22 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                       _buildAppLauncherTile(
                         label: 'BNXmail',
                         iconWidget: Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                           alignment: Alignment.center,
-                          child: const Icon(LucideIcons.send, color: Color(0xFF2563EB), size: 22),
+                          child: const Icon(LucideIcons.send, color: Color(0xFF2563EB), size: 20),
                         ),
                         onTap: () {
                           ScaffoldMessenger.of(context).showSnackBar(
@@ -467,14 +511,22 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                       _buildAppLauncherTile(
                         label: 'Bit-Tool',
                         iconWidget: Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF0F9FF),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                           alignment: Alignment.center,
-                          child: const Icon(LucideIcons.barChart2, color: Color(0xFF0284C7), size: 22),
+                          child: const Icon(LucideIcons.candlestickChart, color: Color(0xFF2563EB), size: 22),
                         ),
                         onTap: () {
                           setState(() => _activeTool = 'calculator');
@@ -483,12 +535,19 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                       _buildAppLauncherTile(
                         label: 'B2Auth',
                         iconWidget: Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF9FAFB),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(color: const Color(0xFFE5E7EB)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                           alignment: Alignment.center,
                           child: const Icon(LucideIcons.shield, color: Color(0xFF374151), size: 22),
@@ -500,14 +559,30 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                       _buildAppLauncherTile(
                         label: 'CliksBus...',
                         iconWidget: Container(
-                          width: 44,
-                          height: 44,
+                          width: 46,
+                          height: 46,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFE8F5E9),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
                           ),
                           alignment: Alignment.center,
-                          child: const Icon(LucideIcons.circleCheckBig, color: Color(0xFF15803D), size: 24),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(14),
+                            child: Image.asset(
+                              'assets/images/icon2_image.png',
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
                         onTap: () {
                           ref.read(navigationProvider.notifier).setModuleAndRoute(
