@@ -729,7 +729,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   // 5. Beta Apps View Button
                   _buildMacOSCircleButton(
                     icon: LucideIcons.slidersHorizontal,
-                    tooltip: 'Beta Apps',
+                    tooltip: ref.watch(macosBetaAppsVisibleProvider) ? 'Close Toolbar' : 'Open Toolbar',
                     isActive: ref.watch(macosBetaAppsVisibleProvider),
                     onTap: () {
                       ref.read(macosBetaAppsVisibleProvider.notifier).update((v) => !v);
