@@ -39,6 +39,7 @@ enum AppRoute {
   auditHub,
   subscription,
   settings,
+  storage,
   help,
   tradingDocs,
   betaClub,

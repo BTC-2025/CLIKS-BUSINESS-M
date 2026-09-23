@@ -7,7 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../payments/widgets/add_money_dialog.dart';
 import 'sidebar_utility_rail.dart';
-import 'storage_breakdown_dialog.dart';
+import '../pages/macos_storage_page.dart';
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -987,14 +987,18 @@ class Sidebar extends ConsumerWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () {
-                MacOsStorageBreakdownDialog.show(context);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const MacOsStoragePage(),
+                  ),
+                );
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFD4EED1)),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Row(
                   children: [
@@ -1015,7 +1019,7 @@ class Sidebar extends ConsumerWidget {
                           ),
                           SizedBox(height: 2),
                           Text(
-                            '3.00 MB of 1.00 GB used',
+                            '921.00 MB of 1.00 GB used',
                             style: TextStyle(
                               fontSize: 9.5,
                               color: Color(0xFF64748B),
@@ -1029,15 +1033,15 @@ class Sidebar extends ConsumerWidget {
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFBFDBFE), width: 2),
+                        border: Border.all(color: const Color(0xFFC7D2FE), width: 2),
                       ),
                       alignment: Alignment.center,
                       child: const Text(
-                        '0%',
+                        '90%',
                         style: TextStyle(
                           fontSize: 8.5,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF2563EB),
+                          color: Color(0xFF7C3AED),
                         ),
                       ),
                     ),

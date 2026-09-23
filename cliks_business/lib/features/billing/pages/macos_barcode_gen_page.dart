@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 
 class MacOsBarcodeGenPage extends StatefulWidget {
@@ -16,39 +15,47 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
   final List<Map<String, dynamic>> _presetTemplates = [
     {
       'title': 'Standard Retail Label',
-      'subtitle': 'Balanced product label with header, multi-field grid, barcode & price tag',
+      'subtitle':
+          'Balanced product label with header, multi-field grid, barcode & price tag',
       'icon': LucideIcons.layoutGrid,
     },
     {
       'title': 'Logistics & Asset Badge',
-      'subtitle': 'Bold SKU header, prominent barcode, and 2-column specifications table',
+      'subtitle':
+          'Bold SKU header, prominent barcode, and 2-column specifications table',
       'icon': LucideIcons.box,
     },
     {
       'title': 'QR Code Spec Tag',
-      'subtitle': 'Side-by-side high density QR code with comprehensive custom attributes list',
+      'subtitle':
+          'Side-by-side high density QR code with comprehensive custom attributes list',
       'icon': LucideIcons.qrCode,
     },
     {
       'title': 'Compact Price Sticker',
-      'subtitle': 'Clean minimal sticker focused on product title, barcode and price tag',
+      'subtitle':
+          'Clean minimal sticker focused on product title, barcode and price tag',
       'icon': LucideIcons.tag,
     },
     {
       'title': 'Jewelry & Small Item Tag',
-      'subtitle': 'Ultra-compact dual column format ideal for small items, rings and accessories',
+      'subtitle':
+          'Ultra-compact dual column format ideal for small items, rings and accessories',
       'icon': LucideIcons.sparkles,
     },
     {
       'title': 'Custom Template',
-      'subtitle': 'Fully personalized layout with store logo, custom badge, border & discount styling',
+      'subtitle':
+          'Fully personalized layout with store logo, custom badge, border & discount styling',
       'icon': LucideIcons.pencil,
     },
   ];
 
   // Data Input & Format
   String _generationFormat = 'Code 128 (Standard)';
-  final TextEditingController _codeValueController = TextEditingController(text: 'CLKS-1001-PROD');
+  final TextEditingController _codeValueController = TextEditingController(
+    text: 'CLKS-1001-PROD',
+  );
   bool _encodePayload = false;
 
   // Label Print Info & Pricing
@@ -148,8 +155,12 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
   @override
   void initState() {
     super.initState();
-    _productTitleController = TextEditingController(text: 'PREMIUM COTTON SHIRT');
-    _descriptionController = TextEditingController(text: 'Size: L | Color: Navy');
+    _productTitleController = TextEditingController(
+      text: 'PREMIUM COTTON SHIRT',
+    );
+    _descriptionController = TextEditingController(
+      text: 'Size: L | Color: Navy',
+    );
     _priceController = TextEditingController(text: '999.00');
     _originalMrpController = TextEditingController(text: '1299.00');
   }
@@ -190,24 +201,45 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
   }
 
   void _addQuickKey(String key) {
-    if (_customFields.length >= 25) return;
+    if (_customFields.length >= 25) {
+      return;
+    }
     setState(() {
       String defaultValue = '';
-      if (key == 'Exp Date') defaultValue = '12/2026';
-      if (key == 'Weight') defaultValue = '500g';
-      if (key == 'Batch No') defaultValue = 'B-2026-X';
-      if (key == 'Material') defaultValue = '100% Cotton';
-      if (key == 'Serial No') defaultValue = 'SN-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
-      if (key == 'MRP') defaultValue = '₹${_originalMrpController.text}';
-      if (key == 'Mfg Date') defaultValue = '01/2026';
-      if (key == 'Origin') defaultValue = 'India';
+      if (key == 'Exp Date') {
+        defaultValue = '12/2026';
+      }
+      if (key == 'Weight') {
+        defaultValue = '500g';
+      }
+      if (key == 'Batch No') {
+        defaultValue = 'B-2026-X';
+      }
+      if (key == 'Material') {
+        defaultValue = '100% Cotton';
+      }
+      if (key == 'Serial No') {
+        defaultValue =
+            'SN-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      }
+      if (key == 'MRP') {
+        defaultValue = '₹${_originalMrpController.text}';
+      }
+      if (key == 'Mfg Date') {
+        defaultValue = '01/2026';
+      }
+      if (key == 'Origin') {
+        defaultValue = 'India';
+      }
 
       _customFields.add({'key': key, 'value': defaultValue});
     });
   }
 
   void _addNewCustomField() {
-    if (_customFields.length >= 25) return;
+    if (_customFields.length >= 25) {
+      return;
+    }
     setState(() {
       _customFields.add({'key': '', 'value': ''});
     });
@@ -238,10 +270,17 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 color: const Color(0xFFDCFCE7),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(LucideIcons.fileSpreadsheet, color: Color(0xFF15803D), size: 18),
+              child: const Icon(
+                LucideIcons.fileSpreadsheet,
+                color: Color(0xFF15803D),
+                size: 18,
+              ),
             ),
             const SizedBox(width: 12),
-            const Text('Bulk CSV Label Upload', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Bulk CSV Label Upload',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: SizedBox(
@@ -252,7 +291,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             children: [
               const Text(
                 'Upload a spreadsheet containing catalog inventory to generate barcode labels in bulk with custom attributes.',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                  height: 1.4,
+                ),
               ),
               const SizedBox(height: 16),
               Container(
@@ -265,23 +308,48 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 ),
                 child: Column(
                   children: [
-                    const Icon(LucideIcons.fileSpreadsheet, size: 32, color: Color(0xFF16A34A)),
+                    const Icon(
+                      LucideIcons.fileSpreadsheet,
+                      size: 32,
+                      color: Color(0xFF16A34A),
+                    ),
                     const SizedBox(height: 8),
-                    const Text('Drag & Drop CSV File here or Browse', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                    const Text(
+                      'Drag & Drop CSV File here or Browse',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    const Text('Supported formats: .CSV, .XLSX (Max 10MB)', style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8))),
+                    const Text(
+                      'Supported formats: .CSV, .XLSX (Max 10MB)',
+                      style: TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+                    ),
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        AppSnackbar.show(context, 'Sample spreadsheet template loaded (12 items ready).', type: SnackType.success);
+                        AppSnackbar.show(
+                          context,
+                          'Sample spreadsheet template loaded (12 items ready).',
+                          type: SnackType.success,
+                        );
                       },
                       icon: const Icon(LucideIcons.upload, size: 13),
-                      label: const Text('Select File', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Select File',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF14532D),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     ),
                   ],
@@ -321,7 +389,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(isBackground ? 'Select Background Tint' : 'Select Barcode Color', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        title: Text(
+          isBackground ? 'Select Background Tint' : 'Select Barcode Color',
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+        ),
         content: Wrap(
           spacing: 12,
           runSpacing: 12,
@@ -348,7 +419,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 decoration: BoxDecoration(
                   color: color,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1.5),
+                  border: Border.all(
+                    color: const Color(0xFFCBD5E1),
+                    width: 1.5,
+                  ),
                 ),
               ),
             );
@@ -394,15 +468,9 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      flex: 62,
-                      child: _buildLeftConfigurationColumn(),
-                    ),
+                    Expanded(flex: 62, child: _buildLeftConfigurationColumn()),
                     const SizedBox(width: 24),
-                    Expanded(
-                      flex: 38,
-                      child: _buildRightLiveCanvasColumn(),
-                    ),
+                    Expanded(flex: 38, child: _buildRightLiveCanvasColumn()),
                   ],
                 );
               },
@@ -456,16 +524,29 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             // Bulk CSV Upload (0)
             OutlinedButton.icon(
               onPressed: _showCsvUploadDialog,
-              icon: const Icon(LucideIcons.fileSpreadsheet, size: 14, color: Color(0xFF15803D)),
+              icon: const Icon(
+                LucideIcons.fileSpreadsheet,
+                size: 14,
+                color: Color(0xFF15803D),
+              ),
               label: const Text(
                 'Bulk CSV Upload (0)',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF15803D),
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 backgroundColor: Colors.white,
                 side: const BorderSide(color: Color(0xFF16A34A), width: 1.2),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
 
@@ -480,16 +561,29 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   type: SnackType.info,
                 );
               },
-              icon: const Icon(LucideIcons.printer, size: 14, color: Color(0xFF334155)),
+              icon: const Icon(
+                LucideIcons.printer,
+                size: 14,
+                color: Color(0xFF334155),
+              ),
               label: const Text(
                 'Print View',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 backgroundColor: Colors.white,
                 side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
 
@@ -504,16 +598,29 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   type: SnackType.success,
                 );
               },
-              icon: const Icon(LucideIcons.download, size: 14, color: Colors.white),
+              icon: const Icon(
+                LucideIcons.download,
+                size: 14,
+                color: Colors.white,
+              ),
               label: const Text(
                 'Download PNG',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF14532D),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
             ),
           ],
@@ -565,7 +672,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             children: [
               Row(
                 children: const [
-                  Icon(LucideIcons.layoutTemplate, color: Color(0xFF16A34A), size: 18),
+                  Icon(
+                    LucideIcons.layoutTemplate,
+                    color: Color(0xFF16A34A),
+                    size: 18,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Select Canvas Label Preset Layout',
@@ -578,7 +689,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFDCFCE7),
                   borderRadius: BorderRadius.circular(20),
@@ -611,7 +725,8 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
               }
 
               final spacing = 12.0;
-              final cardWidth = (width - (itemsInRow - 1) * spacing) / itemsInRow;
+              final cardWidth =
+                  (width - (itemsInRow - 1) * spacing) / itemsInRow;
 
               return Wrap(
                 spacing: spacing,
@@ -626,7 +741,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         _selectedPresetIndex = idx;
                         if (idx == 2) {
                           _generationFormat = 'QR Code';
-                        } else if (idx == 0 || idx == 1 || idx == 3 || idx == 4) {
+                        } else if (idx == 0 ||
+                            idx == 1 ||
+                            idx == 3 ||
+                            idx == 4) {
                           _generationFormat = 'Code 128 (Standard)';
                         }
                       });
@@ -637,10 +755,14 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                       constraints: const BoxConstraints(minHeight: 120),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                        color: isSelected
+                            ? const Color(0xFFF0FDF4)
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+                          color: isSelected
+                              ? const Color(0xFF16A34A)
+                              : const Color(0xFFE2E8F0),
                           width: isSelected ? 2.0 : 1.0,
                         ),
                       ),
@@ -653,17 +775,25 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                               Container(
                                 padding: const EdgeInsets.all(6),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? const Color(0xFF14532D) : const Color(0xFFF1F5F9),
+                                  color: isSelected
+                                      ? const Color(0xFF14532D)
+                                      : const Color(0xFFF1F5F9),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
                                   preset['icon'] as IconData,
                                   size: 16,
-                                  color: isSelected ? Colors.white : const Color(0xFF64748B),
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
                                 ),
                               ),
                               if (isSelected)
-                                const Icon(LucideIcons.checkCircle2, color: Color(0xFF16A34A), size: 16),
+                                const Icon(
+                                  LucideIcons.checkCircle2,
+                                  color: Color(0xFF16A34A),
+                                  size: 16,
+                                ),
                             ],
                           ),
                           const SizedBox(height: 10),
@@ -740,7 +870,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   children: [
                     const Text(
                       'Generation Format',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -755,12 +889,36 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         child: DropdownButton<String>(
                           value: _generationFormat,
                           isExpanded: true,
-                          icon: const Icon(LucideIcons.chevronDown, size: 15, color: Color(0xFF64748B)),
-                          items: ['Code 128 (Standard)', 'EAN-13', 'QR Code', 'UPC-A', 'Code 39']
-                              .map((f) => DropdownMenuItem(value: f, child: Text(f, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))))
-                              .toList(),
+                          icon: const Icon(
+                            LucideIcons.chevronDown,
+                            size: 15,
+                            color: Color(0xFF64748B),
+                          ),
+                          items:
+                              [
+                                    'Code 128 (Standard)',
+                                    'EAN-13',
+                                    'QR Code',
+                                    'UPC-A',
+                                    'Code 39',
+                                  ]
+                                  .map(
+                                    (f) => DropdownMenuItem(
+                                      value: f,
+                                      child: Text(
+                                        f,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                  .toList(),
                           onChanged: (val) {
-                            if (val != null) setState(() => _generationFormat = val);
+                            if (val != null) {
+                              setState(() => _generationFormat = val);
+                            }
                           },
                         ),
                       ),
@@ -778,7 +936,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   children: [
                     const Text(
                       'Code Value (SKU / ID)',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -792,7 +954,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                       child: Center(
                         child: TextField(
                           controller: _codeValueController,
-                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
@@ -826,15 +992,22 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   child: Checkbox(
                     value: _encodePayload,
                     activeColor: const Color(0xFF16A34A),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                    onChanged: (val) => setState(() => _encodePayload = val ?? false),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    onChanged: (val) =>
+                        setState(() => _encodePayload = val ?? false),
                   ),
                 ),
                 const SizedBox(width: 10),
                 const Expanded(
                   child: Text(
                     'Encode Title, Price & Custom Attributes directly inside QR/Barcode payload',
-                    style: TextStyle(fontSize: 11.5, color: Color(0xFF334155), fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFF334155),
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],
@@ -880,7 +1053,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             children: [
               const Text(
                 'Product Title / Name',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
               ),
               const SizedBox(height: 6),
               Container(
@@ -895,15 +1072,30 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   child: DropdownButton<String>(
                     value: _selectedProduct,
                     isExpanded: true,
-                    icon: const Icon(LucideIcons.chevronDown, size: 15, color: Color(0xFF64748B)),
+                    icon: const Icon(
+                      LucideIcons.chevronDown,
+                      size: 15,
+                      color: Color(0xFF64748B),
+                    ),
                     items: _sampleProducts
-                        .map((p) => DropdownMenuItem(
-                              value: p['name'],
-                              child: Text(p['name']!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF0F172A))),
-                            ))
+                        .map(
+                          (p) => DropdownMenuItem(
+                            value: p['name'],
+                            child: Text(
+                              p['name']!,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                        )
                         .toList(),
                     onChanged: (val) {
-                      if (val != null) _onProductSelected(val);
+                      if (val != null) {
+                        _onProductSelected(val);
+                      }
                     },
                   ),
                 ),
@@ -919,7 +1111,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             children: [
               const Text(
                 'Description / Variation',
-                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF475569),
+                ),
               ),
               const SizedBox(height: 6),
               Container(
@@ -933,7 +1129,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 child: Center(
                   child: TextField(
                     controller: _descriptionController,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF0F172A),
+                    ),
                     decoration: const InputDecoration(
                       border: InputBorder.none,
                       isDense: true,
@@ -957,7 +1157,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   children: [
                     const Text(
                       'OFFER PRICE (₹)',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -971,7 +1175,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                       child: Center(
                         child: TextField(
                           controller: _priceController,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
@@ -993,7 +1201,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   children: [
                     const Text(
                       'ORIGINAL MRP (₹)',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -1007,7 +1219,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                       child: Center(
                         child: TextField(
                           controller: _originalMrpController,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
                           decoration: const InputDecoration(
                             border: InputBorder.none,
                             isDense: true,
@@ -1054,7 +1270,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   children: [
                     const Text(
                       'Upload Store Logo',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -1069,20 +1289,37 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         children: [
                           ElevatedButton(
                             onPressed: () {
-                              setState(() => _uploadedLogoName = 'logo_retail.png');
-                              AppSnackbar.show(context, 'Store logo attached: logo_retail.png', type: SnackType.info);
+                              setState(
+                                () => _uploadedLogoName = 'logo_retail.png',
+                              );
+                              AppSnackbar.show(
+                                context,
+                                'Store logo attached: logo_retail.png',
+                                type: SnackType.info,
+                              );
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFFF1F5F9),
                               foregroundColor: const Color(0xFF0F172A),
                               elevation: 0,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(6),
-                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                side: const BorderSide(
+                                  color: Color(0xFFCBD5E1),
+                                ),
                               ),
                             ),
-                            child: const Text('Choose file', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
+                            child: const Text(
+                              'Choose file',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
@@ -1090,7 +1327,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                               _uploadedLogoName ?? 'No file chosen',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Color(0xFF64748B),
+                              ),
                             ),
                           ),
                         ],
@@ -1114,7 +1354,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                   children: [
                     const Text(
                       'Tag Badge Icon',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
                     ),
                     const SizedBox(height: 6),
                     Container(
@@ -1129,12 +1373,29 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         child: DropdownButton<String>(
                           value: _selectedBadge,
                           isExpanded: true,
-                          icon: const Icon(LucideIcons.chevronDown, size: 15, color: Color(0xFF64748B)),
+                          icon: const Icon(
+                            LucideIcons.chevronDown,
+                            size: 15,
+                            color: Color(0xFF64748B),
+                          ),
                           items: _badgeOptions
-                              .map((b) => DropdownMenuItem(value: b, child: Text(b, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500))))
+                              .map(
+                                (b) => DropdownMenuItem(
+                                  value: b,
+                                  child: Text(
+                                    b,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                              )
                               .toList(),
                           onChanged: (val) {
-                            if (val != null) setState(() => _selectedBadge = val);
+                            if (val != null) {
+                              setState(() => _selectedBadge = val);
+                            }
                           },
                         ),
                       ),
@@ -1174,12 +1435,21 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 style: OutlinedButton.styleFrom(
                   backgroundColor: const Color(0xFFFEF2F2),
                   side: const BorderSide(color: Color(0xFFFECACA)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: Text(
                   'Clear All (${_customFields.length})',
-                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFDC2626),
+                  ),
                 ),
               ),
 
@@ -1199,30 +1469,62 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                       onTap: () => setState(() => _isGridView = true),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: _isGridView ? Colors.white : Colors.transparent,
+                          color: _isGridView
+                              ? Colors.white
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(6),
                           boxShadow: _isGridView
-                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                  ),
+                                ]
                               : null,
                         ),
-                        child: Icon(LucideIcons.layoutGrid, size: 14, color: _isGridView ? const Color(0xFF0F172A) : const Color(0xFF64748B)),
+                        child: Icon(
+                          LucideIcons.layoutGrid,
+                          size: 14,
+                          color: _isGridView
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF64748B),
+                        ),
                       ),
                     ),
                     InkWell(
                       onTap: () => setState(() => _isGridView = false),
                       borderRadius: BorderRadius.circular(6),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
-                          color: !_isGridView ? Colors.white : Colors.transparent,
+                          color: !_isGridView
+                              ? Colors.white
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(6),
                           boxShadow: !_isGridView
-                              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.05),
+                                    blurRadius: 4,
+                                  ),
+                                ]
                               : null,
                         ),
-                        child: Icon(LucideIcons.list, size: 14, color: !_isGridView ? const Color(0xFF0F172A) : const Color(0xFF64748B)),
+                        child: Icon(
+                          LucideIcons.list,
+                          size: 14,
+                          color: !_isGridView
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFF64748B),
+                        ),
                       ),
                     ),
                   ],
@@ -1234,13 +1536,29 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
               // + Add Key-Value
               ElevatedButton.icon(
                 onPressed: _addNewCustomField,
-                icon: const Icon(LucideIcons.plus, size: 13, color: Colors.white),
-                label: const Text('+ Add Key-Value', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                icon: const Icon(
+                  LucideIcons.plus,
+                  size: 13,
+                  color: Colors.white,
+                ),
+                label: const Text(
+                  '+ Add Key-Value',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF14532D),
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
               ),
             ],
@@ -1252,7 +1570,14 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Text('Quick Add: ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B))),
+              const Text(
+                'Quick Add: ',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: SingleChildScrollView(
@@ -1266,15 +1591,24 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                           onTap: () => _addQuickKey(key),
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF0FDF4),
-                              border: Border.all(color: const Color(0xFFBBF7D0)),
+                              border: Border.all(
+                                color: const Color(0xFFBBF7D0),
+                              ),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               '+ $key',
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF15803D),
+                              ),
                             ),
                           ),
                         ),
@@ -1310,7 +1644,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         child: Center(
                           child: TextFormField(
                             initialValue: field['key'],
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                             decoration: const InputDecoration(
                               hintText: 'Label Key',
                               border: InputBorder.none,
@@ -1342,7 +1679,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         child: Center(
                           child: TextFormField(
                             initialValue: field['value'],
-                            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
                             decoration: const InputDecoration(
                               hintText: 'Value',
                               border: InputBorder.none,
@@ -1372,7 +1712,11 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: const Color(0xFFFECACA)),
                         ),
-                        child: const Icon(LucideIcons.trash2, size: 15, color: Color(0xFFDC2626)),
+                        child: const Icon(
+                          LucideIcons.trash2,
+                          size: 15,
+                          color: Color(0xFFDC2626),
+                        ),
                       ),
                     ),
                   ],
@@ -1461,7 +1805,14 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Text Label', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                    const Text(
+                      'Text Label',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
@@ -1471,14 +1822,22 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                           child: Checkbox(
                             value: _showCodeValueText,
                             activeColor: const Color(0xFF16A34A),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                            onChanged: (val) => setState(() => _showCodeValueText = val ?? true),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            onChanged: (val) => setState(
+                              () => _showCodeValueText = val ?? true,
+                            ),
                           ),
                         ),
                         const SizedBox(width: 8),
                         const Text(
                           'Show code value text',
-                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: Color(0xFF334155)),
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF334155),
+                          ),
                         ),
                       ],
                     ),
@@ -1498,7 +1857,14 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Bar / QR Color', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                    const Text(
+                      'Bar / QR Color',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: () => _showColorPickerModal(false),
@@ -1524,7 +1890,12 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                             const SizedBox(width: 10),
                             Text(
                               _barColorHex,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'monospace', color: Color(0xFF0F172A)),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'monospace',
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
                           ],
                         ),
@@ -1541,7 +1912,14 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Background Tint', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
+                    const Text(
+                      'Background Tint',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: () => _showColorPickerModal(true),
@@ -1562,13 +1940,20 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                               decoration: BoxDecoration(
                                 color: _bgTintColor,
                                 borderRadius: BorderRadius.circular(4),
-                                border: Border.all(color: const Color(0xFFE2E8F0)),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
                               ),
                             ),
                             const SizedBox(width: 10),
                             Text(
                               _bgTintHex,
-                              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, fontFamily: 'monospace', color: Color(0xFF0F172A)),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'monospace',
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
                           ],
                         ),
@@ -1598,8 +1983,22 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF475569))),
-            Text(displayValue, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF475569),
+              ),
+            ),
+            Text(
+              displayValue,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF0F172A),
+              ),
+            ),
           ],
         ),
         SliderTheme(
@@ -1611,12 +2010,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             overlayColor: const Color(0xFF14532D).withValues(alpha: 0.1),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
           ),
-          child: Slider(
-            value: value,
-            min: min,
-            max: max,
-            onChanged: onChanged,
-          ),
+          child: Slider(value: value, min: min, max: max, onChanged: onChanged),
         ),
       ],
     );
@@ -1626,7 +2020,8 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
   // RIGHT COLUMN: LIVE CANVAS PREVIEW & PRO TIP
   // ═══════════════════════════════════════════════════════════════
   Widget _buildRightLiveCanvasColumn() {
-    final activePreset = _presetTemplates[_selectedPresetIndex]['title'] as String;
+    final activePreset =
+        _presetTemplates[_selectedPresetIndex]['title'] as String;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1650,7 +2045,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             children: [
               // Top simulated bar
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 decoration: const BoxDecoration(
                   border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                 ),
@@ -1667,7 +2065,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(12),
@@ -1685,11 +2086,32 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                     // Window dots
                     Row(
                       children: [
-                        Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFFEF4444), shape: BoxShape.circle)),
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFEF4444),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 5),
-                        Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFFF59E0B), shape: BoxShape.circle)),
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF59E0B),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                         const SizedBox(width: 5),
-                        Container(width: 7, height: 7, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
+                        Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF10B981),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
                       ],
                     ),
                   ],
@@ -1699,11 +2121,17 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
               // Checkerboard Canvas Area
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 26),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 26,
+                ),
                 child: CustomPaint(
                   painter: _CheckerboardPainter(),
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                     child: Column(
                       children: [
                         // The Rendered Label Card
@@ -1730,11 +2158,16 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                                 Align(
                                   alignment: Alignment.topRight,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFF0FDF4),
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                                      border: Border.all(
+                                        color: const Color(0xFFBBF7D0),
+                                      ),
                                     ),
                                     child: Text(
                                       _selectedBadge,
@@ -1783,22 +2216,44 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                                     // Left column (even indices)
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          for (int i = 0; i < _customFields.length; i += 2)
-                                            if (_customFields[i]['key']!.isNotEmpty)
+                                          for (
+                                            int i = 0;
+                                            i < _customFields.length;
+                                            i += 2
+                                          )
+                                            if (_customFields[i]['key']!
+                                                .isNotEmpty)
                                               Padding(
-                                                padding: const EdgeInsets.only(bottom: 3.0),
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 3.0,
+                                                ),
                                                 child: RichText(
                                                   text: TextSpan(
                                                     children: [
                                                       TextSpan(
-                                                        text: '${_customFields[i]['key']}: ',
-                                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                                        text:
+                                                            '${_customFields[i]['key']}: ',
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                            0xFF0F172A,
+                                                          ),
+                                                        ),
                                                       ),
                                                       TextSpan(
-                                                        text: _customFields[i]['value'],
-                                                        style: const TextStyle(fontSize: 10, color: Color(0xFF334155)),
+                                                        text:
+                                                            _customFields[i]['value'],
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          color: Color(
+                                                            0xFF334155,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
@@ -1811,22 +2266,44 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                                     // Right column (odd indices)
                                     Expanded(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          for (int i = 1; i < _customFields.length; i += 2)
-                                            if (_customFields[i]['key']!.isNotEmpty)
+                                          for (
+                                            int i = 1;
+                                            i < _customFields.length;
+                                            i += 2
+                                          )
+                                            if (_customFields[i]['key']!
+                                                .isNotEmpty)
                                               Padding(
-                                                padding: const EdgeInsets.only(bottom: 3.0),
+                                                padding: const EdgeInsets.only(
+                                                  bottom: 3.0,
+                                                ),
                                                 child: RichText(
                                                   text: TextSpan(
                                                     children: [
                                                       TextSpan(
-                                                        text: '${_customFields[i]['key']}: ',
-                                                        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                                        text:
+                                                            '${_customFields[i]['key']}: ',
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color: Color(
+                                                            0xFF0F172A,
+                                                          ),
+                                                        ),
                                                       ),
                                                       TextSpan(
-                                                        text: _customFields[i]['value'],
-                                                        style: const TextStyle(fontSize: 10, color: Color(0xFF334155)),
+                                                        text:
+                                                            _customFields[i]['value'],
+                                                        style: const TextStyle(
+                                                          fontSize: 10,
+                                                          color: Color(
+                                                            0xFF334155,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
@@ -1914,7 +2391,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                                   ),
                                   const SizedBox(width: 8),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 6,
+                                      vertical: 2,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFDCFCE7),
                                       borderRadius: BorderRadius.circular(4),
@@ -1938,7 +2418,10 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
 
                         // Format tag
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -2021,7 +2504,8 @@ class _CheckerboardPainter extends CustomPainter {
 
     for (double y = 0; y < size.height; y += cellSize) {
       for (double x = 0; x < size.width; x += cellSize) {
-        final isEven = ((x / cellSize).floor() + (y / cellSize).floor()) % 2 == 0;
+        final isEven =
+            ((x / cellSize).floor() + (y / cellSize).floor()) % 2 == 0;
         canvas.drawRect(
           Rect.fromLTWH(x, y, cellSize, cellSize),
           isEven ? lightPaint : darkPaint,
@@ -2061,35 +2545,48 @@ class _BarcodePainter extends CustomPainter {
     final endX = size.width - 12.0;
 
     // Start guard
-    canvas.drawRect(Rect.fromLTWH(currentX, 0, 2.5 * scale, size.height), paint);
+    canvas.drawRect(
+      Rect.fromLTWH(currentX, 0, 2.5 * scale, size.height),
+      paint,
+    );
     currentX += 4.5 * scale;
-    canvas.drawRect(Rect.fromLTWH(currentX, 0, 1.5 * scale, size.height), paint);
+    canvas.drawRect(
+      Rect.fromLTWH(currentX, 0, 1.5 * scale, size.height),
+      paint,
+    );
     currentX += 3.5 * scale;
 
     while (currentX < endX - 10.0 * scale) {
       final barWidth = ((random.nextInt(3) + 1) * 1.1) * scale;
       final spaceWidth = ((random.nextInt(3) + 1) * 1.1) * scale;
 
-      if (currentX + barWidth > endX - 8.0 * scale) break;
+      if (currentX + barWidth > endX - 8.0 * scale) {
+        break;
+      }
 
-      canvas.drawRect(
-        Rect.fromLTWH(currentX, 0, barWidth, size.height),
-        paint,
-      );
+      canvas.drawRect(Rect.fromLTWH(currentX, 0, barWidth, size.height), paint);
 
       currentX += barWidth + spaceWidth;
     }
 
     // End guard
     if (endX - currentX > 6.0 * scale) {
-      canvas.drawRect(Rect.fromLTWH(endX - 5.0 * scale, 0, 1.5 * scale, size.height), paint);
-      canvas.drawRect(Rect.fromLTWH(endX - 2.5 * scale, 0, 2.5 * scale, size.height), paint);
+      canvas.drawRect(
+        Rect.fromLTWH(endX - 5.0 * scale, 0, 1.5 * scale, size.height),
+        paint,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(endX - 2.5 * scale, 0, 2.5 * scale, size.height),
+        paint,
+      );
     }
   }
 
   @override
   bool shouldRepaint(covariant _BarcodePainter oldDelegate) =>
-      oldDelegate.sku != sku || oldDelegate.scale != scale || oldDelegate.barColor != barColor;
+      oldDelegate.sku != sku ||
+      oldDelegate.scale != scale ||
+      oldDelegate.barColor != barColor;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -2112,13 +2609,26 @@ class _QrCodePainter extends CustomPainter {
 
     // Draw finder patterns (top-left, top-right, bottom-left)
     void drawFinderPattern(double x, double y) {
-      canvas.drawRect(Rect.fromLTWH(x, y, 7 * moduleSize, 7 * moduleSize), paint);
       canvas.drawRect(
-        Rect.fromLTWH(x + moduleSize, y + moduleSize, 5 * moduleSize, 5 * moduleSize),
+        Rect.fromLTWH(x, y, 7 * moduleSize, 7 * moduleSize),
+        paint,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(
+          x + moduleSize,
+          y + moduleSize,
+          5 * moduleSize,
+          5 * moduleSize,
+        ),
         Paint()..color = Colors.white,
       );
       canvas.drawRect(
-        Rect.fromLTWH(x + 2 * moduleSize, y + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize),
+        Rect.fromLTWH(
+          x + 2 * moduleSize,
+          y + 2 * moduleSize,
+          3 * moduleSize,
+          3 * moduleSize,
+        ),
         paint,
       );
     }
@@ -2131,10 +2641,17 @@ class _QrCodePainter extends CustomPainter {
     final rand = _Lcg(data.hashCode);
     for (int r = 0; r < 25; r++) {
       for (int c = 0; c < 25; c++) {
-        if ((r < 8 && c < 8) || (r < 8 && c > 16) || (r > 16 && c < 8)) continue;
+        if ((r < 8 && c < 8) || (r < 8 && c > 16) || (r > 16 && c < 8)) {
+          continue;
+        }
         if (rand.nextInt(100) > 55) {
           canvas.drawRect(
-            Rect.fromLTWH(c * moduleSize, r * moduleSize, moduleSize, moduleSize),
+            Rect.fromLTWH(
+              c * moduleSize,
+              r * moduleSize,
+              moduleSize,
+              moduleSize,
+            ),
             paint,
           );
         }

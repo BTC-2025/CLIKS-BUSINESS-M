@@ -26,6 +26,7 @@ import '../payments/pages/planner_page.dart';
 import '../payments/pages/referral_page.dart';
 import '../profile/pages/profile_page.dart';
 import '../settings/pages/settings_page.dart';
+import 'pages/macos_storage_page.dart';
 import '../billing/pages/new_invoice_page.dart';
 import '../billing/pages/accounting_page.dart';
 import '../billing/pages/expenses_page.dart';
@@ -531,6 +532,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return ProfilePage(key: ValueKey(route));
       case AppRoute.settings:
         return SettingsPage(key: ValueKey(route));
+      case AppRoute.storage:
+        return const MacOsStoragePage(key: ValueKey(AppRoute.storage));
       case AppRoute.newInvoice:
         return NewInvoicePage(key: ValueKey(route));
       case AppRoute.accounting:
