@@ -46,3 +46,4 @@ flutter:
   assets:
     - assets/images/
     - assets/bit_tool_logo.png
+    - "assets/icons_images_reference /"

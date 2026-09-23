@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -183,47 +184,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           const SizedBox(width: 14),
 
           // Beta Logo (Matching Screenshot)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'B',
-                    style: GoogleFonts.playfairDisplay(
-                      color: const Color(0xFF2563EB),
-                      fontWeight: FontWeight.w900,
-                      fontSize: 22,
-                      height: 1.0,
-                    ),
-                  ),
-                  Text(
-                    'BETA',
-                    style: GoogleFonts.outfit(
-                      color: const Color(0xFF2563EB),
-                      fontWeight: FontWeight.w800,
-                      fontSize: 7.5,
-                      letterSpacing: 0.8,
-                      height: 1.0,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 10),
-              Text(
-                'Beta',
-                style: GoogleFonts.outfit(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF0F172A),
-                  letterSpacing: -0.3,
-                ),
-              ),
-            ],
-          ),
+          _buildBetaLogo(size: 26),
 
           const Spacer(),
 
@@ -504,7 +465,17 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               ),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.home, size: 16, color: Colors.white),
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: Center(
+                      child: Icon(
+                        LucideIcons.home,
+                        size: 16,
+                        color: _activeTab == _StorageTab.home ? Colors.white : const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
                   const SizedBox(width: 12),
                   Text(
                     'Home',
@@ -525,22 +496,17 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
           _buildSidebarItem(
             tab: _StorageTab.bnxMail,
-            customIconWidget: _buildBnxMailLogo(
-              size: 16,
-              color: _activeTab == _StorageTab.bnxMail ? Colors.white : const Color(0xFF2563EB),
-            ),
+            customIconWidget: _buildBnxMailLogo(size: 20),
             title: 'BNX Mail',
           ),
           _buildSidebarItem(
             tab: _StorageTab.cliks,
-            icon: LucideIcons.circleCheck,
-            customIconColor: const Color(0xFF16A34A),
+            customIconWidget: _buildCliksLogo(size: 18),
             title: 'Cliks',
           ),
           _buildSidebarItem(
             tab: _StorageTab.cliksBusiness,
-            icon: LucideIcons.circleCheck,
-            customIconColor: const Color(0xFF16A34A),
+            customIconWidget: _buildCliksBusinessLogo(size: 18),
             title: 'Cliks Business',
           ),
 
@@ -615,14 +581,20 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           ),
           child: Row(
             children: [
-              if (customIconWidget != null)
-                customIconWidget
-              else if (icon != null)
-                Icon(
-                  icon,
-                  size: 16,
-                  color: isSelected ? Colors.white : (customIconColor ?? const Color(0xFF475569)),
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: Center(
+                  child: customIconWidget ??
+                      (icon != null
+                          ? Icon(
+                              icon,
+                              size: 16,
+                              color: isSelected ? Colors.white : (customIconColor ?? const Color(0xFF475569)),
+                            )
+                          : const SizedBox.shrink()),
                 ),
+              ),
               const SizedBox(width: 12),
               Text(
                 title,
@@ -702,14 +674,20 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                Text(
-                  'Cliks Business Storage',
-                  style: GoogleFonts.outfit(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.4,
-                  ),
+                Row(
+                  children: [
+                    _buildCliksBusinessLogo(size: 26),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Cliks Business Storage',
+                      style: GoogleFonts.outfit(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF0F172A),
+                        letterSpacing: -0.4,
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -1350,6 +1328,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
                   _buildEcosystemRow(
                     dotColor: const Color(0xFF2563EB),
+                    iconWidget: _buildBnxMailLogo(size: 18),
                     name: 'BNX Mail',
                     sizeText: '1.32 GB',
                     pctText: '26% of total pool',
@@ -1358,6 +1337,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
                   _buildEcosystemRow(
                     dotColor: const Color(0xFF7C3AED),
+                    iconWidget: _buildCliksBusinessLogo(size: 16),
                     name: 'Cliks Business',
                     sizeText: '921.00 MB',
                     pctText: '18% of total pool',
@@ -1366,6 +1346,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
                   _buildEcosystemRow(
                     dotColor: const Color(0xFF0D9488),
+                    iconWidget: _buildCliksLogo(size: 16),
                     name: 'Cliks',
                     sizeText: '570.00 MB',
                     pctText: '11% of total pool',
@@ -1532,6 +1513,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
   Widget _buildEcosystemRow({
     required Color dotColor,
+    Widget? iconWidget,
     required String name,
     required String sizeText,
     required String pctText,
@@ -1541,15 +1523,20 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       children: [
         Row(
           children: [
-            Container(
-              width: 7,
-              height: 7,
-              decoration: BoxDecoration(
-                color: dotColor,
-                shape: BoxShape.circle,
+            if (iconWidget != null) ...[
+              iconWidget,
+              const SizedBox(width: 8),
+            ] else ...[
+              Container(
+                width: 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
+              const SizedBox(width: 10),
+            ],
             Text(
               name,
               style: GoogleFonts.outfit(
@@ -1602,7 +1589,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           children: [
             _buildAppShortcutCard(
               title: 'BNX Mail',
-              icon: LucideIcons.send,
+              iconWidget: _buildBnxMailLogo(size: 24),
               used: '1.32 GB',
               total: '5.00 GB Pool',
               color: const Color(0xFF2563EB),
@@ -1611,7 +1598,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 16),
             _buildAppShortcutCard(
               title: 'Cliks Business',
-              icon: LucideIcons.checkCircle2,
+              iconWidget: _buildCliksBusinessLogo(size: 22),
               used: '921.00 MB',
               total: '1.00 GB Dedicated',
               color: const Color(0xFF7C3AED),
@@ -1620,7 +1607,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 16),
             _buildAppShortcutCard(
               title: 'Cliks',
-              icon: LucideIcons.checkCircle2,
+              iconWidget: _buildCliksLogo(size: 22),
               used: '570.00 MB',
               total: '5.00 GB Pool',
               color: const Color(0xFF0D9488),
@@ -1634,7 +1621,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
   Widget _buildAppShortcutCard({
     required String title,
-    required IconData icon,
+    Widget? iconWidget,
+    IconData? icon,
     required String used,
     required String total,
     required Color color,
@@ -1657,7 +1645,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: Icon(icon, size: 20, color: color),
+                child: iconWidget ?? Icon(icon ?? LucideIcons.send, size: 20, color: color),
               ),
               const SizedBox(height: 14),
               Text(title, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
@@ -1676,7 +1664,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('BNX Mail Storage', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
+        Row(
+          children: [
+            _buildBnxMailLogo(size: 32),
+            const SizedBox(width: 12),
+            Text('BNX Mail Storage', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A), letterSpacing: -0.4)),
+          ],
+        ),
         const SizedBox(height: 4),
         Text('Storage allocation and message attachments for BNX Mail.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
         const SizedBox(height: 20),
@@ -1701,7 +1695,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Cliks Chat & Channel Storage', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A))),
+        Row(
+          children: [
+            _buildCliksLogo(size: 26),
+            const SizedBox(width: 10),
+            Text('Cliks Chat & Channel Storage', style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A), letterSpacing: -0.4)),
+          ],
+        ),
         const SizedBox(height: 4),
         Text('Shared media, voice notes, and group history for Cliks Messenger.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
         const SizedBox(height: 20),
@@ -1997,7 +1997,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             final isNarrow = constraints.maxWidth < 650;
             final cardBnx = _buildRecycleSummaryCard(
               title: 'BNX Mail',
-              iconWidget: _buildBnxMailLogo(size: 16, color: const Color(0xFF2563EB)),
+              iconWidget: _buildBnxMailLogo(size: 20),
               iconBgColor: const Color(0xFFEFF6FF),
               deletedCount: bnxCount,
               sizeText: '${bnxSize.round()} MB',
@@ -2011,8 +2011,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             );
             final cardCliksBiz = _buildRecycleSummaryCard(
               title: 'Cliks Business',
-              icon: LucideIcons.circleCheck,
-              iconColor: const Color(0xFF16A34A),
+              iconWidget: _buildCliksBusinessLogo(size: 18),
               iconBgColor: const Color(0xFFF5F3FF),
               deletedCount: cliksBizCount,
               sizeText: '${cliksBizSize.round()} MB',
@@ -2026,8 +2025,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             );
             final cardCliks = _buildRecycleSummaryCard(
               title: 'Cliks',
-              icon: LucideIcons.circleCheck,
-              iconColor: const Color(0xFF16A34A),
+              iconWidget: _buildCliksLogo(size: 18),
               iconBgColor: const Color(0xFFF0FDFA),
               deletedCount: cliksCount,
               sizeText: '${cliksSize.round()} MB',
@@ -2374,6 +2372,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(height: 3),
                     Row(
                       children: [
+                        _buildAppTinyBadge(item.app),
+                        const SizedBox(width: 6),
                         Text(
                           item.app,
                           style: GoogleFonts.outfit(
@@ -3214,21 +3214,19 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             final isNarrow = constraints.maxWidth < 650;
             final cardBnx = _buildConnectedAppCard(
               title: 'BNX Mail',
-              iconWidget: _buildBnxMailLogo(size: 18, color: const Color(0xFF2563EB)),
+              iconWidget: _buildBnxMailLogo(size: 22),
               iconBgColor: const Color(0xFFEFF6FF),
               onTap: () => setState(() => _activeTab = _StorageTab.bnxMail),
             );
             final cardCliks = _buildConnectedAppCard(
               title: 'Cliks',
-              icon: LucideIcons.circleCheck,
-              iconColor: const Color(0xFF16A34A),
+              iconWidget: _buildCliksLogo(size: 20),
               iconBgColor: const Color(0xFFF0FDF4),
               onTap: () => setState(() => _activeTab = _StorageTab.cliks),
             );
             final cardCliksBiz = _buildConnectedAppCard(
               title: 'Cliks Business',
-              icon: LucideIcons.circleCheck,
-              iconColor: const Color(0xFF16A34A),
+              iconWidget: _buildCliksBusinessLogo(size: 20),
               iconBgColor: const Color(0xFFF0FDF4),
               onTap: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
             );
@@ -4342,7 +4340,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildAppAccessRow(
                 title: 'BNX Mail',
                 subtitle: 'Emails & attachments',
-                iconWidget: _buildBnxMailLogo(size: 18, color: const Color(0xFF2563EB)),
+                iconWidget: _buildBnxMailLogo(size: 22),
                 iconBgColor: const Color(0xFFEFF6FF),
                 onManage: () => setState(() => _activeTab = _StorageTab.bnxMail),
               ),
@@ -4350,8 +4348,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildAppAccessRow(
                 title: 'Cliks',
                 subtitle: 'Files & documents',
-                icon: LucideIcons.circleCheck,
-                iconColor: const Color(0xFF16A34A),
+                iconWidget: _buildCliksLogo(size: 20),
                 iconBgColor: const Color(0xFFF0FDF4),
                 onManage: () => setState(() => _activeTab = _StorageTab.cliks),
               ),
@@ -4359,8 +4356,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildAppAccessRow(
                 title: 'Cliks Business',
                 subtitle: 'Business files',
-                icon: LucideIcons.circleCheck,
-                iconColor: const Color(0xFF16A34A),
+                iconWidget: _buildCliksBusinessLogo(size: 20),
                 iconBgColor: const Color(0xFFF0FDF4),
                 onManage: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
               ),
@@ -4913,14 +4909,185 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     );
   }
 
-  Widget _buildBnxMailLogo({double size = 16, Color color = const Color(0xFF2563EB)}) {
+  // ═══════════════════════════════════════════════════════════════
+  // BRAND LOGO WIDGETS & ASSET LOADERS (Beta, BNX Mail, Cliks, Cliks Business)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildLogoImage(
+    String fileName, {
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.contain,
+    Color? color,
+  }) {
+    // Direct file loader on macOS desktop for instant hot-reload without bundle delay
+    final candidatePaths = [
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /$fileName',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference/$fileName',
+    ];
+
+    for (final p in candidatePaths) {
+      final f = File(p);
+      if (f.existsSync()) {
+        return Image.file(
+          f,
+          width: width,
+          height: height,
+          fit: fit,
+          color: color,
+          colorBlendMode: color != null ? BlendMode.srcIn : null,
+          errorBuilder: (ctx, err, stack) => _buildFallbackAsset(fileName, width, height, fit, color),
+        );
+      }
+    }
+
+    return _buildFallbackAsset(fileName, width, height, fit, color);
+  }
+
+  Widget _buildFallbackAsset(String fileName, double? width, double? height, BoxFit fit, Color? color) {
+    return Image.asset(
+      'assets/icons_images_reference /$fileName',
+      width: width,
+      height: height,
+      fit: fit,
+      color: color,
+      colorBlendMode: color != null ? BlendMode.srcIn : null,
+      errorBuilder: (ctx, err, stack) {
+        return Image.asset(
+          'assets/icons_images_reference/$fileName',
+          width: width,
+          height: height,
+          fit: fit,
+          color: color,
+          colorBlendMode: color != null ? BlendMode.srcIn : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildBetaLogo({double size = 26}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: size,
+              height: size * 0.95,
+              child: ClipRect(
+                child: FittedBox(
+                  fit: BoxFit.cover,
+                  alignment: const Alignment(0.0, -0.22),
+                  child: SizedBox(
+                    width: 70,
+                    height: 70,
+                    child: _buildLogoImage('beta_logo .jpg', fit: BoxFit.cover),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              'BETA',
+              style: GoogleFonts.outfit(
+                color: const Color(0xFF2563EB),
+                fontWeight: FontWeight.w800,
+                fontSize: 7.0,
+                letterSpacing: 0.8,
+                height: 1.0,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(width: 8),
+        Text(
+          'Beta',
+          style: GoogleFonts.outfit(
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+            letterSpacing: -0.3,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBnxMailLogo({double size = 18}) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(size > 24 ? 7 : (size > 18 ? 5 : 4)),
+        border: Border.all(
+          color: const Color(0xFFCBD5E1),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 2,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      padding: EdgeInsets.all(size * 0.08),
+      child: _buildLogoImage(
+        'bnx_mail_logo.png',
+        fit: BoxFit.contain,
+      ),
+    );
+  }
+
+  Widget _buildCliksLogo({double size = 18}) {
     return SizedBox(
       width: size,
       height: size,
-      child: CustomPaint(
-        painter: _BnxMailIconPainter(color: color),
+      child: ClipOval(
+        child: Transform.scale(
+          scale: 1.20,
+          child: _buildLogoImage(
+            'cliks_logo.png',
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _buildCliksBusinessLogo({double size = 18}) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: ClipOval(
+        child: Transform.scale(
+          scale: 1.18,
+          child: _buildLogoImage(
+            'cliks_business_img.png',
+            width: size,
+            height: size,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAppTinyBadge(String app) {
+    if (app == 'BNX Mail') {
+      return _buildBnxMailLogo(size: 15);
+    } else if (app == 'Cliks Business') {
+      return _buildCliksBusinessLogo(size: 14);
+    } else {
+      return _buildCliksLogo(size: 14);
+    }
   }
 }
 
