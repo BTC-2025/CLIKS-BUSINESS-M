@@ -90,7 +90,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: const Color(0xFFF0FDF4),
       body: Stack(
         children: [
           Column(
@@ -109,7 +109,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     // Right Main View
                     Expanded(
                       child: Container(
-                        color: const Color(0xFFF8FAFC),
+                        color: const Color(0xFFF0FDF4),
                         child: _activeTab == _StorageTab.settings
                             ? _buildSettingsView()
                             : SingleChildScrollView(
@@ -216,7 +216,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(width: 8),
                   Text(
                     'Account',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       color: Colors.white,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
@@ -275,7 +275,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     alignment: Alignment.center,
                     child: Text(
                       'R',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -303,7 +303,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               // Username & Email
               Text(
                 'ravinew2004',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF0F172A),
@@ -312,7 +312,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               const SizedBox(height: 2),
               Text(
                 'ravinew2004@bnxmail.com',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12.5,
                   color: const Color(0xFF64748B),
                 ),
@@ -325,7 +325,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Opening account profile management...', style: GoogleFonts.outfit()),
+                      content: Text('Opening account profile management...', style: GoogleFonts.inter()),
                       backgroundColor: const Color(0xFF2563EB),
                       behavior: SnackBarBehavior.floating,
                       width: 380,
@@ -335,7 +335,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 icon: const Icon(LucideIcons.user, size: 14),
                 label: Text(
                   'Manage your account',
-                  style: GoogleFonts.outfit(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1E293B),
@@ -358,7 +358,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Add account dialog initiated.', style: GoogleFonts.outfit()),
+                      content: Text('Add account dialog initiated.', style: GoogleFonts.inter()),
                       backgroundColor: const Color(0xFF334155),
                       behavior: SnackBarBehavior.floating,
                       width: 340,
@@ -374,7 +374,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Signed out of ravinew2004.', style: GoogleFonts.outfit()),
+                      content: Text('Signed out of ravinew2004.', style: GoogleFonts.inter()),
                       backgroundColor: const Color(0xFF334155),
                       behavior: SnackBarBehavior.floating,
                       width: 340,
@@ -390,7 +390,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('All accounts signed out.', style: GoogleFonts.outfit()),
+                      content: Text('All accounts signed out.', style: GoogleFonts.inter()),
                       backgroundColor: const Color(0xFFDC2626),
                       behavior: SnackBarBehavior.floating,
                       width: 340,
@@ -422,7 +422,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 12),
             Text(
               title,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12.5,
                 fontWeight: FontWeight.w500,
                 color: color,
@@ -441,31 +441,33 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     return Container(
       width: 220,
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: Color(0xFFF0FDF4),
         border: Border(
-          right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+          right: BorderSide(color: Color(0xFFDCF2E4), width: 1.0),
         ),
       ),
       child: ListView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
         children: [
-          // Home (Prominent blue button matching reference screenshots)
+          // Home
           InkWell(
             onTap: () => setState(() => _activeTab = _StorageTab.home),
             borderRadius: BorderRadius.circular(10),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: const Color(0xFF2563EB),
+                color: _activeTab == _StorageTab.home ? const Color(0xFF2563EB) : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.25),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                boxShadow: _activeTab == _StorageTab.home
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Row(
                 children: [
@@ -476,17 +478,17 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       child: Icon(
                         LucideIcons.home,
                         size: 16,
-                        color: _activeTab == _StorageTab.home ? Colors.white : const Color(0xFF475569),
+                        color: _activeTab == _StorageTab.home ? Colors.white : const Color(0xFF374151),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     'Home',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                      fontWeight: _activeTab == _StorageTab.home ? FontWeight.w600 : FontWeight.w500,
+                      color: _activeTab == _StorageTab.home ? Colors.white : const Color(0xFF111827),
                     ),
                   ),
                 ],
@@ -553,7 +555,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       child: Text(
         title,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.inter(
           fontSize: 9.5,
           fontWeight: FontWeight.w700,
           color: const Color(0xFF94A3B8),
@@ -594,7 +596,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           ? Icon(
                               icon,
                               size: 16,
-                              color: isSelected ? Colors.white : (customIconColor ?? const Color(0xFF475569)),
+                              color: isSelected ? Colors.white : (customIconColor ?? const Color(0xFF374151)),
                             )
                           : const SizedBox.shrink()),
                 ),
@@ -602,10 +604,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               const SizedBox(width: 12),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                  color: isSelected ? Colors.white : const Color(0xFF334155),
+                  color: isSelected ? Colors.white : const Color(0xFF111827),
                 ),
               ),
             ],
@@ -660,16 +662,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
                       child: Text(
                         'Storage Management',
-                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
                       ),
                     ),
                     Text(
                       '  ›  ',
-                      style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
                     ),
                     Text(
                       'Cliks Business',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF0F172A),
@@ -684,7 +686,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 10),
                     Text(
                       'Cliks Business Storage',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF0F172A),
@@ -696,7 +698,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 const SizedBox(height: 3),
                 Text(
                   'Track how your 1.00 GB storage is used in Cliks Business.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF64748B),
                   ),
@@ -720,7 +722,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   children: [
                     Text(
                       'Last Updated: $_lastUpdatedText',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 11.5,
                         color: const Color(0xFF64748B),
                       ),
@@ -772,7 +774,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           children: [
                             Text(
                               '90%',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 19,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF0F172A),
@@ -782,7 +784,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             const SizedBox(height: 2),
                             Text(
                               'USED',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF64748B),
@@ -803,7 +805,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '921.00 MB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF7C3AED),
@@ -813,7 +815,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'USED',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -823,7 +825,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 4),
                         Text(
                           '90% Used',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF64748B),
@@ -840,7 +842,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '103.00 MB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF10B981),
@@ -850,7 +852,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'AVAILABLE',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -868,7 +870,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '1.00 GB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF0F172A),
@@ -878,7 +880,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'TOTAL CAPACITY',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -907,7 +909,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             const SizedBox(width: 5),
                             Text(
                               'Critical',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFFEF4444),
@@ -919,7 +921,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 3),
                         Text(
                           'STORAGE CRITICALLY FULL.\nACTION REQUIRED.',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -976,7 +978,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 4,
                       child: Text(
                         'Storage by Category',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF0F172A),
@@ -987,7 +989,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 2,
                       child: Text(
                         'USED',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF64748B),
@@ -999,7 +1001,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 4,
                       child: Text(
                         'TYPE',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF64748B),
@@ -1088,7 +1090,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               Expanded(
                 child: Text(
                   'Keep your storage light! Review cache logs, large attachments, or database backups inside Cliks Business.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF0369A1),
@@ -1134,7 +1136,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF1E293B),
@@ -1159,7 +1161,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   ),
                   child: Text(
                     percent,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                       color: badgeText,
@@ -1177,7 +1179,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               typeDesc,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 color: const Color(0xFF64748B),
               ),
@@ -1202,16 +1204,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onTap: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
               child: Text(
                 'Storage Management',
-                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
               ),
             ),
             Text(
               '  ›  ',
-              style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
             ),
             Text(
               'Storage Usage',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF0F172A),
@@ -1222,7 +1224,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         const SizedBox(height: 10),
         Text(
           'Storage Usage Tracking',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 24,
             fontWeight: FontWeight.w800,
             color: const Color(0xFF0F172A),
@@ -1232,7 +1234,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         const SizedBox(height: 3),
         Text(
           'Real-time analytics and detailed storage allocation breakdown across all Beta applications.',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 13,
             color: const Color(0xFF64748B),
           ),
@@ -1260,7 +1262,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       const SizedBox(width: 8),
                       Text(
                         'Breakdown Chart',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF0F172A),
@@ -1283,7 +1285,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             children: [
                               Text(
                                 '2.77 GB',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.inter(
                                   fontSize: 22,
                                   fontWeight: FontWeight.w900,
                                   color: const Color(0xFF0F172A),
@@ -1292,7 +1294,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                               const SizedBox(height: 2),
                               Text(
                                 'USED',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.inter(
                                   fontSize: 9.5,
                                   fontWeight: FontWeight.w700,
                                   color: const Color(0xFF64748B),
@@ -1322,7 +1324,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     'Ecosystem App Breakdown',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 14.5,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF0F172A),
@@ -1406,7 +1408,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   children: [
                     Text(
                       'TOTAL CAPACITY',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF64748B),
@@ -1416,7 +1418,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(height: 4),
                     Text(
                       '5.00 GB',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFF0F172A),
@@ -1440,7 +1442,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   children: [
                     Text(
                       'AVAILABLE',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF64748B),
@@ -1450,7 +1452,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(height: 4),
                     Text(
                       '2.23 GB',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         color: const Color(0xFF10B981),
@@ -1491,7 +1493,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   children: [
                     Text(
                       'Need to reclaim space?',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF0F172A),
@@ -1500,7 +1502,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(height: 2),
                     Text(
                       'Run cleanups inside individual app details to clear temporary files and logs.',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         color: const Color(0xFF64748B),
                       ),
@@ -1543,7 +1545,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             ],
             Text(
               name,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF1E293B),
@@ -1556,7 +1558,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           children: [
             Text(
               sizeText,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF0F172A),
@@ -1564,7 +1566,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             ),
             Text(
               pctText,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 10.5,
                 color: const Color(0xFF64748B),
               ),
@@ -1584,10 +1586,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       children: [
         Text(
           'Beta Cloud Storage Portal',
-          style: GoogleFonts.outfit(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+          style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
         ),
         const SizedBox(height: 4),
-        Text('Centralized workspace storage control across all connected Beta services.', style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF64748B))),
+        Text('Centralized workspace storage control across all connected Beta services.', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -1652,11 +1654,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 child: iconWidget ?? Icon(icon ?? LucideIcons.send, size: 20, color: color),
               ),
               const SizedBox(height: 14),
-              Text(title, style: GoogleFonts.outfit(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+              Text(title, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
               const SizedBox(height: 4),
-              Text(used, style: GoogleFonts.outfit(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+              Text(used, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
               const SizedBox(height: 2),
-              Text(total, style: GoogleFonts.outfit(fontSize: 11, color: const Color(0xFF64748B))),
+              Text(total, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
             ],
           ),
         ),
@@ -1682,16 +1684,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
                       child: Text(
                         'Storage Management',
-                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
                       ),
                     ),
                     Text(
                       '  ›  ',
-                      style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
                     ),
                     Text(
                       'BNX Mail',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF0F172A),
@@ -1706,7 +1708,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 10),
                     Text(
                       'BNX Mail Storage',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF0F172A),
@@ -1718,7 +1720,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 const SizedBox(height: 3),
                 Text(
                   'Track how your 1.00 GB storage is used in BNX Mail.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF64748B),
                   ),
@@ -1742,7 +1744,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   children: [
                     Text(
                       'Last Updated: $_lastUpdatedText',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 11.5,
                         color: const Color(0xFF64748B),
                       ),
@@ -1798,7 +1800,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           children: [
                             Text(
                               '100%',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 19,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF0F172A),
@@ -1808,7 +1810,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             const SizedBox(height: 2),
                             Text(
                               'USED',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF64748B),
@@ -1829,7 +1831,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '1.32 GB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF2563EB),
@@ -1839,7 +1841,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'USED',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -1849,7 +1851,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 4),
                         Text(
                           '100% Used',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF64748B),
@@ -1866,7 +1868,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '0.00 MB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF10B981),
@@ -1876,7 +1878,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'AVAILABLE',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -1894,7 +1896,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '1.00 GB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF0F172A),
@@ -1904,7 +1906,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'TOTAL CAPACITY',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -1933,7 +1935,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             const SizedBox(width: 5),
                             Text(
                               'Critical',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFFEF4444),
@@ -1945,7 +1947,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 3),
                         Text(
                           'STORAGE CRITICALLY FULL.\nACTION REQUIRED.',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -2002,7 +2004,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 5,
                       child: Text(
                         'Storage by Category',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF0F172A),
@@ -2013,7 +2015,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 3,
                       child: Text(
                         'USED',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF64748B),
@@ -2027,7 +2029,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         alignment: Alignment.centerRight,
                         child: Text(
                           '% OF 1.00 GB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -2122,7 +2124,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               Expanded(
                 child: Text(
                   'Keep your mailbox light! Review and remove large attachments or empty trash to free up more space.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF1E40AF),
@@ -2169,7 +2171,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   child: Text(
                     name,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF0F172A),
@@ -2185,7 +2187,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             flex: 3,
             child: Text(
               used,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF0F172A),
@@ -2201,7 +2203,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   percent,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF64748B),
@@ -2239,16 +2241,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
                       child: Text(
                         'Storage Management',
-                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
                       ),
                     ),
                     Text(
                       '  ›  ',
-                      style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
                     ),
                     Text(
                       'Cliks',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF0F172A),
@@ -2263,7 +2265,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 10),
                     Text(
                       'Cliks Storage',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         color: const Color(0xFF0F172A),
@@ -2275,7 +2277,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 const SizedBox(height: 3),
                 Text(
                   'Track how your 1.00 GB storage is used in Cliks.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF64748B),
                   ),
@@ -2299,7 +2301,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   children: [
                     Text(
                       'Last Updated: $_lastUpdatedText',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 11.5,
                         color: const Color(0xFF64748B),
                       ),
@@ -2355,7 +2357,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           children: [
                             Text(
                               '56%',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 19,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF0F172A),
@@ -2365,7 +2367,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             const SizedBox(height: 2),
                             Text(
                               'USED',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.w700,
                                 color: const Color(0xFF64748B),
@@ -2386,7 +2388,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '570.00 MB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF0D9488),
@@ -2396,7 +2398,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'USED',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -2406,7 +2408,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 4),
                         Text(
                           '56% Used',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
                             color: const Color(0xFF64748B),
@@ -2423,7 +2425,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '454.00 MB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF10B981),
@@ -2433,7 +2435,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'AVAILABLE',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -2451,7 +2453,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           '1.00 GB',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: const Color(0xFF0F172A),
@@ -2461,7 +2463,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 2),
                         Text(
                           'TOTAL CAPACITY',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -2490,7 +2492,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             const SizedBox(width: 5),
                             Text(
                               'Healthy',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF10B981),
@@ -2502,7 +2504,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(height: 3),
                         Text(
                           'PLENTY OF SPACE AVAILABLE',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
                             color: const Color(0xFF64748B),
@@ -2559,7 +2561,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 4,
                       child: Text(
                         'Typical Storage Share',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF0F172A),
@@ -2570,7 +2572,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 3,
                       child: Text(
                         'TYPICAL STORAGE SHARE',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF64748B),
@@ -2582,7 +2584,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       flex: 5,
                       child: Text(
                         'MAIN FILE TYPES',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF64748B),
@@ -2666,7 +2668,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               Expanded(
                 child: Text(
                   'Keep your storage light! Review cache logs, large attachments, or database backups inside Cliks.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF1E40AF),
@@ -2710,7 +2712,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   child: Text(
                     name,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF0F172A),
@@ -2734,7 +2736,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 child: Text(
                   percent,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
                     color: badgeText,
@@ -2749,7 +2751,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             flex: 5,
             child: Text(
               fileTypes,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF475569),
@@ -2816,16 +2818,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
               child: Text(
                 'Storage Management',
-                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
               ),
             ),
             Text(
               '  ›  ',
-              style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
             ),
             Text(
               'Recycle Bin',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF0F172A),
@@ -2857,7 +2859,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     'Recycle Bin',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 22,
                       fontWeight: FontWeight.w800,
                       color: const Color(0xFF0F172A),
@@ -2867,7 +2869,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(height: 2),
                   Text(
                     'Recover deleted files across your applications',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       color: const Color(0xFF64748B),
                     ),
@@ -2899,10 +2901,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           _recycleCurrentPage = 1;
                         });
                       },
-                      style: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFF0F172A)),
+                      style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF0F172A)),
                       decoration: InputDecoration(
                         hintText: 'Search deleted files...',
-                        hintStyle: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                        hintStyle: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF94A3B8)),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -2948,7 +2950,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               Text(
                 'RECYCLE BIN',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 10,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF64748B),
@@ -2962,7 +2964,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     '245 MB',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 26,
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFFEF4444),
@@ -2971,7 +2973,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(width: 6),
                   Text(
                     'used',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF64748B),
@@ -2998,14 +3000,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     '5 GB allocated space',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 11.5,
                       color: const Color(0xFF64748B),
                     ),
                   ),
                   Text(
                     '4.76 GB free',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 11.5,
                       color: const Color(0xFF64748B),
                     ),
@@ -3021,7 +3023,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // ─── 4. APPLICATION STORAGE SECTION TITLE ───
         Text(
           'APPLICATION STORAGE',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF64748B),
@@ -3108,7 +3110,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           children: [
             Text(
               'Recycle Bin',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 20,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF0F172A),
@@ -3116,7 +3118,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             ),
             Text(
               '${filtered.length} ITEMS',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 11.5,
                 fontWeight: FontWeight.w700,
                 color: const Color(0xFF64748B),
@@ -3150,7 +3152,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 const SizedBox(height: 12),
                 Text(
                   'No deleted items found.',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF64748B),
@@ -3224,7 +3226,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       const SizedBox(height: 12),
                       Text(
                         title,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF0F172A),
@@ -3233,7 +3235,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       const SizedBox(height: 2),
                       Text(
                         '$deletedCount deleted items',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
                         ),
@@ -3244,7 +3246,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         children: [
                           Text(
                             sizeText,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
                               color: accentColor,
@@ -3257,7 +3259,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                               child: Text(
                                 'View Details →',
-                                style: GoogleFonts.outfit(
+                                style: GoogleFonts.inter(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: accentColor,
@@ -3310,7 +3312,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 child: Text(
                   tab,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                     color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
@@ -3402,7 +3404,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       item.name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 14.5,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF0F172A),
@@ -3415,7 +3417,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         const SizedBox(width: 6),
                         Text(
                           item.app,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: appColor,
@@ -3423,22 +3425,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                         Text(
                           '  •  ',
-                          style: GoogleFonts.outfit(fontSize: 11, color: const Color(0xFF94A3B8)),
+                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8)),
                         ),
                         Text(
                           item.type,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             color: const Color(0xFF64748B),
                           ),
                         ),
                         Text(
                           '  •  ',
-                          style: GoogleFonts.outfit(fontSize: 11, color: const Color(0xFF94A3B8)),
+                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8)),
                         ),
                         Text(
                           item.deletedDate,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12,
                             color: const Color(0xFF64748B),
                           ),
@@ -3451,7 +3453,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               const SizedBox(width: 12),
               Text(
                 '${item.sizeMb.toStringAsFixed(2)} MB',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 14.5,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF0F172A),
@@ -3468,14 +3470,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               Text(
                 'Retention',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 11.5,
                   color: const Color(0xFF64748B),
                 ),
               ),
               Text(
                 '${item.daysRemaining} days remaining',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
                   color: isExpiringSoon ? const Color(0xFFDC2626) : const Color(0xFF64748B),
@@ -3513,7 +3515,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Restored "${item.name}" to ${item.app}.', style: GoogleFonts.outfit()),
+                      content: Text('Restored "${item.name}" to ${item.app}.', style: GoogleFonts.inter()),
                       backgroundColor: const Color(0xFF10B981),
                       behavior: SnackBarBehavior.floating,
                       width: 360,
@@ -3530,7 +3532,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   ),
                   child: Text(
                     'Restore',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF0F172A),
@@ -3549,7 +3551,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Permanently deleted "${item.name}".', style: GoogleFonts.outfit()),
+                        content: Text('Permanently deleted "${item.name}".', style: GoogleFonts.inter()),
                         backgroundColor: const Color(0xFFEF4444),
                         behavior: SnackBarBehavior.floating,
                         width: 360,
@@ -3561,7 +3563,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Restored "${item.name}".', style: GoogleFonts.outfit()),
+                        content: Text('Restored "${item.name}".', style: GoogleFonts.inter()),
                         backgroundColor: const Color(0xFF10B981),
                         behavior: SnackBarBehavior.floating,
                         width: 360,
@@ -3570,7 +3572,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Downloading "${item.name}"...', style: GoogleFonts.outfit()),
+                        content: Text('Downloading "${item.name}"...', style: GoogleFonts.inter()),
                         backgroundColor: const Color(0xFF2563EB),
                         behavior: SnackBarBehavior.floating,
                         width: 360,
@@ -3581,15 +3583,15 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'restore',
-                    child: Text('Restore file', style: GoogleFonts.outfit(fontSize: 12.5)),
+                    child: Text('Restore file', style: GoogleFonts.inter(fontSize: 12.5)),
                   ),
                   PopupMenuItem(
                     value: 'download',
-                    child: Text('Download file', style: GoogleFonts.outfit(fontSize: 12.5)),
+                    child: Text('Download file', style: GoogleFonts.inter(fontSize: 12.5)),
                   ),
                   PopupMenuItem(
                     value: 'delete',
-                    child: Text('Permanently delete', style: GoogleFonts.outfit(fontSize: 12.5, color: const Color(0xFFEF4444))),
+                    child: Text('Permanently delete', style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFFEF4444))),
                   ),
                 ],
               ),
@@ -3613,7 +3615,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         children: [
           Text(
             'Showing $startItem-$endItem of $totalFilteredItems',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 12.5,
               color: const Color(0xFF64748B),
             ),
@@ -3667,7 +3669,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       alignment: Alignment.center,
                       child: Text(
                         '$p',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                           color: p == _recycleCurrentPage ? Colors.white : const Color(0xFF334155),
@@ -4077,16 +4079,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
                 child: Text(
                   'Storage Management',
-                  style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
                 ),
               ),
               Text(
                 '  ›  ',
-                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
               ),
               Text(
                 'Manage Apps',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0F172A),
@@ -4100,7 +4102,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // Title & Description
         Text(
           'Manage Apps',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 24,
             fontWeight: FontWeight.w800,
             color: const Color(0xFF0F172A),
@@ -4110,7 +4112,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         const SizedBox(height: 3),
         Text(
           'Manage storage boundaries and partition sizing limits',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 13,
             color: const Color(0xFF64748B),
           ),
@@ -4129,7 +4131,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 6),
             Text(
               _manageAppsStatusText,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF059669),
@@ -4174,7 +4176,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     'Total Capacity Pool Size (GB)',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: const Color(0xFF0F172A),
@@ -4194,7 +4196,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     child: TextField(
                       controller: _poolSizeController,
                       keyboardType: TextInputType.number,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF0F172A),
@@ -4214,7 +4216,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     'Unallocated Space:',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       color: const Color(0xFF64748B),
                     ),
@@ -4222,7 +4224,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(height: 2),
                   Text(
                     '2 GB',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 24,
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF059669),
@@ -4239,7 +4241,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // Section Title: Connected App Allocation Limits
         Text(
           'Connected App Allocation Limits',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 14,
             fontWeight: FontWeight.bold,
             color: const Color(0xFF0F172A),
@@ -4309,7 +4311,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   SnackBar(
                     content: Text(
                       'App quota limits and storage boundaries saved.',
-                      style: GoogleFonts.outfit(),
+                      style: GoogleFonts.inter(),
                     ),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
@@ -4338,7 +4340,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 8),
                     Text(
                       'Save Changes',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -4393,7 +4395,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             Expanded(
               child: Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF0F172A),
@@ -4423,16 +4425,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
                 child: Text(
                   'Storage Management',
-                  style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
                 ),
               ),
               Text(
                 '  ›  ',
-                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
               ),
               Text(
                 'Settings',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0F172A),
@@ -4470,7 +4472,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         children: [
                           Text(
                             'SETTINGS',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF94A3B8),
@@ -4579,7 +4581,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 Expanded(
                   child: Text(
                     title,
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? Colors.white : const Color(0xFF0F172A),
@@ -4593,7 +4595,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               padding: const EdgeInsets.only(left: 26),
               child: Text(
                 subtitle,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   color: isSelected ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF64748B),
                 ),
@@ -4612,7 +4614,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // Header
         Text(
           'General',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 24,
             fontWeight: FontWeight.w800,
             color: const Color(0xFF0F172A),
@@ -4622,7 +4624,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         const SizedBox(height: 2),
         Text(
           'Manage your workspace preferences',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 13,
             color: const Color(0xFF64748B),
           ),
@@ -4641,7 +4643,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 6),
             Text(
               _settingsStatusText,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF059669),
@@ -4661,7 +4663,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Language',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4672,7 +4674,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   onSelected: (val) => setState(() => _selectedLanguage = val),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   itemBuilder: (context) => ['English', 'Spanish', 'French', 'German', 'Japanese'].map((l) =>
-                    PopupMenuItem(value: l, child: Text(l, style: GoogleFonts.outfit(fontSize: 12.5)))
+                    PopupMenuItem(value: l, child: Text(l, style: GoogleFonts.inter(fontSize: 12.5)))
                   ).toList(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -4686,7 +4688,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           _selectedLanguage,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0F172A),
@@ -4714,7 +4716,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Storage Unit',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4743,7 +4745,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Decimal Precision',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4754,7 +4756,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   onSelected: (val) => setState(() => _selectedDecimalPrecision = val),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   itemBuilder: (context) => ['0 digits', '1 digit', '2 digits', '3 digits'].map((d) =>
-                    PopupMenuItem(value: d, child: Text(d, style: GoogleFonts.outfit(fontSize: 12.5)))
+                    PopupMenuItem(value: d, child: Text(d, style: GoogleFonts.inter(fontSize: 12.5)))
                   ).toList(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -4768,7 +4770,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           _selectedDecimalPrecision,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0F172A),
@@ -4788,7 +4790,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Show Usage Percentage',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4806,7 +4808,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Show Available Storage',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4832,7 +4834,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Default View',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4843,7 +4845,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   onSelected: (val) => setState(() => _selectedDefaultView = val),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   itemBuilder: (context) => ['Storage Overview', 'App Breakdown', 'Activity Stream'].map((v) =>
-                    PopupMenuItem(value: v, child: Text(v, style: GoogleFonts.outfit(fontSize: 12.5)))
+                    PopupMenuItem(value: v, child: Text(v, style: GoogleFonts.inter(fontSize: 12.5)))
                   ).toList(),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
@@ -4857,7 +4859,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       children: [
                         Text(
                           _selectedDefaultView,
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 12.5,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF0F172A),
@@ -4877,7 +4879,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Show Application Status',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4895,7 +4897,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Show Recent Activity',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4913,7 +4915,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Show Storage Alerts',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4939,7 +4941,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Theme',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13.5,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -4994,7 +4996,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Preferences reset to default values.', style: GoogleFonts.outfit()),
+                    content: Text('Preferences reset to default values.', style: GoogleFonts.inter()),
                     backgroundColor: const Color(0xFF334155),
                     behavior: SnackBarBehavior.floating,
                     width: 320,
@@ -5015,7 +5017,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 6),
                     Text(
                       'Reset',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF334155),
@@ -5033,7 +5035,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('General preferences saved successfully.', style: GoogleFonts.outfit()),
+                    content: Text('General preferences saved successfully.', style: GoogleFonts.inter()),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
                     width: 350,
@@ -5060,7 +5062,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 8),
                     Text(
                       'Save Changes',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -5090,7 +5092,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   'Privacy & Data Control',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF0F172A),
@@ -5100,7 +5102,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 const SizedBox(height: 2),
                 Text(
                   'Manage privacy and access to your stored data',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF64748B),
                   ),
@@ -5119,7 +5121,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 6),
                     Text(
                       _settingsStatusText,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF059669),
@@ -5153,7 +5155,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(width: 6),
                   Text(
                     'Protected',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF059669),
@@ -5170,7 +5172,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // PRIVACY OVERVIEW Section Header
         Text(
           'PRIVACY OVERVIEW',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF64748B),
@@ -5207,7 +5209,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(height: 12),
                   Text(
                     '98%',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 32,
                       fontWeight: FontWeight.w900,
                       color: const Color(0xFF0F172A),
@@ -5216,7 +5218,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(height: 2),
                   Text(
                     '✓ Privacy Protected',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w700,
                       color: const Color(0xFF059669),
@@ -5242,7 +5244,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       const SizedBox(width: 8),
                       Text(
                         'Storage Privacy',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14.5,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF0F172A),
@@ -5253,7 +5255,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(height: 6),
                   Text(
                     'Your storage is currently private and accessible only to you.',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 12.5,
                       color: const Color(0xFF64748B),
                     ),
@@ -5270,7 +5272,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       const SizedBox(width: 6),
                       Text(
                         'Last checked: Today',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 11.5,
                           color: const Color(0xFF64748B),
                         ),
@@ -5307,7 +5309,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // Section: STORAGE ACCESS
         Text(
           'STORAGE ACCESS',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF64748B),
@@ -5328,7 +5330,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               Text(
                 'Who can access your storage?',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF0F172A),
@@ -5368,7 +5370,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // Section: APPLICATION ACCESS (Screenshot 2)
         Text(
           'APPLICATION ACCESS',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF64748B),
@@ -5418,7 +5420,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         // Section: DATA CONTROLS (Screenshot 2)
         Text(
           'DATA CONTROLS',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF64748B),
@@ -5449,7 +5451,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onAction: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Exporting complete workspace storage archive...', style: GoogleFonts.outfit()),
+                    content: Text('Exporting complete workspace storage archive...', style: GoogleFonts.inter()),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
                     width: 360,
@@ -5467,7 +5469,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onAction: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Displaying recent storage audit logs.', style: GoogleFonts.outfit()),
+                    content: Text('Displaying recent storage audit logs.', style: GoogleFonts.inter()),
                     backgroundColor: const Color(0xFF334155),
                     behavior: SnackBarBehavior.floating,
                     width: 340,
@@ -5513,7 +5515,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Privacy and access preferences saved successfully.', style: GoogleFonts.outfit()),
+                    content: Text('Privacy and access preferences saved successfully.', style: GoogleFonts.inter()),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
                     width: 380,
@@ -5541,7 +5543,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 8),
                     Text(
                       'Save Changes',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -5587,7 +5589,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                     color: const Color(0xFF0F172A),
@@ -5596,7 +5598,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12,
                     color: const Color(0xFF64748B),
                   ),
@@ -5609,7 +5611,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               Text(
                 'STORAGE ACCESS',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF94A3B8),
@@ -5638,7 +5640,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     const SizedBox(width: 5),
                     Text(
                       'Allowed',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF059669),
@@ -5660,7 +5662,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Text(
                     'Manage',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 12.5,
                       fontWeight: FontWeight.w600,
                       color: const Color(0xFF2563EB),
@@ -5718,7 +5720,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               const SizedBox(width: 10),
               Text(
                 title,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: const Color(0xFF0F172A),
@@ -5729,7 +5731,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           const SizedBox(height: 12),
           Text(
             subtitle,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 12,
               color: const Color(0xFF64748B),
             ),
@@ -5743,7 +5745,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               children: [
                 Text(
                   actionText,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                     color: const Color(0xFF2563EB),
@@ -5772,7 +5774,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         setState(() => _storageAccessOption = id);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Storage access set to "$title".', style: GoogleFonts.outfit()),
+            content: Text('Storage access set to "$title".', style: GoogleFonts.inter()),
             backgroundColor: const Color(0xFF2563EB),
             behavior: SnackBarBehavior.floating,
             width: 320,
@@ -5809,7 +5811,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 14),
             Text(
               title,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: const Color(0xFF0F172A),
@@ -5825,7 +5827,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 child: Text(
                   badgeText,
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
                     color: const Color(0xFF2563EB),
@@ -5876,7 +5878,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         children: [
           Text(
             title,
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 10,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF64748B),
@@ -5911,7 +5913,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 6),
             Text(
               label,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                 color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
@@ -5946,7 +5948,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(width: 6),
             Text(
               isOn ? 'ON' : 'OFF',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: isOn ? const Color(0xFF059669) : const Color(0xFF94A3B8),
@@ -6040,7 +6042,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             const SizedBox(height: 1),
             Text(
               'BETA',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 color: const Color(0xFF2563EB),
                 fontWeight: FontWeight.w800,
                 fontSize: 7.0,
@@ -6053,7 +6055,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         const SizedBox(width: 8),
         Text(
           'Beta',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: const Color(0xFF0F172A),

@@ -247,7 +247,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             children: [
               Text(
                 'Subscription & Billing',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
                   color: _darkForestGreen,
@@ -257,7 +257,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(height: 2),
               Text(
                 'Manage your active workspace tier, features access, and transaction statements.',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   color: const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
@@ -283,7 +283,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         children: [
           Text(
             'Annual Billing Cycle',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 12.5,
               fontWeight: FontWeight.w700,
               color: _darkForestGreen,
@@ -298,7 +298,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             ),
             child: Text(
               'ACTIVE',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -358,7 +358,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 children: [
                   Text(
                     'ACTIVE PLAN: ',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w800,
                       color: Colors.white70,
@@ -368,7 +368,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                   const SizedBox(width: 4),
                   Text(
                     'Elite Suite',
-                    style: GoogleFonts.outfit(
+                    style: GoogleFonts.inter(
                       fontSize: 21,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
@@ -380,7 +380,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(height: 3),
               Text(
                 'Your workspace is configured with high-performance ERP pipelines under the Business Elite Suite tier.',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12.5,
                   color: Colors.white.withValues(alpha: 0.82),
                   height: 1.35,
@@ -411,7 +411,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             children: [
               Text(
                 'NEXT RENEWAL',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
                   color: Colors.white60,
@@ -421,7 +421,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(height: 3),
               Text(
                 '12 Jul 2027',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -441,7 +441,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             children: [
               Text(
                 'RENEWAL AMOUNT',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 9.5,
                   fontWeight: FontWeight.w700,
                   color: Colors.white60,
@@ -451,7 +451,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(height: 3),
               Text(
                 '₹8,999 + GST',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Colors.white,
@@ -523,7 +523,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 const SizedBox(width: 8),
                 Text(
                   'Upgrade Workspace Tier',
-                  style: GoogleFonts.outfit(
+                  style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF0F172A),
@@ -552,7 +552,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     const SizedBox(width: 3.5),
                     Text(
                       'Active Plan',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF475569),
@@ -580,7 +580,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     const SizedBox(width: 3.5),
                     Text(
                       'Billing History',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
                         color: const Color(0xFF475569),
@@ -595,7 +595,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         const SizedBox(height: 5),
         Text(
           'Choose the ideal tier for your business scale. Special 90-day promotional discount active: save up to 82% before offer expires in $days days.',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 13,
             color: const Color(0xFF64748B),
           ),
@@ -638,7 +638,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 8),
               Text(
                 'Active Plan (Elite Suite)',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0F172A),
@@ -655,7 +655,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 8),
               Text(
                 'Workspace Pricing Tiers',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0F172A),
@@ -672,7 +672,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 8),
               Text(
                 'Billing & Statement History',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF0F172A),
@@ -690,7 +690,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 8),
               Text(
                 'Back to Top',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                   color: const Color(0xFF64748B),
@@ -729,7 +729,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 4.5),
               Text(
                 '90d Offer: ${days}d ${hours.toString().padLeft(2, '0')}h ${mins.toString().padLeft(2, '0')}m ${secs.toString().padLeft(2, '0')}s left',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF78350F),
@@ -745,7 +745,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 5),
               Text(
                 'Navigate',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 10.5,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF92400E),
@@ -923,7 +923,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             alignment: Alignment.centerLeft,
             child: Text(
               tier.name,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: isTier4
@@ -940,7 +940,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             height: 42,
             child: Text(
               tier.headline,
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF64748B),
@@ -963,7 +963,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           // ─── 7. WHAT'S INCLUDED HEADER (Starts on identical horizontal axis) ───
           Text(
             "WHAT'S INCLUDED",
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 11,
               fontWeight: FontWeight.w800,
               color: isTier4
@@ -1009,7 +1009,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                   Expanded(
                     child: Text(
                       f,
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: const Color(0xFF334155),
@@ -1049,7 +1049,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             const SizedBox(width: 5),
             Text(
               'MOST POPULAR',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 10,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -1084,7 +1084,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             const SizedBox(width: 5),
             Text(
               'CURRENTLY ACTIVE PLAN',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
@@ -1106,7 +1106,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         ),
         child: Text(
           'STANDARD',
-          style: GoogleFonts.outfit(
+          style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w800,
             color: const Color(0xFF0D9488),
@@ -1126,7 +1126,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       ),
       child: Text(
         'STARTER',
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w800,
           color: const Color(0xFF475569),
@@ -1212,7 +1212,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       ),
       child: Text(
         tier.discountTag,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.inter(
           fontSize: 10.5,
           fontWeight: FontWeight.w800,
           color: textColor,
@@ -1243,7 +1243,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           // Strikethrough monthly price
           Text(
             '${tier.originalMonthlyPrice}/mo',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF94A3B8),
@@ -1260,7 +1260,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             children: [
               Text(
                 tier.offerMonthlyPrice,
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
                   color: isTier4
@@ -1272,7 +1272,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 4),
               Text(
                 '/ mo',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF64748B),
@@ -1285,7 +1285,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           // Billed annually at ₹X / yr
           Text(
             'Billed annually at ${tier.fullAnnualPrice} / yr',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF64748B),
@@ -1296,7 +1296,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           // Price per organization, billed annually
           Text(
             'Price per organization, billed annually',
-            style: GoogleFonts.outfit(
+            style: GoogleFonts.inter(
               fontSize: 10.5,
               fontWeight: FontWeight.w500,
               color: const Color(0xFF94A3B8),
@@ -1337,7 +1337,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             const SizedBox(width: 7),
             Text(
               'Currently Active Plan',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFF78350F),
@@ -1370,7 +1370,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           children: [
             Text(
               'Start free trial',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -1403,7 +1403,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             Expanded(
               child: Text(
                 'Start Trial - ${tier.name}',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
                 ),
@@ -1417,7 +1417,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           children: [
             Text(
               'Get instant 14-day free access to all features under ${tier.name}. No credit card required to start.',
-              style: GoogleFonts.outfit(
+              style: GoogleFonts.inter(
                 fontSize: 13,
                 color: const Color(0xFF334155),
               ),
@@ -1437,14 +1437,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     children: [
                       Text(
                         'Monthly Rate:',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
                         ),
                       ),
                       Text(
                         '${tier.offerMonthlyPrice} / mo',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
                           color: const Color(0xFF0F172A),
@@ -1458,14 +1458,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     children: [
                       Text(
                         'After Trial:',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
                         ),
                       ),
                       Text(
                         'Billed annually at ${tier.fullAnnualPrice} / yr',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF64748B),
@@ -1483,7 +1483,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(
               'Cancel',
-              style: GoogleFonts.outfit(color: const Color(0xFF64748B)),
+              style: GoogleFonts.inter(color: const Color(0xFF64748B)),
             ),
           ),
           ElevatedButton(
@@ -1493,7 +1493,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 SnackBar(
                   content: Text(
                     '14-day free trial activated for ${tier.name}!',
-                    style: GoogleFonts.outfit(),
+                    style: GoogleFonts.inter(),
                   ),
                   backgroundColor: const Color(0xFF0F172A),
                   behavior: SnackBarBehavior.floating,
@@ -1510,7 +1510,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             ),
             child: Text(
               'Start 14-Day Free Trial',
-              style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -1549,7 +1549,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               const SizedBox(width: 10),
               Text(
                 'Billing & Statement History',
-                style: GoogleFonts.outfit(
+                style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF0F172A),
@@ -1610,7 +1610,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                             ),
                             child: Text(
                               'Paid',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 color: _darkForestGreen,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -1653,7 +1653,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                             ),
                             child: Text(
                               'Paid',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 color: _darkForestGreen,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
@@ -1683,7 +1683,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       child: Text(
         label,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: const Color(0xFF64748B),
@@ -1698,7 +1698,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       padding: const EdgeInsets.symmetric(vertical: 12.0),
       child: Text(
         val,
-        style: GoogleFonts.outfit(
+        style: GoogleFonts.inter(
           fontSize: 12,
           fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
           color: color ?? const Color(0xFF334155),

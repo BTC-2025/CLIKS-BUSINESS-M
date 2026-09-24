@@ -206,7 +206,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
     if (available <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${product.name} is out of available stock!', style: GoogleFonts.outfit()),
+          content: Text('${product.name} is out of available stock!', style: GoogleFonts.inter()),
           backgroundColor: const Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
           width: 380,
@@ -232,7 +232,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
         SnackBar(
           content: Text(
             'Cannot add more. Only ${line.product.stock} ${line.product.unit} available in stock!',
-            style: GoogleFonts.outfit(),
+            style: GoogleFonts.inter(),
           ),
           backgroundColor: const Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
@@ -289,7 +289,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                   children: [
                     Text(
                       'Increase Stock',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF111827),
@@ -319,7 +319,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     children: [
                       Text(
                         'PRODUCT',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF6B7280),
@@ -329,7 +329,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                       const SizedBox(height: 4),
                       Text(
                         product.name,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF111827),
@@ -340,14 +340,14 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         children: [
                           Text(
                             'Current Stock: ',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               color: const Color(0xFF6B7280),
                             ),
                           ),
                           Text(
                             '${product.stock}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFF16A34A),
@@ -363,7 +363,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                   children: [
                     Text(
                       'Quantity to Add',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF374151),
@@ -372,7 +372,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     const SizedBox(width: 3),
                     Text(
                       '*',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFFEF4444),
@@ -394,10 +394,10 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         child: TextField(
                           controller: qtyCtrl,
                           keyboardType: TextInputType.number,
-                          style: GoogleFonts.outfit(fontSize: 13.5, color: const Color(0xFF111827)),
+                          style: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF111827)),
                           decoration: InputDecoration(
                             hintText: 'e.g. 20',
-                            hintStyle: GoogleFonts.outfit(fontSize: 13.5, color: const Color(0xFF9CA3AF)),
+                            hintStyle: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF9CA3AF)),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           ),
@@ -457,7 +457,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF374151),
@@ -473,7 +473,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                             SnackBar(
                               content: Text(
                                 'Please enter a valid quantity greater than 0',
-                                style: GoogleFonts.outfit(),
+                                style: GoogleFonts.inter(),
                               ),
                               backgroundColor: const Color(0xFFDC2626),
                               behavior: SnackBarBehavior.floating,
@@ -490,7 +490,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                           SnackBar(
                             content: Text(
                               'Added $addQty PCS to "${product.name}". Total stock is now ${product.stock} PCS.',
-                              style: GoogleFonts.outfit(),
+                              style: GoogleFonts.inter(),
                             ),
                             backgroundColor: const Color(0xFF16A34A),
                             duration: const Duration(milliseconds: 1800),
@@ -508,7 +508,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                       ),
                       child: Text(
                         'Add Stock',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.bold,
                         ),
@@ -545,7 +545,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                   children: [
                     Text(
                       'Decrease Stock',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFF111827),
@@ -575,7 +575,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     children: [
                       Text(
                         'PRODUCT',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 9.5,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF6B7280),
@@ -585,7 +585,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                       const SizedBox(height: 4),
                       Text(
                         product.name,
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
                           color: const Color(0xFF111827),
@@ -596,14 +596,14 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         children: [
                           Text(
                             'Current Stock: ',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               color: const Color(0xFF6B7280),
                             ),
                           ),
                           Text(
                             '${product.stock}',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               color: const Color(0xFFEA580C),
@@ -619,7 +619,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                   children: [
                     Text(
                       'Quantity to Deduct',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF374151),
@@ -628,7 +628,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     const SizedBox(width: 3),
                     Text(
                       '*',
-                      style: GoogleFonts.outfit(
+                      style: GoogleFonts.inter(
                         fontSize: 12.5,
                         fontWeight: FontWeight.bold,
                         color: const Color(0xFFEF4444),
@@ -650,10 +650,10 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         child: TextField(
                           controller: qtyCtrl,
                           keyboardType: TextInputType.number,
-                          style: GoogleFonts.outfit(fontSize: 13.5, color: const Color(0xFF111827)),
+                          style: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF111827)),
                           decoration: InputDecoration(
                             hintText: 'e.g. 5',
-                            hintStyle: GoogleFonts.outfit(fontSize: 13.5, color: const Color(0xFF9CA3AF)),
+                            hintStyle: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF9CA3AF)),
                             border: InputBorder.none,
                             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                           ),
@@ -713,7 +713,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                       ),
                       child: Text(
                         'Cancel',
-                        style: GoogleFonts.outfit(
+                        style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF374151),
@@ -727,7 +727,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         if (deductQty == null || deductQty <= 0) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Please enter a valid quantity greater than 0', style: GoogleFonts.outfit()),
+                              content: Text('Please enter a valid quantity greater than 0', style: GoogleFonts.inter()),
                               backgroundColor: const Color(0xFFDC2626),
                               behavior: SnackBarBehavior.floating,
                               width: 380,
@@ -738,7 +738,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         if (deductQty > product.stock) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Cannot deduct $deductQty PCS. Current stock is only ${product.stock} PCS.', style: GoogleFonts.outfit()),
+                              content: Text('Cannot deduct $deductQty PCS. Current stock is only ${product.stock} PCS.', style: GoogleFonts.inter()),
                               backgroundColor: const Color(0xFFDC2626),
                               behavior: SnackBarBehavior.floating,
                               width: 380,
@@ -752,7 +752,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         Navigator.of(ctx).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Deducted $deductQty PCS from "${product.name}". Total stock is now ${product.stock} PCS.', style: GoogleFonts.outfit()),
+                            content: Text('Deducted $deductQty PCS from "${product.name}". Total stock is now ${product.stock} PCS.', style: GoogleFonts.inter()),
                             backgroundColor: const Color(0xFFEA580C),
                             duration: const Duration(milliseconds: 1800),
                             behavior: SnackBarBehavior.floating,
@@ -769,7 +769,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                       ),
                       child: Text(
                         'Deduct Stock',
-                        style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -1741,7 +1741,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                               children: [
                                 const Icon(LucideIcons.penSquare, size: 15, color: Color(0xFF2563EB)),
                                 const SizedBox(width: 10),
-                                Text('Edit Item', style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
+                                Text('Edit Item', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
                               ],
                             ),
                           ),
@@ -1752,7 +1752,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                               children: [
                                 const Icon(LucideIcons.trendingUp, size: 15, color: Color(0xFF16A34A)),
                                 const SizedBox(width: 10),
-                                Text('Increase Stock', style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
+                                Text('Increase Stock', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
                               ],
                             ),
                           ),
@@ -1763,7 +1763,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                               children: [
                                 const Icon(LucideIcons.trendingDown, size: 15, color: Color(0xFFEA580C)),
                                 const SizedBox(width: 10),
-                                Text('Decrease Stock', style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
+                                Text('Decrease Stock', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF1F2937))),
                               ],
                             ),
                           ),
@@ -1775,7 +1775,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                               children: [
                                 const Icon(LucideIcons.trash2, size: 15, color: Color(0xFFEF4444)),
                                 const SizedBox(width: 10),
-                                Text('Delete Item', style: GoogleFonts.outfit(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
+                                Text('Delete Item', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.bold, color: const Color(0xFFEF4444))),
                               ],
                             ),
                           ),
@@ -1797,7 +1797,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                             product.name,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF111827),
@@ -1806,7 +1806,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                           const SizedBox(height: 2),
                           Text(
                             product.sku,
-                            style: GoogleFonts.outfit(fontSize: 10, color: const Color(0xFF9CA3AF)),
+                            style: GoogleFonts.inter(fontSize: 10, color: const Color(0xFF9CA3AF)),
                           ),
                         ],
                       ),
@@ -1820,7 +1820,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         ),
                         child: Text(
                           '$cartQty In Cart',
-                          style: GoogleFonts.outfit(
+                          style: GoogleFonts.inter(
                             fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -1840,7 +1840,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         children: [
                           TextSpan(
                             text: '₹${_formatIndianCurrency(product.price)} ',
-                            style: GoogleFonts.outfit(
+                            style: GoogleFonts.inter(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
                               color: const Color(0xFF111827),
@@ -1848,7 +1848,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                           ),
                           TextSpan(
                             text: '/ ${product.unit}',
-                            style: GoogleFonts.outfit(fontSize: 9, color: const Color(0xFF6B7280)),
+                            style: GoogleFonts.inter(fontSize: 9, color: const Color(0xFF6B7280)),
                           ),
                         ],
                       ),
@@ -1868,7 +1868,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                             ),
                             child: Text(
                               'OUT',
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.bold,
                                 color: const Color(0xFFEF4444),
@@ -1885,7 +1885,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                             child: Text(
                               '$availableStock PCS\nleft',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.bold,
                                 color: const Color(0xFFD97706),
@@ -1903,7 +1903,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                             child: Text(
                               '$availableStock PCS\nleft',
                               textAlign: TextAlign.center,
-                              style: GoogleFonts.outfit(
+                              style: GoogleFonts.inter(
                                 fontSize: 8.5,
                                 fontWeight: FontWeight.bold,
                                 color: const Color(0xFF16A34A),

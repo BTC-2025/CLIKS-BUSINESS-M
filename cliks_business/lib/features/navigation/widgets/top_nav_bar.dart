@@ -520,7 +520,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(color: Color(0xFF135029)),
+      decoration: const BoxDecoration(color: Color(0xFF166534)),
       child: Stack(
         alignment: Alignment.center,
         children: [
@@ -591,7 +591,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                         subtitle: 'INV-158091 was saved successfully.',
                         time: '2 mins ago',
                         icon: LucideIcons.fileCheck,
-                        iconColor: const Color(0xFF135029),
+                        iconColor: const Color(0xFF166534),
                       ),
                       _buildNotificationItem(
                         title: 'Points Updated',
@@ -826,7 +826,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           ),
           child: Icon(
             icon,
-            color: isActive ? const Color(0xFF135029) : Colors.white,
+            color: isActive ? const Color(0xFF166534) : Colors.white,
             size: 18,
           ),
         ),
@@ -885,7 +885,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF135029) : Colors.transparent,
+          color: isActive ? const Color(0xFF0F4622) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
           border: isActive ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1) : null,
         ),

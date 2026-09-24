@@ -539,7 +539,7 @@ class Sidebar extends ConsumerWidget {
       width: 260,
       decoration: const BoxDecoration(
         color: Color(0xFFF0FDF4),
-        border: Border(right: BorderSide(color: Color(0xFFD4EED1))),
+        border: Border(right: BorderSide(color: Color(0xFFDCF2E4))),
       ),
       child: Column(
         children: [
@@ -571,7 +571,7 @@ class Sidebar extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF135029),
+                          color: const Color(0xFF166534),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Row(
@@ -849,7 +849,7 @@ class Sidebar extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 10),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF135029),
+                          color: const Color(0xFF166534),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: const Row(
@@ -1263,15 +1263,15 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
 
     final Color bgColor;
     if (widget.isSelected) {
-      bgColor = const Color(0xFFD4EED1);
+      bgColor = const Color(0xFFDCF2E4);
     } else if (_isHovered || _isPressed) {
-      bgColor = const Color(0xFFD4EED1).withValues(alpha: 0.65);
+      bgColor = const Color(0xFFDCF2E4).withValues(alpha: 0.65);
     } else {
       bgColor = Colors.transparent;
     }
 
-    final Color contentColor = isHighlighted ? const Color(0xFF135029) : const Color(0xFF1F2937);
-    final Color iconColor = isHighlighted ? const Color(0xFF135029) : const Color(0xFF374151);
+    final Color contentColor = isHighlighted ? const Color(0xFF166534) : const Color(0xFF111827);
+    final Color iconColor = isHighlighted ? const Color(0xFF166534) : const Color(0xFF374151);
 
     return Padding(
       padding: widget.margin,
@@ -1305,8 +1305,8 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: widget.isSelected
-                            ? const Color(0xFF135029)
-                            : const Color(0xFF135029).withValues(alpha: 0.8),
+                            ? const Color(0xFF166534)
+                            : const Color(0xFF166534).withValues(alpha: 0.8),
                         borderRadius: const BorderRadius.only(
                           topRight: Radius.circular(3),
                           bottomRight: Radius.circular(3),
@@ -1391,7 +1391,7 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                 decoration: BoxDecoration(
                   color: _isHovered
-                      ? const Color(0xFFD4EED1).withValues(alpha: 0.35)
+                      ? const Color(0xFFDCF2E4).withValues(alpha: 0.35)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1400,14 +1400,14 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
                     Icon(
                       widget.icon,
                       size: 18,
-                      color: isHighlighted ? const Color(0xFF135029) : const Color(0xFF4B5563),
+                      color: isHighlighted ? const Color(0xFF166534) : const Color(0xFF4B5563),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         widget.label,
                         style: TextStyle(
-                          color: isHighlighted ? const Color(0xFF135029) : const Color(0xFF1F2937),
+                          color: isHighlighted ? const Color(0xFF166534) : const Color(0xFF111827),
                           fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
                           fontSize: 13.5,
                         ),
@@ -1416,7 +1416,7 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
                     Icon(
                       widget.isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
                       size: 16,
-                      color: isHighlighted ? const Color(0xFF135029) : const Color(0xFF9CA3AF),
+                      color: isHighlighted ? const Color(0xFF166534) : const Color(0xFF9CA3AF),
                     ),
                   ],
                 ),
@@ -1482,9 +1482,9 @@ class _SidebarItemState extends State<_SidebarItem> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? const Color(0xFFD4EED1)
+                  ? const Color(0xFFDCF2E4)
                   : (_isHovered
-                      ? const Color(0xFFD4EED1).withValues(alpha: 0.6)
+                      ? const Color(0xFFDCF2E4).withValues(alpha: 0.6)
                       : Colors.transparent),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -1498,7 +1498,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                     width: 4.5,
                     child: Container(
                       decoration: const BoxDecoration(
-                        color: Color(0xFF135029),
+                        color: Color(0xFF166534),
                         borderRadius: BorderRadius.only(
                           topRight: Radius.circular(3),
                           bottomRight: Radius.circular(3),
@@ -1511,14 +1511,14 @@ class _SidebarItemState extends State<_SidebarItem> {
                     Icon(
                       widget.icon,
                       size: 20,
-                      color: isHighlighted ? const Color(0xFF135029) : AppColors.secondaryText,
+                      color: isHighlighted ? const Color(0xFF166534) : AppColors.secondaryText,
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         widget.label,
                         style: TextStyle(
-                          color: isHighlighted ? const Color(0xFF135029) : AppColors.darkText,
+                          color: isHighlighted ? const Color(0xFF166534) : AppColors.darkText,
                           fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
                           fontSize: 14,
                         ),
@@ -1628,9 +1628,9 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
               color: widget.isSelected
-                  ? const Color(0xFFD4EED1)
+                  ? const Color(0xFFDCF2E4)
                   : (_isHovered
-                      ? const Color(0xFFD4EED1).withValues(alpha: 0.6)
+                      ? const Color(0xFFDCF2E4).withValues(alpha: 0.6)
                       : Colors.transparent),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -1644,7 +1644,7 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
                     width: 4.5,
                     child: Container(
                       decoration: const BoxDecoration(
-                        color: Color(0xFF135029),
+                        color: Color(0xFF166534),
                         borderRadius: BorderRadius.only(
                           topRight: Radius.circular(3),
                           bottomRight: Radius.circular(3),
@@ -1658,7 +1658,7 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
                       Icon(
                         widget.icon,
                         size: 16,
-                        color: isHighlighted ? const Color(0xFF135029) : AppColors.secondaryText,
+                        color: isHighlighted ? const Color(0xFF166534) : AppColors.secondaryText,
                       ),
                       const SizedBox(width: 10),
                     ],
@@ -1666,7 +1666,7 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
                       child: Text(
                         widget.label,
                         style: TextStyle(
-                          color: isHighlighted ? const Color(0xFF135029) : AppColors.secondaryText,
+                          color: isHighlighted ? const Color(0xFF166534) : AppColors.secondaryText,
                           fontSize: 13,
                           fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
                         ),
