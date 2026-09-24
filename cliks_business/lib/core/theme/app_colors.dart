@@ -20,7 +20,7 @@ class AppColors {
   static const Color yellow = Color(0xFFF2C94C);
   
   static const Color hoverBackground = Color(0xFFEEF7F0);
-  static const Color sidebarBackground = Color(0xFFEAF6EC);
+  static const Color sidebarBackground = Color(0xFFF0FDF4);
 
   // macOS-specific palette tokens
   static const Color macosDarkGreen = Color(0xFF135029);

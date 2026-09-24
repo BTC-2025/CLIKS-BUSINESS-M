@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -43,12 +44,62 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   static const Color _lightMintGreen = Color(0xFFEAFAE3);
   static const Color _mintBorder = Color(0xFFD1F2C2);
 
+  // Scroll Controller & GlobalKeys for seamless section navigation
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _topHeaderKey = GlobalKey();
+  final GlobalKey _activePlanKey = GlobalKey();
+  final GlobalKey _upgradeTiersKey = GlobalKey();
+  final GlobalKey _billingHistoryKey = GlobalKey();
+
+  // 90-Day Promotional Discount Live Countdown Timer
+  late final DateTime _offerEndTime;
+  Timer? _countdownTimer;
+  Duration _remainingTime = const Duration(days: 90);
+
+  @override
+  void initState() {
+    super.initState();
+    // 90-day promotional discount countdown
+    _offerEndTime = DateTime.now().add(const Duration(days: 90));
+    _remainingTime = _offerEndTime.difference(DateTime.now());
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      final diff = _offerEndTime.difference(DateTime.now());
+      if (diff.isNegative) {
+        timer.cancel();
+        setState(() => _remainingTime = Duration.zero);
+      } else {
+        setState(() => _remainingTime = diff);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _countdownTimer?.cancel();
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollToSection(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx != null) {
+      Scrollable.ensureVisible(
+        ctx,
+        duration: const Duration(milliseconds: 550),
+        curve: Curves.easeInOutCubic,
+        alignment: 0.05,
+      );
+    }
+  }
+
   final List<_SubscriptionTierData> _tiers = const [
     _SubscriptionTierData(
       tierNumber: 1,
       topTag: 'STARTER',
       name: 'Tier 1 (Starter)',
-      headline: 'Essential tools for emerging retail, solopreneurs & small teams.',
+      headline:
+          'Essential tools for emerging retail, solopreneurs & small teams.',
       originalMonthlyPrice: '₹549',
       offerMonthlyPrice: '₹99',
       fullAnnualPrice: '₹1,188',
@@ -68,7 +119,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       tierNumber: 2,
       topTag: 'STANDARD',
       name: 'Tier 2 (Standard)',
-      headline: 'Comprehensive operational suite for growing SMBs and expanding stores.',
+      headline:
+          'Comprehensive operational suite for growing SMBs and expanding stores.',
       originalMonthlyPrice: '₹1,349',
       offerMonthlyPrice: '₹249',
       fullAnnualPrice: '₹2,988',
@@ -88,7 +140,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       tierNumber: 3,
       topTag: 'MOST POPULAR',
       name: 'Tier 3 (Premium / Growth)',
-      headline: 'High-velocity automation, multi-site sync & advanced business analytics.',
+      headline:
+          'High-velocity automation, multi-site sync & advanced business analytics.',
       originalMonthlyPrice: '₹2,499',
       offerMonthlyPrice: '₹549',
       fullAnnualPrice: '₹6,588',
@@ -109,7 +162,8 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       tierNumber: 4,
       topTag: 'CURRENTLY ACTIVE PLAN',
       name: 'Tier 4 (Elite)',
-      headline: 'Maximum performance, unlimited scale & dedicated 24/7 VIP governance.',
+      headline:
+          'Maximum performance, unlimited scale & dedicated 24/7 VIP governance.',
       originalMonthlyPrice: '₹3,499',
       offerMonthlyPrice: '₹999',
       fullAnnualPrice: '₹11,988',
@@ -137,21 +191,22 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
+        controller: _scrollController,
         physics: const BouncingScrollPhysics(),
         padding: EdgeInsets.all(paddingVal),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ─── 1. TOP HEADER (Subscription & Billing with Credit Card Icon & Cycle Pill) ───
-            _buildTopHeader(isMobile),
+            Container(key: _topHeaderKey, child: _buildTopHeader(isMobile)),
             const SizedBox(height: 18),
 
             // ─── 2. ACTIVE PLAN HERO BANNER (Elite Suite with Next Renewal & Amount) ───
-            _buildActivePlanBanner(isMobile),
+            Container(key: _activePlanKey, child: _buildActivePlanBanner(isMobile)),
             const SizedBox(height: 28),
 
             // ─── 3. UPGRADE WORKSPACE TIER SECTION TITLE ───
-            _buildUpgradeSectionHeader(),
+            Container(key: _upgradeTiersKey, child: _buildUpgradeSectionHeader()),
             const SizedBox(height: 18),
 
             // ─── 4. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH DARK FOREST GREEN HIGHLIGHTS) ───
@@ -159,7 +214,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             const SizedBox(height: 36),
 
             // ─── 5. BILLING & STATEMENT HISTORY ───
-            _buildBillingHistorySection(),
+            Container(key: _billingHistoryKey, child: _buildBillingHistorySection()),
           ],
         ),
       ),
@@ -181,11 +236,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             borderRadius: BorderRadius.circular(10),
           ),
           child: const Center(
-            child: Icon(
-              LucideIcons.creditCard,
-              color: Colors.white,
-              size: 21,
-            ),
+            child: Icon(LucideIcons.creditCard, color: Colors.white, size: 21),
           ),
         ),
         const SizedBox(width: 14),
@@ -262,11 +313,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     if (isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          titleSection,
-          const SizedBox(height: 12),
-          billingCyclePill,
-        ],
+        children: [titleSection, const SizedBox(height: 12), billingCyclePill],
       );
     }
 
@@ -296,11 +343,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             borderRadius: BorderRadius.circular(14),
           ),
           child: const Center(
-            child: Icon(
-              LucideIcons.sparkles,
-              color: Colors.white,
-              size: 22,
-            ),
+            child: Icon(LucideIcons.sparkles, color: Colors.white, size: 22),
           ),
         ),
         const SizedBox(width: 16),
@@ -437,11 +480,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       child: isMobile
           ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                leftPart,
-                const SizedBox(height: 16),
-                rightBox,
-              ],
+              children: [leftPart, const SizedBox(height: 16), rightBox],
             )
           : Row(
               children: [
@@ -457,34 +496,105 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   // 3. UPGRADE WORKSPACE TIER SECTION TITLE
   // ═══════════════════════════════════════════════════════════════
   Widget _buildUpgradeSectionHeader() {
+    final days = _remainingTime.inDays;
+    final hours = _remainingTime.inHours % 24;
+    final mins = _remainingTime.inMinutes % 60;
+    final secs = _remainingTime.inSeconds % 60;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 8,
           children: [
-            Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: _darkForestGreen,
-                shape: BoxShape.circle,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: _darkForestGreen,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Upgrade Workspace Tier',
+                  style: GoogleFonts.outfit(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.4,
+                  ),
+                ),
+              ],
+            ),
+            // Small button near "Upgrade Workspace Tier"
+            _buildUpgradeOfferTimerButton(days, hours, mins, secs),
+            // Quick Jump to Active Plan
+            InkWell(
+              onTap: () => _scrollToSection(_activePlanKey),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.arrowUp, size: 10.5, color: Color(0xFF475569)),
+                    const SizedBox(width: 3.5),
+                    Text(
+                      'Active Plan',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(width: 8),
-            Text(
-              'Upgrade Workspace Tier',
-              style: GoogleFonts.outfit(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
-                letterSpacing: -0.4,
+            // Quick Jump to Billing History
+            InkWell(
+              onTap: () => _scrollToSection(_billingHistoryKey),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.arrowDown, size: 10.5, color: Color(0xFF475569)),
+                    const SizedBox(width: 3.5),
+                    Text(
+                      'Billing History',
+                      style: GoogleFonts.outfit(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 5),
         Text(
-          'Choose the ideal tier for your business scale. Save up to 82% with annual billed pricing.',
+          'Choose the ideal tier for your business scale. Special 90-day promotional discount active: save up to 82% before offer expires in $days days.',
           style: GoogleFonts.outfit(
             fontSize: 13,
             color: const Color(0xFF64748B),
@@ -494,13 +604,175 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     );
   }
 
+  Widget _buildUpgradeOfferTimerButton(
+    int days,
+    int hours,
+    int mins,
+    int secs,
+  ) {
+    return PopupMenuButton<String>(
+      tooltip: '90-Day Promotional Discount Active • Click to Navigate Sections',
+      onSelected: (value) {
+        if (value == 'active_plan') {
+          _scrollToSection(_activePlanKey);
+        } else if (value == 'tiers') {
+          _scrollToSection(_upgradeTiersKey);
+        } else if (value == 'billing') {
+          _scrollToSection(_billingHistoryKey);
+        } else if (value == 'top') {
+          _scrollToSection(_topHeaderKey);
+        }
+      },
+      offset: const Offset(0, 34),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      elevation: 6,
+      itemBuilder: (context) => [
+        PopupMenuItem(
+          value: 'active_plan',
+          child: Row(
+            children: [
+              const Icon(LucideIcons.sparkles, size: 14, color: _darkForestGreen),
+              const SizedBox(width: 8),
+              Text(
+                'Active Plan (Elite Suite)',
+                style: GoogleFonts.outfit(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'tiers',
+          child: Row(
+            children: [
+              const Icon(LucideIcons.layers, size: 14, color: _darkForestGreen),
+              const SizedBox(width: 8),
+              Text(
+                'Workspace Pricing Tiers',
+                style: GoogleFonts.outfit(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+        ),
+        PopupMenuItem(
+          value: 'billing',
+          child: Row(
+            children: [
+              const Icon(LucideIcons.history, size: 14, color: _darkForestGreen),
+              const SizedBox(width: 8),
+              Text(
+                'Billing & Statement History',
+                style: GoogleFonts.outfit(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem(
+          value: 'top',
+          child: Row(
+            children: [
+              const Icon(LucideIcons.arrowUp, size: 14, color: Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              Text(
+                'Back to Top',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4.5),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFFD4AF37), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.2),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                LucideIcons.timer,
+                size: 12.5,
+                color: Color(0xFF78350F),
+              ),
+              const SizedBox(width: 4.5),
+              Text(
+                '90d Offer: ${days}d ${hours.toString().padLeft(2, '0')}h ${mins.toString().padLeft(2, '0')}m ${secs.toString().padLeft(2, '0')}s left',
+                style: GoogleFonts.outfit(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF78350F),
+                  letterSpacing: 0.2,
+                ),
+              ),
+              const SizedBox(width: 5),
+              Container(
+                width: 1,
+                height: 11,
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.6),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                'Navigate',
+                style: GoogleFonts.outfit(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF92400E),
+                ),
+              ),
+              const SizedBox(width: 2.5),
+              const Icon(
+                LucideIcons.chevronDown,
+                size: 11,
+                color: Color(0xFF78350F),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 2. FOUR SUBSCRIPTION CARDS (Strict Identical Height & Layout Uniformity)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildFourTierCards() {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cards = _tiers.map((tier) => _buildSingleSubscriptionCard(tier)).toList();
+        final cards = _tiers
+            .map((tier) => _buildSingleSubscriptionCard(tier))
+            .toList();
 
         // Responsive horizontal scroll guard on smaller macOS window sizes to avoid overflow
         if (constraints.maxWidth < 1180) {
@@ -508,14 +780,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 1180),
+              constraints: const BoxConstraints(minWidth: 1200),
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: cards
                       .map(
                         (c) => SizedBox(
-                          width: 285,
+                          width: 290,
                           child: Padding(
                             padding: const EdgeInsets.only(right: 14.0),
                             child: c,
@@ -563,16 +835,16 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     final Color accentColor = isTier1
         ? const Color(0xFF475569) // Cool Slate Blue
         : (isTier2
-            ? const Color(0xFF0D9488) // Clean Teal / Emerald
-            : (isTier3
-                ? const Color(0xFF2563EB) // Vibrant Royal Blue / Indigo
-                : const Color(0xFFB45309))); // Rich Warm Gold / Amber
+              ? const Color(0xFF0D9488) // Clean Teal / Emerald
+              : (isTier3
+                    ? const Color(0xFF2563EB) // Vibrant Royal Blue / Indigo
+                    : const Color(0xFFB45309))); // Rich Warm Gold / Amber
 
     final Color cardBorderColor = isTier4
         ? const Color(0xFFD4AF37) // Luxury Champagne Gold border
         : (isTier3
-            ? const Color(0xFF2563EB) // Royal Blue border
-            : const Color(0xFFE2E8F0));
+              ? const Color(0xFF2563EB) // Royal Blue border
+              : const Color(0xFFE2E8F0));
 
     final double borderWidth = isTier4 ? 2.4 : (isTier3 ? 2.0 : 1.2);
 
@@ -590,25 +862,25 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             ),
           ]
         : (isTier4
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
-                  blurRadius: 24,
-                  offset: const Offset(0, 6),
-                ),
-                BoxShadow(
-                  color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ]);
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
+                    blurRadius: 24,
+                    offset: const Offset(0, 6),
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+                    blurRadius: 10,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ]);
 
     return Container(
       decoration: BoxDecoration(
@@ -617,10 +889,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         border: Border.all(color: cardBorderColor, width: borderWidth),
         boxShadow: cardShadow,
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+      child: SingleChildScrollView(
+        physics: const NeverScrollableScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
           // ─── 1. TOP PILL BADGE (Aligned across all cards) ───
           Container(
             height: 28,
@@ -651,7 +926,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               style: GoogleFonts.outfit(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
-                color: isTier4 ? const Color(0xFF78350F) : const Color(0xFF0F172A),
+                color: isTier4
+                    ? const Color(0xFF78350F)
+                    : const Color(0xFF0F172A),
                 letterSpacing: -0.3,
               ),
             ),
@@ -689,7 +966,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             style: GoogleFonts.outfit(
               fontSize: 11,
               fontWeight: FontWeight.w800,
-              color: isTier4 ? const Color(0xFF92400E) : const Color(0xFF64748B),
+              color: isTier4
+                  ? const Color(0xFF92400E)
+                  : const Color(0xFF64748B),
               letterSpacing: 0.8,
             ),
           ),
@@ -711,7 +990,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                           ? const Color(0xFFFEF3C7)
                           : accentColor.withValues(alpha: 0.12),
                       border: isTier4
-                          ? Border.all(color: const Color(0xFFFDE68A), width: 1.0)
+                          ? Border.all(
+                              color: const Color(0xFFFDE68A),
+                              width: 1.0,
+                            )
                           : null,
                       shape: BoxShape.circle,
                     ),
@@ -741,8 +1023,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildTierTopBadge(_SubscriptionTierData tier) {
     if (tier.tierNumber == 3) {
@@ -861,14 +1144,14 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     final Color bgColor = isTier4
         ? const Color(0xFFFEF3C7)
         : (isTier3
-            ? const Color(0xFFEFF6FF)
-            : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
+              ? const Color(0xFFEFF6FF)
+              : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
 
     final Color borderColor = isTier4
         ? const Color(0xFFD4AF37)
         : (isTier3
-            ? const Color(0xFFBFDBFE)
-            : (isTier2 ? const Color(0xFF99F6E4) : const Color(0xFFCBD5E1)));
+              ? const Color(0xFFBFDBFE)
+              : (isTier2 ? const Color(0xFF99F6E4) : const Color(0xFFCBD5E1)));
 
     return Container(
       width: 44,
@@ -905,20 +1188,20 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     final Color bgColor = isTier4
         ? const Color(0xFFFEF3C7)
         : (isTier3
-            ? const Color(0xFFEFF6FF)
-            : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
+              ? const Color(0xFFEFF6FF)
+              : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
 
     final Color textColor = isTier4
         ? const Color(0xFF78350F)
         : (isTier3
-            ? const Color(0xFF2563EB)
-            : (isTier2 ? const Color(0xFF0D9488) : const Color(0xFF475569)));
+              ? const Color(0xFF2563EB)
+              : (isTier2 ? const Color(0xFF0D9488) : const Color(0xFF475569)));
 
     final Color borderColor = isTier4
         ? const Color(0xFFD4AF37)
         : (isTier3
-            ? const Color(0xFFBFDBFE)
-            : (isTier2 ? const Color(0xFFCCFBF1) : const Color(0xFFE2E8F0)));
+              ? const Color(0xFFBFDBFE)
+              : (isTier2 ? const Color(0xFFCCFBF1) : const Color(0xFFE2E8F0)));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -980,7 +1263,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 style: GoogleFonts.outfit(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: isTier4 ? const Color(0xFF78350F) : const Color(0xFF0F172A),
+                  color: isTier4
+                      ? const Color(0xFF78350F)
+                      : const Color(0xFF0F172A),
                   letterSpacing: -0.8,
                 ),
               ),
@@ -1044,7 +1329,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(LucideIcons.checkCheck, size: 16, color: Color(0xFF78350F)),
+            const Icon(
+              LucideIcons.checkCheck,
+              size: 16,
+              color: Color(0xFF78350F),
+            ),
             const SizedBox(width: 7),
             Text(
               'Currently Active Plan',
@@ -1068,9 +1357,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           backgroundColor: accentColor,
           foregroundColor: Colors.white,
           elevation: tier.tierNumber == 3 ? 2 : 0,
-          shadowColor: tier.tierNumber == 3 ? accentColor.withValues(alpha: 0.35) : null,
+          shadowColor: tier.tierNumber == 3
+              ? accentColor.withValues(alpha: 0.35)
+              : null,
           padding: const EdgeInsets.symmetric(horizontal: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1110,7 +1403,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             Expanded(
               child: Text(
                 'Start Trial - ${tier.name}',
-                style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800),
+                style: GoogleFonts.outfit(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
             ),
           ],
@@ -1121,7 +1417,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           children: [
             Text(
               'Get instant 14-day free access to all features under ${tier.name}. No credit card required to start.',
-              style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF334155)),
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                color: const Color(0xFF334155),
+              ),
             ),
             const SizedBox(height: 14),
             Container(
@@ -1138,7 +1437,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     children: [
                       Text(
                         'Monthly Rate:',
-                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
                       ),
                       Text(
                         '${tier.offerMonthlyPrice} / mo',
@@ -1156,7 +1458,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                     children: [
                       Text(
                         'After Trial:',
-                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
                       ),
                       Text(
                         'Billed annually at ${tier.fullAnnualPrice} / yr',
@@ -1176,7 +1481,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: Text('Cancel', style: GoogleFonts.outfit(color: const Color(0xFF64748B))),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.outfit(color: const Color(0xFF64748B)),
+            ),
           ),
           ElevatedButton(
             onPressed: () {
@@ -1196,7 +1504,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0F172A),
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
             child: Text(
               'Start 14-Day Free Trial',
@@ -1207,8 +1517,6 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       ),
     );
   }
-
-
 
   // ═══════════════════════════════════════════════════════════════
   // 4. BILLING & STATEMENT HISTORY
@@ -1233,7 +1541,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         children: [
           Row(
             children: [
-              const Icon(LucideIcons.history, color: _darkForestGreen, size: 18),
+              const Icon(
+                LucideIcons.history,
+                color: _darkForestGreen,
+                size: 18,
+              ),
               const SizedBox(width: 10),
               Text(
                 'Billing & Statement History',
@@ -1257,7 +1569,9 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 // Header Row
                 TableRow(
                   decoration: const BoxDecoration(
-                    border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.5)),
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.5),
+                    ),
                   ),
                   children: [
                     _buildTh('INVOICE ID'),
@@ -1272,7 +1586,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 // Table Row Data
                 TableRow(
                   children: [
-                    _buildTd('INV-2026-0743', isBold: true, color: _darkForestGreen),
+                    _buildTd(
+                      'INV-2026-0743',
+                      isBold: true,
+                      color: _darkForestGreen,
+                    ),
                     _buildTd('03 Jul 2026'),
                     _buildTd('Tier 4 (Elite)', isBold: true),
                     _buildTd('Cashfree PG'),
@@ -1281,7 +1599,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2.5,
+                            ),
                             decoration: BoxDecoration(
                               color: _lightMintGreen,
                               borderRadius: BorderRadius.circular(5),
@@ -1299,12 +1620,20 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         ],
                       ),
                     ),
-                    _buildTd('₹11,988', isBold: true, color: const Color(0xFF0F172A)),
+                    _buildTd(
+                      '₹11,988',
+                      isBold: true,
+                      color: const Color(0xFF0F172A),
+                    ),
                   ],
                 ),
                 TableRow(
                   children: [
-                    _buildTd('INV-2025-0682', isBold: true, color: _darkForestGreen),
+                    _buildTd(
+                      'INV-2025-0682',
+                      isBold: true,
+                      color: _darkForestGreen,
+                    ),
                     _buildTd('03 Jul 2025'),
                     _buildTd('Tier 3 (Growth)', isBold: true),
                     _buildTd('HDFC NetBanking'),
@@ -1313,7 +1642,10 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2.5,
+                            ),
                             decoration: BoxDecoration(
                               color: _lightMintGreen,
                               borderRadius: BorderRadius.circular(5),
@@ -1331,7 +1663,11 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                         ],
                       ),
                     ),
-                    _buildTd('₹6,588', isBold: true, color: const Color(0xFF0F172A)),
+                    _buildTd(
+                      '₹6,588',
+                      isBold: true,
+                      color: const Color(0xFF0F172A),
+                    ),
                   ],
                 ),
               ],

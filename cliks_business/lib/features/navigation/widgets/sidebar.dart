@@ -175,6 +175,7 @@ class Sidebar extends ConsumerWidget {
                         navigation.currentRoute == AppRoute.generateEInvoice,
                     children: [
                       _SidebarSubItem(
+                        icon: LucideIcons.calculator,
                         label: 'Accounting',
                         isSelected: navigation.currentRoute == AppRoute.accounting,
                         onTap: () {
@@ -184,6 +185,7 @@ class Sidebar extends ConsumerWidget {
                         },
                       ),
                       _SidebarSubItem(
+                        icon: LucideIcons.trendingUp,
                         label: 'Expenses',
                         isSelected: navigation.currentRoute == AppRoute.expenses ||
                             navigation.currentRoute == AppRoute.recordExpense ||
@@ -195,7 +197,8 @@ class Sidebar extends ConsumerWidget {
                         },
                       ),
                       _SidebarSubItem(
-                        label: 'GST',
+                        icon: LucideIcons.percent,
+                        label: 'Tax',
                         isSelected: navigation.currentRoute == AppRoute.gst ||
                             navigation.currentRoute == AppRoute.generateEWayBill ||
                             navigation.currentRoute == AppRoute.generateEInvoice,
@@ -535,7 +538,7 @@ class Sidebar extends ConsumerWidget {
     return Container(
       width: 260,
       decoration: const BoxDecoration(
-        color: Color(0xFFEAFAE3),
+        color: Color(0xFFF0FDF4),
         border: Border(right: BorderSide(color: Color(0xFFD4EED1))),
       ),
       child: Column(
@@ -546,56 +549,13 @@ class Sidebar extends ConsumerWidget {
               children: [
                 if (navigation.currentModule == AppModule.books) ...[
                   // 1. Dashboard Pill
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-                    child: InkWell(
-                      onTap: () {
-                        ref.read(navigationProvider.notifier).setRoute(AppRoute.dashboard);
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: (navigation.currentRoute == AppRoute.dashboard)
-                              ? Colors.white
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: (navigation.currentRoute == AppRoute.dashboard)
-                              ? [
-                                  BoxShadow(
-                                    color: const Color(0xFF135029).withValues(alpha: 0.08),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                              : null,
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              LucideIcons.layoutGrid,
-                              size: 18,
-                              color: (navigation.currentRoute == AppRoute.dashboard)
-                                  ? const Color(0xFF135029)
-                                  : const Color(0xFF4B5563),
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Dashboard',
-                              style: TextStyle(
-                                color: (navigation.currentRoute == AppRoute.dashboard)
-                                    ? const Color(0xFF135029)
-                                    : const Color(0xFF1F2937),
-                                fontWeight: (navigation.currentRoute == AppRoute.dashboard)
-                                    ? FontWeight.bold
-                                    : FontWeight.w600,
-                                fontSize: 13.5,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                  _buildMacOSItem(
+                    icon: LucideIcons.layoutGrid,
+                    label: 'Dashboard',
+                    isSelected: navigation.currentRoute == AppRoute.dashboard,
+                    onTap: () {
+                      ref.read(navigationProvider.notifier).setRoute(AppRoute.dashboard);
+                    },
                   ),
 
                   const SizedBox(height: 6),
@@ -650,11 +610,13 @@ class Sidebar extends ConsumerWidget {
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
+                        icon: LucideIcons.calculator,
                         label: 'Accounting',
                         isSelected: navigation.currentRoute == AppRoute.accounting,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.accounting),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.trendingUp,
                         label: 'Expenses',
                         isSelected: navigation.currentRoute == AppRoute.expenses ||
                             navigation.currentRoute == AppRoute.recordExpense ||
@@ -662,7 +624,8 @@ class Sidebar extends ConsumerWidget {
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.expenses),
                       ),
                       _buildMacOSSubItem(
-                        label: 'GST',
+                        icon: LucideIcons.percent,
+                        label: 'Tax',
                         isSelected: navigation.currentRoute == AppRoute.gst ||
                             navigation.currentRoute == AppRoute.generateEWayBill ||
                             navigation.currentRoute == AppRoute.generateEInvoice,
@@ -687,24 +650,28 @@ class Sidebar extends ConsumerWidget {
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
+                        icon: LucideIcons.receipt,
                         label: 'Sales Invoices',
                         isSelected: navigation.currentRoute == AppRoute.billing ||
                             navigation.currentRoute == AppRoute.invoiceTemplates,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.billing),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.fileSpreadsheet,
                         label: 'Sales Orders',
                         isSelected: navigation.currentRoute == AppRoute.sales ||
                             navigation.currentRoute == AppRoute.newSalesOrder,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.sales),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.users,
                         label: 'Customers',
                         isSelected: navigation.currentRoute == AppRoute.customers ||
                             navigation.currentRoute == AppRoute.addCustomer,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.customers),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.rotateCcw,
                         label: 'Returns',
                         isSelected: navigation.currentRoute == AppRoute.returns ||
                             navigation.currentRoute == AppRoute.newCustomerReturn,
@@ -726,12 +693,14 @@ class Sidebar extends ConsumerWidget {
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
+                        icon: LucideIcons.receiptText,
                         label: 'Purchase Invoices',
                         isSelected: navigation.currentRoute == AppRoute.purchase ||
                             navigation.currentRoute == AppRoute.newPurchaseBill,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.purchase),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.truck,
                         label: 'Suppliers',
                         isSelected: navigation.currentRoute == AppRoute.suppliers ||
                             navigation.currentRoute == AppRoute.registerSupplier,
@@ -759,18 +728,21 @@ class Sidebar extends ConsumerWidget {
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
+                        icon: LucideIcons.package,
                         label: 'Products',
                         isSelected: navigation.currentRoute == AppRoute.products ||
                             navigation.currentRoute == AppRoute.registerProduct,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.products),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.boxes,
                         label: 'Stock & Inventory',
                         isSelected: navigation.currentRoute == AppRoute.stock ||
                             navigation.currentRoute == AppRoute.adjustStock,
                         onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.stock),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.warehouse,
                         label: 'Warehouse',
                         isSelected: navigation.currentRoute == AppRoute.warehouse ||
                             navigation.currentRoute == AppRoute.registerWarehouse,
@@ -1092,132 +1064,38 @@ class Sidebar extends ConsumerWidget {
         const SizedBox(height: 4),
 
         // 3. Settings Item
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-          child: InkWell(
-            onTap: () {
-              ref.read(navigationProvider.notifier).setModuleAndRoute(
-                    AppModule.books,
-                    AppRoute.settings,
-                  );
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: navigation.currentRoute == AppRoute.settings
-                    ? Colors.white
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: navigation.currentRoute == AppRoute.settings
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF135029).withValues(alpha: 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.settings,
-                    size: 17,
-                    color: navigation.currentRoute == AppRoute.settings
-                        ? const Color(0xFF135029)
-                        : const Color(0xFF4B5563),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Settings',
-                      style: TextStyle(
-                        color: navigation.currentRoute == AppRoute.settings
-                            ? const Color(0xFF135029)
-                            : const Color(0xFF374151),
-                        fontWeight: navigation.currentRoute == AppRoute.settings
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    LucideIcons.chevronRight,
-                    size: 14,
-                    color: navigation.currentRoute == AppRoute.settings
-                        ? const Color(0xFF135029)
-                        : const Color(0xFF9CA3AF),
-                  ),
-                ],
-              ),
-            ),
+        _buildMacOSItem(
+          icon: LucideIcons.settings,
+          label: 'Settings',
+          isSelected: navigation.currentRoute == AppRoute.settings,
+          onTap: () {
+            ref.read(navigationProvider.notifier).setModuleAndRoute(
+                  AppModule.books,
+                  AppRoute.settings,
+                );
+          },
+          trailing: const Icon(
+            LucideIcons.chevronRight,
+            size: 14,
+            color: Color(0xFF9CA3AF),
           ),
         ),
 
         // 4. Help & Support Item
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-          child: InkWell(
-            onTap: () {
-              ref.read(navigationProvider.notifier).setModuleAndRoute(
-                    AppModule.books,
-                    AppRoute.help,
-                  );
-            },
-            borderRadius: BorderRadius.circular(10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-              decoration: BoxDecoration(
-                color: navigation.currentRoute == AppRoute.help
-                    ? Colors.white
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                boxShadow: navigation.currentRoute == AppRoute.help
-                    ? [
-                        BoxShadow(
-                          color: const Color(0xFF135029).withValues(alpha: 0.08),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    LucideIcons.helpCircle,
-                    size: 17,
-                    color: navigation.currentRoute == AppRoute.help
-                        ? const Color(0xFF135029)
-                        : const Color(0xFF4B5563),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Help & Support',
-                      style: TextStyle(
-                        color: navigation.currentRoute == AppRoute.help
-                            ? const Color(0xFF135029)
-                            : const Color(0xFF374151),
-                        fontWeight: navigation.currentRoute == AppRoute.help
-                            ? FontWeight.bold
-                            : FontWeight.w500,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    LucideIcons.chevronRight,
-                    size: 14,
-                    color: navigation.currentRoute == AppRoute.help
-                        ? const Color(0xFF135029)
-                        : const Color(0xFF9CA3AF),
-                  ),
-                ],
-              ),
-            ),
+        _buildMacOSItem(
+          icon: LucideIcons.helpCircle,
+          label: 'Help & Support',
+          isSelected: navigation.currentRoute == AppRoute.help,
+          onTap: () {
+            ref.read(navigationProvider.notifier).setModuleAndRoute(
+                  AppModule.books,
+                  AppRoute.help,
+                );
+          },
+          trailing: const Icon(
+            LucideIcons.chevronRight,
+            size: 14,
+            color: Color(0xFF9CA3AF),
           ),
         ),
 
@@ -1296,49 +1174,16 @@ class Sidebar extends ConsumerWidget {
     required String label,
     required bool isSelected,
     required VoidCallback onTap,
+    Widget? trailing,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(10),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF135029).withValues(alpha: 0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: isSelected ? const Color(0xFF135029) : const Color(0xFF4B5563),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? const Color(0xFF135029) : const Color(0xFF1F2937),
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                    fontSize: 13.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return _MacOSSidebarTile(
+      icon: icon,
+      label: label,
+      isSelected: isSelected,
+      onTap: onTap,
+      trailing: trailing,
+      margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8.5),
     );
   }
 
@@ -1352,50 +1197,17 @@ class Sidebar extends ConsumerWidget {
       builder: (context, ref, _) {
         final expandedStates = ref.watch(sidebarExpandedProvider);
         final isExpanded = expandedStates[label] ?? isInitiallyExpanded;
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-              child: InkWell(
-                onTap: () {
-                  ref.read(sidebarExpandedProvider.notifier).update((state) => {
-                        ...state,
-                        label: !isExpanded,
-                      });
-                },
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                  child: Row(
-                    children: [
-                      Icon(icon, size: 18, color: const Color(0xFF4B5563)),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          label,
-                          style: const TextStyle(
-                            color: Color(0xFF1F2937),
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13.5,
-                          ),
-                        ),
-                      ),
-                      Icon(
-                        isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
-                        size: 16,
-                        color: const Color(0xFF9CA3AF),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            if (isExpanded)
-              Padding(
-                padding: const EdgeInsets.only(left: 32, right: 14),
-                child: Column(children: children),
-              ),
-          ],
+        return _MacOSExpandableGroup(
+          icon: icon,
+          label: label,
+          isExpanded: isExpanded,
+          onToggle: () {
+            ref.read(sidebarExpandedProvider.notifier).update((state) => {
+                  ...state,
+                  label: !isExpanded,
+                });
+          },
+          children: children,
         );
       },
     );
@@ -1407,47 +1219,129 @@ class Sidebar extends ConsumerWidget {
     required VoidCallback onTap,
     IconData? icon,
   }) {
+    return _MacOSSidebarTile(
+      icon: icon,
+      label: label,
+      isSelected: isSelected,
+      onTap: onTap,
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    );
+  }
+}
+
+class _MacOSSidebarTile extends StatefulWidget {
+  final IconData? icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final Widget? trailing;
+  final EdgeInsetsGeometry margin;
+  final EdgeInsetsGeometry padding;
+
+  const _MacOSSidebarTile({
+    this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    this.trailing,
+    this.margin = const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+    this.padding = const EdgeInsets.symmetric(horizontal: 12, vertical: 8.5),
+  });
+
+  @override
+  State<_MacOSSidebarTile> createState() => _MacOSSidebarTileState();
+}
+
+class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
+  bool _isHovered = false;
+  bool _isPressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isHighlighted = widget.isSelected || _isHovered || _isPressed;
+
+    final Color bgColor;
+    if (widget.isSelected) {
+      bgColor = const Color(0xFFD4EED1);
+    } else if (_isHovered || _isPressed) {
+      bgColor = const Color(0xFFD4EED1).withValues(alpha: 0.65);
+    } else {
+      bgColor = Colors.transparent;
+    }
+
+    final Color contentColor = isHighlighted ? const Color(0xFF135029) : const Color(0xFF1F2937);
+    final Color iconColor = isHighlighted ? const Color(0xFF135029) : const Color(0xFF374151);
+
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF135029).withValues(alpha: 0.08),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
+      padding: widget.margin,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) => setState(() => _isPressed = false),
+          onTapCancel: () => setState(() => _isPressed = false),
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOut,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: bgColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                // Curved indicator bar on the left edge when touched or selected
+                if (isHighlighted)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 5,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: widget.isSelected
+                            ? const Color(0xFF135029)
+                            : const Color(0xFF135029).withValues(alpha: 0.8),
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(3),
+                          bottomRight: Radius.circular(3),
+                        ),
+                      ),
                     ),
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              if (icon != null) ...[
-                Icon(
-                  icon,
-                  size: 15,
-                  color: isSelected ? const Color(0xFF135029) : const Color(0xFF6B7280),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? const Color(0xFF135029) : const Color(0xFF4B5563),
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                Padding(
+                  padding: widget.padding,
+                  child: Row(
+                    children: [
+                      if (widget.icon != null) ...[
+                        Icon(
+                          widget.icon,
+                          size: 18,
+                          color: iconColor,
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        child: Text(
+                          widget.label,
+                          style: TextStyle(
+                            color: contentColor,
+                            fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                            fontSize: 13.5,
+                          ),
+                        ),
+                      ),
+                      if (widget.trailing != null) widget.trailing!,
+                    ],
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1455,7 +1349,92 @@ class Sidebar extends ConsumerWidget {
   }
 }
 
-class _SidebarItem extends StatelessWidget {
+class _MacOSExpandableGroup extends StatefulWidget {
+  final IconData icon;
+  final String label;
+  final bool isExpanded;
+  final VoidCallback onToggle;
+  final List<Widget> children;
+
+  const _MacOSExpandableGroup({
+    required this.icon,
+    required this.label,
+    required this.isExpanded,
+    required this.onToggle,
+    required this.children,
+  });
+
+  @override
+  State<_MacOSExpandableGroup> createState() => _MacOSExpandableGroupState();
+}
+
+class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isHighlighted = widget.isExpanded || _isHovered;
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            onEnter: (_) => setState(() => _isHovered = true),
+            onExit: (_) => setState(() => _isHovered = false),
+            child: GestureDetector(
+              onTap: widget.onToggle,
+              behavior: HitTestBehavior.opaque,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: _isHovered
+                      ? const Color(0xFFD4EED1).withValues(alpha: 0.35)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      widget.icon,
+                      size: 18,
+                      color: isHighlighted ? const Color(0xFF135029) : const Color(0xFF4B5563),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: TextStyle(
+                          color: isHighlighted ? const Color(0xFF135029) : const Color(0xFF1F2937),
+                          fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      widget.isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                      size: 16,
+                      color: isHighlighted ? const Color(0xFF135029) : const Color(0xFF9CA3AF),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (widget.isExpanded)
+          Padding(
+            padding: const EdgeInsets.only(left: 18, right: 14),
+            child: Column(children: widget.children),
+          ),
+      ],
+    );
+  }
+}
+
+class _SidebarItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isSelected;
@@ -1473,65 +1452,83 @@ class _SidebarItem extends StatelessWidget {
   });
 
   @override
+  State<_SidebarItem> createState() => _SidebarItemState();
+}
+
+class _SidebarItemState extends State<_SidebarItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    final trailingWidget = trailing;
+    final trailingWidget = widget.trailing;
+    final isHighlighted = widget.isSelected || _isHovered;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: InkWell(
-        onTap: () {
-          onTap();
-          if (!isHeader && Scaffold.of(context).isDrawerOpen) {
-            Navigator.of(context).pop();
-          }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ]
-                : null,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                icon,
-                size: 20,
-                color: isSelected ? AppColors.primaryGreen : AppColors.secondaryText,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    color: isSelected ? AppColors.primaryGreen : AppColors.darkText,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 14,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: InkWell(
+          onTap: () {
+            widget.onTap();
+            if (!widget.isHeader && Scaffold.of(context).isDrawerOpen) {
+              Navigator.of(context).pop();
+            }
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? const Color(0xFFD4EED1)
+                  : (_isHovered
+                      ? const Color(0xFFD4EED1).withValues(alpha: 0.6)
+                      : Colors.transparent),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                if (isHighlighted && !widget.isHeader)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4.5,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF135029),
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(3),
+                          bottomRight: Radius.circular(3),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              ?trailingWidget,
-              if (isSelected) ...[
-                const SizedBox(width: 8),
-                Container(
-                  width: 4,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryGreen,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+                Row(
+                  children: [
+                    Icon(
+                      widget.icon,
+                      size: 20,
+                      color: isHighlighted ? const Color(0xFF135029) : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: TextStyle(
+                          color: isHighlighted ? const Color(0xFF135029) : AppColors.darkText,
+                          fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    ?trailingWidget,
+                  ],
                 ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -1588,33 +1585,98 @@ class _SidebarExpandable extends ConsumerWidget {
   }
 }
 
-class _SidebarSubItem extends StatelessWidget {
+class _SidebarSubItem extends StatefulWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final IconData? icon;
 
   const _SidebarSubItem({
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.icon,
   });
 
   @override
+  State<_SidebarSubItem> createState() => _SidebarSubItemState();
+}
+
+class _SidebarSubItemState extends State<_SidebarSubItem> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
-    return ListTile(
-      dense: true,
-      onTap: () {
-        onTap();
-        if (Scaffold.of(context).isDrawerOpen) {
-          Navigator.of(context).pop();
-        }
-      },
-      title: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? AppColors.primaryGreen : AppColors.secondaryText,
-          fontSize: 13,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+    final isHighlighted = widget.isSelected || _isHovered;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: InkWell(
+          onTap: () {
+            widget.onTap();
+            if (Scaffold.of(context).isDrawerOpen) {
+              Navigator.of(context).pop();
+            }
+          },
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? const Color(0xFFD4EED1)
+                  : (_isHovered
+                      ? const Color(0xFFD4EED1).withValues(alpha: 0.6)
+                      : Colors.transparent),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Stack(
+              children: [
+                if (isHighlighted)
+                  Positioned(
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: 4.5,
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF135029),
+                        borderRadius: BorderRadius.only(
+                          topRight: Radius.circular(3),
+                          bottomRight: Radius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+                Row(
+                  children: [
+                    if (widget.icon != null) ...[
+                      Icon(
+                        widget.icon,
+                        size: 16,
+                        color: isHighlighted ? const Color(0xFF135029) : AppColors.secondaryText,
+                      ),
+                      const SizedBox(width: 10),
+                    ],
+                    Expanded(
+                      child: Text(
+                        widget.label,
+                        style: TextStyle(
+                          color: isHighlighted ? const Color(0xFF135029) : AppColors.secondaryText,
+                          fontSize: 13,
+                          fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
