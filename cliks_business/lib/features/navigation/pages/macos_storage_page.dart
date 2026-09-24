@@ -42,7 +42,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   String _manageAppsStatusText = 'Preferences saved successfully';
 
   // Settings state
-  String _settingsSubSection = 'privacy'; // 'general', 'privacy', 'apps'
+  final ScrollController _settingsScrollController = ScrollController();
+  String _settingsSubSection = 'general'; // 'general', 'privacy', 'apps'
   String _selectedLanguage = 'English';
   String _selectedStorageUnit = 'GB'; // 'GB', 'TB'
   String _selectedDecimalPrecision = '2 digits';
@@ -66,6 +67,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   void dispose() {
     _recycleSearchController.dispose();
     _poolSizeController.dispose();
+    _settingsScrollController.dispose();
     super.dispose();
   }
 
@@ -104,15 +106,17 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     // Left Sidebar
                     _buildSidebar(),
 
-                    // Right Main Scrollable View
+                    // Right Main View
                     Expanded(
                       child: Container(
                         color: const Color(0xFFF8FAFC),
-                        child: SingleChildScrollView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
-                          child: _buildActiveTabView(),
-                        ),
+                        child: _activeTab == _StorageTab.settings
+                            ? _buildSettingsView()
+                            : SingleChildScrollView(
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+                                child: _buildActiveTabView(),
+                              ),
                       ),
                     ),
                   ],
@@ -631,7 +635,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       case _StorageTab.manageApps:
         return _buildManageAppsView();
       case _StorageTab.settings:
-        return _buildSettingsView();
+        return const SizedBox.shrink();
     }
   }
 
@@ -4407,130 +4411,140 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   // VIEW: SETTINGS (Screenshots 3, 4, 5)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildSettingsView() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Breadcrumbs
-        Row(
-          children: [
-            InkWell(
-              onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
-              child: Text(
-                'Storage Management',
-                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
-              ),
-            ),
-            Text(
-              '  ›  ',
-              style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
-            ),
-            Text(
-              'Settings',
-              style: GoogleFonts.outfit(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // Unified Card Layout (Inner Sidebar + Right Panel matching screenshots)
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final isNarrow = constraints.maxWidth < 800;
-
-              Widget rightContent;
-              if (_settingsSubSection == 'privacy') {
-                rightContent = _buildSettingsPrivacyContent();
-              } else if (_settingsSubSection == 'apps') {
-                rightContent = _buildManageAppsView(showBreadcrumbs: false);
-              } else {
-                rightContent = _buildSettingsGeneralContent();
-              }
-
-              final innerSidebar = Container(
-                width: isNarrow ? double.infinity : 240,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  border: isNarrow
-                      ? const Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0))
-                      : const Border(right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Breadcrumbs
+          Row(
+            children: [
+              InkWell(
+                onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                child: Text(
+                  'Storage Management',
+                  style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'SETTINGS',
-                      style: GoogleFonts.outfit(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF94A3B8),
-                        letterSpacing: 0.6,
+              ),
+              Text(
+                '  ›  ',
+                style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF94A3B8)),
+              ),
+              Text(
+                'Settings',
+                style: GoogleFonts.outfit(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Unified Card Layout (Fixed Inner Sidebar + Dynamically Scrollable Right Panel)
+          Expanded(
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Fixed Left Sub-Navigation for Settings
+                  Container(
+                    width: 250,
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
                       ),
                     ),
-                    const SizedBox(height: 14),
-                    _buildSettingsNavTile(
-                      id: 'general',
-                      icon: LucideIcons.settings,
-                      title: 'General',
-                      subtitle: 'Manage your workspace preferences',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildSettingsNavTile(
-                      id: 'privacy',
-                      icon: LucideIcons.shield,
-                      title: 'Privacy & Data Control',
-                      subtitle: 'Manage privacy and access to your stored data',
-                    ),
-                    const SizedBox(height: 8),
-                    _buildSettingsNavTile(
-                      id: 'apps',
-                      icon: LucideIcons.layoutGrid,
-                      title: 'Manage Apps',
-                      subtitle: 'Manage storage boundaries and partition sizing limits',
-                    ),
-                  ],
-                ),
-              );
-
-              if (isNarrow) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    innerSidebar,
-                    Padding(
+                    child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
                       padding: const EdgeInsets.all(20),
-                      child: rightContent,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'SETTINGS',
+                            style: GoogleFonts.outfit(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF94A3B8),
+                              letterSpacing: 0.6,
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          _buildSettingsNavTile(
+                            id: 'general',
+                            icon: LucideIcons.settings,
+                            title: 'General',
+                            subtitle: 'Manage your workspace preferences',
+                          ),
+                          const SizedBox(height: 8),
+                          _buildSettingsNavTile(
+                            id: 'privacy',
+                            icon: LucideIcons.shield,
+                            title: 'Privacy & Data Control',
+                            subtitle: 'Manage privacy and access to your stored data',
+                          ),
+                          const SizedBox(height: 8),
+                          _buildSettingsNavTile(
+                            id: 'apps',
+                            icon: LucideIcons.layoutGrid,
+                            title: 'Manage Apps',
+                            subtitle: 'Manage storage boundaries and partition sizing limits',
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                );
-              }
+                  ),
 
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  innerSidebar,
+                  // Dynamically Scrollable Right Content Area
                   Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(28),
-                      child: rightContent,
+                    child: Scrollbar(
+                      controller: _settingsScrollController,
+                      child: SingleChildScrollView(
+                        controller: _settingsScrollController,
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.all(28),
+                        child: _getSettingsSubSectionContent(),
+                      ),
                     ),
                   ),
                 ],
-              );
-            },
+              ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
+  }
+
+  Widget _getSettingsSubSectionContent() {
+    if (_settingsSubSection == 'privacy') {
+      return _buildSettingsPrivacyContent();
+    } else if (_settingsSubSection == 'apps') {
+      return _buildManageAppsView(showBreadcrumbs: false);
+    } else {
+      return _buildSettingsGeneralContent();
+    }
+  }
+
+  void _selectSettingsSubSection(String id) {
+    if (_settingsSubSection != id) {
+      setState(() {
+        _settingsSubSection = id;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_settingsScrollController.hasClients) {
+          _settingsScrollController.jumpTo(0);
+        }
+      });
+    }
   }
 
   Widget _buildSettingsNavTile({
@@ -4542,7 +4556,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     final isSelected = _settingsSubSection == id;
 
     return InkWell(
-      onTap: () => setState(() => _settingsSubSection = id),
+      onTap: () => _selectSettingsSubSection(id),
       borderRadius: BorderRadius.circular(10),
       child: Container(
         width: double.infinity,
