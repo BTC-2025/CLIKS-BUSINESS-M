@@ -17,9 +17,7 @@ class _SubscriptionTierData {
   final String originalMonthlyPrice;
   final String offerMonthlyPrice;
   final String fullAnnualPrice;
-  final String monthlySavings;
-  final String annualSavings;
-  final String discountPercentage;
+  final String discountTag;
   final IconData icon;
   final List<String> features;
   final bool isCurrentPlan;
@@ -32,9 +30,7 @@ class _SubscriptionTierData {
     required this.originalMonthlyPrice,
     required this.offerMonthlyPrice,
     required this.fullAnnualPrice,
-    required this.monthlySavings,
-    required this.annualSavings,
-    required this.discountPercentage,
+    required this.discountTag,
     required this.icon,
     required this.features,
     this.isCurrentPlan = false,
@@ -50,15 +46,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   final List<_SubscriptionTierData> _tiers = const [
     _SubscriptionTierData(
       tierNumber: 1,
-      topTag: 'ANNUAL SAVER',
-      name: 'Tier 1 (Basic / Starter)',
+      topTag: 'STARTER',
+      name: 'Tier 1 (Starter)',
       headline: 'Essential tools for emerging retail, solopreneurs & small teams.',
       originalMonthlyPrice: '₹549',
       offerMonthlyPrice: '₹99',
       fullAnnualPrice: '₹1,188',
-      monthlySavings: '₹450',
-      annualSavings: '₹5,400',
-      discountPercentage: '82%',
+      discountTag: 'Save 82%',
       icon: LucideIcons.rocket,
       features: [
         'Unlimited Accounting & Day Book Logs',
@@ -72,15 +66,13 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
     ),
     _SubscriptionTierData(
       tierNumber: 2,
-      topTag: 'GROWTH READY',
+      topTag: 'STANDARD',
       name: 'Tier 2 (Standard)',
       headline: 'Comprehensive operational suite for growing SMBs and expanding stores.',
       originalMonthlyPrice: '₹1,349',
       offerMonthlyPrice: '₹249',
       fullAnnualPrice: '₹2,988',
-      monthlySavings: '₹1,100',
-      annualSavings: '₹13,200',
-      discountPercentage: '81%',
+      discountTag: 'Save 81%',
       icon: LucideIcons.layers,
       features: [
         'Everything included in Tier 1',
@@ -100,9 +92,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       originalMonthlyPrice: '₹2,499',
       offerMonthlyPrice: '₹549',
       fullAnnualPrice: '₹6,588',
-      monthlySavings: '₹1,950',
-      annualSavings: '₹23,400',
-      discountPercentage: '78%',
+      discountTag: 'Save 78%',
       icon: LucideIcons.trendingUp,
       features: [
         'Everything included in Tier 2',
@@ -123,9 +113,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
       originalMonthlyPrice: '₹3,499',
       offerMonthlyPrice: '₹999',
       fullAnnualPrice: '₹11,988',
-      monthlySavings: '₹2,500',
-      annualSavings: '₹30,000',
-      discountPercentage: '71%',
+      discountTag: 'Save 71%',
       icon: LucideIcons.crown,
       features: [
         'Everything included in Tier 3',
@@ -134,8 +122,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
         'Custom White-Label Invoicing & Branding',
         'Unlimited Manufacturing Batches & QC Logs',
         'Guaranteed 99.99% Enterprise Uptime SLA',
-        'Dedicated FIN-PRO Account Manager',
-        '24/7/365 Direct Priority VIP Phone Support',
+        'Dedicated FIN-PRO Manager & 24/7 VIP Support',
       ],
       isCurrentPlan: true,
     ),
@@ -508,7 +495,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 2. FOUR SUBSCRIPTION CARDS (Side-by-side with perfect vertical alignment)
+  // 2. FOUR SUBSCRIPTION CARDS (Strict Identical Height & Layout Uniformity)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildFourTierCards() {
     return LayoutBuilder(
@@ -522,473 +509,584 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
               constraints: const BoxConstraints(minWidth: 1180),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: cards
-                    .map(
-                      (c) => SizedBox(
-                        width: 285,
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 14.0),
-                          child: c,
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: cards
+                      .map(
+                        (c) => SizedBox(
+                          width: 285,
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 14.0),
+                            child: c,
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(),
+                      )
+                      .toList(),
+                ),
               ),
             ),
           );
         }
 
-        // Full width desktop: 4 cards side-by-side
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: cards
-              .map(
-                (c) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 7.0),
-                    child: c,
+        // Full width desktop: 4 cards side-by-side with strict identical height
+        return IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: cards
+                .map(
+                  (c) => Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 7.0),
+                      child: c,
+                    ),
                   ),
-                ),
-              )
-              .toList(),
+                )
+                .toList(),
+          ),
         );
       },
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // INDIVIDUAL SUBSCRIPTION CARD (Dark Forest Green Highlighting)
+  // INDIVIDUAL SUBSCRIPTION CARD (Enterprise SaaS Aesthetic)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildSingleSubscriptionCard(_SubscriptionTierData tier) {
-    final isCurrent = tier.isCurrentPlan;
-    final isPopular = tier.tierNumber == 3;
+    final int tierNum = tier.tierNumber;
+    final bool isTier1 = tierNum == 1;
+    final bool isTier2 = tierNum == 2;
+    final bool isTier3 = tierNum == 3;
+    final bool isTier4 = tierNum == 4;
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: isCurrent
-              ? _darkForestGreen
-              : (isPopular ? const Color(0xFF22C55E).withValues(alpha: 0.6) : const Color(0xFFE2E8F0)),
-          width: isCurrent ? 2.2 : (isPopular ? 1.5 : 1.2),
-        ),
-        boxShadow: isCurrent
+    // Distinct Tier Accents & Color Themes
+    final Color accentColor = isTier1
+        ? const Color(0xFF475569) // Cool Slate Blue
+        : (isTier2
+            ? const Color(0xFF0D9488) // Clean Teal / Emerald
+            : (isTier3
+                ? const Color(0xFF2563EB) // Vibrant Royal Blue / Indigo
+                : const Color(0xFFB45309))); // Rich Warm Gold / Amber
+
+    final Color cardBorderColor = isTier4
+        ? const Color(0xFFD4AF37) // Luxury Champagne Gold border
+        : (isTier3
+            ? const Color(0xFF2563EB) // Royal Blue border
+            : const Color(0xFFE2E8F0));
+
+    final double borderWidth = isTier4 ? 2.4 : (isTier3 ? 2.0 : 1.2);
+
+    final List<BoxShadow> cardShadow = isTier3
+        ? [
+            BoxShadow(
+              color: const Color(0xFF2563EB).withValues(alpha: 0.14),
+              blurRadius: 22,
+              offset: const Offset(0, 6),
+            ),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ]
+        : (isTier4
             ? [
                 BoxShadow(
-                  color: _darkForestGreen.withValues(alpha: 0.16),
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
                   blurRadius: 24,
-                  offset: const Offset(0, 8),
+                  offset: const Offset(0, 6),
                 ),
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
+                  color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
                   blurRadius: 10,
                   offset: const Offset(0, 2),
                 ),
               ]
             : [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.025),
-                  blurRadius: 14,
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),
-              ],
+              ]);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isTier4 ? const Color(0xFFFFFDF5) : Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: cardBorderColor, width: borderWidth),
+        boxShadow: cardShadow,
       ),
-      clipBehavior: Clip.antiAlias,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── TOP TAG / RIBBON BAR (Aligned 34px height across all 4 cards) ───
+          // ─── 1. TOP PILL BADGE (Aligned across all cards) ───
           Container(
-            width: double.infinity,
-            height: 34,
-            decoration: BoxDecoration(
-              color: isCurrent
-                  ? _darkForestGreen
-                  : (isPopular ? _lightMintGreen : const Color(0xFFF8FAFC)),
-              border: Border(
-                bottom: BorderSide(
-                  color: isCurrent
-                      ? _darkForestGreen
-                      : (isPopular ? _mintBorder : const Color(0xFFE2E8F0)),
-                  width: 1.0,
-                ),
+            height: 28,
+            alignment: Alignment.centerLeft,
+            child: _buildTierTopBadge(tier),
+          ),
+          const SizedBox(height: 14),
+
+          // ─── 2. TIER ICON & TOP-RIGHT DISCOUNT TAG ───
+          SizedBox(
+            height: 44,
+            child: Row(
+              children: [
+                _buildTierIcon(tier, accentColor),
+                const Spacer(),
+                _buildDiscountTag(tier),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ─── 3. TIER NAME (Identical height for all cards) ───
+          Container(
+            height: 28,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              tier.name,
+              style: GoogleFonts.outfit(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: isTier4 ? const Color(0xFF78350F) : const Color(0xFF0F172A),
+                letterSpacing: -0.3,
               ),
             ),
-            alignment: Alignment.center,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isCurrent) ...[
-                  const Icon(LucideIcons.checkCircle2, size: 13, color: Colors.white),
-                  const SizedBox(width: 6),
-                  Text(
-                    tier.topTag,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: 0.6,
+          ),
+          const SizedBox(height: 6),
+
+          // ─── 4. TIER HEADLINE (Strict identical 42px height for all cards) ───
+          SizedBox(
+            height: 42,
+            child: Text(
+              tier.headline,
+              style: GoogleFonts.outfit(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+                height: 1.35,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ─── 5. PRICING CONTAINER (Identical height & padding across all cards) ───
+          _buildPricingBox(tier),
+          const SizedBox(height: 16),
+
+          // ─── 6. ACTION CTA BUTTON (Strict 44px height across all cards) ───
+          _buildCtaButton(tier, accentColor),
+          const SizedBox(height: 20),
+
+          // ─── 7. WHAT'S INCLUDED HEADER (Starts on identical horizontal axis) ───
+          Text(
+            "WHAT'S INCLUDED",
+            style: GoogleFonts.outfit(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: isTier4 ? const Color(0xFF92400E) : const Color(0xFF64748B),
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ─── 8. FEATURES LIST (Checklist with clean theme icons & standard line-height) ───
+          ...tier.features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 9.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 17,
+                    height: 17,
+                    margin: const EdgeInsets.only(top: 2),
+                    decoration: BoxDecoration(
+                      color: isTier4
+                          ? const Color(0xFFFEF3C7)
+                          : accentColor.withValues(alpha: 0.12),
+                      border: isTier4
+                          ? Border.all(color: const Color(0xFFFDE68A), width: 1.0)
+                          : null,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Icon(
+                        LucideIcons.check,
+                        size: 10.5,
+                        color: isTier4 ? const Color(0xFFB45309) : accentColor,
+                      ),
                     ),
                   ),
-                ] else if (isPopular) ...[
-                  const Icon(LucideIcons.sparkles, size: 12, color: _darkForestGreen),
-                  const SizedBox(width: 5),
-                  Text(
-                    tier.topTag,
-                    style: GoogleFonts.outfit(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w800,
-                      color: _darkForestGreen,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ] else ...[
-                  Text(
-                    tier.topTag,
-                    style: GoogleFonts.outfit(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF64748B),
-                      letterSpacing: 0.5,
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      f,
+                      style: GoogleFonts.outfit(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF334155),
+                        height: 1.35,
+                      ),
                     ),
                   ),
                 ],
-              ],
-            ),
-          ),
-
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ─── 1. TIER ICON ───
-                Row(
-                  children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: isCurrent ? _darkForestGreen : _lightMintGreen,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isCurrent ? _darkForestGreen : _mintBorder,
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          tier.icon,
-                          size: 20,
-                          color: isCurrent ? const Color(0xFFF2C94C) : _darkForestGreen,
-                        ),
-                      ),
-                    ),
-                    const Spacer(),
-                    if (isCurrent)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: _lightMintGreen,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: _mintBorder),
-                        ),
-                        child: Text(
-                          'ACTIVE',
-                          style: GoogleFonts.outfit(
-                            fontSize: 9.5,
-                            fontWeight: FontWeight.w800,
-                            color: _darkForestGreen,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      )
-                    else if (isPopular)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF0FDF4),
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
-                        ),
-                        child: Text(
-                          'RECOMMENDED',
-                          style: GoogleFonts.outfit(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            color: const Color(0xFF15803D),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-
-                // ─── 2. TIER NAME ───
-                Text(
-                  tier.name,
-                  style: GoogleFonts.outfit(
-                    fontSize: 17.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.3,
-                  ),
-                ),
-                const SizedBox(height: 5),
-
-                // ─── 3. TIER HEADLINE ───
-                SizedBox(
-                  height: 38,
-                  child: Text(
-                    tier.headline,
-                    style: GoogleFonts.outfit(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF64748B),
-                      height: 1.35,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // ─── 4, 5, 6, 7. PRICING SECTION (Dark Forest Green Highlights) ───
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Monthly Without Offer (Strikethrough, Neutral)
-                      Row(
-                        children: [
-                          Text(
-                            '${tier.originalMonthlyPrice} / month',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w600,
-                              color: const Color(0xFF94A3B8),
-                              decoration: TextDecoration.lineThrough,
-                              decorationColor: const Color(0xFF94A3B8),
-                            ),
-                          ),
-                          const Spacer(),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: _lightMintGreen,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: _mintBorder),
-                            ),
-                            child: Text(
-                              '${tier.discountPercentage} OFF',
-                              style: GoogleFonts.outfit(
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w900,
-                                color: _darkForestGreen,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-
-                      // With Offer Price (Annual Billed Monthly - Prominent Dark Forest Green)
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
-                        children: [
-                          Text(
-                            tier.offerMonthlyPrice,
-                            style: GoogleFonts.outfit(
-                              fontSize: 30,
-                              fontWeight: FontWeight.w900,
-                              color: _darkForestGreen,
-                              letterSpacing: -0.6,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '/ month',
-                            style: GoogleFonts.outfit(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              color: _darkForestGreen,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '(Annual)',
-                            style: GoogleFonts.outfit(
-                              fontSize: 10.5,
-                              color: const Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-
-                      // Full Annual Billed Price (with Offer)
-                      Row(
-                        children: [
-                          const Icon(LucideIcons.calendarCheck, size: 12, color: _darkForestGreen),
-                          const SizedBox(width: 5),
-                          Text(
-                            'Full Annual Cost: ${tier.fullAnnualPrice} / year',
-                            style: GoogleFonts.outfit(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: _darkForestGreen,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Savings Detail
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                        decoration: BoxDecoration(
-                          color: _lightMintGreen,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(LucideIcons.tag, size: 11, color: _darkForestGreen),
-                            const SizedBox(width: 5),
-                            Expanded(
-                              child: Text(
-                                'Save ${tier.monthlySavings}/mo (${tier.annualSavings}/yr)',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: _darkForestGreen,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-
-                // ─── 8. UPGRADE PLAN BUTTON (Dark Forest Green) ───
-                SizedBox(
-                  width: double.infinity,
-                  child: isCurrent
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _lightMintGreen,
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: _darkForestGreen, width: 1.5),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(LucideIcons.checkCheck, size: 15, color: _darkForestGreen),
-                              const SizedBox(width: 7),
-                              Text(
-                                'Current Active Plan',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: _darkForestGreen,
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : ElevatedButton(
-                          onPressed: () => _showUpgradeDialog(tier),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _darkForestGreen,
-                            foregroundColor: Colors.white,
-                            elevation: 2,
-                            shadowColor: _darkForestGreen.withValues(alpha: 0.35),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                'Upgrade to Tier ${tier.tierNumber}',
-                                style: GoogleFonts.outfit(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Icon(LucideIcons.arrowRight, size: 14, color: Colors.white),
-                            ],
-                          ),
-                        ),
-                ),
-                const SizedBox(height: 20),
-
-                // ─── 9. WHAT'S INCLUDED SECTION ───
-                Text(
-                  "WHAT'S INCLUDED",
-                  style: GoogleFonts.outfit(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF64748B),
-                    letterSpacing: 0.8,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Checklist of features with dark forest green checkmarks
-                ...tier.features.map(
-                  (f) => Padding(
-                    padding: const EdgeInsets.only(bottom: 9.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: const BoxDecoration(
-                            color: _lightMintGreen,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Center(
-                            child: Icon(LucideIcons.check, size: 10, color: _darkForestGreen),
-                          ),
-                        ),
-                        const SizedBox(width: 9),
-                        Expanded(
-                          child: Text(
-                            f,
-                            style: GoogleFonts.outfit(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                              color: const Color(0xFF334155),
-                              height: 1.35,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTierTopBadge(_SubscriptionTierData tier) {
+    if (tier.tierNumber == 3) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFF2563EB),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF2563EB).withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.sparkles, size: 12, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              'MOST POPULAR',
+              style: GoogleFonts.outfit(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (tier.tierNumber == 4) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFD97706), Color(0xFFB45309)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFD97706).withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
+            const SizedBox(width: 5),
+            Text(
+              'CURRENTLY ACTIVE PLAN',
+              style: GoogleFonts.outfit(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (tier.tierNumber == 2) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0FDFA),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFCCFBF1)),
+        ),
+        child: Text(
+          'STANDARD',
+          style: GoogleFonts.outfit(
+            fontSize: 10,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0D9488),
+            letterSpacing: 0.6,
+          ),
+        ),
+      );
+    }
+
+    // Tier 1 (Starter)
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Text(
+        'STARTER',
+        style: GoogleFonts.outfit(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF475569),
+          letterSpacing: 0.6,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTierIcon(_SubscriptionTierData tier, Color accentColor) {
+    final bool isTier4 = tier.tierNumber == 4;
+    final bool isTier3 = tier.tierNumber == 3;
+    final bool isTier2 = tier.tierNumber == 2;
+
+    final Color bgColor = isTier4
+        ? const Color(0xFFFEF3C7)
+        : (isTier3
+            ? const Color(0xFFEFF6FF)
+            : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
+
+    final Color borderColor = isTier4
+        ? const Color(0xFFD4AF37)
+        : (isTier3
+            ? const Color(0xFFBFDBFE)
+            : (isTier2 ? const Color(0xFF99F6E4) : const Color(0xFFCBD5E1)));
+
+    return Container(
+      width: 44,
+      height: 44,
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor, width: isTier4 ? 1.5 : 1.2),
+        boxShadow: isTier4
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Icon(
+          tier.icon,
+          size: 20,
+          color: isTier4 ? const Color(0xFFB45309) : accentColor,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDiscountTag(_SubscriptionTierData tier) {
+    final bool isTier4 = tier.tierNumber == 4;
+    final bool isTier3 = tier.tierNumber == 3;
+    final bool isTier2 = tier.tierNumber == 2;
+
+    final Color bgColor = isTier4
+        ? const Color(0xFFFEF3C7)
+        : (isTier3
+            ? const Color(0xFFEFF6FF)
+            : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
+
+    final Color textColor = isTier4
+        ? const Color(0xFF78350F)
+        : (isTier3
+            ? const Color(0xFF2563EB)
+            : (isTier2 ? const Color(0xFF0D9488) : const Color(0xFF475569)));
+
+    final Color borderColor = isTier4
+        ? const Color(0xFFD4AF37)
+        : (isTier3
+            ? const Color(0xFFBFDBFE)
+            : (isTier2 ? const Color(0xFFCCFBF1) : const Color(0xFFE2E8F0)));
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: borderColor, width: isTier4 ? 1.3 : 1.0),
+      ),
+      child: Text(
+        tier.discountTag,
+        style: GoogleFonts.outfit(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
+          color: textColor,
+          letterSpacing: 0.2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPricingBox(_SubscriptionTierData tier) {
+    final bool isTier4 = tier.tierNumber == 4;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: isTier4 ? const Color(0xFFFFFDF0) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isTier4 ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+          width: isTier4 ? 1.4 : 1.0,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Strikethrough monthly price
+          Text(
+            '${tier.originalMonthlyPrice}/mo',
+            style: GoogleFonts.outfit(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF94A3B8),
+              decoration: TextDecoration.lineThrough,
+              decorationColor: const Color(0xFF94A3B8),
+            ),
+          ),
+          const SizedBox(height: 2),
+
+          // Large bold monthly offer price
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                tier.offerMonthlyPrice,
+                style: GoogleFonts.outfit(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                  color: isTier4 ? const Color(0xFF78350F) : const Color(0xFF0F172A),
+                  letterSpacing: -0.8,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '/ mo',
+                style: GoogleFonts.outfit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 3),
+
+          // Billed annually at ₹X / yr
+          Text(
+            'Billed annually at ${tier.fullAnnualPrice} / yr',
+            style: GoogleFonts.outfit(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // Price per organization, billed annually
+          Text(
+            'Price per organization, billed annually',
+            style: GoogleFonts.outfit(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF94A3B8),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCtaButton(_SubscriptionTierData tier, Color accentColor) {
+    if (tier.isCurrentPlan) {
+      return Container(
+        height: 44,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
+          ),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFD4AF37), width: 1.6),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(LucideIcons.checkCheck, size: 16, color: Color(0xFF78350F)),
+            const SizedBox(width: 7),
+            Text(
+              'Currently Active Plan',
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF78350F),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return SizedBox(
+      height: 44,
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () => _showUpgradeDialog(tier),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: accentColor,
+          foregroundColor: Colors.white,
+          elevation: tier.tierNumber == 3 ? 2 : 0,
+          shadowColor: tier.tierNumber == 3 ? accentColor.withValues(alpha: 0.35) : null,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              'Start free trial',
+              style: GoogleFonts.outfit(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Icon(LucideIcons.arrowRight, size: 14, color: Colors.white),
+          ],
+        ),
       ),
     );
   }
@@ -1003,15 +1101,15 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: _lightMintGreen,
+                color: const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(tier.icon, size: 20, color: _darkForestGreen),
+              child: Icon(tier.icon, size: 20, color: const Color(0xFF0F172A)),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Upgrade to ${tier.name}',
+                'Start Trial - ${tier.name}',
                 style: GoogleFonts.outfit(fontSize: 17, fontWeight: FontWeight.w800),
               ),
             ),
@@ -1022,7 +1120,7 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Confirm subscription upgrade to ${tier.name}.',
+              'Get instant 14-day free access to all features under ${tier.name}. No credit card required to start.',
               style: GoogleFonts.outfit(fontSize: 13, color: const Color(0xFF334155)),
             ),
             const SizedBox(height: 14),
@@ -1033,20 +1131,42 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  Text(
-                    'Annual Amount Due:',
-                    style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Monthly Rate:',
+                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                      ),
+                      Text(
+                        '${tier.offerMonthlyPrice} / mo',
+                        style: GoogleFonts.outfit(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
                   ),
-                  Text(
-                    '${tier.fullAnnualPrice} + GST',
-                    style: GoogleFonts.outfit(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: _darkForestGreen,
-                    ),
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'After Trial:',
+                        style: GoogleFonts.outfit(fontSize: 12, color: const Color(0xFF64748B)),
+                      ),
+                      Text(
+                        'Billed annually at ${tier.fullAnnualPrice} / yr',
+                        style: GoogleFonts.outfit(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -1064,22 +1184,22 @@ class _SubscriptionPageState extends State<SubscriptionPage> {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Upgrade order initiated for ${tier.name} (${tier.fullAnnualPrice}/year).',
+                    '14-day free trial activated for ${tier.name}!',
                     style: GoogleFonts.outfit(),
                   ),
-                  backgroundColor: _darkForestGreen,
+                  backgroundColor: const Color(0xFF0F172A),
                   behavior: SnackBarBehavior.floating,
                   width: 420,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: _darkForestGreen,
+              backgroundColor: const Color(0xFF0F172A),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: Text(
-              'Proceed with Payment',
+              'Start 14-Day Free Trial',
               style: GoogleFonts.outfit(fontWeight: FontWeight.w700),
             ),
           ),
