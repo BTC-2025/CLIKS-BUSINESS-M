@@ -110,286 +110,300 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       height: 64,
       padding: EdgeInsets.only(
         left: isDesktop ? 16 : 8,
-        right: 0, // Shifting icons closer to the right edge
+        right: isDesktop ? 0 : 4,
       ),
       decoration: const BoxDecoration(color: AppColors.primaryGreen),
       child: Row(
         children: [
           // Logo and Menu section
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (!isDesktop && navigation.currentModule != AppModule.profile)
-                Builder(
-                  builder: (ctx) => IconButton(
-                    icon: const Icon(
-                      LucideIcons.menu,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                    onPressed: () => Scaffold.of(ctx).openDrawer(),
-                  ),
-                ),
-              InkWell(
-                onTap: () => ref
-                    .read(navigationProvider.notifier)
-                    .setModuleAndRoute(AppModule.books, AppRoute.dashboard),
-                child: Row(
-                  children: [
-                    if (![
-                      AppRoute.people,
-                      AppRoute.wallet,
-                      AppRoute.transaction,
-                      AppRoute.segregation,
-                      AppRoute.splitCollect,
-                      AppRoute.planner,
-                      AppRoute.accounting,
-                      AppRoute.expenses,
-                      AppRoute.gst,
-                      AppRoute.billing,
-                      AppRoute.simpleBilling,
-                      AppRoute.sales,
-                      AppRoute.customers,
-                      AppRoute.returns,
-                      AppRoute.purchase,
-                      AppRoute.suppliers,
-                      AppRoute.products,
-                      AppRoute.stock,
-                      AppRoute.warehouse,
-                      AppRoute.inventory,
-                      AppRoute.pos,
-                      AppRoute.reports,
-                      AppRoute.marketing,
-                      AppRoute.barcodeGen,
-                      AppRoute.auditHub,
-                      AppRoute.payroll,
-                      AppRoute.allocateEmployeeLoan,
-                      AppRoute.processMonthlyPayroll,
-                      AppRoute.attendance,
-                      AppRoute.manualPunchEntry,
-                      AppRoute.regularizeMissedPunch,
-                      AppRoute.staff,
-                      AppRoute.hr,
-                    ].contains(navigation.currentRoute)) ...[
-                      Container(
-                        clipBehavior: Clip.antiAlias,
-                        padding: const EdgeInsets.all(3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5E9),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Image.asset(
-                          'assets/images/icon.png',
-                          width: 24,
-                          height: 24,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                    ],
-                    Text(
-                      () {
-                        switch (navigation.currentRoute) {
-                          case AppRoute.people:
-                            return 'People';
-                          case AppRoute.wallet:
-                            return 'Wallet';
-                          case AppRoute.transaction:
-                            return 'Transaction';
-                          case AppRoute.segregation:
-                            return 'Segregation';
-                          case AppRoute.splitCollect:
-                            return 'Split and Collect';
-                          case AppRoute.planner:
-                            return 'Planner';
-                          case AppRoute.accounting:
-                            return 'Accounting';
-                          case AppRoute.expenses:
-                            return 'Expenses';
-                          case AppRoute.gst:
-                            return 'GST Compliance';
-                          case AppRoute.billing:
-                            return 'Sales Invoice';
-                          case AppRoute.simpleBilling:
-                            return 'Simple Billing';
-                          case AppRoute.sales:
-                            return 'Sales Orders';
-                          case AppRoute.customers:
-                            return 'Customers';
-                          case AppRoute.returns:
-                            return 'Returns';
-                          case AppRoute.purchase:
-                            return 'Purchase Invoice';
-                          case AppRoute.suppliers:
-                            return 'Suppliers';
-                          case AppRoute.products:
-                            return 'Products';
-                          case AppRoute.stock:
-                            return 'Stock & Inventory';
-                          case AppRoute.warehouse:
-                            return 'Warehouse';
-                          case AppRoute.inventory:
-                            return 'Inventory';
-                          case AppRoute.pos:
-                            return 'Point of Sale (POS)';
-                          case AppRoute.reports:
-                            return 'Reports & Analytics';
-                          case AppRoute.marketing:
-                            return 'Marketing Hub';
-                          case AppRoute.barcodeGen:
-                            return 'Barcode Generator';
-                          case AppRoute.auditHub:
-                            return 'Audit Hub';
-                          case AppRoute.payroll:
-                          case AppRoute.allocateEmployeeLoan:
-                          case AppRoute.processMonthlyPayroll:
-                            return 'Payroll';
-                          case AppRoute.attendance:
-                          case AppRoute.manualPunchEntry:
-                          case AppRoute.regularizeMissedPunch:
-                            return 'Attendance';
-                          case AppRoute.staff:
-                            return 'Staff';
-                          case AppRoute.hr:
-                            return 'Human Resources';
-                          case AppRoute.betaClub:
-                            return 'Partner Launch Desk';
-                          case AppRoute.storage:
-                            return 'Storage';
-                          default:
-                            return 'Cliks Business';
-                        }
-                      }(),
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: isDesktop ? 20 : 17.5,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          // Central Animated Section (Search or Module Selector)
           Expanded(
-            flex: _isSearchExpanded ? 8 : 0,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              transitionBuilder: (Widget child, Animation<double> animation) {
-                return FadeTransition(
-                  opacity: animation,
-                  child: SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(0.1, 0),
-                      end: Offset.zero,
-                    ).animate(animation),
-                    child: child,
-                  ),
-                );
-              },
-              child: _isSearchExpanded
-                  ? Container(
-                      key: const ValueKey('expanded_search'),
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.08),
-                        ),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        autofocus: true,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                        decoration: InputDecoration(
-                          hintText: 'Search analytics, people or documents...',
-                          hintStyle: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.4),
-                          ),
-                          prefixIcon: const Icon(
-                            LucideIcons.search,
-                            color: Colors.white70,
-                            size: 18,
-                          ),
-                          suffixIcon: IconButton(
-                            icon: const Icon(
-                              LucideIcons.x,
-                              color: Colors.white70,
-                              size: 18,
-                            ),
-                            onPressed: () =>
-                                setState(() => _isSearchExpanded = false),
-                          ),
-                          border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
-                        ),
-                      ),
-                    )
-                  : isDesktop
-                  ? Container(
-                      key: const ValueKey('module_selector'),
+            child: Row(
+              children: [
+                if (!isDesktop && navigation.currentModule != AppModule.profile)
+                  Builder(
+                    builder: (ctx) => IconButton(
+                      visualDensity: VisualDensity.compact,
                       padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(30),
+                      constraints:
+                          const BoxConstraints(minWidth: 36, minHeight: 36),
+                      icon: const Icon(
+                        LucideIcons.menu,
+                        color: Colors.white,
+                        size: 22,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _ModulePill(
-                            label: 'Books',
-                            isActive:
-                                navigation.currentModule == AppModule.books,
-                            onTap: () => ref
-                                .read(navigationProvider.notifier)
-                                .setModuleAndRoute(
-                                  AppModule.books,
-                                  AppRoute.dashboard,
-                                ),
+                      onPressed: () => Scaffold.of(ctx).openDrawer(),
+                    ),
+                  ),
+                if (!isDesktop) const SizedBox(width: 2),
+                Flexible(
+                  child: InkWell(
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setModuleAndRoute(AppModule.books, AppRoute.dashboard),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (![
+                          AppRoute.people,
+                          AppRoute.wallet,
+                          AppRoute.transaction,
+                          AppRoute.segregation,
+                          AppRoute.splitCollect,
+                          AppRoute.planner,
+                          AppRoute.accounting,
+                          AppRoute.expenses,
+                          AppRoute.gst,
+                          AppRoute.billing,
+                          AppRoute.simpleBilling,
+                          AppRoute.sales,
+                          AppRoute.customers,
+                          AppRoute.returns,
+                          AppRoute.purchase,
+                          AppRoute.suppliers,
+                          AppRoute.products,
+                          AppRoute.stock,
+                          AppRoute.warehouse,
+                          AppRoute.inventory,
+                          AppRoute.pos,
+                          AppRoute.reports,
+                          AppRoute.marketing,
+                          AppRoute.barcodeGen,
+                          AppRoute.auditHub,
+                          AppRoute.payroll,
+                          AppRoute.allocateEmployeeLoan,
+                          AppRoute.processMonthlyPayroll,
+                          AppRoute.attendance,
+                          AppRoute.manualPunchEntry,
+                          AppRoute.regularizeMissedPunch,
+                          AppRoute.staff,
+                          AppRoute.hr,
+                        ].contains(navigation.currentRoute)) ...[
+                          Container(
+                            clipBehavior: Clip.antiAlias,
+                            padding: const EdgeInsets.all(2.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFE8F5E9),
+                              borderRadius: BorderRadius.circular(7),
+                            ),
+                            child: Image.asset(
+                              'assets/images/icon.png',
+                              width: 22,
+                              height: 22,
+                              fit: BoxFit.contain,
+                            ),
                           ),
-                          _ModulePill(
-                            label: 'Payments',
-                            isActive:
-                                navigation.currentModule == AppModule.payments,
-                            onTap: () => ref
-                                .read(navigationProvider.notifier)
-                                .setModuleAndRoute(
-                                  AppModule.payments,
-                                  AppRoute.people,
-                                ),
-                          ),
-                          _ModulePill(
-                            label: 'Social',
-                            isActive:
-                                navigation.currentModule == AppModule.social,
-                            onTap: () => ref
-                                .read(navigationProvider.notifier)
-                                .setModuleAndRoute(
-                                  AppModule.social,
-                                  Theme.of(context).platform == TargetPlatform.macOS
-                                      ? AppRoute.betaClub
-                                      : AppRoute.meetup,
-                                ),
-                          ),
+                          const SizedBox(width: 6),
                         ],
-                      ),
-                    )
-                  : const SizedBox.shrink(key: ValueKey('empty')),
+                        Flexible(
+                          child: Text(
+                            () {
+                              switch (navigation.currentRoute) {
+                                case AppRoute.people:
+                                  return 'People';
+                                case AppRoute.wallet:
+                                  return 'Wallet';
+                                case AppRoute.transaction:
+                                  return 'Transaction';
+                                case AppRoute.segregation:
+                                  return 'Segregation';
+                                case AppRoute.splitCollect:
+                                  return 'Split and Collect';
+                                case AppRoute.planner:
+                                  return 'Planner';
+                                case AppRoute.accounting:
+                                  return 'Accounting';
+                                case AppRoute.expenses:
+                                  return 'Expenses';
+                                case AppRoute.gst:
+                                  return 'GST Compliance';
+                                case AppRoute.billing:
+                                  return 'Sales Invoice';
+                                case AppRoute.simpleBilling:
+                                  return 'Simple Billing';
+                                case AppRoute.sales:
+                                  return 'Sales Orders';
+                                case AppRoute.customers:
+                                  return 'Customers';
+                                case AppRoute.returns:
+                                  return 'Returns';
+                                case AppRoute.purchase:
+                                  return 'Purchase Invoice';
+                                case AppRoute.suppliers:
+                                  return 'Suppliers';
+                                case AppRoute.products:
+                                  return 'Products';
+                                case AppRoute.stock:
+                                  return 'Stock & Inventory';
+                                case AppRoute.warehouse:
+                                  return 'Warehouse';
+                                case AppRoute.inventory:
+                                  return 'Inventory';
+                                case AppRoute.pos:
+                                  return 'Point of Sale (POS)';
+                                case AppRoute.reports:
+                                  return 'Reports & Analytics';
+                                case AppRoute.marketing:
+                                  return 'Marketing Hub';
+                                case AppRoute.barcodeGen:
+                                  return 'Barcode Generator';
+                                case AppRoute.auditHub:
+                                  return 'Audit Hub';
+                                case AppRoute.fintech:
+                                  return 'Fintech';
+                                case AppRoute.payroll:
+                                case AppRoute.allocateEmployeeLoan:
+                                case AppRoute.processMonthlyPayroll:
+                                  return 'Payroll';
+                                case AppRoute.attendance:
+                                case AppRoute.manualPunchEntry:
+                                case AppRoute.regularizeMissedPunch:
+                                  return 'Attendance';
+                                case AppRoute.staff:
+                                  return 'Staff';
+                                case AppRoute.hr:
+                                  return 'Human Resources';
+                                case AppRoute.betaClub:
+                                  return 'Partner Launch Desk';
+                                case AppRoute.storage:
+                                  return 'Storage';
+                                default:
+                                  return 'Cliks Business';
+                              }
+                            }(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: isDesktop ? 20 : 16.5,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
 
-          const Spacer(),
+          if (isDesktop) ...[
+            const Spacer(),
+            // Central Animated Section (Search or Module Selector)
+            Expanded(
+              flex: _isSearchExpanded ? 8 : 0,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return FadeTransition(
+                    opacity: animation,
+                    child: SlideTransition(
+                      position: Tween<Offset>(
+                        begin: const Offset(0.1, 0),
+                        end: Offset.zero,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  );
+                },
+                child: _isSearchExpanded
+                    ? Container(
+                        key: const ValueKey('expanded_search'),
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.08),
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          autofocus: true,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                          ),
+                          decoration: InputDecoration(
+                            hintText:
+                                'Search analytics, people or documents...',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.4),
+                            ),
+                            prefixIcon: const Icon(
+                              LucideIcons.search,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(
+                                LucideIcons.x,
+                                color: Colors.white70,
+                                size: 18,
+                              ),
+                              onPressed: () =>
+                                  setState(() => _isSearchExpanded = false),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Container(
+                        key: const ValueKey('module_selector'),
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _ModulePill(
+                              label: 'Books',
+                              isActive:
+                                  navigation.currentModule == AppModule.books,
+                              onTap: () => ref
+                                  .read(navigationProvider.notifier)
+                                  .setModuleAndRoute(
+                                    AppModule.books,
+                                    AppRoute.dashboard,
+                                  ),
+                            ),
+                            _ModulePill(
+                              label: 'Payments',
+                              isActive: navigation.currentModule ==
+                                  AppModule.payments,
+                              onTap: () => ref
+                                  .read(navigationProvider.notifier)
+                                  .setModuleAndRoute(
+                                    AppModule.payments,
+                                    AppRoute.people,
+                                  ),
+                            ),
+                            _ModulePill(
+                              label: 'Social',
+                              isActive:
+                                  navigation.currentModule == AppModule.social,
+                              onTap: () => ref
+                                  .read(navigationProvider.notifier)
+                                  .setModuleAndRoute(
+                                    AppModule.social,
+                                    AppRoute.betaClub,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
+            const Spacer(),
+          ] else ...[
+            const SizedBox(width: 4),
+          ],
 
           // Right-side Action Buttons
           Row(
@@ -399,13 +413,67 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                 _buildExpenseHeaderActionButton(context, ref),
               ] else ...[
                 if (!_isSearchExpanded) ...[
+                  // FIN PRO capsule tab - small & sleek, only on Dashboard
+                  if (navigation.currentRoute == AppRoute.dashboard) ...[
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.auditHub);
+                        },
+                        borderRadius: BorderRadius.circular(14),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.25),
+                              width: 0.8,
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                LucideIcons.landmark,
+                                color: Colors.white,
+                                size: 12,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'FIN PRO',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 3),
+                  ],
                   if (isDesktop) const _PointsChip(),
                   if (isDesktop) const SizedBox(width: 8),
                   IconButton(
-                    icon: const Icon(
+                    visualDensity: isDesktop
+                        ? VisualDensity.standard
+                        : VisualDensity.compact,
+                    padding: EdgeInsets.all(isDesktop ? 8 : 4),
+                    constraints: isDesktop
+                        ? const BoxConstraints()
+                        : const BoxConstraints(minWidth: 34, minHeight: 34),
+                    icon: Icon(
                       LucideIcons.search,
                       color: Colors.white,
-                      size: 22,
+                      size: isDesktop ? 22 : 20,
                     ),
                     onPressed: () => setState(() => _isSearchExpanded = true),
                     tooltip: 'Search',
@@ -453,26 +521,30 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    padding: EdgeInsets.all(isDesktop ? 8 : 4),
+                    constraints: isDesktop
+                        ? const BoxConstraints()
+                        : const BoxConstraints(minWidth: 34, minHeight: 34),
                     icon: Stack(
                       alignment: Alignment.topRight,
                       children: [
-                        const Icon(
+                        Icon(
                           LucideIcons.bell,
                           color: Colors.white,
-                          size: 22,
+                          size: isDesktop ? 22 : 20,
                         ),
                         Positioned(
-                          right: 2,
-                          top: 2,
+                          right: 1,
+                          top: 1,
                           child: Container(
-                            padding: const EdgeInsets.all(3),
+                            padding: const EdgeInsets.all(2.5),
                             decoration: const BoxDecoration(
                               color: Colors.redAccent,
                               shape: BoxShape.circle,
                             ),
                             constraints: const BoxConstraints(
-                              minWidth: 8,
-                              minHeight: 8,
+                              minWidth: 7,
+                              minHeight: 7,
                             ),
                           ),
                         ),
@@ -618,7 +690,9 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   // 3. FIN-PRO Capsule button
                   _buildMacOSCapsuleButton(
                     onTap: () {
-                      ref.read(navigationProvider.notifier).setModuleAndRoute(
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setModuleAndRoute(
                             AppModule.books,
                             AppRoute.auditHub,
                           );
@@ -651,8 +725,11 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   _buildMacOSCapsuleButton(
                     tooltip: 'Account Settings',
                     onTap: () {
-                      ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
-                      ref.read(macosAccountMenuVisibleProvider.notifier).update((v) => !v);
+                      ref.read(macosBetaAppsVisibleProvider.notifier).state =
+                          false;
+                      ref
+                          .read(macosAccountMenuVisibleProvider.notifier)
+                          .update((v) => !v);
                     },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -687,11 +764,16 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   // 5. Beta Apps View Button
                   _buildMacOSCircleButton(
                     icon: LucideIcons.slidersHorizontal,
-                    tooltip: ref.watch(macosBetaAppsVisibleProvider) ? 'Close Toolbar' : 'Open Toolbar',
+                    tooltip: ref.watch(macosBetaAppsVisibleProvider)
+                        ? 'Close Toolbar'
+                        : 'Open Toolbar',
                     isActive: ref.watch(macosBetaAppsVisibleProvider),
                     onTap: () {
-                      ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
-                      ref.read(macosBetaAppsVisibleProvider.notifier).update((v) => !v);
+                      ref.read(macosAccountMenuVisibleProvider.notifier).state =
+                          false;
+                      ref
+                          .read(macosBetaAppsVisibleProvider.notifier)
+                          .update((v) => !v);
                     },
                   ),
                 ],
@@ -761,8 +843,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                       children: [
                         _buildMacOSModulePill(
                           label: 'Books',
-                          isActive:
-                              navigation.currentModule == AppModule.books,
+                          isActive: navigation.currentModule == AppModule.books,
                           onTap: () => ref
                               .read(navigationProvider.notifier)
                               .setModuleAndRoute(
@@ -818,9 +899,13 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           height: 36,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isActive ? Colors.white : Colors.black.withValues(alpha: 0.2),
+            color: isActive
+                ? Colors.white
+                : Colors.black.withValues(alpha: 0.2),
             border: Border.all(
-              color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.22),
+              color: isActive
+                  ? Colors.white
+                  : Colors.white.withValues(alpha: 0.22),
               width: 1,
             ),
           ),
@@ -887,7 +972,12 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFF0F4622) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
-          border: isActive ? Border.all(color: Colors.white.withValues(alpha: 0.25), width: 1) : null,
+          border: isActive
+              ? Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1,
+                )
+              : null,
         ),
         child: Text(
           label,

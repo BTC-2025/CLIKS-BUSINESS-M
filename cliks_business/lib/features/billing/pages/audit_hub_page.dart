@@ -49,6 +49,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isFirmWorkplace = isMacOS ? (_activeWorkplace == 1) : true;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -58,8 +59,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           // ─── HERO SUMMARY CARD WITH INTEGRATED WORKPLACE BUTTONS ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
-                : _buildHeroSummary(isMobile)
+                ? _buildHeroSummary(isMobile, isMacOS)
+                : _buildHeroSummary(isMobile, isMacOS)
                     .animate()
                     .fadeIn(duration: 400.ms)
                     .slideY(begin: -0.05, end: 0),
@@ -70,7 +71,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           ),
 
           // ─── STICKY ADVISORY TAB NAVIGATION (When in Firm Mode) ───
-          if (_activeWorkplace == 1)
+          if (isFirmWorkplace)
             SliverPersistentHeader(
               pinned: true,
               delegate: _StickyTabNavDelegate(
@@ -83,7 +84,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               ),
             ),
 
-          if (_activeWorkplace == 1)
+          if (isFirmWorkplace)
             const SliverToBoxAdapter(
               child: SizedBox(height: 8),
             ),
@@ -94,12 +95,12 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               isMobile ? 14 : 24,
               0,
               isMobile ? 14 : 24,
-              isMobile ? 40 : 40,
+              isMobile ? 80 : 40,
             ),
             sliver: SliverToBoxAdapter(
               child: isMacOS
-                  ? _buildMainContent(isMobile)
-                  : _buildMainContent(isMobile)
+                  ? _buildMainContent(isMobile, isFirmWorkplace)
+                  : _buildMainContent(isMobile, isFirmWorkplace)
                       .animate()
                       .fadeIn(duration: 500.ms, delay: 150.ms),
             ),
@@ -112,7 +113,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   // ═══════════════════════════════════════════════════════════════
   // HERO SUMMARY CARD WITH INTEGRATED 2 BUTTONS & ESSENTIAL STATS
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildHeroSummary(bool isMobile) {
+  Widget _buildHeroSummary(bool isMobile, bool isMacOS) {
     return Container(
       margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
@@ -194,92 +195,122 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
           const SizedBox(height: 14),
 
-          // 2 Workplace Buttons Placed Inside Statistics Header Card
-          Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _activeWorkplace = 0),
-                  child: AnimatedContainer(
-                    duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.monitor,
-                          color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
-                          size: 14,
+          // Workplace Selector (On macOS: 2 Toggle Buttons; On Mobile: Firm Advisory Banner)
+          if (isMacOS)
+            Row(
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeWorkplace = 0),
+                    child: AnimatedContainer(
+                      duration: Duration.zero,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.2),
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'FIN-PRO Business',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
-                              fontSize: isMobile ? 11 : 12.5,
-                              fontWeight: FontWeight.bold,
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            LucideIcons.monitor,
+                            color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'FIN-PRO Business',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
+                                fontSize: isMobile ? 11 : 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _activeWorkplace = 1),
-                  child: AnimatedContainer(
-                    duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          LucideIcons.userCheck,
-                          color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
-                          size: 14,
+                const SizedBox(width: 8),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeWorkplace = 1),
+                    child: AnimatedContainer(
+                      duration: Duration.zero,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      decoration: BoxDecoration(
+                        color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.2),
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: Text(
-                            'FIN-PRO Firm',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
-                              fontSize: isMobile ? 11 : 12.5,
-                              fontWeight: FontWeight.bold,
+                      ),
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            LucideIcons.userCheck,
+                            color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              'FIN-PRO Firm',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
+                                fontSize: isMobile ? 11 : 12.5,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ),
+              ],
+            )
+          else
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
               ),
-            ],
-          ),
+              alignment: Alignment.center,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.userCheck, color: Colors.white, size: 14),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'FIN-PRO Firm Advisory Workspace',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: isMobile ? 11.5 : 12.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
           const SizedBox(height: 14),
 
@@ -403,9 +434,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   // ═══════════════════════════════════════════════════════════════
   // MAIN CONTENT ROUTER WITH ACCOUNTING STYLE CARD CONTAINER
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildMainContent(bool isMobile) {
-    if (_activeWorkplace == 0) {
-      // FIN-PRO Business View
+  Widget _buildMainContent(bool isMobile, bool isFirmWorkplace) {
+    if (!isFirmWorkplace) {
+      // FIN-PRO Business View (macOS only)
       return Container(
         padding: EdgeInsets.all(isMobile ? 16 : 24),
         decoration: BoxDecoration(

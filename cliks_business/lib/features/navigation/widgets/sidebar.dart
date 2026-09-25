@@ -15,7 +15,8 @@ class Sidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navigation = ref.watch(navigationProvider);
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS ||
+    final isMacOS =
+        Theme.of(context).platform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.macOS;
 
     if (isMacOS) {
@@ -23,9 +24,11 @@ class Sidebar extends ConsumerWidget {
     }
 
     final double topPadding = MediaQuery.of(context).padding.top;
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double drawerWidth = (screenWidth * 0.85).clamp(295.0, 315.0);
 
     return Container(
-      width: 285,
+      width: drawerWidth,
       decoration: const BoxDecoration(
         color: AppColors.sidebarBackground,
         border: Border(right: BorderSide(color: AppColors.border)),
@@ -36,80 +39,95 @@ class Sidebar extends ConsumerWidget {
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-          // Top section - stays fixed curvy green gradient card
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.fromLTRB(16, 24 + topPadding, 16, 20),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [AppColors.primaryGreen, Color(0xFF0F5B2E)],
-              ),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      clipBehavior: Clip.antiAlias,
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5E9), // Light green covering the curvy square
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Image.asset(
-                        'assets/images/icon.png',
-                        width: 28,
-                        height: 28,
-                        fit: BoxFit.contain,
-                      ),
+                // Top section - stays fixed curvy green gradient card
+                Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.fromLTRB(16, 24 + topPadding, 16, 20),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [AppColors.primaryGreen, Color(0xFF0F5B2E)],
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'Cliks Business',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: -0.5,
-                      ),
+                    borderRadius: BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
                     ),
-                  ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            clipBehavior: Clip.antiAlias,
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFFE8F5E9,
+                              ), // Light green covering the curvy square
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Image.asset(
+                              'assets/images/icon.png',
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Cliks Business',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Divider(
+                        height: 1,
+                        thickness: 1,
+                        color: Colors.white.withValues(alpha: 0.2),
+                      ),
+                      const SizedBox(height: 12),
+                      const SidebarUtilityRail(),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 12),
-                Divider(height: 1, thickness: 1, color: Colors.white.withValues(alpha: 0.2)),
-                const SizedBox(height: 12),
-                const SidebarUtilityRail(),
-              ],
-            ),
-          ),
-          const SizedBox(height: 16),
-          
-          // Scrollable rest of the list (now inline in main ListView)
+                const SizedBox(height: 16),
+
+                // Scrollable rest of the list (now inline in main ListView)
                 if (navigation.currentModule == AppModule.books) ...[
                   // Dashboard Button
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: InkWell(
                       onTap: () {
-                        ref.read(navigationProvider.notifier).setRoute(AppRoute.dashboard);
+                        ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.dashboard);
                       },
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
                         decoration: BoxDecoration(
                           color: (navigation.currentRoute == AppRoute.dashboard)
                               ? AppColors.primaryGreen.withValues(alpha: 0.15)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: (navigation.currentRoute == AppRoute.dashboard)
+                            color:
+                                (navigation.currentRoute == AppRoute.dashboard)
                                 ? AppColors.primaryGreen
                                 : Colors.transparent,
                             width: 1,
@@ -120,7 +138,9 @@ class Sidebar extends ConsumerWidget {
                             Icon(
                               LucideIcons.layoutDashboard,
                               size: 20,
-                              color: (navigation.currentRoute == AppRoute.dashboard)
+                              color:
+                                  (navigation.currentRoute ==
+                                      AppRoute.dashboard)
                                   ? AppColors.primaryGreen
                                   : AppColors.secondaryText,
                             ),
@@ -129,7 +149,9 @@ class Sidebar extends ConsumerWidget {
                               child: Text(
                                 'Dashboard',
                                 style: TextStyle(
-                                  color: (navigation.currentRoute == AppRoute.dashboard)
+                                  color:
+                                      (navigation.currentRoute ==
+                                          AppRoute.dashboard)
                                       ? AppColors.primaryGreen
                                       : AppColors.darkText,
                                   fontWeight: FontWeight.w600,
@@ -144,31 +166,43 @@ class Sidebar extends ConsumerWidget {
                   ),
                   const SizedBox(height: 8),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: ElevatedButton.icon(
                       onPressed: () {
                         final scaffold = Scaffold.maybeOf(context);
                         if (scaffold != null && scaffold.isDrawerOpen) {
                           Navigator.pop(context);
                         }
-                        ref.read(navigationProvider.notifier).setRoute(AppRoute.newInvoice);
+                        ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.newInvoice);
                       },
                       icon: const Icon(LucideIcons.plus, size: 16),
-                      label: const Text('Generate Invoice', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Generate Invoice',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
-                   _SidebarExpandable(
+                  _SidebarExpandable(
                     icon: LucideIcons.wallet,
                     label: 'Finance',
-                    isInitiallyExpanded: navigation.currentRoute == AppRoute.accounting ||
+                    isInitiallyExpanded:
+                        navigation.currentRoute == AppRoute.accounting ||
                         navigation.currentRoute == AppRoute.expenses ||
                         navigation.currentRoute == AppRoute.gst ||
+                        navigation.currentRoute == AppRoute.fintech ||
                         navigation.currentRoute == AppRoute.recordExpense ||
                         navigation.currentRoute == AppRoute.lodgeStaffClaim ||
                         navigation.currentRoute == AppRoute.generateEWayBill ||
@@ -177,43 +211,76 @@ class Sidebar extends ConsumerWidget {
                       _SidebarSubItem(
                         icon: LucideIcons.calculator,
                         label: 'Accounting',
-                        isSelected: navigation.currentRoute == AppRoute.accounting,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.accounting,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.accounting);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.accounting);
                         },
                       ),
                       _SidebarSubItem(
                         icon: LucideIcons.trendingUp,
                         label: 'Expenses',
-                        isSelected: navigation.currentRoute == AppRoute.expenses ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.expenses ||
                             navigation.currentRoute == AppRoute.recordExpense ||
                             navigation.currentRoute == AppRoute.lodgeStaffClaim,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.expenses);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.expenses);
                         },
                       ),
                       _SidebarSubItem(
                         icon: LucideIcons.percent,
                         label: 'Tax',
-                        isSelected: navigation.currentRoute == AppRoute.gst ||
-                            navigation.currentRoute == AppRoute.generateEWayBill ||
-                            navigation.currentRoute == AppRoute.generateEInvoice,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.gst ||
+                            navigation.currentRoute ==
+                                AppRoute.generateEWayBill ||
+                            navigation.currentRoute ==
+                                AppRoute.generateEInvoice,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.gst);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.gst);
+                        },
+                      ),
+                      _SidebarSubItem(
+                        icon: LucideIcons.cpu,
+                        label: 'Fintech',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.fintech,
+                        onTap: () {
+                          final scaffold = Scaffold.maybeOf(context);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.fintech);
                         },
                       ),
                     ],
                   ),
-                   _SidebarExpandable(
+                  _SidebarExpandable(
                     icon: LucideIcons.shoppingCart,
                     label: 'Sales',
-                    isInitiallyExpanded: navigation.currentRoute == AppRoute.billing ||
+                    isInitiallyExpanded:
+                        navigation.currentRoute == AppRoute.billing ||
                         navigation.currentRoute == AppRoute.sales ||
                         navigation.currentRoute == AppRoute.customers ||
                         navigation.currentRoute == AppRoute.returns ||
@@ -225,43 +292,66 @@ class Sidebar extends ConsumerWidget {
                     children: [
                       _SidebarSubItem(
                         label: 'Sales Invoice',
-                        isSelected: navigation.currentRoute == AppRoute.billing ||
-                            navigation.currentRoute == AppRoute.invoiceTemplates,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.billing ||
+                            navigation.currentRoute ==
+                                AppRoute.invoiceTemplates,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.billing);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.billing);
                         },
                       ),
                       _SidebarSubItem(
                         label: 'Orders',
-                        isSelected: navigation.currentRoute == AppRoute.sales ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.sales ||
                             navigation.currentRoute == AppRoute.newSalesOrder,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.sales);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.sales);
                         },
                       ),
                       _SidebarSubItem(
                         label: 'Customers',
-                        isSelected: navigation.currentRoute == AppRoute.customers ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.customers ||
                             navigation.currentRoute == AppRoute.addCustomer,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.customers);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.customers);
                         },
                       ),
                       _SidebarSubItem(
                         label: 'Returns',
-                        isSelected: navigation.currentRoute == AppRoute.returns ||
-                            navigation.currentRoute == AppRoute.newCustomerReturn ||
-                            navigation.currentRoute == AppRoute.newSupplierReturn,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.returns ||
+                            navigation.currentRoute ==
+                                AppRoute.newCustomerReturn ||
+                            navigation.currentRoute ==
+                                AppRoute.newSupplierReturn,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.returns);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.returns);
                         },
                       ),
                     ],
@@ -269,42 +359,59 @@ class Sidebar extends ConsumerWidget {
                   _SidebarExpandable(
                     icon: LucideIcons.shoppingBag,
                     label: 'Purchases',
-                    isInitiallyExpanded: navigation.currentRoute == AppRoute.purchase,
+                    isInitiallyExpanded:
+                        navigation.currentRoute == AppRoute.purchase,
                     children: [
                       _SidebarSubItem(
                         label: 'Purchase Invoice',
-                        isSelected: navigation.currentRoute == AppRoute.purchase,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.purchase,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.purchase);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.purchase);
                         },
                       ),
                       _SidebarSubItem(
                         label: 'Suppliers',
-                        isSelected: navigation.currentRoute == AppRoute.suppliers,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.suppliers,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.suppliers);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.suppliers);
                         },
                       ),
                     ],
                   ),
-                   _SidebarExpandable(
+                  _SidebarExpandable(
                     icon: LucideIcons.box,
                     label: 'Inventory',
-                    isInitiallyExpanded: navigation.currentRoute == AppRoute.products ||
+                    isInitiallyExpanded:
+                        navigation.currentRoute == AppRoute.products ||
                         navigation.currentRoute == AppRoute.stock ||
                         navigation.currentRoute == AppRoute.warehouse,
                     children: [
                       _SidebarSubItem(
                         label: 'Products',
-                        isSelected: navigation.currentRoute == AppRoute.products,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.products,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.products);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.products);
                         },
                       ),
                       _SidebarSubItem(
@@ -312,45 +419,66 @@ class Sidebar extends ConsumerWidget {
                         isSelected: navigation.currentRoute == AppRoute.stock,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.stock);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.stock);
                         },
                       ),
                       _SidebarSubItem(
                         label: 'Warehouse',
-                        isSelected: navigation.currentRoute == AppRoute.warehouse,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.warehouse,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.warehouse);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.warehouse);
                         },
                       ),
                     ],
                   ),
-                   _SidebarExpandable(
+                  _SidebarExpandable(
                     icon: LucideIcons.users,
                     label: 'HR',
-                    isInitiallyExpanded: navigation.currentRoute == AppRoute.staff ||
+                    isInitiallyExpanded:
+                        navigation.currentRoute == AppRoute.staff ||
                         navigation.currentRoute == AppRoute.attendance ||
                         navigation.currentRoute == AppRoute.payroll ||
                         navigation.currentRoute == AppRoute.hr,
                     children: [
                       _SidebarSubItem(
                         label: 'Staff',
-                        isSelected: navigation.currentRoute == AppRoute.staff || navigation.currentRoute == AppRoute.hr,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.staff ||
+                            navigation.currentRoute == AppRoute.hr,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.staff);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.staff);
                         },
                       ),
                       _SidebarSubItem(
                         label: 'Attendance',
-                        isSelected: navigation.currentRoute == AppRoute.attendance,
+                        isSelected:
+                            navigation.currentRoute == AppRoute.attendance,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.attendance);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.attendance);
                         },
                       ),
                       _SidebarSubItem(
@@ -358,8 +486,12 @@ class Sidebar extends ConsumerWidget {
                         isSelected: navigation.currentRoute == AppRoute.payroll,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                          ref.read(navigationProvider.notifier).setRoute(AppRoute.payroll);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.payroll);
                         },
                       ),
                     ],
@@ -370,8 +502,27 @@ class Sidebar extends ConsumerWidget {
                     isSelected: navigation.currentRoute == AppRoute.pos,
                     onTap: () {
                       final scaffold = Scaffold.maybeOf(context);
-                      if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                      ref.read(navigationProvider.notifier).setRoute(AppRoute.pos);
+                      if (scaffold != null && scaffold.isDrawerOpen) {
+                        Navigator.pop(context);
+                      }
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setRoute(AppRoute.pos);
+                    },
+                  ),
+                  _SidebarItem(
+                    icon: LucideIcons.receiptText,
+                    label: 'Simple Billing',
+                    isSelected:
+                        navigation.currentRoute == AppRoute.simpleBilling,
+                    onTap: () {
+                      final scaffold = Scaffold.maybeOf(context);
+                      if (scaffold != null && scaffold.isDrawerOpen) {
+                        Navigator.pop(context);
+                      }
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setRoute(AppRoute.simpleBilling);
                     },
                   ),
                   _SidebarItem(
@@ -380,8 +531,12 @@ class Sidebar extends ConsumerWidget {
                     isSelected: navigation.currentRoute == AppRoute.reports,
                     onTap: () {
                       final scaffold = Scaffold.maybeOf(context);
-                      if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                      ref.read(navigationProvider.notifier).setRoute(AppRoute.reports);
+                      if (scaffold != null && scaffold.isDrawerOpen) {
+                        Navigator.pop(context);
+                      }
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setRoute(AppRoute.reports);
                     },
                   ),
                   _SidebarItem(
@@ -390,8 +545,12 @@ class Sidebar extends ConsumerWidget {
                     isSelected: navigation.currentRoute == AppRoute.barcodeGen,
                     onTap: () {
                       final scaffold = Scaffold.maybeOf(context);
-                      if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                      ref.read(navigationProvider.notifier).setRoute(AppRoute.barcodeGen);
+                      if (scaffold != null && scaffold.isDrawerOpen) {
+                        Navigator.pop(context);
+                      }
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setRoute(AppRoute.barcodeGen);
                     },
                   ),
                   _SidebarItem(
@@ -400,29 +559,28 @@ class Sidebar extends ConsumerWidget {
                     isSelected: navigation.currentRoute == AppRoute.marketing,
                     onTap: () {
                       final scaffold = Scaffold.maybeOf(context);
-                      if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                      ref.read(navigationProvider.notifier).setRoute(AppRoute.marketing);
-                    },
-                  ),
-                  _SidebarItem(
-                    icon: LucideIcons.briefcase,
-                    label: 'FIN-PRO Audit Hub',
-                    isSelected: navigation.currentRoute == AppRoute.auditHub,
-                    onTap: () {
-                      final scaffold = Scaffold.maybeOf(context);
-                      if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-                      ref.read(navigationProvider.notifier).setRoute(AppRoute.auditHub);
+                      if (scaffold != null && scaffold.isDrawerOpen) {
+                        Navigator.pop(context);
+                      }
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setRoute(AppRoute.marketing);
                     },
                   ),
                   _SidebarItem(
                     icon: LucideIcons.sparkles,
                     label: 'Refer & Earn',
                     isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.referral),
                   ),
                 ] else if (navigation.currentModule == AppModule.payments) ...[
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: ElevatedButton.icon(
                       onPressed: () {
                         showDialog(
@@ -431,12 +589,17 @@ class Sidebar extends ConsumerWidget {
                         );
                       },
                       icon: const Icon(LucideIcons.plus, size: 16),
-                      label: const Text('Add Money', style: TextStyle(fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Add Money',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryGreen,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -444,97 +607,100 @@ class Sidebar extends ConsumerWidget {
                     icon: LucideIcons.users,
                     label: 'People',
                     isSelected: navigation.currentRoute == AppRoute.people,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.people),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.people),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.history,
                     label: 'Transaction',
                     isSelected: navigation.currentRoute == AppRoute.transaction,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.transaction),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.transaction),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.split,
                     label: 'Segregation',
                     isSelected: navigation.currentRoute == AppRoute.segregation,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.segregation),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.segregation),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.activity,
                     label: 'Split & Collect',
-                    isSelected: navigation.currentRoute == AppRoute.splitCollect,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.splitCollect),
+                    isSelected:
+                        navigation.currentRoute == AppRoute.splitCollect,
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.splitCollect),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.calendarDays,
                     label: 'Planner',
                     isSelected: navigation.currentRoute == AppRoute.planner,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.planner),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.planner),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.sparkles,
                     label: 'Refer & Earn',
                     isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.referral),
                   ),
                 ] else if (navigation.currentModule == AppModule.social) ...[
                   _SidebarItem(
                     icon: LucideIcons.userCheck,
                     label: 'PARTNER LAUNCH DESK',
                     isSelected: navigation.currentRoute == AppRoute.betaClub,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.betaClub),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.betaClub),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.trendingUp,
                     label: 'Trading Docs',
                     isSelected: navigation.currentRoute == AppRoute.tradingDocs,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.tradingDocs),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.tradingDocs),
                   ),
                   _SidebarItem(
                     icon: LucideIcons.sparkles,
                     label: 'Refer & Earn',
                     isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.referral),
                   ),
                 ] else if (navigation.currentModule == AppModule.profile) ...[
                   _SidebarItem(
                     icon: LucideIcons.user,
                     label: 'Account Profile',
                     isSelected: navigation.currentRoute == AppRoute.profile,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.profile),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.profile),
                   ),
-                ],
-
-                // Global Settings and Help & Support items
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: Divider(height: 1, thickness: 1, color: AppColors.border),
-                ),
-                _SidebarItem(
-                  icon: LucideIcons.settings,
-                  label: 'Settings',
-                  isSelected: navigation.currentRoute == AppRoute.settings,
-                  onTap: () => ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.settings),
-                ),
-                _SidebarItem(
-                  icon: LucideIcons.helpCircle,
-                  label: 'Help & Support',
-                  isSelected: navigation.currentRoute == AppRoute.help,
-                  onTap: () => ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.help),
-                ),
-
-                if (navigation.currentModule == AppModule.books || navigation.currentModule == AppModule.payments) ...[
-                  const _PlanBanner(),
                 ],
               ],
             ),
           ),
-          if (navigation.currentModule != AppModule.profile) const _BottomActions(),
+          const _MobileSidebarBottomFixed(),
         ],
       ),
     );
   }
 
-  Widget _buildMacOSSidebar(BuildContext context, WidgetRef ref, NavigationState navigation) {
+  Widget _buildMacOSSidebar(
+    BuildContext context,
+    WidgetRef ref,
+    NavigationState navigation,
+  ) {
     return Container(
       width: 260,
       decoration: const BoxDecoration(
@@ -554,7 +720,9 @@ class Sidebar extends ConsumerWidget {
                     label: 'Dashboard',
                     isSelected: navigation.currentRoute == AppRoute.dashboard,
                     onTap: () {
-                      ref.read(navigationProvider.notifier).setRoute(AppRoute.dashboard);
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setRoute(AppRoute.dashboard);
                     },
                   ),
 
@@ -562,10 +730,15 @@ class Sidebar extends ConsumerWidget {
 
                   // 2. + Generate Invoice Button
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 4,
+                    ),
                     child: InkWell(
                       onTap: () {
-                        ref.read(navigationProvider.notifier).setRoute(AppRoute.newInvoice);
+                        ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.newInvoice);
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Container(
@@ -577,7 +750,11 @@ class Sidebar extends ConsumerWidget {
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.plus, size: 16, color: Colors.white),
+                            Icon(
+                              LucideIcons.plus,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Generate Invoice',
@@ -612,24 +789,35 @@ class Sidebar extends ConsumerWidget {
                       _buildMacOSSubItem(
                         icon: LucideIcons.calculator,
                         label: 'Accounting',
-                        isSelected: navigation.currentRoute == AppRoute.accounting,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.accounting),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.accounting,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.accounting),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.trendingUp,
                         label: 'Expenses',
-                        isSelected: navigation.currentRoute == AppRoute.expenses ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.expenses ||
                             navigation.currentRoute == AppRoute.recordExpense ||
                             navigation.currentRoute == AppRoute.lodgeStaffClaim,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.expenses),
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.expenses),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.percent,
                         label: 'Tax',
-                        isSelected: navigation.currentRoute == AppRoute.gst ||
-                            navigation.currentRoute == AppRoute.generateEWayBill ||
-                            navigation.currentRoute == AppRoute.generateEInvoice,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.gst ||
+                            navigation.currentRoute ==
+                                AppRoute.generateEWayBill ||
+                            navigation.currentRoute ==
+                                AppRoute.generateEInvoice,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.gst),
                       ),
                     ],
                   ),
@@ -652,30 +840,44 @@ class Sidebar extends ConsumerWidget {
                       _buildMacOSSubItem(
                         icon: LucideIcons.receipt,
                         label: 'Sales Invoices',
-                        isSelected: navigation.currentRoute == AppRoute.billing ||
-                            navigation.currentRoute == AppRoute.invoiceTemplates,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.billing),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.billing ||
+                            navigation.currentRoute ==
+                                AppRoute.invoiceTemplates,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.billing),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.fileSpreadsheet,
                         label: 'Sales Orders',
-                        isSelected: navigation.currentRoute == AppRoute.sales ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.sales ||
                             navigation.currentRoute == AppRoute.newSalesOrder,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.sales),
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.sales),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.users,
                         label: 'Customers',
-                        isSelected: navigation.currentRoute == AppRoute.customers ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.customers ||
                             navigation.currentRoute == AppRoute.addCustomer,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.customers),
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.customers),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.rotateCcw,
                         label: 'Returns',
-                        isSelected: navigation.currentRoute == AppRoute.returns ||
-                            navigation.currentRoute == AppRoute.newCustomerReturn,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.returns),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.returns ||
+                            navigation.currentRoute ==
+                                AppRoute.newCustomerReturn,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.returns),
                       ),
                     ],
                   ),
@@ -695,16 +897,23 @@ class Sidebar extends ConsumerWidget {
                       _buildMacOSSubItem(
                         icon: LucideIcons.receiptText,
                         label: 'Purchase Invoices',
-                        isSelected: navigation.currentRoute == AppRoute.purchase ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.purchase ||
                             navigation.currentRoute == AppRoute.newPurchaseBill,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.purchase),
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.purchase),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.truck,
                         label: 'Suppliers',
-                        isSelected: navigation.currentRoute == AppRoute.suppliers ||
-                            navigation.currentRoute == AppRoute.registerSupplier,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.suppliers),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.suppliers ||
+                            navigation.currentRoute ==
+                                AppRoute.registerSupplier,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.suppliers),
                       ),
                     ],
                   ),
@@ -730,23 +939,33 @@ class Sidebar extends ConsumerWidget {
                       _buildMacOSSubItem(
                         icon: LucideIcons.package,
                         label: 'Products',
-                        isSelected: navigation.currentRoute == AppRoute.products ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.products ||
                             navigation.currentRoute == AppRoute.registerProduct,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.products),
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.products),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.boxes,
                         label: 'Stock & Inventory',
-                        isSelected: navigation.currentRoute == AppRoute.stock ||
+                        isSelected:
+                            navigation.currentRoute == AppRoute.stock ||
                             navigation.currentRoute == AppRoute.adjustStock,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.stock),
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.stock),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.warehouse,
                         label: 'Warehouse',
-                        isSelected: navigation.currentRoute == AppRoute.warehouse ||
-                            navigation.currentRoute == AppRoute.registerWarehouse,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.warehouse),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.warehouse ||
+                            navigation.currentRoute ==
+                                AppRoute.registerWarehouse,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.warehouse),
                       ),
                     ],
                   ),
@@ -766,22 +985,34 @@ class Sidebar extends ConsumerWidget {
                       _buildMacOSSubItem(
                         icon: LucideIcons.user,
                         label: 'Staff',
-                        isSelected: navigation.currentRoute == AppRoute.staff || navigation.currentRoute == AppRoute.hr,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.staff),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.staff ||
+                            navigation.currentRoute == AppRoute.hr,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.staff),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.calendarCheck,
                         label: 'Attendance',
-                        isSelected: navigation.currentRoute == AppRoute.attendance,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.attendance),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.attendance,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.attendance),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.fileText,
                         label: 'Payroll',
-                        isSelected: navigation.currentRoute == AppRoute.payroll ||
-                            navigation.currentRoute == AppRoute.allocateEmployeeLoan ||
-                            navigation.currentRoute == AppRoute.processMonthlyPayroll,
-                        onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.payroll),
+                        isSelected:
+                            navigation.currentRoute == AppRoute.payroll ||
+                            navigation.currentRoute ==
+                                AppRoute.allocateEmployeeLoan ||
+                            navigation.currentRoute ==
+                                AppRoute.processMonthlyPayroll,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.payroll),
                       ),
                     ],
                   ),
@@ -790,54 +1021,72 @@ class Sidebar extends ConsumerWidget {
                     icon: LucideIcons.monitor,
                     label: 'POS Billing',
                     isSelected: navigation.currentRoute == AppRoute.pos,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.pos),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.pos),
                   ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.receiptText,
                     label: 'Simple Billing',
-                    isSelected: navigation.currentRoute == AppRoute.simpleBilling,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.simpleBilling),
+                    isSelected:
+                        navigation.currentRoute == AppRoute.simpleBilling,
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.simpleBilling),
                   ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.lineChart,
                     label: 'Reports',
                     isSelected: navigation.currentRoute == AppRoute.reports,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.reports),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.reports),
                   ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.barcode,
                     label: 'Barcode Gen',
                     isSelected: navigation.currentRoute == AppRoute.barcodeGen,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.barcodeGen),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.barcodeGen),
                   ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.megaphone,
                     label: 'Marketing',
                     isSelected: navigation.currentRoute == AppRoute.marketing,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.marketing),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.marketing),
                   ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.briefcase,
                     label: 'FIN-PRO Audit Hub',
                     isSelected: navigation.currentRoute == AppRoute.auditHub,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.auditHub),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.auditHub),
                   ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.sparkles,
                     label: 'Refer & Earn',
                     isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.referral),
                   ),
                 ] else if (navigation.currentModule == AppModule.payments) ...[
                   // + Add Money Button (for Payments module)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     child: InkWell(
                       onTap: () {
                         showDialog(
@@ -855,7 +1104,11 @@ class Sidebar extends ConsumerWidget {
                         child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(LucideIcons.plus, size: 16, color: Colors.white),
+                            Icon(
+                              LucideIcons.plus,
+                              size: 16,
+                              color: Colors.white,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Add Money',
@@ -877,63 +1130,84 @@ class Sidebar extends ConsumerWidget {
                     icon: LucideIcons.users,
                     label: 'People',
                     isSelected: navigation.currentRoute == AppRoute.people,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.people),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.people),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.history,
                     label: 'Transaction',
                     isSelected: navigation.currentRoute == AppRoute.transaction,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.transaction),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.transaction),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.split,
                     label: 'Segregation',
                     isSelected: navigation.currentRoute == AppRoute.segregation,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.segregation),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.segregation),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.activity,
                     label: 'Split & Collect',
-                    isSelected: navigation.currentRoute == AppRoute.splitCollect,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.splitCollect),
+                    isSelected:
+                        navigation.currentRoute == AppRoute.splitCollect,
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.splitCollect),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.calendarDays,
                     label: 'Planner',
                     isSelected: navigation.currentRoute == AppRoute.planner,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.planner),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.planner),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.sparkles,
                     label: 'Refer & Earn',
                     isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.referral),
                   ),
                 ] else if (navigation.currentModule == AppModule.social) ...[
                   _buildMacOSItem(
                     icon: LucideIcons.userCheck,
                     label: 'Partner Launch Desk',
                     isSelected: navigation.currentRoute == AppRoute.betaClub,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.betaClub),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.betaClub),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.fileText,
                     label: 'Trading Docs',
                     isSelected: navigation.currentRoute == AppRoute.tradingDocs,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.tradingDocs),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.tradingDocs),
                   ),
                   _buildMacOSItem(
                     icon: LucideIcons.sparkles,
                     label: 'Refer & Earn',
                     isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.referral),
                   ),
                 ] else if (navigation.currentModule == AppModule.profile) ...[
                   _buildMacOSItem(
                     icon: LucideIcons.user,
                     label: 'Account Profile',
                     isSelected: navigation.currentRoute == AppRoute.profile,
-                    onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.profile),
+                    onTap: () => ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.profile),
                   ),
                 ],
               ],
@@ -947,7 +1221,11 @@ class Sidebar extends ConsumerWidget {
     );
   }
 
-  Widget _buildMacOSBottomSection(BuildContext context, WidgetRef ref, NavigationState navigation) {
+  Widget _buildMacOSBottomSection(
+    BuildContext context,
+    WidgetRef ref,
+    NavigationState navigation,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -966,7 +1244,10 @@ class Sidebar extends ConsumerWidget {
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -974,7 +1255,11 @@ class Sidebar extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 18),
+                    const Icon(
+                      LucideIcons.cloud,
+                      color: Color(0xFF2563EB),
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Column(
@@ -1005,7 +1290,10 @@ class Sidebar extends ConsumerWidget {
                       height: 28,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFC7D2FE), width: 2),
+                        border: Border.all(
+                          color: const Color(0xFFC7D2FE),
+                          width: 2,
+                        ),
                       ),
                       alignment: Alignment.center,
                       child: const Text(
@@ -1041,18 +1329,35 @@ class Sidebar extends ConsumerWidget {
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
                 onTap: () {
-                  ref.read(navigationProvider.notifier).setRoute(AppRoute.subscription);
+                  ref
+                      .read(navigationProvider.notifier)
+                      .setRoute(AppRoute.subscription);
                 },
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       // Badge 1: 293 DAYS BOOK ELITE
-                      _buildMacOSDaysBadge('293', 'DAYS', 'BOOK', 'ELITE', const Color(0xFFF2C94C)),
+                      _buildMacOSDaysBadge(
+                        '293',
+                        'DAYS',
+                        'BOOK',
+                        'ELITE',
+                        const Color(0xFFF2C94C),
+                      ),
                       Container(width: 1, height: 26, color: Colors.white24),
                       // Badge 2: 354 DAYS FIN-PRO FIRM
-                      _buildMacOSDaysBadge('354', 'DAYS', 'FIN-PRO', 'FIRM', const Color(0xFFF2C94C)),
+                      _buildMacOSDaysBadge(
+                        '354',
+                        'DAYS',
+                        'FIN-PRO',
+                        'FIRM',
+                        const Color(0xFFF2C94C),
+                      ),
                     ],
                   ),
                 ),
@@ -1069,10 +1374,9 @@ class Sidebar extends ConsumerWidget {
           label: 'Settings',
           isSelected: navigation.currentRoute == AppRoute.settings,
           onTap: () {
-            ref.read(navigationProvider.notifier).setModuleAndRoute(
-                  AppModule.books,
-                  AppRoute.settings,
-                );
+            ref
+                .read(navigationProvider.notifier)
+                .setModuleAndRoute(AppModule.books, AppRoute.settings);
           },
           trailing: const Icon(
             LucideIcons.chevronRight,
@@ -1087,10 +1391,9 @@ class Sidebar extends ConsumerWidget {
           label: 'Help & Support',
           isSelected: navigation.currentRoute == AppRoute.help,
           onTap: () {
-            ref.read(navigationProvider.notifier).setModuleAndRoute(
-                  AppModule.books,
-                  AppRoute.help,
-                );
+            ref
+                .read(navigationProvider.notifier)
+                .setModuleAndRoute(AppModule.books, AppRoute.help);
           },
           trailing: const Icon(
             LucideIcons.chevronRight,
@@ -1104,7 +1407,13 @@ class Sidebar extends ConsumerWidget {
     );
   }
 
-  Widget _buildMacOSDaysBadge(String days, String daysLabel, String line1, String line2, Color accentColor) {
+  Widget _buildMacOSDaysBadge(
+    String days,
+    String daysLabel,
+    String line1,
+    String line2,
+    Color accentColor,
+  ) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1202,10 +1511,9 @@ class Sidebar extends ConsumerWidget {
           label: label,
           isExpanded: isExpanded,
           onToggle: () {
-            ref.read(sidebarExpandedProvider.notifier).update((state) => {
-                  ...state,
-                  label: !isExpanded,
-                });
+            ref
+                .read(sidebarExpandedProvider.notifier)
+                .update((state) => {...state, label: !isExpanded});
           },
           children: children,
         );
@@ -1270,8 +1578,12 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
       bgColor = Colors.transparent;
     }
 
-    final Color contentColor = isHighlighted ? const Color(0xFF166534) : const Color(0xFF111827);
-    final Color iconColor = isHighlighted ? const Color(0xFF166534) : const Color(0xFF374151);
+    final Color contentColor = isHighlighted
+        ? const Color(0xFF166534)
+        : const Color(0xFF111827);
+    final Color iconColor = isHighlighted
+        ? const Color(0xFF166534)
+        : const Color(0xFF374151);
 
     return Padding(
       padding: widget.margin,
@@ -1319,11 +1631,7 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
                   child: Row(
                     children: [
                       if (widget.icon != null) ...[
-                        Icon(
-                          widget.icon,
-                          size: 18,
-                          color: iconColor,
-                        ),
+                        Icon(widget.icon, size: 18, color: iconColor),
                         const SizedBox(width: 12),
                       ],
                       Expanded(
@@ -1331,7 +1639,9 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
                           widget.label,
                           style: TextStyle(
                             color: contentColor,
-                            fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                            fontWeight: isHighlighted
+                                ? FontWeight.bold
+                                : FontWeight.w600,
                             fontSize: 13.5,
                           ),
                         ),
@@ -1388,7 +1698,10 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 140),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
                 decoration: BoxDecoration(
                   color: _isHovered
                       ? const Color(0xFFDCF2E4).withValues(alpha: 0.35)
@@ -1400,23 +1713,33 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
                     Icon(
                       widget.icon,
                       size: 18,
-                      color: isHighlighted ? const Color(0xFF166534) : const Color(0xFF4B5563),
+                      color: isHighlighted
+                          ? const Color(0xFF166534)
+                          : const Color(0xFF4B5563),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         widget.label,
                         style: TextStyle(
-                          color: isHighlighted ? const Color(0xFF166534) : const Color(0xFF111827),
-                          fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w600,
+                          color: isHighlighted
+                              ? const Color(0xFF166534)
+                              : const Color(0xFF111827),
+                          fontWeight: isHighlighted
+                              ? FontWeight.bold
+                              : FontWeight.w600,
                           fontSize: 13.5,
                         ),
                       ),
                     ),
                     Icon(
-                      widget.isExpanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                      widget.isExpanded
+                          ? LucideIcons.chevronDown
+                          : LucideIcons.chevronRight,
                       size: 16,
-                      color: isHighlighted ? const Color(0xFF166534) : const Color(0xFF9CA3AF),
+                      color: isHighlighted
+                          ? const Color(0xFF166534)
+                          : const Color(0xFF9CA3AF),
                     ),
                   ],
                 ),
@@ -1464,7 +1787,7 @@ class _SidebarItemState extends State<_SidebarItem> {
     final isHighlighted = widget.isSelected || _isHovered;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 1.5),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -1477,56 +1800,43 @@ class _SidebarItemState extends State<_SidebarItem> {
             }
           },
           borderRadius: BorderRadius.circular(10),
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? const Color(0xFFDCF2E4)
                   : (_isHovered
-                      ? const Color(0xFFDCF2E4).withValues(alpha: 0.6)
-                      : Colors.transparent),
+                        ? const Color(0xFFDCF2E4).withValues(alpha: 0.5)
+                        : Colors.transparent),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Stack(
+            child: Row(
               children: [
-                if (isHighlighted && !widget.isHeader)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 4.5,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF166534),
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(3),
-                          bottomRight: Radius.circular(3),
-                        ),
-                      ),
+                Icon(
+                  widget.icon,
+                  size: 19,
+                  color: isHighlighted
+                      ? const Color(0xFF166534)
+                      : AppColors.secondaryText,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: isHighlighted
+                          ? const Color(0xFF166534)
+                          : AppColors.darkText,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w700
+                          : (_isHovered ? FontWeight.w600 : FontWeight.w500),
+                      fontSize: 13.5,
                     ),
                   ),
-                Row(
-                  children: [
-                    Icon(
-                      widget.icon,
-                      size: 20,
-                      color: isHighlighted ? const Color(0xFF166534) : AppColors.secondaryText,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        widget.label,
-                        style: TextStyle(
-                          color: isHighlighted ? const Color(0xFF166534) : AppColors.darkText,
-                          fontWeight: isHighlighted ? FontWeight.bold : FontWeight.w500,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                    ?trailingWidget,
-                  ],
                 ),
+                ?trailingWidget,
               ],
             ),
           ),
@@ -1564,10 +1874,9 @@ class _SidebarExpandable extends ConsumerWidget {
           isSelected: false,
           isHeader: true,
           onTap: () {
-            ref.read(sidebarExpandedProvider.notifier).update((state) => {
-              ...state,
-              label: !isExpanded,
-            });
+            ref
+                .read(sidebarExpandedProvider.notifier)
+                .update((state) => {...state, label: !isExpanded});
           },
           trailing: Icon(
             isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
@@ -1610,7 +1919,7 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
     final isHighlighted = widget.isSelected || _isHovered;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1.5),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _isHovered = true),
@@ -1622,57 +1931,44 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
               Navigator.of(context).pop();
             }
           },
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            clipBehavior: Clip.antiAlias,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          borderRadius: BorderRadius.circular(9),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? const Color(0xFFDCF2E4)
                   : (_isHovered
-                      ? const Color(0xFFDCF2E4).withValues(alpha: 0.6)
-                      : Colors.transparent),
-              borderRadius: BorderRadius.circular(10),
+                        ? const Color(0xFFDCF2E4).withValues(alpha: 0.5)
+                        : Colors.transparent),
+              borderRadius: BorderRadius.circular(9),
             ),
-            child: Stack(
+            child: Row(
               children: [
-                if (isHighlighted)
-                  Positioned(
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 4.5,
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF166534),
-                        borderRadius: BorderRadius.only(
-                          topRight: Radius.circular(3),
-                          bottomRight: Radius.circular(3),
-                        ),
-                      ),
+                if (widget.icon != null) ...[
+                  Icon(
+                    widget.icon,
+                    size: 15,
+                    color: isHighlighted
+                        ? const Color(0xFF166534)
+                        : AppColors.secondaryText,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: Text(
+                    widget.label,
+                    style: TextStyle(
+                      color: isHighlighted
+                          ? const Color(0xFF166534)
+                          : AppColors.secondaryText,
+                      fontSize: 13,
+                      fontWeight: widget.isSelected
+                          ? FontWeight.w700
+                          : (_isHovered ? FontWeight.w600 : FontWeight.w500),
                     ),
                   ),
-                Row(
-                  children: [
-                    if (widget.icon != null) ...[
-                      Icon(
-                        widget.icon,
-                        size: 16,
-                        color: isHighlighted ? const Color(0xFF166534) : AppColors.secondaryText,
-                      ),
-                      const SizedBox(width: 10),
-                    ],
-                    Expanded(
-                      child: Text(
-                        widget.label,
-                        style: TextStyle(
-                          color: isHighlighted ? const Color(0xFF166534) : AppColors.secondaryText,
-                          fontSize: 13,
-                          fontWeight: isHighlighted ? FontWeight.bold : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -1683,166 +1979,363 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
   }
 }
 
-class _BottomActions extends ConsumerWidget {
-  const _BottomActions();
+class _MobileSidebarBottomFixed extends ConsumerWidget {
+  const _MobileSidebarBottomFixed();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final navigation = ref.watch(navigationProvider);
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(12, 8, 12, 10 + bottomPadding),
       decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: AppColors.border)),
+        color: AppColors.sidebarBackground,
+        border: Border(top: BorderSide(color: Color(0xFFDCF2E4), width: 1)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'CLIKS BUS',
-                style: TextStyle(
-                  color: AppColors.darkText,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              SizedBox(height: 2),
-              Text(
-                'App Version 2.4.0',
-                style: TextStyle(
-                  color: AppColors.secondaryText,
-                  fontSize: 11,
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: const Text('Terminate Session?'),
-                  content: const Text('Are you sure you want to disconnect from the active business session?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text('Terminate', style: TextStyle(color: Colors.red)),
-                    ),
-                  ],
-                ),
-              );
+          // 1. Storage Card
+          _buildStorageCard(context, ref),
+          const SizedBox(height: 8),
+
+          // 2. Dual Badges Capsule (Subscription Button)
+          _buildSubscriptionBadgesCard(context, ref, navigation),
+          const SizedBox(height: 8),
+
+          // 3. Settings Card
+          _buildActionCard(
+            context: context,
+            icon: LucideIcons.settings,
+            label: 'Settings',
+            onTap: () {
+              final scaffold = Scaffold.maybeOf(context);
+              if (scaffold != null && scaffold.isDrawerOpen) {
+                Navigator.pop(context);
+              }
+              ref.read(navigationProvider.notifier).setRoute(AppRoute.settings);
             },
-            icon: const Icon(
-              LucideIcons.power,
-              color: Colors.redAccent,
-              size: 22,
-            ),
+          ),
+          const SizedBox(height: 8),
+
+          // 4. Help & Support Card
+          _buildActionCard(
+            context: context,
+            icon: LucideIcons.helpCircle,
+            label: 'Help & Support',
+            onTap: () {
+              final scaffold = Scaffold.maybeOf(context);
+              if (scaffold != null && scaffold.isDrawerOpen) {
+                Navigator.pop(context);
+              }
+              ref.read(navigationProvider.notifier).setRoute(AppRoute.help);
+            },
           ),
         ],
       ),
     );
   }
-}
 
-class _PlanBanner extends ConsumerWidget {
-  const _PlanBanner();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return GestureDetector(
-      onTap: () {
-        final scaffold = Scaffold.maybeOf(context);
-        if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-        ref.read(navigationProvider.notifier).setRoute(AppRoute.subscription);
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF14275E), // Darker professional blue
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF14275E).withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+  Widget _buildStorageCard(BuildContext context, WidgetRef ref) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: () {
+          final scaffold = Scaffold.maybeOf(context);
+          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.storage);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 17),
+              const SizedBox(width: 9),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Storage',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    SizedBox(height: 1),
+                    Text(
+                      '0 KB of 1.00 GB used',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDBEAFE),
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: const Text(
+                  '0%',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(LucideIcons.crown, color: Color(0xFFF2C94C), size: 24),
-            ),
-            const SizedBox(width: 14),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Elite Suite',
-                    style: TextStyle(
-                      color: Color(0xFFF2C94C), // High-visibility yellow
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      letterSpacing: -0.2,
-                    ),
+      ),
+    );
+  }
+
+  Widget _buildSubscriptionBadgesCard(
+    BuildContext context,
+    WidgetRef ref,
+    NavigationState navigation,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          final scaffold = Scaffold.maybeOf(context);
+          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.subscription);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF0B1329), // Dark navy
+            borderRadius: BorderRadius.circular(16),
+            border: navigation.currentRoute == AppRoute.subscription
+                ? Border.all(color: const Color(0xFFF59E0B), width: 1.5)
+                : null,
+          ),
+          child: Row(
+            children: [
+              // Badge 1: 290 DAYS BOOK ELITE
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
                   ),
-                  SizedBox(height: 2),
-                  Text(
-                    'Manage Plan',
-                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF132247),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                ],
-              ),
-            ),
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFF2C94C), width: 3),
-              ),
-              child: const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '359',
-                    style: TextStyle(
-                      color: Color(0xFF14275E),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFF59E0B),
+                            width: 2.2,
+                          ),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '290',
+                              style: TextStyle(
+                                color: Color(0xFF0B1329),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 10.5,
+                                height: 1.0,
+                              ),
+                            ),
+                            Text(
+                              'DAYS',
+                              style: TextStyle(
+                                color: Color(0xFF0B1329),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 6.5,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'BOOK',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              height: 1.1,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          Text(
+                            'ELITE',
+                            style: TextStyle(
+                              color: Color(0xFFF59E0B),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 11,
+                              height: 1.1,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  Text(
-                    'DAYS',
-                    style: TextStyle(
-                      color: Color(0xFF14275E),
-                      fontWeight: FontWeight.bold,
-                      fontSize: 8,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              // Badge 2: 351 DAYS FIN-PRO FIRM
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF132247),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFFF59E0B),
+                            width: 2.2,
+                          ),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '351',
+                              style: TextStyle(
+                                color: Color(0xFF0B1329),
+                                fontWeight: FontWeight.w900,
+                                fontSize: 10.5,
+                                height: 1.0,
+                              ),
+                            ),
+                            Text(
+                              'DAYS',
+                              style: TextStyle(
+                                color: Color(0xFF0B1329),
+                                fontWeight: FontWeight.w800,
+                                fontSize: 6.5,
+                                height: 1.1,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'FIN-PRO',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10.5,
+                              height: 1.1,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                          Text(
+                            'FIRM',
+                            style: TextStyle(
+                              color: Color(0xFFF59E0B),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 10.5,
+                              height: 1.1,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionCard({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 9),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 16, color: const Color(0xFF334155)),
+              const SizedBox(width: 9),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Color(0xFF1E293B),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12.5,
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                LucideIcons.chevronRight,
+                size: 14,
+                color: Color(0xFF94A3B8),
+              ),
+            ],
+          ),
         ),
       ),
     );

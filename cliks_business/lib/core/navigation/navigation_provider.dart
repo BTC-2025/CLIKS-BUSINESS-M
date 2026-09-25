@@ -37,6 +37,7 @@ enum AppRoute {
   rewards,
   barcodeGen,
   auditHub,
+  fintech,
   subscription,
   settings,
   storage,
@@ -116,3 +117,6 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
 final navigationProvider = StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
   return NavigationNotifier();
 });
+
+/// Dedicated split-screen provider for mobile calculator view
+final mobileCalculatorSplitScreenProvider = StateProvider<bool>((ref) => false);

@@ -69,11 +69,10 @@ class AppColors {
   /// Returns light green highlight #DCF2E4 on macOS
   static Color get lightGreenHighlight => isMacOS ? macosLightGreen : accentLightGreen;
 
-  /// Gradient colors for statistics hero cards across sections.
-  /// On macOS: solid dark green #166534.
-  static List<Color> get heroGradientColors => isMacOS
-      ? const [Color(0xFF166534), Color(0xFF166534)]
-      : const [Color(0xFF166534), Color(0xFF1F7A46), Color(0xFF22905A)];
+  /// Colors for statistics hero cards across sections.
+  /// Universal solid dark green #166534 matching header.
+  static List<Color> get heroGradientColors =>
+      const [Color(0xFF166534), Color(0xFF166534)];
 
   /// Shadow color for statistics hero cards across sections
   static Color get heroShadowColor => isMacOS

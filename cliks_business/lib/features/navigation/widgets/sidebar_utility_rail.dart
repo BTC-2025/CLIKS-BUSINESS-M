@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../../widgets/calculator/beta_calculator.dart';
+import '../../../core/navigation/navigation_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class UtilityRailState {
@@ -172,8 +173,8 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
               curve: Curves.easeOutBack,
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                width: 36,
-                height: 36,
+                width: 30,
+                height: 30,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -223,11 +224,11 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                           );
                     }
                   },
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(15),
                   child: Center(
                     child: Icon(
                       item['icon'] as IconData,
-                      size: isActive ? 16 : 15,
+                      size: isActive ? 14 : 13,
                       color: isActive
                           ? itemColor
                           : Colors.white.withValues(alpha: 0.45),
@@ -336,9 +337,9 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
       children: [
         // Horizontal Rail Bar - Shifted slightly to the left
         Container(
-          height: 52,
-          margin: const EdgeInsets.only(left: 0, right: 16, top: 4, bottom: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          height: 44,
+          margin: const EdgeInsets.only(left: 0, right: 16, top: 2, bottom: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
           decoration: const BoxDecoration(color: Colors.transparent),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -360,9 +361,9 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                     }
                   },
                   child: Container(
-                    width: 38,
-                    height: 38,
-                    padding: const EdgeInsets.all(3),
+                    width: 32,
+                    height: 32,
+                    padding: const EdgeInsets.all(2),
                     decoration: const BoxDecoration(
                       color: Color(0xFFE8F5E9),
                       shape: BoxShape.circle,
@@ -437,8 +438,8 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                 Tooltip(
                   message: isEditingUtilities ? 'Done' : 'Add Utility',
                   child: Container(
-                    width: 36,
-                    height: 36,
+                    width: 30,
+                    height: 30,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: isEditingUtilities
@@ -516,6 +517,9 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     final expandedUtilityTab = railState.expandedTab;
     if (expandedUtilityTab == null) return const SizedBox.shrink();
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS ||
+        defaultTargetPlatform == TargetPlatform.macOS;
+
     Widget content;
     switch (expandedUtilityTab) {
       case 'Calculator':
@@ -579,10 +583,58 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   color: AppColors.darkText,
                 ),
               ),
-              GestureDetector(
-                onTap: () =>
-                    ref.read(utilityRailProvider.notifier).setExpandedTab(null),
-                child: const Icon(LucideIcons.x, size: 14, color: Colors.grey),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (!isMacOS && expandedUtilityTab == 'Calculator') ...[
+                    Tooltip(
+                      message: 'Split Screen View',
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.of(context).maybePop();
+                          ref.read(utilityRailProvider.notifier).setExpandedTab(null);
+                          ref.read(mobileCalculatorSplitScreenProvider.notifier).state = true;
+                        },
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          margin: const EdgeInsets.only(right: 8),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: AppColors.primaryGreen.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.splitscreen_rounded,
+                                size: 13,
+                                color: AppColors.primaryGreen,
+                              ),
+                              SizedBox(width: 4),
+                              Text(
+                                'Split',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.primaryGreen,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                  GestureDetector(
+                    onTap: () =>
+                        ref.read(utilityRailProvider.notifier).setExpandedTab(null),
+                    child: const Icon(LucideIcons.x, size: 14, color: Colors.grey),
+                  ),
+                ],
               ),
             ],
           ),

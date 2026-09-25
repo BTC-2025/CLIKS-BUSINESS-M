@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/navigation/navigation_provider.dart';
+import '../../widgets/calculator/beta_calculator.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/macos_right_utility_rail.dart';
 import 'widgets/macos_account_menu_card.dart';
-import '../social/pages/social_page.dart';
 import '../billing/pages/billing_page.dart';
 import '../billing/pages/simple_billing_page.dart';
 import '../people/pages/people_page.dart';
@@ -28,6 +28,7 @@ import '../payments/pages/referral_page.dart';
 import '../profile/pages/profile_page.dart';
 import '../settings/pages/settings_page.dart';
 import 'pages/macos_storage_page.dart';
+import 'pages/mobile_storage_page.dart';
 import '../billing/pages/new_invoice_page.dart';
 import '../billing/pages/accounting_page.dart';
 import '../billing/pages/expenses_page.dart';
@@ -50,6 +51,7 @@ import '../../widgets/modals/finance_modals.dart';
 import '../../widgets/modals/sales_modals.dart';
 import '../billing/pages/barcode_gen_page.dart';
 import '../billing/pages/audit_hub_page.dart';
+import '../billing/pages/fintech_page.dart';
 import '../billing/pages/subscription_page.dart';
 import '../purchases/pages/purchase_invoice_page.dart';
 import '../purchases/pages/suppliers_page.dart';
@@ -70,20 +72,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
   AppModule? _lastModule;
   bool _slideForward = true;
   int _refreshKey = 0;
-  bool _isBottomBarVisible = true;
-  Timer? _scrollStopTimer;
-
-  @override
-  void dispose() {
-    _scrollStopTimer?.cancel();
-    super.dispose();
-  }
+  double? _splitCalculatorHeight;
 
   @override
   Widget build(BuildContext context) {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final isSplitCalculator = !isMacOS && !isDesktop && ref.watch(mobileCalculatorSplitScreenProvider);
 
     ref.listen(navigationProvider, (prev, next) {
       if (prev != next && ref.read(macosAccountMenuVisibleProvider)) {
@@ -136,10 +132,18 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         navigation.currentRoute == AppRoute.regularizeMissedPunch;
 
     return PopScope(
-      canPop: (navigation.currentModule == AppModule.books && navigation.currentRoute == AppRoute.dashboard) && !isOverlay,
+      canPop: (navigation.currentModule == AppModule.books && navigation.currentRoute == AppRoute.dashboard) && !isOverlay && !isSplitCalculator,
       onPopInvoked: (didPop) {
         if (didPop) return;
         
+        if (isSplitCalculator) {
+          setState(() {
+            _splitCalculatorHeight = null;
+          });
+          ref.read(mobileCalculatorSplitScreenProvider.notifier).state = false;
+          return;
+        }
+
         if (isOverlay) {
           final baseRoute = () {
             if (navigation.currentRoute == AppRoute.recordExpense ||
@@ -196,7 +200,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             }
             return navigation.currentModule == AppModule.payments
                 ? AppRoute.people
-                : (navigation.currentModule == AppModule.social ? (isMacOS ? AppRoute.betaClub : AppRoute.meetup) : AppRoute.dashboard);
+                : (navigation.currentModule == AppModule.social ? AppRoute.betaClub : AppRoute.dashboard);
           }();
           ref.read(navigationProvider.notifier).setRoute(baseRoute);
           return;
@@ -209,7 +213,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             case AppModule.payments:
               return AppRoute.people;
             case AppModule.social:
-              return isMacOS ? AppRoute.betaClub : AppRoute.meetup;
+              return AppRoute.betaClub;
             case AppModule.profile:
               return AppRoute.profile;
           }
@@ -221,30 +225,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
           ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.books, AppRoute.dashboard);
         }
       },
-      child: NotificationListener<ScrollNotification>(
-        onNotification: (ScrollNotification notification) {
-          if (notification is ScrollUpdateNotification) {
-            if (notification.scrollDelta != null && notification.scrollDelta! != 0) {
-              _scrollStopTimer?.cancel();
-              if (_isBottomBarVisible) {
-                setState(() {
-                  _isBottomBarVisible = false;
-                });
-              }
-            }
-          } else if (notification is ScrollEndNotification) {
-            _scrollStopTimer?.cancel();
-            _scrollStopTimer = Timer(const Duration(milliseconds: 220), () {
-              if (mounted && !_isBottomBarVisible) {
-                setState(() {
-                  _isBottomBarVisible = true;
-                });
-              }
-            });
-          }
-          return false;
-        },
-        child: Scaffold(
+      child: Scaffold(
           body: Stack(
             children: [
               // Main Body Content
@@ -253,6 +234,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 child: Column(
                   children: [
                     const TopNavBar(),
+                    if (isSplitCalculator)
+                      _buildTopSectionBar(context, ref, navigation),
                     Expanded(
                       child: Row(
                         children: [
@@ -330,7 +313,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                       }
                                       return navigation.currentModule == AppModule.payments
                                           ? AppRoute.people
-                                          : (navigation.currentModule == AppModule.social ? (isMacOS ? AppRoute.betaClub : AppRoute.meetup) : AppRoute.dashboard);
+                                          : (navigation.currentModule == AppModule.social ? AppRoute.betaClub : AppRoute.dashboard);
                                     }();
 
                                     if (isOverlay) {
@@ -358,33 +341,68 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                     return _getPage(navigation.currentRoute);
                                   }();
 
-                                  if (isMacOS) {
-                                    return KeyedSubtree(
-                                      key: ValueKey('${navigation.currentRoute}_$_refreshKey'),
-                                      child: content,
+                                  final renderedPage = isMacOS
+                                      ? KeyedSubtree(
+                                          key: ValueKey('${navigation.currentRoute}_$_refreshKey'),
+                                          child: content,
+                                        )
+                                      : AnimatedSwitcher(
+                                          duration: const Duration(milliseconds: 300),
+                                          transitionBuilder: (child, animation) {
+                                            final slideAnimation = Tween<Offset>(
+                                              begin: _slideForward ? const Offset(0.08, 0) : const Offset(-0.08, 0),
+                                              end: Offset.zero,
+                                            ).animate(CurvedAnimation(
+                                              parent: animation,
+                                              curve: Curves.easeOutCubic,
+                                            ));
+                                            return FadeTransition(
+                                              opacity: animation,
+                                              child: SlideTransition(
+                                                position: slideAnimation,
+                                                child: child,
+                                              ),
+                                            );
+                                          },
+                                          child: content,
+                                        );
+
+                                  if (isSplitCalculator) {
+                                    return LayoutBuilder(
+                                      builder: (context, constraints) {
+                                        final totalHeight = constraints.maxHeight;
+                                        final minHeight = 160.0;
+                                        final maxHeight = (totalHeight - 100.0).clamp(minHeight, totalHeight);
+                                        final calcHeight = (_splitCalculatorHeight ?? (totalHeight * 0.52))
+                                            .clamp(minHeight, maxHeight);
+
+                                        return Column(
+                                          children: [
+                                            Expanded(
+                                              child: ClipRect(
+                                                child: renderedPage,
+                                              ),
+                                            ),
+                                            SizedBox(
+                                              height: calcHeight,
+                                              child: _buildMobileSplitCalculator(
+                                                context,
+                                                ref,
+                                                onDragUpdate: (deltaY) {
+                                                  setState(() {
+                                                    final current = _splitCalculatorHeight ?? calcHeight;
+                                                    _splitCalculatorHeight = (current - deltaY).clamp(minHeight, maxHeight);
+                                                  });
+                                                },
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      },
                                     );
                                   }
 
-                                  return AnimatedSwitcher(
-                                    duration: const Duration(milliseconds: 300),
-                                    transitionBuilder: (child, animation) {
-                                      final slideAnimation = Tween<Offset>(
-                                        begin: _slideForward ? const Offset(0.08, 0) : const Offset(-0.08, 0),
-                                        end: Offset.zero,
-                                      ).animate(CurvedAnimation(
-                                        parent: animation,
-                                        curve: Curves.easeOutCubic,
-                                      ));
-                                      return FadeTransition(
-                                        opacity: animation,
-                                        child: SlideTransition(
-                                          position: slideAnimation,
-                                          child: child,
-                                        ),
-                                      );
-                                    },
-                                    child: content,
-                                  );
+                                  return renderedPage;
                                 }(),
                               ),
                             ),
@@ -398,22 +416,13 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 ),
               ),
 
-              // Floating Bottom Navigation Bar overlay with transparent edges
-              if (!isDesktop && !isOverlay)
+              // Fixed Bottom Navigation Bar
+              if (!isDesktop && !isOverlay && !isSplitCalculator)
                 Positioned(
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  child: AnimatedSlide(
-                    offset: _isBottomBarVisible ? Offset.zero : const Offset(0, 1.8),
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOutCubic,
-                    child: AnimatedOpacity(
-                      opacity: _isBottomBarVisible ? 1.0 : 0.0,
-                      duration: const Duration(milliseconds: 200),
-                      child: _buildStylishBottomBar(context, ref, navigation),
-                    ),
-                  ),
+                  child: _buildStylishBottomBar(context, ref, navigation),
                 ),
 
               // macOS Top-Right Account Dropdown Menu Overlay
@@ -437,38 +446,242 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
           ),
           drawer: (isDesktop || navigation.currentModule == AppModule.profile) ? null : const Drawer(child: Sidebar()),
         ),
+      );
+  }
+
+  Widget _buildMobileSplitCalculator(
+    BuildContext context,
+    WidgetRef ref, {
+    void Function(double deltaY)? onDragUpdate,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Drag handle and header bar
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onVerticalDragUpdate: (details) {
+              onDragUpdate?.call(details.delta.dy);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+                border: Border(bottom: BorderSide(color: AppColors.border, width: 0.8)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Center drag pill handle
+                  Center(
+                    child: Container(
+                      width: 48,
+                      height: 5,
+                      margin: const EdgeInsets.only(bottom: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade400,
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF27AE60).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(
+                              LucideIcons.calculator,
+                              size: 14,
+                              color: Color(0xFF27AE60),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Calculator',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.darkText,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'SPLIT VIEW',
+                              style: TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryGreen,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      // "X" Close Button
+                      InkWell(
+                        onTap: () {
+                          setState(() {
+                            _splitCalculatorHeight = null;
+                          });
+                          ref.read(mobileCalculatorSplitScreenProvider.notifier).state = false;
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(5),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.x,
+                            size: 15,
+                            color: AppColors.secondaryText,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // Calculator Content
+          const Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              child: BetaCalculator(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopSectionBar(BuildContext context, WidgetRef ref, NavigationState navigation) {
+    return Container(
+      width: double.infinity,
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildTopTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books'),
+            _buildTopTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments'),
+            _buildTopTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social'),
+            _buildTopTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTopTab(WidgetRef ref, NavigationState navigation, AppModule module, IconData icon, String label) {
+    final isActive = navigation.currentModule == module;
+    return GestureDetector(
+      onTap: () => _switchToModule(ref, module),
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOutCubic,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? AppColors.primaryGreen : Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? Colors.white : AppColors.secondaryText,
+              size: 15,
+            ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOutCubic,
+              child: isActive
+                  ? Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const SizedBox(width: 5),
+                        Text(
+                          label,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildStylishBottomBar(BuildContext context, WidgetRef ref, NavigationState navigation) {
+    final double bottomInset = MediaQuery.of(context).padding.bottom;
     return Container(
       color: Colors.transparent,
-      child: SafeArea(
-        top: false,
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-          decoration: BoxDecoration(
-            color: AppColors.cardBackground,
-            borderRadius: BorderRadius.circular(32),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 16,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildBottomTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books'),
-              _buildBottomTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments'),
-              _buildBottomTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social'),
-              _buildBottomTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile'),
-            ],
-          ),
+      padding: EdgeInsets.only(bottom: bottomInset > 0 ? (bottomInset * 0.35).clamp(2.0, 6.0) : 4.0),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        decoration: BoxDecoration(
+          color: AppColors.cardBackground,
+          borderRadius: BorderRadius.circular(32),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildBottomTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books'),
+            _buildBottomTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments'),
+            _buildBottomTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social'),
+            _buildBottomTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile'),
+          ],
         ),
       ),
     );
@@ -526,7 +739,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       case AppRoute.dashboard:
         return DashboardPage(key: ValueKey(route));
       case AppRoute.meetup:
-        return SocialPage(key: ValueKey(route));
+        return BetaClubPage(key: ValueKey(route));
       case AppRoute.billing:
         return BillingPage(key: ValueKey(route));
       case AppRoute.simpleBilling:
@@ -558,7 +771,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       case AppRoute.settings:
         return SettingsPage(key: ValueKey(route));
       case AppRoute.storage:
-        return const MacOsStoragePage(key: ValueKey(AppRoute.storage));
+        final isMacOSStorage = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+        return isMacOSStorage
+            ? const MacOsStoragePage(key: ValueKey(AppRoute.storage))
+            : const MobileStoragePage(key: ValueKey(AppRoute.storage));
       case AppRoute.newInvoice:
         return NewInvoicePage(key: ValueKey(route));
       case AppRoute.accounting:
@@ -610,6 +826,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return BarcodeGenPage(key: ValueKey(route));
       case AppRoute.auditHub:
         return AuditHubPage(key: ValueKey(route));
+      case AppRoute.fintech:
+        return FintechPage(key: ValueKey(route));
       case AppRoute.subscription:
         return SubscriptionPage(key: ValueKey(route));
       case AppRoute.recordExpense:
@@ -675,8 +893,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     } else if (module == AppModule.payments) {
       ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.payments, AppRoute.people);
     } else if (module == AppModule.social) {
-      final isMacOS = defaultTargetPlatform == TargetPlatform.macOS;
-      ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.social, isMacOS ? AppRoute.betaClub : AppRoute.meetup);
+      ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.social, AppRoute.betaClub);
     } else if (module == AppModule.profile) {
       ref.read(navigationProvider.notifier).setModuleAndRoute(AppModule.profile, AppRoute.profile);
     }

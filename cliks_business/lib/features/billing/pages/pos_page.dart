@@ -148,7 +148,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       // Dropup Expandable FAB for Mobile
       floatingActionButton: isMobile
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
+              padding: EdgeInsets.only(
+                bottom: (_cart.isNotEmpty && _activeTab == 0 ? 150 : 88) +
+                    MediaQuery.of(context).padding.bottom,
+              ),
               child: _ExpandableFab(
                 onAddProduct: () {
                   showDialog(
@@ -162,63 +165,76 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               ),
             )
           : null,
-      body: CustomScrollView(
-        physics: const BouncingScrollPhysics(),
-        slivers: [
-          // ─── HERO SUMMARY CARD (Accounting Style Header) ───
-          SliverToBoxAdapter(
-            child: isMacOS
-                ? _buildHeroSummary(isMobile)
-                : _buildHeroSummary(isMobile)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: -0.05, end: 0),
-          ),
-
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 6),
-          ),
-
-          // ─── STICKY TAB NAVIGATION BAR ───
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _StickyTabNavDelegate(
-              height: isMobile ? 50 : 56,
-              child: Container(
-                color: const Color(0xFFF8F9FB),
-                padding: const EdgeInsets.symmetric(vertical: 2),
-                child: _buildTabNav(isMobile),
+      body: Stack(
+        children: [
+          CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              // ─── HERO SUMMARY CARD (Accounting Style Header) ───
+              SliverToBoxAdapter(
+                child: isMacOS
+                    ? _buildHeroSummary(isMobile)
+                    : _buildHeroSummary(isMobile)
+                        .animate()
+                        .fadeIn(duration: 400.ms)
+                        .slideY(begin: -0.05, end: 0),
               ),
-            ),
-          ),
 
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 8),
-          ),
-
-          // ─── MAIN CONTENT AREA ───
-          SliverPadding(
-            padding: EdgeInsets.fromLTRB(
-              isMobile ? 14 : 24,
-              0,
-              isMobile ? 14 : 24,
-              isMobile ? 140 : 40,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDesktopActions(isMobile),
-                  if (!isMobile) const SizedBox(height: 12),
-                  isMacOS
-                      ? _buildMainContent(isMobile, screenWidth)
-                      : _buildMainContent(isMobile, screenWidth)
-                          .animate()
-                          .fadeIn(duration: 500.ms, delay: 150.ms),
-                ],
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 6),
               ),
-            ),
+
+              // ─── STICKY TAB NAVIGATION BAR ───
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _StickyTabNavDelegate(
+                  height: isMobile ? 50 : 56,
+                  child: Container(
+                    color: const Color(0xFFF8F9FB),
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: _buildTabNav(isMobile),
+                  ),
+                ),
+              ),
+
+              const SliverToBoxAdapter(
+                child: SizedBox(height: 8),
+              ),
+
+              // ─── MAIN CONTENT AREA ───
+              SliverPadding(
+                padding: EdgeInsets.fromLTRB(
+                  isMobile ? 14 : 24,
+                  0,
+                  isMobile ? 14 : 24,
+                  isMobile ? (230 + MediaQuery.of(context).padding.bottom) : 40,
+                ),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildDesktopActions(isMobile),
+                      if (!isMobile) const SizedBox(height: 12),
+                      isMacOS
+                          ? _buildMainContent(isMobile, screenWidth)
+                          : _buildMainContent(isMobile, screenWidth)
+                              .animate()
+                              .fadeIn(duration: 500.ms, delay: 150.ms),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
+
+          // Docked Quick Checkout Bar on Mobile above bottom navigation bar
+          if (isMobile && _activeTab == 0 && _cart.isNotEmpty)
+            Positioned(
+              left: 14,
+              right: 14,
+              bottom: 76 + MediaQuery.of(context).padding.bottom,
+              child: _buildMobileFloatingCheckoutBar(context),
+            ),
         ],
       ),
     );
@@ -636,7 +652,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
             crossAxisCount: isMobile ? 2 : 3,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 1.2,
+            childAspectRatio: isMobile ? 1.05 : 1.2,
           ),
           itemCount: _filteredCatalog.length,
           itemBuilder: (context, index) {
@@ -645,7 +661,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               onTap: () => _addToCart(p),
               borderRadius: BorderRadius.circular(12),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: EdgeInsets.all(isMobile ? 10 : 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(12),
@@ -661,11 +677,19 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(4)),
-                          child: Text(p.category, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8))),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(4)),
+                            child: Text(
+                              p.category,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 4),
                         Text('Stock: ${p.stock}', style: const TextStyle(fontSize: 10, color: AppColors.secondaryText)),
                       ],
                     ),
@@ -673,7 +697,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.all(4),
                           decoration: const BoxDecoration(color: Color(0xFF166534), shape: BoxShape.circle),
@@ -753,8 +784,12 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                         ),
                       ),
                       Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
                             icon: const Icon(LucideIcons.minusCircle, size: 16, color: AppColors.secondaryText),
                             onPressed: () {
                               setState(() {
@@ -766,15 +801,26 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                               });
                             },
                           ),
-                          Text('${item.quantity}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Text('${item.quantity}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                          ),
                           IconButton(
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
                             icon: const Icon(LucideIcons.plusCircle, size: 16, color: Color(0xFF166534)),
                             onPressed: () => setState(() => item.quantity++),
                           ),
                         ],
                       ),
                       const SizedBox(width: 8),
-                      Text('₹${item.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text('₹${item.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                        ),
+                      ),
                     ],
                   ),
                 );
@@ -821,11 +867,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     setState(() => _cart.clear());
                   },
                   icon: const Icon(LucideIcons.banknote, size: 13),
-                  label: const Text('Cash (F1)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Cash (F1)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF166534),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
@@ -838,11 +887,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     AppSnackbar.show(context, "UPI QR Code generated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
                   },
                   icon: const Icon(LucideIcons.qrCode, size: 13),
-                  label: const Text('UPI (F2)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('UPI (F2)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7C3AED),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
@@ -855,11 +907,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     AppSnackbar.show(context, "Card Terminal initiated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
                   },
                   icon: const Icon(LucideIcons.creditCard, size: 13),
-                  label: const Text('Card (F3)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Card (F3)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC2410C),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     elevation: 0,
                   ),
@@ -878,24 +933,50 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   Widget _buildCatalogTab(bool isMobile) {
     if (isMobile) {
       return Column(
-        children: _catalog.map((p) => Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text('${p.sku} • ${p.category}', style: const TextStyle(fontSize: 11, color: AppColors.secondaryText)),
-                ],
+        children: [
+          ..._catalog.map((p) => Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text('${p.sku} • ${p.category}', style: const TextStyle(fontSize: 11, color: AppColors.secondaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+              ],
+            ),
+          )),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => const QuickRegisterItemDialog(),
+                );
+              },
+              icon: const Icon(LucideIcons.plus, size: 15),
+              label: const Text('Add Quick Product', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF166534),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                elevation: 0,
               ),
-              Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-            ],
+            ),
           ),
-        )).toList(),
+        ],
       );
     }
 
@@ -920,24 +1001,35 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   Widget _buildSalesHistoryTab(bool isMobile) {
     if (isMobile) {
       return Column(
-        children: _salesHistory.map((s) => Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(s.billNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-                  Text('${s.customer} • ${s.time}', style: const TextStyle(fontSize: 11, color: AppColors.secondaryText)),
-                ],
-              ),
-              Text('₹${s.totalAmount.toStringAsFixed(2)} (${s.paymentMode})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-            ],
-          ),
-        )).toList(),
+        children: [
+          ..._salesHistory.map((s) => Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(s.billNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text('${s.customer} • ${s.time}', style: const TextStyle(fontSize: 11, color: AppColors.secondaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text('₹${s.totalAmount.toStringAsFixed(2)} (${s.paymentMode})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                  ),
+                ),
+              ],
+            ),
+          )),
+        ],
       );
     }
 
@@ -964,35 +1056,285 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(16)),
-      child: const Column(
+      child: Column(
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Opening Cash Balance', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+              Expanded(
+                child: Text('Opening Cash Balance', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+              ),
+              SizedBox(width: 8),
               Text('₹10,000.00', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             ],
           ),
-          SizedBox(height: 8),
-          Row(
+          const SizedBox(height: 8),
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Today Cash Collections', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+              Expanded(
+                child: Text('Today Cash Collections', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+              ),
+              SizedBox(width: 8),
               Text('₹45,200.00', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
             ],
           ),
-          SizedBox(height: 8),
-          Divider(),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
+          const Divider(),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Expected Till Cash Balance', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-              Text('₹55,200.00', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+              const Expanded(
+                child: Text(
+                  'Expected Till Cash Balance',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: const Text('₹55,200.00', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    AppSnackbar.show(context, "Cash In / Cash Out recorded.", type: SnackType.info);
+                  },
+                  icon: const Icon(LucideIcons.arrowUpDown, size: 14),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Cash In / Out', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF166534),
+                    side: const BorderSide(color: Color(0xFF166534)),
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    AppSnackbar.show(context, "Till reconciled successfully for today.", type: SnackType.success);
+                  },
+                  icon: const Icon(LucideIcons.checkCheck, size: 14),
+                  label: const FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text('Reconcile Till', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF166534),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    elevation: 0,
+                  ),
+                ),
+              ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE FLOATING CHECKOUT BAR & BOTTOM SHEET
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMobileFloatingCheckoutBar(BuildContext context) {
+    final itemCount = _cart.fold(0, (sum, i) => sum + i.quantity);
+    return Material(
+      elevation: 6,
+      shadowColor: const Color(0xFF166534).withValues(alpha: 0.35),
+      borderRadius: BorderRadius.circular(16),
+      color: const Color(0xFF166534),
+      child: InkWell(
+        onTap: () => _showMobileCheckoutSheet(context),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(LucideIcons.shoppingBag, color: Colors.white, size: 16),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$itemCount ${itemCount == 1 ? "Item" : "Items"} • Tax Incl.',
+                        style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        '₹${_cartTotal.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Pay Now',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                    SizedBox(width: 4),
+                    Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF166534)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMobileCheckoutSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          padding: EdgeInsets.fromLTRB(16, 16, 16, 20 + MediaQuery.of(ctx).padding.bottom),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCBD5E1),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Complete Payment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                  Text('₹${_cartTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Divider(height: 1),
+              const SizedBox(height: 14),
+              const Text('Select Payment Mode', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondaryText)),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AppSnackbar.show(context, "Cash payment of ₹${_cartTotal.toStringAsFixed(2)} received! Receipt printed.", type: SnackType.success);
+                        setState(() => _cart.clear());
+                      },
+                      icon: const Icon(LucideIcons.banknote, size: 14),
+                      label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Cash (F1)', style: TextStyle(fontWeight: FontWeight.bold))),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF166534),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AppSnackbar.show(context, "UPI QR Code generated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
+                      },
+                      icon: const Icon(LucideIcons.qrCode, size: 14),
+                      label: const FittedBox(fit: BoxFit.scaleDown, child: Text('UPI (F2)', style: TextStyle(fontWeight: FontWeight.bold))),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF7C3AED),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        AppSnackbar.show(context, "Card Terminal initiated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
+                      },
+                      icon: const Icon(LucideIcons.creditCard, size: 14),
+                      label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Card (F3)', style: TextStyle(fontWeight: FontWeight.bold))),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFC2410C),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton.icon(
+                  onPressed: () {
+                    Navigator.pop(ctx);
+                    setState(() => _cart.clear());
+                  },
+                  icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFDC2626)),
+                  label: const Text('Clear Cart & Cancel', style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

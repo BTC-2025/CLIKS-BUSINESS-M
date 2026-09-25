@@ -90,7 +90,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF0FDF4),
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Column(
@@ -109,7 +109,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     // Right Main View
                     Expanded(
                       child: Container(
-                        color: const Color(0xFFF0FDF4),
+                        color: Colors.white,
                         child: _activeTab == _StorageTab.settings
                             ? _buildSettingsView()
                             : SingleChildScrollView(
@@ -441,9 +441,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     return Container(
       width: 220,
       decoration: const BoxDecoration(
-        color: Color(0xFFF0FDF4),
+        color: Colors.white,
         border: Border(
-          right: BorderSide(color: Color(0xFFDCF2E4), width: 1.0),
+          right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
         ),
       ),
       child: ListView(

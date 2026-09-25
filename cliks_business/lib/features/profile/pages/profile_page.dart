@@ -31,7 +31,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     super.initState();
     _accounts = [
       {'username': _currentUsername, 'email': _currentEmail, 'icon': LucideIcons.user, 'color': const Color(0xFF1565C0)},
-      {'username': 'cliks_admin', 'email': 'admin@cliks.business', 'icon': LucideIcons.userCheck, 'color': const Color(0xFF2E7D32)},
+      {'username': 'cliks_admin', 'email': 'admin@cliks.business', 'icon': LucideIcons.userCheck, 'color': AppColors.primaryGreen},
     ];
   }
 
@@ -346,11 +346,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         isMobile ? 20 : 28
       ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.heroGradientColors,
-        ),
+        color: AppColors.primaryGreen,
         borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(32),
           bottomRight: Radius.circular(32),
