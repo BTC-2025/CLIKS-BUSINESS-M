@@ -26,6 +26,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   int _activeAdvisoryTab = 6; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: Auditor Suite, 7: consult, 8: Reports, 9: Senior CA
   int _selectedAuditorIndex = 1; // 0: Statutory, 1: Tax, 2: Internal, 3: Cost, 4: Secretarial, 5: Forensic
   int _activeSubTab = 0; // Sub-tab index
+  bool _showTeamRequests = false;
+  bool _aruntestRemoved = false;
   final TextEditingController _emailController = TextEditingController();
 
   final List<String> _auditorRoles = [
@@ -3522,7 +3524,10 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             return Padding(
               padding: const EdgeInsets.only(right: 6),
               child: InkWell(
-                onTap: () => setState(() => _activeAdvisoryTab = index),
+                onTap: () => setState(() {
+                  _activeAdvisoryTab = index;
+                  _showTeamRequests = false;
+                }),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   padding: EdgeInsets.symmetric(
@@ -4436,18 +4441,19 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 'Audit & Tax Tasks',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
               ),
             ),
             const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: () => showDialog(context: context, builder: (_) => const AssignTaskDialog()),
-              icon: const Icon(LucideIcons.plusCircle, size: 14),
-              label: const Text('Assign Task', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              icon: const Icon(LucideIcons.plus, size: 14),
+              label: const Text('Assign Task', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF166534),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
@@ -4462,15 +4468,189 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   }
 
   Widget _buildAdvisoryTeamsTab(bool isMobile) {
+    if (_showTeamRequests) {
+      return _buildTeamRequestsView(isMobile);
+    }
+    return _buildTeamMembersTableView(isMobile);
+  }
+
+  Widget _buildTeamRequestsView(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header Row
+        // Top bar with Back to Teams button + Title matching Image 2
         if (isMobile)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Practice Team Members', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showTeamRequests = false;
+                  });
+                },
+                icon: const Icon(LucideIcons.arrowLeft, size: 13, color: Color(0xFF334155)),
+                label: const Text(
+                  'Back to Teams',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Row(
+                children: [
+                  Text('✉️ ', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Team Invitations & Requests',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Approve join requests or track pending invitations.',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+              ),
+            ],
+          )
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _showTeamRequests = false;
+                  });
+                },
+                icon: const Icon(LucideIcons.arrowLeft, size: 14, color: Color(0xFF334155)),
+                label: const Text(
+                  'Back to Teams',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text('✉️ ', style: TextStyle(fontSize: 16)),
+                      Text(
+                        'Team Invitations & Requests',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    'Approve join requests or track pending invitations.',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+        const SizedBox(height: 18),
+
+        // Empty state card matching Image 2
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 90, horizontal: 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                ),
+                child: const Icon(
+                  LucideIcons.userCheck,
+                  size: 24,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'No Pending Requests',
+                style: TextStyle(
+                  fontSize: 15.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'All team invitations and member requests have been fully processed.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF64748B),
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTeamMembersTableView(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header Row matching Image 1
+        if (isMobile)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Text('👥 ', style: TextStyle(fontSize: 16)),
+                  Text(
+                    'Practice Team Members',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  ),
+                ],
+              ),
               const SizedBox(height: 4),
               const Text(
                 'Manage roles, access control, and staff associations inside your advisory firm.',
@@ -4481,13 +4661,18 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: () => showDialog(context: context, builder: (_) => const InviteTeamDialog()),
+                      onPressed: () {
+                        setState(() {
+                          _showTeamRequests = true;
+                        });
+                      },
                       icon: const Icon(LucideIcons.userCheck, size: 13, color: Color(0xFF2563EB)),
                       label: const Text('Team Requests', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF93C5FD)),
+                        side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        backgroundColor: Colors.white,
                       ),
                     ),
                   ),
@@ -4517,7 +4702,15 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Practice Team Members', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                    Row(
+                      children: [
+                        Text('👥 ', style: TextStyle(fontSize: 16)),
+                        Text(
+                          'Practice Team Members',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        ),
+                      ],
+                    ),
                     SizedBox(height: 4),
                     Text(
                       'Manage roles, access control, and staff associations inside your advisory firm.',
@@ -4528,13 +4721,18 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               ),
               const SizedBox(width: 16),
               OutlinedButton.icon(
-                onPressed: () => showDialog(context: context, builder: (_) => const InviteTeamDialog()),
+                onPressed: () {
+                  setState(() {
+                    _showTeamRequests = true;
+                  });
+                },
                 icon: const Icon(LucideIcons.userCheck, size: 14, color: Color(0xFF2563EB)),
                 label: const Text('Team Requests', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                 style: OutlinedButton.styleFrom(
-                  side: const BorderSide(color: Color(0xFF93C5FD)),
+                  side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.white,
                 ),
               ),
               const SizedBox(width: 8),
@@ -4552,10 +4750,253 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             ],
           ),
 
-        const SizedBox(height: 16),
-        _buildTeamCard('Rajesh Sharma', 'Senior Auditor', 'rajesh@finpro.com'),
-        const SizedBox(height: 10),
-        _buildTeamCard('Priya Nair', 'Tax Specialist', 'priya@finpro.com'),
+        const SizedBox(height: 18),
+
+        // Table container matching Image 1
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tableContent = Column(
+                children: [
+                  // Table Header Row
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFFFFF),
+                      border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          flex: 3,
+                          child: _buildColumnFilterHeader('TEAM MEMBER'),
+                        ),
+                        Expanded(
+                          flex: 4,
+                          child: _buildColumnFilterHeader('EMAIL ADDRESS'),
+                        ),
+                        Expanded(
+                          flex: 3,
+                          child: _buildColumnFilterHeader('DESIGNATION / ROLE'),
+                        ),
+                        Expanded(
+                          flex: 2,
+                          child: _buildColumnFilterHeader('STATUS'),
+                        ),
+                        const SizedBox(
+                          width: 90,
+                          child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(
+                              'ACTIONS',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF64748B),
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Member row (aruntest)
+                  if (!_aruntestRemoved)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      child: Row(
+                        children: [
+                          // Team Member
+                          Expanded(
+                            flex: 3,
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: const Color(0xFFDCFCE7),
+                                  child: const Text(
+                                    'A',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF15803D),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'aruntest',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Email Address
+                          const Expanded(
+                            flex: 4,
+                            child: Text(
+                              'aruntest@bnxmail.com',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontFamily: 'monospace',
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                          // Designation / Role
+                          Expanded(
+                            flex: 3,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'CS Specialist',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Status
+                          Expanded(
+                            flex: 2,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0FDF4),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Text(
+                                  'Active',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF16A34A),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Actions
+                          SizedBox(
+                            width: 90,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _aruntestRemoved = true;
+                                  });
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Team member removed'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFFECACA)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                ),
+                                child: const Text(
+                                  'Remove',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w500,
+                                    color: Color(0xFFEF4444),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(
+                        child: Text(
+                          'No team members found',
+                          style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+
+              if (constraints.maxWidth < 650) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 650,
+                    child: tableContent,
+                  ),
+                );
+              }
+              return tableContent;
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildColumnFilterHeader(String title) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.filter, size: 9, color: Color(0xFF94A3B8)),
+              SizedBox(width: 2),
+              Icon(LucideIcons.chevronDown, size: 8, color: Color(0xFF94A3B8)),
+            ],
+          ),
+        ),
       ],
     );
   }
