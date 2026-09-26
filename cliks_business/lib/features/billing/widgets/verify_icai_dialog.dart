@@ -2,16 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class VerifyIcaiDialog extends StatefulWidget {
-  const VerifyIcaiDialog({super.key});
+  final void Function(String name, String firm, String regNo, String designation, String chapter)? onVerified;
+  final String? initialName;
+  final String? initialFirm;
+  final String? initialRegNo;
+  final String? initialDesignation;
+  final String? initialChapter;
+
+  const VerifyIcaiDialog({
+    super.key,
+    this.onVerified,
+    this.initialName,
+    this.initialFirm,
+    this.initialRegNo,
+    this.initialDesignation,
+    this.initialChapter,
+  });
 
   @override
   State<VerifyIcaiDialog> createState() => _VerifyIcaiDialogState();
 }
 
 class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
-  final _nameController = TextEditingController();
-  final _firmController = TextEditingController();
-  final _regNoController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _firmController;
+  late final TextEditingController _regNoController;
   final _emailController = TextEditingController(text: 'ravinew2004@bnxmail.com');
   final _addressController = TextEditingController();
 
@@ -40,6 +55,20 @@ class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName ?? '');
+    _firmController = TextEditingController(text: widget.initialFirm ?? '');
+    _regNoController = TextEditingController(text: widget.initialRegNo ?? '');
+    if (widget.initialDesignation != null && _designationOptions.contains(widget.initialDesignation)) {
+      _selectedDesignation = widget.initialDesignation!;
+    }
+    if (widget.initialChapter != null && _chapterOptions.contains(widget.initialChapter)) {
+      _selectedChapter = widget.initialChapter!;
+    }
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _firmController.dispose();
@@ -50,7 +79,18 @@ class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
   }
 
   void _handleSubmit() {
+    final name = _nameController.text.trim().isNotEmpty
+        ? _nameController.text.trim()
+        : 'CA Rajesh Sharma';
+    final firm = _firmController.text.trim().isNotEmpty
+        ? _firmController.text.trim()
+        : 'Sharma & Associates LLP';
+    final regNo = _regNoController.text.trim().isNotEmpty
+        ? _regNoController.text.trim()
+        : '508219';
+
     Navigator.of(context).pop();
+    widget.onVerified?.call(name, firm, regNo, _selectedDesignation, _selectedChapter);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Row(

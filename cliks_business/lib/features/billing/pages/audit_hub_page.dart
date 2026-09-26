@@ -92,6 +92,29 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   bool _aruntestRemoved = false;
   final TextEditingController _emailController = TextEditingController();
 
+  // ICAI Verification & Accreditation State
+  bool _isIcaiVerified = false;
+  String _caFullName = 'CA Rajesh Sharma';
+  String _icaiMembershipNo = '508219';
+  String _memberDesignation = 'Associate Member (ACA)';
+  String _firmPracticeName = 'Sharma & Associates LLP';
+  String _icaiChapter = 'Southern India Regional Council (SIRC)';
+
+  String get _memberDesignationShort {
+    if (_memberDesignation.contains('FCA')) return 'FCA';
+    if (_memberDesignation.contains('ACA')) return 'ACA';
+    return _memberDesignation;
+  }
+
+  String get _icaiChapterShort {
+    if (_icaiChapter.contains('SIRC')) return 'SIRC Chapter';
+    if (_icaiChapter.contains('WIRC')) return 'WIRC Chapter';
+    if (_icaiChapter.contains('NIRC')) return 'NIRC Chapter';
+    if (_icaiChapter.contains('EIRC')) return 'EIRC Chapter';
+    if (_icaiChapter.contains('CIRC')) return 'CIRC Chapter';
+    return _icaiChapter;
+  }
+
   final List<String> _auditorRoles = [
     'Statutory Financial Auditor (ICAI CA)',
     'Tax Auditor (ICAI CA)',
@@ -397,38 +420,174 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Align(
-            alignment: Alignment.centerRight,
-            child: InkWell(
-              onTap: () => _showVerifyIcaDialog(context),
-              borderRadius: BorderRadius.circular(20),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF166534), width: 1.5),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.shieldCheck, size: 14, color: Color(0xFF166534)),
-                    SizedBox(width: 6),
-                    Text(
-                      'VERIFY ICAI',
-                      style: TextStyle(
-                        color: Color(0xFF166534),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 11.5,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
+          // ─── AUDITOR IDENTITY & ACCREDITATION STRIP (APPROACH 1) ───
+          Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 12 : 16,
+              vertical: isMobile ? 10 : 12,
+            ),
+            decoration: BoxDecoration(
+              color: _isIcaiVerified ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: _isIcaiVerified ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+                width: 1.2,
               ),
             ),
+            child: Row(
+              children: [
+                // Left: Signing Auditor Avatar & Status Icon
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: _isIcaiVerified ? const Color(0xFFDCFCE7) : const Color(0xFFEFF6FF),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: _isIcaiVerified ? const Color(0xFF86EFAC) : const Color(0xFFBFDBFE),
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Center(
+                    child: Icon(
+                      _isIcaiVerified ? LucideIcons.badgeCheck : LucideIcons.userCheck,
+                      size: 19,
+                      color: _isIcaiVerified ? const Color(0xFF15803D) : const Color(0xFF2563EB),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              _isIcaiVerified
+                                  ? '$_caFullName ($_memberDesignationShort)'
+                                  : 'Signing Partner / Auditor',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: _isIcaiVerified ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(5),
+                              border: Border.all(
+                                color: _isIcaiVerified ? const Color(0xFF86EFAC) : const Color(0xFFFDE68A),
+                                width: 0.8,
+                              ),
+                            ),
+                            child: Text(
+                              _isIcaiVerified ? 'ICAI ACCREDITED' : 'VERIFICATION REQUIRED',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w800,
+                                color: _isIcaiVerified ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        _isIcaiVerified
+                            ? 'M.No: $_icaiMembershipNo • Active COP • $_firmPracticeName • $_icaiChapterShort'
+                            : 'Verify ICAI membership & COP to enable automated UDIN generation & statutory e-filing.',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                          color: _isIcaiVerified ? const Color(0xFF166534) : const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+
+                // Right: Verify Button / Status Pill
+                if (!_isIcaiVerified)
+                  InkWell(
+                    onTap: () => _showVerifyIcaDialog(context),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF056B43),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF056B43).withValues(alpha: 0.25),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.shieldCheck, size: 15, color: Colors.white),
+                          SizedBox(width: 7),
+                          Text(
+                            'Verify ICAI Credentials',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                else
+                  InkWell(
+                    onTap: () => _showVerifyIcaDialog(context),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFF86EFAC), width: 1.2),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFF166534)),
+                          SizedBox(width: 6),
+                          Text(
+                            'Credentials Verified',
+                            style: TextStyle(
+                              color: Color(0xFF166534),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11.5,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(LucideIcons.pencil, size: 11, color: Color(0xFF166534)),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
@@ -487,7 +646,23 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) => const VerifyIcaiDialog(),
+      builder: (ctx) => VerifyIcaiDialog(
+        initialName: _caFullName,
+        initialFirm: _firmPracticeName,
+        initialRegNo: _icaiMembershipNo,
+        initialDesignation: _memberDesignation,
+        initialChapter: _icaiChapter,
+        onVerified: (name, firm, regNo, designation, chapter) {
+          setState(() {
+            _isIcaiVerified = true;
+            _caFullName = name;
+            _firmPracticeName = firm;
+            _icaiMembershipNo = regNo;
+            _memberDesignation = designation;
+            _icaiChapter = chapter;
+          });
+        },
+      ),
     );
   }
 
