@@ -22,7 +22,7 @@ class AuditHubPage extends StatefulWidget {
 }
 
 class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderStateMixin {
-  int _activeWorkplace = 0; // 0: FIN-PRO Business, 1: FIN-PRO Firm
+  final int _activeWorkplace = 1; // 1: FIN-PRO Firm
   int _activeAdvisoryTab = 0; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: consult, 7: Reports, 8: Senior CA
   final TextEditingController _emailController = TextEditingController();
 
@@ -49,7 +49,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    final isFirmWorkplace = isMacOS ? (_activeWorkplace == 1) : true;
+    const isFirmWorkplace = true;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -195,122 +195,35 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
           const SizedBox(height: 14),
 
-          // Workplace Selector (On macOS: 2 Toggle Buttons; On Mobile: Firm Advisory Banner)
-          if (isMacOS)
-            Row(
+          // FIN-PRO Firm Advisory Workspace Banner
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+            ),
+            alignment: Alignment.center,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _activeWorkplace = 0),
-                    child: AnimatedContainer(
-                      duration: Duration.zero,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _activeWorkplace == 0 ? Colors.white : Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            LucideIcons.monitor,
-                            color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              'FIN-PRO Business',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: _activeWorkplace == 0 ? AppColors.stylishDarkGreen : Colors.white,
-                                fontSize: isMobile ? 11 : 12.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
+                const Icon(LucideIcons.userCheck, color: Colors.white, size: 14),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => setState(() => _activeWorkplace = 1),
-                    child: AnimatedContainer(
-                      duration: Duration.zero,
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      decoration: BoxDecoration(
-                        color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: _activeWorkplace == 1 ? Colors.white : Colors.white.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            LucideIcons.userCheck,
-                            color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
-                            size: 14,
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              'FIN-PRO Firm',
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: _activeWorkplace == 1 ? AppColors.stylishDarkGreen : Colors.white,
-                                fontSize: isMobile ? 11 : 12.5,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
+                Flexible(
+                  child: Text(
+                    'FIN-PRO Firm Advisory Workspace',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: isMobile ? 11.5 : 12.5,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
               ],
-            )
-          else
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-              ),
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(LucideIcons.userCheck, color: Colors.white, size: 14),
-                  const SizedBox(width: 8),
-                  Flexible(
-                    child: Text(
-                      'FIN-PRO Firm Advisory Workspace',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: isMobile ? 11.5 : 12.5,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             ),
+          ),
 
           const SizedBox(height: 14),
 

@@ -780,6 +780,7 @@ class Sidebar extends ConsumerWidget {
                       AppRoute.accounting,
                       AppRoute.expenses,
                       AppRoute.gst,
+                      AppRoute.fintech,
                       AppRoute.recordExpense,
                       AppRoute.lodgeStaffClaim,
                       AppRoute.generateEWayBill,
@@ -818,6 +819,15 @@ class Sidebar extends ConsumerWidget {
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.gst),
+                      ),
+                      _buildMacOSSubItem(
+                        icon: LucideIcons.cpu,
+                        label: 'Fintech',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.fintech,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.fintech),
                       ),
                     ],
                   ),
