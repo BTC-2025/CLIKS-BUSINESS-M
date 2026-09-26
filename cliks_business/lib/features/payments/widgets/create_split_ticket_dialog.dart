@@ -16,8 +16,8 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
   final _descriptionController = TextEditingController();
   final _budgetController = TextEditingController();
   final _participantController = TextEditingController();
-  String _selectedCurrency = 'INR (₹)';
-  final List<String> _participants = ['You'];
+  String _selectedCurrency = 'INR';
+  final List<String> _participants = ['You', 'sri', 'monica', 'vincent', 'ashwin'];
 
   @override
   void dispose() {
@@ -30,7 +30,7 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
 
   void _addParticipant() {
     final name = _participantController.text.trim();
-    if (name.isNotEmpty) {
+    if (name.isNotEmpty && !_participants.contains(name)) {
       setState(() {
         _participants.add(name);
         _participantController.clear();
@@ -45,66 +45,46 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
 
     return Dialog(
       backgroundColor: Colors.white,
-      alignment: Alignment.bottomCenter,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(32),
-          topRight: Radius.circular(32),
-        ),
+      alignment: Alignment.center,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
       ),
-      insetPadding: EdgeInsets.zero,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: ConstrainedBox(
         constraints: BoxConstraints(
-          maxWidth: isMobile ? double.infinity : 500,
-          maxHeight: MediaQuery.of(context).size.height * 0.75,
+          maxWidth: isMobile ? double.infinity : 520,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Drag Handle
-            Align(
-              alignment: Alignment.topCenter,
-              child: Container(
-                width: 40,
-                height: 4,
-                margin: const EdgeInsets.only(top: 8, bottom: 4),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 16, 12),
+              padding: const EdgeInsets.fromLTRB(24, 20, 20, 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Expanded(
-                    child: Text(
-                      'Create Split Ticket',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                      overflow: TextOverflow.ellipsis,
+                  const Text(
+                    'Create Split Ticket',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF064E3B),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(LucideIcons.x, size: 18, color: Colors.black54),
+                    icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF64748B)),
                     style: IconButton.styleFrom(
-                      backgroundColor: Colors.grey.shade100,
+                      backgroundColor: const Color(0xFFF1F5F9),
                       shape: const CircleBorder(),
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(6),
                     ),
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1, color: AppColors.border),
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
             
             // Form Content
             Flexible(
@@ -129,7 +109,7 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
                           flex: 2,
                           child: Column(
@@ -150,7 +130,7 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
                     
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -163,13 +143,13 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                               _buildLabel('GROUP CURRENCY'),
                               _buildDropdown(
                                 value: _selectedCurrency,
-                                items: ['INR (₹)', 'USD (\$)', 'EUR (€)', 'GBP (£)'],
+                                items: ['INR', 'USD', 'EUR', 'GBP'],
                                 onChanged: (v) => setState(() => _selectedCurrency = v!),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: 14),
                         Expanded(
                           flex: 3,
                           child: Column(
@@ -185,7 +165,7 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 18),
                     
                     _buildLabel('PARTICIPANTS (${_participants.length})'),
                     Row(
@@ -196,34 +176,34 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                             hint: 'Add participant name...',
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         SizedBox(
-                          height: 48,
+                          height: 44,
                           child: ElevatedButton.icon(
                             onPressed: _addParticipant,
-                            icon: const Icon(LucideIcons.userPlus, size: 16),
+                            icon: const Icon(LucideIcons.userPlus, size: 15),
                             label: const Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              foregroundColor: AppColors.primaryGreen,
+                              foregroundColor: const Color(0xFF0E4D34),
                               elevation: 0,
-                              side: const BorderSide(color: Color(0xFFE5EAF4)),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 14),
                     
-                    // Participants List (Preview)
+                    // Participants List
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE5EAF4)),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: Wrap(
                         spacing: 8,
@@ -231,7 +211,7 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                         children: _participants.map((p) => _buildParticipantChip(p)).toList(),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 28),
                     
                     SizedBox(
                       width: double.infinity,
@@ -253,7 +233,7 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                             return;
                           }
                           final newTicket = {
-                            'id': DateTime.now().millisecondsSinceEpoch.toString(),
+                            'id': 'ticket_${DateTime.now().millisecondsSinceEpoch}',
                             'title': title,
                             'currency': _selectedCurrency,
                             'budget': budgetVal,
@@ -268,14 +248,14 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
                           Navigator.pop(context, newTicket);
                         },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF084421),
+                          backgroundColor: const Color(0xFF0E4D34),
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: const Text(
                           'Create Ticket',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -295,14 +275,14 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5EAF4)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             name,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.darkText),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
           ),
           if (name != 'You') ...[
             const SizedBox(width: 6),
@@ -318,15 +298,15 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      padding: const EdgeInsets.only(bottom: 6.0, left: 2),
       child: Text(
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontSize: 10,
-          fontWeight: FontWeight.bold,
-          color: Color(0xFF5A7184),
+          fontWeight: FontWeight.w800,
+          color: Color(0xFF64748B),
           letterSpacing: 0.5,
         ),
       ),
@@ -343,25 +323,25 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
       controller: controller,
       keyboardType: keyboardType,
       inputFormatters: inputFormatters,
-      style: const TextStyle(fontSize: 14, color: AppColors.darkText, fontWeight: FontWeight.w500),
+      style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFC1C7D0), fontSize: 13),
+        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
         filled: true,
         fillColor: Colors.white,
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE5EAF4)),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFFE5EAF4)),
+          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: Color(0xFF084421), width: 1.5),
+          borderSide: const BorderSide(color: Color(0xFF0E4D34), width: 1.5),
         ),
       ),
     );
@@ -373,22 +353,22 @@ class _CreateSplitTicketDialogState extends State<CreateSplitTicketDialog> {
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
-      height: 48,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE5EAF4)),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
           isExpanded: true,
-          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF5A7184)),
+          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(item, style: const TextStyle(fontSize: 13, color: AppColors.darkText, fontWeight: FontWeight.w500)),
+              child: Text(item, style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500)),
             );
           }).toList(),
           onChanged: onChanged,
