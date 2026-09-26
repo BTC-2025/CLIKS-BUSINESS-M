@@ -7,6 +7,7 @@ import '../widgets/request_document_dialog.dart';
 import '../widgets/assign_task_dialog.dart';
 import '../widgets/register_client_dialog.dart';
 import '../widgets/invite_team_dialog.dart';
+import '../widgets/verify_icai_dialog.dart';
 
 class _TabItem {
   final String label;
@@ -485,86 +486,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   void _showVerifyIcaDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFDCFCE7),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Icon(LucideIcons.shieldCheck, color: Color(0xFF15803D), size: 22),
-            ),
-            const SizedBox(width: 12),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('ICAI Member Verification Portal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text('Institute of Chartered Accountants of India', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
-                ],
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: const Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Practicing CA:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                      Text('CA Ravindran K. (FCA)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Membership No:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                      Text('084291 (Active COP)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Firm Reg No (FRN):', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                      Text('009182S / 2026', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
-                    ],
-                  ),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('UDIN Service:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                      Text('LIVE & Connected ✓', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close', style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
+      barrierDismissible: true,
+      builder: (ctx) => const VerifyIcaiDialog(),
     );
   }
 
