@@ -1073,14 +1073,6 @@ class Sidebar extends ConsumerWidget {
                         .setRoute(AppRoute.marketing),
                   ),
 
-                  _buildMacOSItem(
-                    icon: LucideIcons.briefcase,
-                    label: 'FIN-PRO Audit Hub',
-                    isSelected: navigation.currentRoute == AppRoute.auditHub,
-                    onTap: () => ref
-                        .read(navigationProvider.notifier)
-                        .setRoute(AppRoute.auditHub),
-                  ),
 
                   _buildMacOSItem(
                     icon: LucideIcons.sparkles,

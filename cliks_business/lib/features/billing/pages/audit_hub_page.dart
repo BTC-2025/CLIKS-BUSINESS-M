@@ -23,20 +23,49 @@ class AuditHubPage extends StatefulWidget {
 
 class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderStateMixin {
   final int _activeWorkplace = 1; // 1: FIN-PRO Firm
-  int _activeAdvisoryTab = 0; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: consult, 7: Reports, 8: Senior CA
+  int _activeAdvisoryTab = 6; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: Auditor Suite, 7: consult, 8: Reports, 9: Senior CA
+  int _selectedAuditorIndex = 1; // 0: Statutory, 1: Tax, 2: Internal, 3: Cost, 4: Secretarial, 5: Forensic
+  int _activeSubTab = 0; // Sub-tab index
   final TextEditingController _emailController = TextEditingController();
 
-  final List<_TabItem> _advisoryTabs = [
+  final List<String> _auditorRoles = [
+    'Statutory Financial Auditor (ICAI CA)',
+    'Tax Auditor (ICAI CA)',
+    'Internal Auditor (CIA / CA / CMA)',
+    'Cost Auditor (ICMAI CMA)',
+    'Secretarial Auditor (ICSI CS)',
+    'Forensic Auditor (ICAI FAFD / CFE)',
+  ];
+
+  late final List<_TabItem> _advisoryTabs = [
     _TabItem('Home', LucideIcons.home),
     _TabItem('Clients', LucideIcons.users),
     _TabItem('Tasks', LucideIcons.checkSquare),
     _TabItem('Teams', LucideIcons.userCheck),
     _TabItem('Time Tracking', LucideIcons.clock),
     _TabItem('Workpaper', LucideIcons.fileText),
+    _TabItem('Tax Auditor', LucideIcons.briefcase),
     _TabItem('consult', LucideIcons.wallet),
     _TabItem('Reports', LucideIcons.barChart2),
     _TabItem('Senior CA', LucideIcons.userCheck),
   ];
+
+  void _selectAuditorRole(int index) {
+    setState(() {
+      _selectedAuditorIndex = index;
+      _activeAdvisoryTab = 6;
+      _activeSubTab = 0;
+      final roleNames = [
+        'Statutory Financial Auditor',
+        'Tax Auditor',
+        'Internal Auditor',
+        'Cost Auditor',
+        'Secretarial Auditor',
+        'Forensic Auditor',
+      ];
+      _advisoryTabs[6] = _TabItem(roleNames[index], LucideIcons.briefcase);
+    });
+  }
 
   @override
   void dispose() {
@@ -56,38 +85,39 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ─── HERO SUMMARY CARD WITH INTEGRATED WORKPLACE BUTTONS ───
+          // ─── CARD 1: TOP AUDITOR ROLE CARDS & ICAI VERIFICATION ───
           SliverToBoxAdapter(
-            child: isMacOS
-                ? _buildHeroSummary(isMobile, isMacOS)
-                : _buildHeroSummary(isMobile, isMacOS)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: -0.05, end: 0),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 14 : 24,
+                isMobile ? 12 : 16,
+                isMobile ? 14 : 24,
+                0,
+              ),
+              child: _buildTopAuditorCard(isMobile),
+            ),
           ),
 
           const SliverToBoxAdapter(
             child: SizedBox(height: 12),
           ),
 
-          // ─── STICKY ADVISORY TAB NAVIGATION (When in Firm Mode) ───
-          if (isFirmWorkplace)
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _StickyTabNavDelegate(
-                height: isMobile ? 50 : 56,
-                child: Container(
-                  color: const Color(0xFFF8F9FB),
-                  padding: const EdgeInsets.symmetric(vertical: 2),
-                  child: _buildAdvisoryTabsBar(isMobile),
-                ),
+          // ─── CARD 2: TOP ADVISORY TABS CARD (EXACT TO REFERENCE IMAGES) ───
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 14 : 24,
+                0,
+                isMobile ? 14 : 24,
+                0,
               ),
+              child: _buildAdvisoryTabsBar(isMobile),
             ),
+          ),
 
-          if (isFirmWorkplace)
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 8),
-            ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 16),
+          ),
 
           // ─── MAIN CONTENT AREA ───
           SliverPadding(
@@ -283,63 +313,3250 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // ADVISORY CHOICE TABS (Accounting Style)
+  // TOP AUDITOR ROLE CARDS & ICAI VERIFICATION (macOS)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildAdvisoryTabsBar(bool isMobile) {
+  Widget _buildTopAuditorCard(bool isMobile) {
     return Container(
-      height: isMobile ? 46 : 52,
-      margin: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 16),
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 20, vertical: 6),
-        itemCount: _advisoryTabs.length,
-        itemBuilder: (context, index) {
-          final isSelected = _activeAdvisoryTab == index;
-          return Padding(
-            padding: const EdgeInsets.only(right: 6),
-            child: GestureDetector(
-              onTap: () => setState(() => _activeAdvisoryTab = index),
-              child: AnimatedContainer(
-                duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 12 : 18,
-                  vertical: 6,
-                ),
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: InkWell(
+              onTap: () => _showVerifyIcaDialog(context),
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF166534) : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
-                  ),
-                  boxShadow: isSelected
-                      ? [BoxShadow(color: const Color(0xFF166534).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))]
-                      : [],
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFF166534), width: 1.5),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      _advisoryTabs[index].icon,
-                      size: isMobile ? 13 : 15,
-                      color: isSelected ? Colors.white : const Color(0xFF6B7280),
-                    ),
-                    const SizedBox(width: 5),
+                    Icon(LucideIcons.shieldCheck, size: 14, color: Color(0xFF166534)),
+                    SizedBox(width: 6),
                     Text(
-                      _advisoryTabs[index].label,
+                      'VERIFY ICAI',
                       style: TextStyle(
-                        fontSize: isMobile ? 11.5 : 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF374151),
+                        color: Color(0xFF166534),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11.5,
+                        letterSpacing: 0.5,
                       ),
                     ),
                   ],
                 ),
               ),
             ),
-          );
-        },
+          ),
+          const SizedBox(height: 12),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: List.generate(_auditorRoles.length, (index) {
+                final isSelected = _selectedAuditorIndex == index;
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: InkWell(
+                    onTap: () => _selectAuditorRole(index),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                          width: isSelected ? 1.5 : 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: isSelected ? const Color(0xFF166534) : const Color(0xFF9CA3AF),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _auditorRoles[index],
+                            style: TextStyle(
+                              color: isSelected ? const Color(0xFF166534) : const Color(0xFF4B5563),
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              fontSize: isMobile ? 11.5 : 12.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showVerifyIcaDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(LucideIcons.shieldCheck, color: Color(0xFF15803D), size: 22),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('ICAI Member Verification Portal', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text('Institute of Chartered Accountants of India', style: TextStyle(fontSize: 11, color: Color(0xFF6B7280))),
+                ],
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: const Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Practicing CA:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                      Text('CA Ravindran K. (FCA)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Membership No:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                      Text('084291 (Active COP)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Firm Reg No (FRN):', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                      Text('009182S / 2026', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF111827))),
+                    ],
+                  ),
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('UDIN Service:', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
+                      Text('LIVE & Connected ✓', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close', style: TextStyle(color: Color(0xFF166534), fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // STATUTORY FINANCIAL AUDIT SUITE CARD (EXACT TO IMAGES)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildAuditorSuiteTab(bool isMobile) {
+    final subTabs = _getSuiteSubTabs();
+    final isTaxAudit = _selectedAuditorIndex == 1;
+
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Suite Header & Core Deliverable
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: isTaxAudit ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: isTaxAudit ? const Color(0xFFFDE68A) : const Color(0xFFDBEAFE)),
+                ),
+                child: Icon(
+                  LucideIcons.fileText,
+                  color: isTaxAudit ? const Color(0xFFD97706) : const Color(0xFF2563EB),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 4,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Text(
+                          _getSuiteTitle(),
+                          style: TextStyle(
+                            fontSize: isMobile ? 16 : 18,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF111827),
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isTaxAudit ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: isTaxAudit ? const Color(0xFFFDE68A) : const Color(0xFFBFDBFE)),
+                          ),
+                          child: Text(
+                            _getSuiteBadge(),
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: isTaxAudit ? const Color(0xFFB45309) : const Color(0xFF1D4ED8),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      _getSuiteSubtitle(),
+                      style: TextStyle(
+                        fontSize: isMobile ? 12 : 13,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          // Deliverable Box (full-featured pill on its own line)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('📦 ', style: TextStyle(fontSize: 13)),
+                Flexible(
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: 'Core Deliverable: ',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12.5,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
+                        TextSpan(
+                          text: _getCoreDeliverableText(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 12.5,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Sub-Tabs Bar
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: List.generate(subTabs.length, (index) {
+                final activeSub = _activeSubTab >= subTabs.length ? 0 : _activeSubTab;
+                final isSubSelected = activeSub == index;
+
+                Color activeBorderColor;
+                Color activeTextColor;
+                if (isTaxAudit) {
+                  if (index == 0) {
+                    activeBorderColor = const Color(0xFFD97706);
+                    activeTextColor = const Color(0xFFD97706);
+                  } else if (index == 1 || index == 2) {
+                    activeBorderColor = const Color(0xFF2563EB);
+                    activeTextColor = const Color(0xFF2563EB);
+                  } else if (index == 3) {
+                    activeBorderColor = const Color(0xFFD97706);
+                    activeTextColor = const Color(0xFFD97706);
+                  } else {
+                    activeBorderColor = const Color(0xFF2563EB);
+                    activeTextColor = const Color(0xFFD97706);
+                  }
+                } else {
+                  activeBorderColor = const Color(0xFF2563EB);
+                  activeTextColor = const Color(0xFF2563EB);
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: InkWell(
+                    onTap: () => setState(() => _activeSubTab = index),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSubSelected ? activeBorderColor : Colors.transparent,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: Text(
+                        subTabs[index],
+                        style: TextStyle(
+                          fontSize: isMobile ? 12 : 13,
+                          fontWeight: isSubSelected ? FontWeight.w700 : FontWeight.w600,
+                          color: isSubSelected ? activeTextColor : const Color(0xFF4B5563),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+
+          // Active Sub-Tab View
+          Builder(
+            builder: (context) {
+              final activeSub = _activeSubTab >= subTabs.length ? 0 : _activeSubTab;
+              if (_selectedAuditorIndex == 0) {
+                if (activeSub == 0) return _buildRule11gVault(isMobile);
+                if (activeSub == 1) return _buildSmartVouching(isMobile);
+                if (activeSub == 2) return _buildFixedAssetDepreciation(isMobile);
+                if (activeSub == 3) return _buildDirectBankBRS(isMobile);
+              } else if (_selectedAuditorIndex == 1) {
+                if (activeSub == 0) return _buildTaxCashPaymentWatchdog(isMobile);
+                if (activeSub == 1) return _buildTaxTdsTcsHub(isMobile);
+                if (activeSub == 2) return _buildTaxClause44ExpenseBreakdown(isMobile);
+                if (activeSub == 3) return _buildTaxMsmePaymentTracker(isMobile);
+                if (activeSub == 4) return _buildTaxStatutoryDuesClock(isMobile);
+              }
+              return _buildGeneralAuditorSuiteContent(isMobile);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SUB-TAB 0: RULE 11(g) VAULT & CERTIFICATE (IMAGE 1 & 5) ───
+  Widget _buildRule11gVault(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text('🛡️', style: TextStyle(fontSize: 15)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Immutable Rule 11(g) Audit-Log Vault & Certificate',
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Append-only, tamper-evident datastore logging all voucher creations, modifications, and deletions with field-level diffs.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Downloading Rule 11(g) Audit Trail Certificate PDF...'),
+                      backgroundColor: Color(0xFF1D4ED8),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1D4ED8),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.download, size: 14, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        '1-Click Rule 11(g) Report (.PDF)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          // Monospaced Console Log Box
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '[SYSTEM STATUS] Rule 11(g) Audit Logging: ACTIVE & IMMUTABLE (Zero Downtime / Zero Tampering)',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12.5,
+                    color: Color(0xFF15803D),
+                  ),
+                ),
+                SizedBox(height: 10),
+                Text(
+                  '• 2026-09-09 14:22:01 | User: accounts@bnxmail.com | Table: vouchers | Action: UPDATE | Field: amount | old: ₹45,000 → new: ₹50,000\n'
+                  '• 2026-09-09 11:15:40 | User: admin@bnxmail.com | Table: ledger_entries | Action: CREATE | Record ID: #8912 | Status: Verified\n'
+                  '• 2026-09-08 17:04:12 | User: audit_user@bnxmail.com | Table: invoices | Action: DELETE (Soft) | Record ID: #4401 | Reason: Cancelled',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    color: Color(0xFF374151),
+                    height: 1.6,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SUB-TAB 1: SMART VOUCHING & SAMPLER (IMAGE 2) ───
+  Widget _buildSmartVouching(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(LucideIcons.search, size: 16, color: Color(0xFF4B5563)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Smart Vouching & Materiality Sampler',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '3-Way Match Verification (PO ↔ GRN ↔ Purchase Invoice) & Statistical Sampling Engine.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: const Text(
+                      'Cutoff: > ₹50,000',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1D4ED8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFA7F3D0)),
+                    ),
+                    child: const Text(
+                      '3-Way Match Rate: 98.4%',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF047857),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF9FAFB),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 2, child: Text('PO Number', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                      Expanded(flex: 2, child: Text('GRN Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                      Expanded(flex: 2, child: Text('Invoice Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                      Expanded(flex: 2, child: Text('Amount', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                      Expanded(flex: 3, child: Text('3-Way Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 2, child: Text('PO-8821', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)))),
+                      Expanded(flex: 2, child: Text('GRN-4012', style: TextStyle(fontSize: 12.5, color: Color(0xFF166534)))),
+                      Expanded(flex: 2, child: Text('INV-9021', style: TextStyle(fontSize: 12.5, color: Color(0xFF374151)))),
+                      Expanded(flex: 2, child: Text('₹1,25,000', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF111827)))),
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            Icon(LucideIcons.check, size: 14, color: Color(0xFF15803D)),
+                            SizedBox(width: 4),
+                            Text('Matched (Qty & Rate)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: const Row(
+                    children: [
+                      Expanded(flex: 2, child: Text('PO-8840', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)))),
+                      Expanded(flex: 2, child: Text('GRN-4029', style: TextStyle(fontSize: 12.5, color: Color(0xFF166534)))),
+                      Expanded(flex: 2, child: Text('INV-9055', style: TextStyle(fontSize: 12.5, color: Color(0xFF374151)))),
+                      Expanded(flex: 2, child: Text('₹68,000', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF111827)))),
+                      Expanded(
+                        flex: 3,
+                        child: Row(
+                          children: [
+                            Icon(LucideIcons.triangleAlert, size: 14, color: Color(0xFFDC2626)),
+                            SizedBox(width: 4),
+                            Text('Rate Discrepancy (2.5% spike)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SUB-TAB 2: FIXED ASSET & DEPRECIATION (IMAGE 3) ───
+  Widget _buildFixedAssetDepreciation(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('📓', style: TextStyle(fontSize: 15)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Fixed Asset & Depreciation Engine',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Auto-computes Companies Act 2013 Sched II (Useful life) vs Income Tax Act (Block of assets).',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          if (isMobile)
+            Column(
+              children: [
+                _buildDepreciationMetricCard(
+                  'COMPANIES ACT SCHED II (SLM/WDV)',
+                  '₹1,42,000',
+                  const Color(0xFF2563EB),
+                ),
+                const SizedBox(height: 12),
+                _buildDepreciationMetricCard(
+                  'INCOME TAX ACT (BLOCK OF ASSETS)',
+                  '₹1,68,500',
+                  const Color(0xFF15803D),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _buildDepreciationMetricCard(
+                    'COMPANIES ACT SCHED II (SLM/WDV)',
+                    '₹1,42,000',
+                    const Color(0xFF2563EB),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildDepreciationMetricCard(
+                    'INCOME TAX ACT (BLOCK OF ASSETS)',
+                    '₹1,68,500',
+                    const Color(0xFF15803D),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDepreciationMetricCard(String title, String amount, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF6B7280),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SUB-TAB 3: DIRECT BANK BRS ENGINE (IMAGE 4) ───
+  Widget _buildDirectBankBRS(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text('🏛️', style: TextStyle(fontSize: 15)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Direct Bank Reconciliation (BRS) Engine',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Reconciles bank statement feeds against system ledgers with unpresented cheque tracking.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          if (isMobile)
+            Column(
+              children: [
+                _buildBRSMetricCard('Unpresented Cheques', '₹1,24,000', const Color(0xFFD97706)),
+                const SizedBox(height: 12),
+                _buildBRSMetricCard('Uncleared Deposits', '₹85,000', const Color(0xFF2563EB)),
+                const SizedBox(height: 12),
+                _buildBRSMetricCard('Net BRS Discrepancy', '₹0.00 (Reconciled)', const Color(0xFF15803D)),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: _buildBRSMetricCard('Unpresented Cheques', '₹1,24,000', const Color(0xFFD97706)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildBRSMetricCard('Uncleared Deposits', '₹85,000', const Color(0xFF2563EB)),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: _buildBRSMetricCard('Net BRS Discrepancy', '₹0.00 (Reconciled)', const Color(0xFF15803D)),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBRSMetricCard(String title, String amount, Color color) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAX AUDIT & FORM 3CD HUB (5 SUB-TABS EXACT TO IMAGES)
+  // ═══════════════════════════════════════════════════════════════
+
+  // ─── TAX SUB-TAB 0: SEC 40A(3) CASH PAYMENT WATCHDOG (IMAGE 1) ───
+  Widget _buildTaxCashPaymentWatchdog(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Top Watchdog Header Box
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Row(
+                      children: [
+                        Text('📕', style: TextStyle(fontSize: 14)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Section 40A(3) Cash Payment Watchdog',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Flags aggregate daily cash payments to a single vendor subject to tax disallowance under Sec 40A(3).',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF1F2),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFFECDD3)),
+                ),
+                child: const Text(
+                  'Threshold: > ₹10,000 / Day / Party',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFE11D48),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // 2. Disallowed Alert Banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF1F2),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFFECDD3)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFFECDD3)),
+                ),
+                child: const Icon(LucideIcons.alertTriangle, color: Color(0xFFE11D48), size: 16),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Vendor: Balaji Heavy Roadways',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text.rich(
+                      TextSpan(
+                        children: const [
+                          TextSpan(
+                            text: 'Date: 2026-08-18 | Total Cash: ',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                          ),
+                          TextSpan(
+                            text: '₹38,200',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFFBE123C),
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' across 1 vouchers (VCH-8411)',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'DISALLOWED u/s 40A(3)',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFBE123C),
+                    letterSpacing: 0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // 3. SEC 40A(3) AUDIT INSPECTION LEDGER Table
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text(
+                      'SEC 40A(3) AUDIT INSPECTION LEDGER',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF374151),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'FY 2025-2026 | Auto-aggregated by Date & Party',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  dataRowMinHeight: 64,
+                  dataRowMaxHeight: double.infinity,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  headingTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF4B5563),
+                  ),
+                  dataTextStyle: const TextStyle(fontSize: 12, color: Color(0xFF1F2937)),
+                  horizontalMargin: 16,
+                  columnSpacing: 24,
+                  columns: const [
+                    DataColumn(label: Text('Payment\nDate')),
+                    DataColumn(label: Text('Party / Vendor Name')),
+                    DataColumn(label: Text('PAN')),
+                    DataColumn(label: Text('Voucher Nos')),
+                    DataColumn(label: Text('Total Cash\nPaid (₹)')),
+                    DataColumn(label: Text('Statutory\nLimit')),
+                    DataColumn(label: Text('Status')),
+                    DataColumn(label: Text('Action')),
+                  ],
+                  rows: [
+                    // Row 1: Sharma Logistics
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('2026-09-\n02', style: TextStyle(fontSize: 11.5))),
+                        DataCell(
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Text(
+                                  'Sharma Logistics (Cash Payment)',
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Note: Rule 6DD(g) - Payment made on bank holiday or\noffline rural banking unit',
+                                  style: TextStyle(fontSize: 10.5, color: Color(0xFF047857)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const DataCell(Text('AABCS99\n12E', style: TextStyle(fontSize: 11.5))),
+                        const DataCell(Text('VCH-9012,\nVCH-9015', style: TextStyle(fontSize: 11.5))),
+                        const DataCell(Text('₹18,500', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('₹10,000')),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(LucideIcons.check, size: 12, color: Color(0xFF047857)),
+                                SizedBox(width: 4),
+                                Text(
+                                  'EXEMPT u/r\n6DD',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF047857),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFF10B981)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(LucideIcons.check, size: 12, color: Color(0xFF047857)),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Exempted',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF047857),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Remark',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  color: Color(0xFF9CA3AF),
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Row 2: Balaji Heavy Roadways
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('2026-08-\n18', style: TextStyle(fontSize: 11.5))),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Balaji Heavy Roadways',
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                                ),
+                                child: const Text(
+                                  'Transporter',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('AAHFB77\n14K', style: TextStyle(fontSize: 11.5))),
+                        const DataCell(Text('VCH-8411')),
+                        const DataCell(Text('₹38,200', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('₹35,000')),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Text(
+                              'DISALLOWED',
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFBE123C),
+                              ),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFD1D5DB)),
+                            ),
+                            child: const Text(
+                              'Exempt under Rule\n6DD',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Row 3: Shree Sai Packing Materials
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('2026-08-\n25', style: TextStyle(fontSize: 11.5))),
+                        const DataCell(
+                          Text(
+                            'Shree Sai Packing Materials',
+                            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                          ),
+                        ),
+                        const DataCell(Text('AACSS44\n12L', style: TextStyle(fontSize: 11.5))),
+                        const DataCell(Text('VCH-8650')),
+                        const DataCell(Text('₹9,200', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('₹10,000')),
+                        const DataCell(
+                          Text(
+                            'COMPLIANT',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFD1D5DB)),
+                            ),
+                            child: const Text(
+                              'Exempt under Rule\n6DD',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    // Row 4: National Highway Transport Corp
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('2026-07-\n14', style: TextStyle(fontSize: 11.5))),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'National Highway Transport Corp',
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(color: const Color(0xFFDBEAFE)),
+                                ),
+                                child: const Text(
+                                  'Transporter',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('AAACN22\n01P', style: TextStyle(fontSize: 11.5))),
+                        const DataCell(Text('VCH-7910')),
+                        const DataCell(Text('₹34,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('₹35,000')),
+                        const DataCell(
+                          Text(
+                            'COMPLIANT',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF374151),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFD1D5DB)),
+                            ),
+                            child: const Text(
+                              'Exempt under Rule\n6DD',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF374151),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── TAX SUB-TAB 1: TDS/TCS HUB (CLAUSE 34) (IMAGE 2) ───
+  Widget _buildTaxTdsTcsHub(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Top Status Chips and Export Button
+        isMobile
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(LucideIcons.check, size: 13, color: Color(0xFF047857)),
+                            SizedBox(width: 5),
+                            Text(
+                              'Sec 194C (Contractors) - ✓ Compliant',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF047857),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFECFDF5),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFA7F3D0)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(LucideIcons.check, size: 13, color: Color(0xFF047857)),
+                            SizedBox(width: 5),
+                            Text(
+                              'Sec 194J (Professional) - ✓ Compliant',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF047857),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFFDE68A)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFFB45309)),
+                            SizedBox(width: 5),
+                            Text(
+                              'Sec 194Q (Goods Purchase) - ⚠️ 1 Delay Deposit',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Exporting Form 3CD Clause 34 (.XLSX)...'),
+                          backgroundColor: Color(0xFF2563EB),
+                        ),
+                      );
+                    },
+                    icon: const Icon(LucideIcons.fileSpreadsheet, size: 14, color: Colors.white),
+                    label: const Text(
+                      'Form 3CD Clause 34 - Ready to Export (.XLSX)',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(LucideIcons.check, size: 13, color: Color(0xFF047857)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Sec 194C (Contractors) - ✓ Compliant',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF047857),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFA7F3D0)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(LucideIcons.check, size: 13, color: Color(0xFF047857)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Sec 194J (Professional) - ✓ Compliant',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF047857),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFDE68A)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFFB45309)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Sec 194Q (Goods Purchase) - ⚠️ 1 Delay Deposit',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFB45309),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Exporting Form 3CD Clause 34 (.XLSX)...'),
+                          backgroundColor: Color(0xFF2563EB),
+                        ),
+                      );
+                    },
+                    icon: const Icon(LucideIcons.fileSpreadsheet, size: 14, color: Colors.white),
+                    label: const Text(
+                      'Form 3CD Clause 34 - Ready to Export (.XLSX)',
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      elevation: 0,
+                    ),
+                  ),
+                ],
+              ),
+
+        const SizedBox(height: 14),
+
+        // 2. Statutory Disallowance Alert Banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF1F2),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFFECDD3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.shieldAlert, color: Color(0xFFE11D48), size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: const [
+                      TextSpan(
+                        text: 'Statutory Disallowance Alert: ',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFBE123C),
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Total 30% expenditure disallowed under Section 40(a)(ia) due to belated deposit: ',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                      ),
+                      TextSpan(
+                        text: '₹10,20,000.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFBE123C),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFFECDD3)),
+                ),
+                child: const Text(
+                  'Add back to P&L in 3CD',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFBE123C),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // 3. FORM 3CD CLAUSE 34 MASTER SCHEDULE Table
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text(
+                      'FORM 3CD CLAUSE 34 MASTER SCHEDULE',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF374151),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'Statutory Due Date: Strict 7th of Following Month',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  dataRowMinHeight: 60,
+                  dataRowMaxHeight: double.infinity,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  headingTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF4B5563),
+                  ),
+                  dataTextStyle: const TextStyle(fontSize: 12, color: Color(0xFF1F2937)),
+                  horizontalMargin: 16,
+                  columnSpacing: 24,
+                  columns: const [
+                    DataColumn(label: Text('TDS Section')),
+                    DataColumn(label: Text('Total Amount\nPaid/Credited')),
+                    DataColumn(label: Text('Total Base\nDeductible')),
+                    DataColumn(label: Text('Actual TDS\nDeducted')),
+                    DataColumn(label: Text('Challan / Deposit\nDate')),
+                    DataColumn(label: Text('Statutory Due\nDate')),
+                    DataColumn(label: Text('Delay (Days)')),
+                    DataColumn(label: Text('Disallowance Flag (30% u/s\n40(a)(ia))')),
+                  ],
+                  rows: [
+                    // Row 1: Sec 194C
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text('Sec 194C', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                              Text('Payments to Contractors & Sub-\nContractors', style: TextStyle(fontSize: 10.5, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('₹48,50,000')),
+                        const DataCell(Text('₹48,50,000')),
+                        const DataCell(Text('₹97,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('2026-08-05')),
+                        const DataCell(Text('2026-08-07')),
+                        const DataCell(Text('0 days (On-\nTime)', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF047857), fontSize: 11.5))),
+                        const DataCell(Text('₹0.00 (Nil)', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11.5))),
+                      ],
+                    ),
+                    // Row 2: Sec 194J
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text('Sec 194J', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                              Text('Fees for Professional & Technical\nServices', style: TextStyle(fontSize: 10.5, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('₹16,20,000')),
+                        const DataCell(Text('₹16,20,000')),
+                        const DataCell(Text('₹1,62,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('2026-08-06')),
+                        const DataCell(Text('2026-08-07')),
+                        const DataCell(Text('0 days (On-\nTime)', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF047857), fontSize: 11.5))),
+                        const DataCell(Text('₹0.00 (Nil)', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11.5))),
+                      ],
+                    ),
+                    // Row 3: Sec 194Q
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text('Sec 194Q', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                              Text('Purchase of Goods exceeding\n₹50 Lakhs', style: TextStyle(fontSize: 10.5, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('₹84,00,000')),
+                        const DataCell(Text('₹34,00,000')),
+                        const DataCell(Text('₹3,400', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('2026-08-19')),
+                        const DataCell(Text('2026-08-07')),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '+12 days',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFB45309)),
+                            ),
+                          ),
+                        ),
+                        DataCell(
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              '₹10,20,000 (30%)',
+                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFBE123C)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Row 4: Sec 194I(a)
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text('Sec 194I(a)', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                              Text('Rent of Plant, Machinery &\nEquipment', style: TextStyle(fontSize: 10.5, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('₹7,50,000')),
+                        const DataCell(Text('₹7,50,000')),
+                        const DataCell(Text('₹15,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('2026-08-07')),
+                        const DataCell(Text('2026-08-07')),
+                        const DataCell(Text('0 days (On-\nTime)', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF047857), fontSize: 11.5))),
+                        const DataCell(Text('₹0.00 (Nil)', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11.5))),
+                      ],
+                    ),
+                    // Row 5: Sec 194H
+                    DataRow(
+                      cells: [
+                        DataCell(
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Text('Sec 194H', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12)),
+                              Text('Commission or Brokerage', style: TextStyle(fontSize: 10.5, color: Color(0xFF6B7280))),
+                            ],
+                          ),
+                        ),
+                        const DataCell(Text('₹3,20,000')),
+                        const DataCell(Text('₹3,20,000')),
+                        const DataCell(Text('₹16,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('2026-08-04')),
+                        const DataCell(Text('2026-08-07')),
+                        const DataCell(Text('0 days (On-\nTime)', style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF047857), fontSize: 11.5))),
+                        const DataCell(Text('₹0.00 (Nil)', style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 11.5))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── TAX SUB-TAB 2: CLAUSE 44 EXPENSE BREAKDOWN (IMAGE 3) ───
+  Widget _buildTaxClause44ExpenseBreakdown(bool isMobile) {
+    Widget buildMetricCard({
+      required String title,
+      required String amount,
+      required String subtitle,
+      required Color indicatorColor,
+      required Color amountColor,
+    }) {
+      return Expanded(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 3.5,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      color: indicatorColor,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF4B5563),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                amount,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: amountColor,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Metric Cards Row
+        Row(
+          children: [
+            buildMetricCard(
+              title: 'GST EXEMPT SUPPLIES',
+              amount: '₹4,20,000',
+              subtitle: 'Nil-rated / Non-taxable',
+              indicatorColor: const Color(0xFF10B981),
+              amountColor: const Color(0xFF047857),
+            ),
+            const SizedBox(width: 12),
+            buildMetricCard(
+              title: 'COMPOSITION SCHEME',
+              amount: '₹1,80,000',
+              subtitle: 'Sec 10 Composition dealers',
+              indicatorColor: const Color(0xFF3B82F6),
+              amountColor: const Color(0xFF2563EB),
+            ),
+            const SizedBox(width: 12),
+            buildMetricCard(
+              title: 'REGISTERED ENTITIES',
+              amount: '₹45,60,000',
+              subtitle: 'Regular GST registered suppliers',
+              indicatorColor: const Color(0xFF8B5CF6),
+              amountColor: const Color(0xFF7C3AED),
+            ),
+            const SizedBox(width: 12),
+            buildMetricCard(
+              title: 'NON-REGISTERED ENTITIES',
+              amount: '₹8,10,000',
+              subtitle: 'Unregistered entities (URD)',
+              indicatorColor: const Color(0xFFF59E0B),
+              amountColor: const Color(0xFFD97706),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 16),
+
+        // 2. FORM 3CD CLAUSE 44 OFFICIAL EXPENDITURE MATRIX Table
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'FORM 3CD CLAUSE 44 OFFICIAL EXPENDITURE MATRIX',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Break-up of total expenditure in respect of entities registered under GST vs unregistered entities.',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Exporting Clause 44 Excel for Form 3CD...'),
+                            backgroundColor: Color(0xFF059669),
+                          ),
+                        );
+                      },
+                      icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                      label: const Text(
+                        'Export Clause 44 Excel for Form 3CD',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF059669),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  dataRowMinHeight: 56,
+                  dataRowMaxHeight: double.infinity,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  headingTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF4B5563),
+                  ),
+                  dataTextStyle: const TextStyle(fontSize: 12, color: Color(0xFF1F2937)),
+                  horizontalMargin: 16,
+                  columnSpacing: 24,
+                  columns: const [
+                    DataColumn(label: Text('S\nl')),
+                    DataColumn(label: Text('Expenditure Head (Col 1)')),
+                    DataColumn(label: Text('Total Expenditure (Col\n2)')),
+                    DataColumn(label: Text('Exempt (Col\n3)')),
+                    DataColumn(label: Text('Composition (Col\n4)')),
+                    DataColumn(label: Text('Other Registered (Col\n5)')),
+                    DataColumn(label: Text('Total Registered (Col\n6)')),
+                    DataColumn(label: Text('Non-Registered (Col\n7)')),
+                  ],
+                  rows: [
+                    _buildClause44Row('1', 'Raw Materials & Consumables', '₹32,50,000', '₹1,50,000', '₹90,000', '₹26,00,000', '₹28,40,000', '₹4,10,000'),
+                    _buildClause44Row('2', 'Freight, Cartage & Logistics', '₹8,40,000', '₹1,20,000', '₹0', '₹5,60,000', '₹6,80,000', '₹1,60,000'),
+                    _buildClause44Row('3', 'Rent, Rates & Office Occupancy', '₹7,20,000', '₹0', '₹0', '₹6,40,000', '₹6,40,000', '₹80,000'),
+                    _buildClause44Row('4', 'Legal & Professional Retainers', '₹4,60,000', '₹0', '₹45,000', '₹3,85,000', '₹4,30,000', '₹30,000'),
+                    _buildClause44Row('5', 'Repairs & Machinery\nMaintenance', '₹3,80,000', '₹50,000', '₹45,000', '₹2,15,000', '₹3,10,000', '₹70,000'),
+                    _buildClause44Row('6', 'Power, Fuel & Utilities', '₹3,20,000', '₹1,00,000', '₹0', '₹1,60,000', '₹2,60,000', '₹60,000'),
+                    // Total Row
+                    DataRow(
+                      color: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                      cells: const [
+                        DataCell(Text('')),
+                        DataCell(
+                          Text(
+                            'TOTAL (FORM 3CD CLAUSE 44)',
+                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                          ),
+                        ),
+                        DataCell(Text('₹59,70,000', style: TextStyle(fontWeight: FontWeight.w800))),
+                        DataCell(Text('₹4,20,000', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF047857)))),
+                        DataCell(Text('₹1,80,000', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF2563EB)))),
+                        DataCell(Text('₹45,60,000', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF7C3AED)))),
+                        DataCell(Text('₹51,60,000', style: TextStyle(fontWeight: FontWeight.w800))),
+                        DataCell(Text('₹8,10,000', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFFD97706)))),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  DataRow _buildClause44Row(
+    String sl,
+    String head,
+    String total,
+    String exempt,
+    String composition,
+    String otherReg,
+    String totalReg,
+    String nonReg,
+  ) {
+    return DataRow(
+      cells: [
+        DataCell(Text(sl, style: const TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)))),
+        DataCell(Text(head, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12))),
+        DataCell(Text(total, style: const TextStyle(fontWeight: FontWeight.bold))),
+        DataCell(Text(exempt)),
+        DataCell(Text(composition)),
+        DataCell(Text(otherReg)),
+        DataCell(Text(totalReg, style: const TextStyle(fontWeight: FontWeight.w600))),
+        DataCell(Text(nonReg)),
+      ],
+    );
+  }
+
+  // ─── TAX SUB-TAB 3: SEC 43B(h) MSME PAYMENT TRACKER (IMAGE 4) ───
+  Widget _buildTaxMsmePaymentTracker(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Top Amber Banner Card
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: const Icon(LucideIcons.clock, color: Color(0xFFD97706), size: 18),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Micro Vendor: Precision Tools Pvt Ltd | Invoice Date: 2026-08-01 (40 Days Elapsed) | Limit: 45 Days',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF78350F),
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Payment must be settled within the statutory limit to avoid non-deductible tax disallowance under Section 43B(h).',
+                      style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E)),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF3C7),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: const Text(
+                  '[ 5 Days Remaining ]',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFFB45309),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // 2. Table: MSMED ACT SEC 15 & INCOME TAX SEC 43B(H) AGING LEDGER
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'MSMED ACT SEC 15 & INCOME TAX SEC 43B(H) AGING LEDGER',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 2),
+                          Text(
+                            'Statutory Rule: Default 15 days without agreement / Maximum 45 days with written agreement.',
+                            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Exporting Section 43B(h) Disallowance Schedule...'),
+                            backgroundColor: Color(0xFFD97706),
+                          ),
+                        );
+                      },
+                      icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                      label: const Text(
+                        'Export Section 43B(h) Disallowance Schedule',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFD97706),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  dataRowMinHeight: 56,
+                  dataRowMaxHeight: double.infinity,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  headingTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF4B5563),
+                  ),
+                  dataTextStyle: const TextStyle(fontSize: 12, color: Color(0xFF1F2937)),
+                  horizontalMargin: 16,
+                  columnSpacing: 22,
+                  columns: const [
+                    DataColumn(label: Text('Vendor Name')),
+                    DataColumn(label: Text('MSME\nCategory')),
+                    DataColumn(label: Text('Udyam Reg No')),
+                    DataColumn(label: Text('Invoice No &\nDate')),
+                    DataColumn(label: Text('Bill Amount\n(₹)')),
+                    DataColumn(label: Text('Balance Due\n(₹)')),
+                    DataColumn(label: Text('Statutory\nLimit')),
+                    DataColumn(label: Text('Days\nElapsed')),
+                    DataColumn(label: Text('Days\nRemaining')),
+                    DataColumn(label: Text('Risk Status')),
+                  ],
+                  rows: [
+                    // Row 1: Precision Tools Pvt Ltd
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('Precision Tools Pvt Ltd', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                        DataCell(_buildMsmeCategoryBadge('Micro')),
+                        const DataCell(Text('UDYAM-MH-03-\n0044912', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('INV-2026-PT-\n881\n2026-08-01', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('₹3,45,000')),
+                        const DataCell(Text('₹3,45,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('45 Days')),
+                        const DataCell(Text('40', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('5d', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD97706)))),
+                        DataCell(_buildMsmeRiskBadge('CRITICAL_DUE')),
+                      ],
+                    ),
+                    // Row 2: Apex Micro Stampings
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('Apex Micro Stampings', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                        DataCell(_buildMsmeCategoryBadge('Micro')),
+                        const DataCell(Text('UDYAM-TN-02-\n0019283', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('AMS-9022\n2026-07-15', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('₹1,88,000')),
+                        const DataCell(Text('₹1,88,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('45 Days')),
+                        const DataCell(Text('57', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('-12d\n(Overdue)', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFDC2626), fontSize: 11))),
+                        DataCell(_buildMsmeRiskBadge('DISALLOWED_43BH')),
+                      ],
+                    ),
+                    // Row 3: Kaveri Paper Converters
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('Kaveri Paper Converters', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                        DataCell(_buildMsmeCategoryBadge('Small')),
+                        const DataCell(Text('UDYAM-KR-08-\n0051142', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('KPC-1140\n2026-08-28', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('₹5,20,000')),
+                        const DataCell(Text('₹5,20,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('15 Days')),
+                        const DataCell(Text('13', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('2d', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFD97706)))),
+                        DataCell(_buildMsmeRiskBadge('CRITICAL_DUE')),
+                      ],
+                    ),
+                    // Row 4: Supreme Electro-Tech Controls
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('Supreme Electro-Tech\nControls', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                        DataCell(_buildMsmeCategoryBadge('Small')),
+                        const DataCell(Text('UDYAM-GJ-01-\n0078129', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('SETC-4091\n2026-08-20', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('₹2,90,000')),
+                        const DataCell(Text('₹0', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('45 Days')),
+                        const DataCell(Text('21', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('24d', style: TextStyle(fontWeight: FontWeight.w600))),
+                        DataCell(_buildMsmeRiskBadge('COMPLIANT')),
+                      ],
+                    ),
+                    // Row 5: Shilpa Industrial Fasteners
+                    DataRow(
+                      cells: [
+                        const DataCell(Text('Shilpa Industrial\nFasteners', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12))),
+                        DataCell(_buildMsmeCategoryBadge('Micro')),
+                        const DataCell(Text('UDYAM-DL-05-\n0033190', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('SIF-6712\n2026-09-01', style: TextStyle(fontSize: 11))),
+                        const DataCell(Text('₹1,42,000')),
+                        const DataCell(Text('₹1,42,000', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('45 Days')),
+                        const DataCell(Text('9', style: TextStyle(fontWeight: FontWeight.bold))),
+                        const DataCell(Text('36d', style: TextStyle(fontWeight: FontWeight.w600))),
+                        DataCell(_buildMsmeRiskBadge('COMPLIANT')),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMsmeCategoryBadge(String cat) {
+    final isMicro = cat == 'Micro';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isMicro ? const Color(0xFFEFF6FF) : const Color(0xFFEEF2FF),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: isMicro ? const Color(0xFFBFDBFE) : const Color(0xFFC7D2FE)),
+      ),
+      child: Text(
+        cat,
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.bold,
+          color: isMicro ? const Color(0xFF2563EB) : const Color(0xFF4F46E5),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMsmeRiskBadge(String status) {
+    Color bg;
+    Color text;
+    Color border;
+
+    if (status == 'CRITICAL_DUE') {
+      bg = const Color(0xFFFEF3C7);
+      border = const Color(0xFFFDE68A);
+      text = const Color(0xFFB45309);
+    } else if (status == 'DISALLOWED_43BH') {
+      bg = const Color(0xFFFEE2E2);
+      border = const Color(0xFFFECACA);
+      text = const Color(0xFFBE123C);
+    } else {
+      bg = const Color(0xFFECFDF5);
+      border = const Color(0xFFA7F3D0);
+      text = const Color(0xFF047857);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: border),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800, color: text),
+      ),
+    );
+  }
+
+  // ─── TAX SUB-TAB 4: STATUTORY DUES CLOCK (PF/ESI) (IMAGE 5) ───
+  Widget _buildTaxStatutoryDuesClock(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Top Header Box
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: const [
+                        Text('⏰', style: TextStyle(fontSize: 14)),
+                        SizedBox(width: 8),
+                        Text(
+                          'Statutory Dues Clock (Clause 20(b) of Form 3CD)',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Strict 15th-of-next-month statutory clock for EPF and ESIC contributions under Section 36(1)(va) and Section 43B.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFECDD3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFFE11D48)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Late Deposit Observed',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFE11D48),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Exporting Form 3CD Clause 20(b) Format...'),
+                                backgroundColor: Color(0xFF0F172A),
+                              ),
+                            );
+                          },
+                          icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                          label: const Text(
+                            'Export Form 3CD Clause 20(b) Format',
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F172A),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Row(
+                            children: [
+                              Text('⏰', style: TextStyle(fontSize: 14)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Statutory Dues Clock (Clause 20(b) of Form 3CD)',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Strict 15th-of-next-month statutory clock for EPF and ESIC contributions under Section 36(1)(va) and Section 43B.',
+                            style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFFF1F2),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFFECDD3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: const [
+                              Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFFE11D48)),
+                              SizedBox(width: 5),
+                              Text(
+                                'Late Deposit Observed',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFE11D48),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Exporting Form 3CD Clause 20(b) Format...'),
+                                backgroundColor: Color(0xFF0F172A),
+                              ),
+                            );
+                          },
+                          icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                          label: const Text(
+                            'Export Form 3CD Clause 20(b) Format',
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F172A),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            elevation: 0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // 2. Disallowance Alert Banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF1F2),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFFECDD3)),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.shieldAlert, color: Color(0xFFE11D48), size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    children: const [
+                      TextSpan(
+                        text: 'Permanent Disallowance u/s 36(1)(va): ',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFBE123C),
+                        ),
+                      ),
+                      TextSpan(
+                        text: 'Total employee PF/ESI contributions delayed past the 15th statutory due date cannot be claimed: ',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                      ),
+                      TextSpan(
+                        text: '₹31,800',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFBE123C),
+                        ),
+                      ),
+                      TextSpan(
+                        text: ' (SC Judgment in ',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                      ),
+                      TextSpan(
+                        text: 'Checkmate Services P. Ltd.',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontStyle: FontStyle.italic,
+                          color: Color(0xFFBE123C),
+                        ),
+                      ),
+                      TextSpan(
+                        text: ').',
+                        style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        // 3. CLAUSE 20(B) MONTHLY STATUTORY DUES GRID Table
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text(
+                      'CLAUSE 20(B) MONTHLY STATUTORY DUES GRID',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF374151),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Text(
+                      'EPF (12% + 12%) | ESIC (0.75% + 3.25%)',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1, color: Color(0xFFE5E7EB)),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  dataRowMinHeight: 60,
+                  dataRowMaxHeight: double.infinity,
+                  headingRowColor: WidgetStateProperty.all(const Color(0xFFF9FAFB)),
+                  headingTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF4B5563),
+                  ),
+                  dataTextStyle: const TextStyle(fontSize: 12, color: Color(0xFF1F2937)),
+                  horizontalMargin: 16,
+                  columnSpacing: 24,
+                  columns: const [
+                    DataColumn(label: Text('Month /\nPeriod')),
+                    DataColumn(label: Text('Fund Nature')),
+                    DataColumn(label: Text('Employee\nContribution (₹)')),
+                    DataColumn(label: Text('Employer\nShare (₹)')),
+                    DataColumn(label: Text('Statutory Due\nDate')),
+                    DataColumn(label: Text('Actual Deposit\nDate')),
+                    DataColumn(label: Text('Challan / TRRN\nRef')),
+                    DataColumn(label: Text('Delay (Days)')),
+                    DataColumn(label: Text('Disallowed u/s\n36(1)(va)')),
+                  ],
+                  rows: [
+                    // Row 1: August 2026 EPF
+                    _buildStatutoryDuesRow(
+                      month: 'August\n2026',
+                      fundName: 'EPF (Employees Provident\nFund)',
+                      isEpf: true,
+                      empContr: '₹1,45,000',
+                      emprShare: '₹1,45,000',
+                      dueDate: '2026-09-15',
+                      actualDate: '2026-09-10',
+                      ref: 'TRRN-8821901',
+                      delay: '0 days (On-\nTime)',
+                      isDelay: false,
+                      disallowed: '₹0.00 (Nil)',
+                      isDisallowed: false,
+                    ),
+                    // Row 2: August 2026 ESIC
+                    _buildStatutoryDuesRow(
+                      month: 'August\n2026',
+                      fundName: 'ESIC (Employees State\nInsurance)',
+                      isEpf: false,
+                      empContr: '₹32,400',
+                      emprShare: '₹1,39,800',
+                      dueDate: '2026-09-15',
+                      actualDate: '2026-09-11',
+                      ref: 'ESIC-7740192',
+                      delay: '0 days (On-\nTime)',
+                      isDelay: false,
+                      disallowed: '₹0.00 (Nil)',
+                      isDisallowed: false,
+                    ),
+                    // Row 3: July 2026 EPF
+                    _buildStatutoryDuesRow(
+                      month: 'July 2026',
+                      fundName: 'EPF (Employees Provident\nFund)',
+                      isEpf: true,
+                      empContr: '₹1,42,000',
+                      emprShare: '₹1,42,000',
+                      dueDate: '2026-08-15',
+                      actualDate: '2026-08-14',
+                      ref: 'TRRN-7719402',
+                      delay: '0 days (On-\nTime)',
+                      isDelay: false,
+                      disallowed: '₹0.00 (Nil)',
+                      isDisallowed: false,
+                    ),
+                    // Row 4: July 2026 ESIC (Delayed!)
+                    _buildStatutoryDuesRow(
+                      month: 'July 2026',
+                      fundName: 'ESIC (Employees State\nInsurance)',
+                      isEpf: false,
+                      empContr: '₹31,800',
+                      emprShare: '₹1,37,200',
+                      dueDate: '2026-08-15',
+                      actualDate: '2026-08-19',
+                      ref: 'ESIC-6630129',
+                      delay: '+4 days',
+                      isDelay: true,
+                      disallowed: '₹31,800',
+                      isDisallowed: true,
+                    ),
+                    // Row 5: June 2026 EPF
+                    _buildStatutoryDuesRow(
+                      month: 'June 2026',
+                      fundName: 'EPF (Employees Provident\nFund)',
+                      isEpf: true,
+                      empContr: '₹1,38,000',
+                      emprShare: '₹1,38,000',
+                      dueDate: '2026-07-15',
+                      actualDate: '2026-07-12',
+                      ref: 'TRRN-6629103',
+                      delay: '0 days (On-\nTime)',
+                      isDelay: false,
+                      disallowed: '₹0.00 (Nil)',
+                      isDisallowed: false,
+                    ),
+                    // Row 6: June 2026 ESIC
+                    _buildStatutoryDuesRow(
+                      month: 'June 2026',
+                      fundName: 'ESIC (Employees State\nInsurance)',
+                      isEpf: false,
+                      empContr: '₹30,500',
+                      emprShare: '₹1,31,500',
+                      dueDate: '2026-07-15',
+                      actualDate: '2026-07-13',
+                      ref: 'ESIC-5510291',
+                      delay: '0 days (On-\nTime)',
+                      isDelay: false,
+                      disallowed: '₹0.00 (Nil)',
+                      isDisallowed: false,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  DataRow _buildStatutoryDuesRow({
+    required String month,
+    required String fundName,
+    required bool isEpf,
+    required String empContr,
+    required String emprShare,
+    required String dueDate,
+    required String actualDate,
+    required String ref,
+    required String delay,
+    required bool isDelay,
+    required String disallowed,
+    required bool isDisallowed,
+  }) {
+    return DataRow(
+      cells: [
+        DataCell(Text(month, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5))),
+        DataCell(
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: isEpf ? const Color(0xFFEFF6FF) : const Color(0xFFECFDF5),
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: isEpf ? const Color(0xFFDBEAFE) : const Color(0xFFA7F3D0)),
+            ),
+            child: Text(
+              fundName,
+              style: TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.bold,
+                color: isEpf ? const Color(0xFF2563EB) : const Color(0xFF047857),
+              ),
+            ),
+          ),
+        ),
+        DataCell(Text(empContr)),
+        DataCell(Text(emprShare)),
+        DataCell(Text(dueDate, style: const TextStyle(fontWeight: FontWeight.bold))),
+        DataCell(Text(actualDate)),
+        DataCell(Text(ref, style: const TextStyle(fontSize: 11.5))),
+        DataCell(
+          isDelay
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEE2E2),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    delay,
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFBE123C)),
+                  ),
+                )
+              : Text(
+                  delay,
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF047857), fontSize: 11.5),
+                ),
+        ),
+        DataCell(
+          isDisallowed
+              ? Text(disallowed, style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFBE123C)))
+              : Text(disallowed, style: const TextStyle(color: Color(0xFF9CA3AF), fontSize: 11.5)),
+        ),
+      ],
+    );
+  }
+
+  // ─── GENERAL SUITE CONTENT FOR OTHER AUDITOR ROLES ───
+  Widget _buildGeneralAuditorSuiteContent(bool isMobile) {
+    final subTabs = _getSuiteSubTabs();
+    final currentSubTab = _activeSubTab < subTabs.length ? subTabs[_activeSubTab] : subTabs[0];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.clipboardCheck, size: 16, color: Color(0xFF166534)),
+                        const SizedBox(width: 8),
+                        Text(
+                          currentSubTab,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Automated compliance, verification checks and working papers for ${_auditorRoles[_selectedAuditorIndex]}.',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              InkWell(
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Generating $currentSubTab Report...'),
+                      backgroundColor: const Color(0xFF166534),
+                    ),
+                  );
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF166534),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.download, size: 14, color: Colors.white),
+                      SizedBox(width: 8),
+                      Text(
+                        '1-Click Export (.PDF)',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 18),
+
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'STATUS: COMPLIANT & READY FOR SIGNING',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.green.shade800,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text('UDIN COMPLIANT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '• Verified data feeds from company trial balance and statutory ledgers.\n'
+                  '• Checklists updated to the latest Ministry of Corporate Affairs (MCA) and technical standards.\n'
+                  '• Ready for peer review packaging and partner digital certificate attachment.',
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade700, height: 1.6),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── SUITE METADATA HELPERS ───
+  String _getSuiteTitle() {
+    switch (_selectedAuditorIndex) {
+      case 0:
+        return 'Statutory Financial Audit Suite';
+      case 1:
+        return 'Tax Audit & Form 3CD Hub';
+      case 2:
+        return 'Internal Audit & Controls Suite';
+      case 3:
+        return 'Cost Audit & Compliance Suite';
+      case 4:
+        return 'Secretarial Audit & Governance Suite';
+      case 5:
+        return 'Forensic Audit & Fraud Investigation Suite';
+      default:
+        return 'Statutory Financial Audit Suite';
+    }
+  }
+
+  String _getSuiteBadge() {
+    switch (_selectedAuditorIndex) {
+      case 0:
+        return 'ICAI CA STANDARD';
+      case 1:
+        return 'SEC 44AB TAX AUDIT';
+      case 2:
+        return 'CIA / CA / CMA STANDARD';
+      case 3:
+        return 'ICMAI CMA STANDARD';
+      case 4:
+        return 'ICSI CS STANDARD';
+      case 5:
+        return 'ICAI FAFD / CFE STANDARD';
+      default:
+        return 'ICAI CA STANDARD';
+    }
+  }
+
+  String _getSuiteSubtitle() {
+    switch (_selectedAuditorIndex) {
+      case 0:
+        return "Prove a 'true and fair view' under Section 143 of the Companies Act and Indian Accounting Standards (Ind AS).";
+      case 1:
+        return 'Verify compliance under Section 44AB and auto-populate Form 3CD.';
+      case 2:
+        return 'Operational risk management, IFC (Internal Financial Controls) and COSO framework matrix.';
+      case 3:
+        return 'Statutory cost compliance under Section 148 of Companies Act 2013 and CRA Rules.';
+      case 4:
+        return 'Corporate governance audit under Section 204 of the Companies Act 2013 and SEBI LODR Regulations.';
+      case 5:
+        return "Digital forensics, Benford's Law distribution analysis, and fund diversion tracking under IBC & EOW norms.";
+      default:
+        return "Prove a 'true and fair view' under Section 143 of the Companies Act and Indian Accounting Standards (Ind AS).";
+    }
+  }
+
+  String _getCoreDeliverableText() {
+    switch (_selectedAuditorIndex) {
+      case 0:
+        return 'Rule 11(g) Audit Trail Certificate & SA 230 Working Paper Bundle';
+      case 1:
+        return '1-Click Form 3CD Data Extractor (Clauses 21, 34, 44, Sec 43B(h))';
+      case 2:
+        return 'Internal Financial Controls (IFC) Report & Risk-Control Matrix (RCM)';
+      case 3:
+        return 'Form CRA-1 to CRA-4 Cost Audit Report & XBRL Package';
+      case 4:
+        return 'Form MR-3 Secretarial Audit Report & Annual Secretarial Compliance Report';
+      case 5:
+        return 'Forensic Audit Investigation Report & Money Trail Evidentiary Pack';
+      default:
+        return 'Rule 11(g) Audit Trail Certificate & SA 230 Working Paper Bundle';
+    }
+  }
+
+  List<String> _getSuiteSubTabs() {
+    switch (_selectedAuditorIndex) {
+      case 0:
+        return [
+          'Rule 11(g) Vault & Certificate',
+          'Smart Vouching & Sampler',
+          'Fixed Asset & Depreciation',
+          'Direct Bank BRS Engine',
+        ];
+      case 1:
+        return [
+          'Sec 40A(3) Cash Payment Watchdog',
+          'TDS/TCS Hub (Clause 34)',
+          'Clause 44 Expense Breakdown',
+          'Sec 43B(h) MSME Payment Tracker',
+          'Statutory Dues Clock (PF/ESI)',
+        ];
+      case 2:
+        return [
+          'Risk Control Matrix (RCM)',
+          'Entity Level Controls (ELC)',
+          'Process Walkthroughs',
+          'Testing of Operating Effectiveness',
+          'Audit Committee Summary',
+        ];
+      case 3:
+        return [
+          'CRA-1 Cost Records',
+          'CRA-2 Form & Filing',
+          'CRA-3 Cost Audit Report',
+          'CRA-4 Annexures & Reconciliation',
+          'Capacity & Ratio Engine',
+        ];
+      case 4:
+        return [
+          'Form MR-3 Compliance',
+          'Board & Committee Meetings',
+          'MCA Statutory Registers',
+          'SEBI LODR Checklists',
+          'Secretarial Working Papers',
+        ];
+      case 5:
+        return [
+          "Benford's Law Fraud Engine",
+          'Red Flag Transaction Scanner',
+          'Related Party Fund Siphoning',
+          'Journal Entry (JE) Testing',
+          'Evidentiary Dossier',
+        ];
+      default:
+        return [
+          'Rule 11(g) Vault & Certificate',
+          'Smart Vouching & Sampler',
+          'Fixed Asset & Depreciation',
+          'Direct Bank BRS Engine',
+        ];
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ADVISORY CHOICE TABS (Accounting Style)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildAdvisoryTabsBar(bool isMobile) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: List.generate(_advisoryTabs.length, (index) {
+            final isSelected = _activeAdvisoryTab == index;
+
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: InkWell(
+                onTap: () => setState(() => _activeAdvisoryTab = index),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 12 : 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF166534) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _advisoryTabs[index].icon,
+                        size: isMobile ? 13 : 15,
+                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        _advisoryTabs[index].label,
+                        style: TextStyle(
+                          fontSize: isMobile ? 11.5 : 12.5,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          color: isSelected ? Colors.white : const Color(0xFF4B5563),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
       ),
     );
   }
@@ -417,6 +3634,10 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     }
 
     // FIN-PRO Firm View
+    if (_activeAdvisoryTab == 6) {
+      return _buildAuditorSuiteTab(isMobile);
+    }
+
     return Container(
       padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
@@ -860,10 +4081,12 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       case 5:
         return _buildAdvisoryWorkpaperTab(isMobile);
       case 6:
-        return _buildAdvisoryConsultTab(isMobile);
+        return _buildAuditorSuiteTab(isMobile);
       case 7:
-        return _buildAdvisoryReportsTab(isMobile);
+        return _buildAdvisoryConsultTab(isMobile);
       case 8:
+        return _buildAdvisoryReportsTab(isMobile);
+      case 9:
         return _buildAdvisorySeniorCATab(isMobile);
       default:
         return const SizedBox.shrink();
