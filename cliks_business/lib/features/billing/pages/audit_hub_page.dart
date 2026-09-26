@@ -14,6 +14,67 @@ class _TabItem {
   _TabItem(this.label, this.icon);
 }
 
+class _StatutoryAuditSubTrack {
+  final String subTrack;
+  final String section;
+  final String mandatoryRules;
+  final String caroClause;
+  final String deliverable;
+  final String objective;
+
+  const _StatutoryAuditSubTrack({
+    required this.subTrack,
+    required this.section,
+    required this.mandatoryRules,
+    required this.caroClause,
+    required this.deliverable,
+    required this.objective,
+  });
+}
+
+class _StatutoryAuditModule {
+  final String title;
+  final String description;
+  final List<_StatutoryAuditSubTrack> subTracks;
+
+  const _StatutoryAuditModule({
+    required this.title,
+    required this.description,
+    required this.subTracks,
+  });
+}
+
+class _TaxAuditSubTrack {
+  final String subTrack;
+  final String actSection;
+  final String rules;
+  final String form3cdClause;
+  final String deliverable;
+  final String objective;
+
+  const _TaxAuditSubTrack({
+    required this.subTrack,
+    required this.actSection,
+    required this.rules,
+    required this.form3cdClause,
+    required this.deliverable,
+    required this.objective,
+  });
+}
+
+class _TaxAuditModule {
+  final String title;
+  final String description;
+  final List<_TaxAuditSubTrack> subTracks;
+
+  const _TaxAuditModule({
+    required this.title,
+    required this.description,
+    required this.subTracks,
+  });
+}
+
+
 class AuditHubPage extends StatefulWidget {
   const AuditHubPage({super.key});
 
@@ -24,7 +85,7 @@ class AuditHubPage extends StatefulWidget {
 class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderStateMixin {
   final int _activeWorkplace = 1; // 1: FIN-PRO Firm
   int _activeAdvisoryTab = 6; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: Auditor Suite, 7: consult, 8: Reports, 9: Senior CA
-  int _selectedAuditorIndex = 1; // 0: Statutory, 1: Tax, 2: Internal, 3: Cost, 4: Secretarial, 5: Forensic
+  int _selectedAuditorIndex = 0; // 0: Statutory, 1: Tax, 2: Internal, 3: Cost, 4: Secretarial, 5: Forensic
   int _activeSubTab = 0; // Sub-tab index
   bool _showTeamRequests = false;
   bool _aruntestRemoved = false;
@@ -46,7 +107,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     _TabItem('Teams', LucideIcons.userCheck),
     _TabItem('Time Tracking', LucideIcons.clock),
     _TabItem('Workpaper', LucideIcons.fileText),
-    _TabItem('Tax Auditor', LucideIcons.briefcase),
+    _TabItem('Statutory Financial Auditor', LucideIcons.briefcase),
     _TabItem('consult', LucideIcons.wallet),
     _TabItem('Reports', LucideIcons.barChart2),
     _TabItem('Senior CA', LucideIcons.userCheck),
@@ -663,8 +724,11 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                   } else if (index == 3) {
                     activeBorderColor = const Color(0xFFD97706);
                     activeTextColor = const Color(0xFFD97706);
-                  } else {
+                  } else if (index == 4) {
                     activeBorderColor = const Color(0xFF2563EB);
+                    activeTextColor = const Color(0xFFD97706);
+                  } else {
+                    activeBorderColor = const Color(0xFFD97706);
                     activeTextColor = const Color(0xFFD97706);
                   }
                 } else {
@@ -713,12 +777,18 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 if (activeSub == 1) return _buildSmartVouching(isMobile);
                 if (activeSub == 2) return _buildFixedAssetDepreciation(isMobile);
                 if (activeSub == 3) return _buildDirectBankBRS(isMobile);
+                if (activeSub >= 4 && activeSub < 4 + _statutoryAuditModules.length) {
+                  return _buildStatutoryAuditModuleView(_statutoryAuditModules[activeSub - 4], isMobile, activeSub - 4);
+                }
               } else if (_selectedAuditorIndex == 1) {
                 if (activeSub == 0) return _buildTaxCashPaymentWatchdog(isMobile);
                 if (activeSub == 1) return _buildTaxTdsTcsHub(isMobile);
                 if (activeSub == 2) return _buildTaxClause44ExpenseBreakdown(isMobile);
                 if (activeSub == 3) return _buildTaxMsmePaymentTracker(isMobile);
                 if (activeSub == 4) return _buildTaxStatutoryDuesClock(isMobile);
+                if (activeSub >= 5 && activeSub < 5 + _taxAuditModules.length) {
+                  return _buildTaxAuditModuleView(_taxAuditModules[activeSub - 5], isMobile, activeSub - 5);
+                }
               }
               return _buildGeneralAuditorSuiteContent(isMobile);
             },
@@ -3230,6 +3300,1236 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     );
   }
 
+  // ─── STATUTORY AUDIT MODULE DATA STRUCTURES ───
+  static const List<_StatutoryAuditModule> _statutoryAuditModules = [
+    // Module 1: Corporate Governance, Appointment & Pre-Audit Controls
+    _StatutoryAuditModule(
+      title: 'Module 1: Corporate Governance, Appointment & Pre-Audit Controls',
+      description: 'Focuses on statutory auditor onboarding, legal tenure validity, rotation rules, and firm-level quality controls before audit field execution begins.',
+      subTracks: [
+        _StatutoryAuditSubTrack(
+          subTrack: '1. Statutory Appointment & Tenure Registry',
+          section: 'Section 139(1), Section 139(2)',
+          mandatoryRules: 'Rule 3 & Rule 4 of Companies (Audit & Auditors) Rules, 2014',
+          caroClause: 'Sec 143(3)(a) (Proper appointment & books)',
+          deliverable: 'Form ADT-1',
+          objective: 'Validating Board/AGM resolutions, 5-year tenure limits, mandatory CA firm rotation (5/10-year caps), and ROC filing timelines.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '2. Auditor Independence & Quality Review',
+          section: 'Section 141(1), Section 141(3)',
+          mandatoryRules: 'ICAI SQC 1; ICAI Code of Ethics (Revised 2020)',
+          caroClause: 'Sec 141(3) Disqualification Review',
+          deliverable: 'Form ADT-1 (Eligibility Certificate)',
+          objective: 'Ensuring no financial interest, indebtedness (> ₹5L), or relative relationships disqualify the signing auditor under Section 141.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '3. Non-Audit Services Disallowance Audit',
+          section: 'Section 144',
+          mandatoryRules: 'Code of Ethics Part-1; NFRA Disciplinary Guidelines',
+          caroClause: 'Sec 143(3) Statutory Disclosures',
+          deliverable: 'Section 144 Independence Attestation Memo',
+          objective: 'Certifying that the CA firm renders no prohibited services (bookkeeping, internal audit, investment banking, or outsourced financial services) to the client or its holding/subsidiary entities.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '4. Predecessor Auditor Resignation Review',
+          section: 'Section 140(2), Section 140(3)',
+          mandatoryRules: 'Rule 8 of Companies (Audit & Auditors) Rules, 2014; SA 300',
+          caroClause: 'CARO 2020 Clause 3(xviii)',
+          deliverable: 'Form ADT-3 Review Dossier',
+          objective: 'Inspecting reasons, reservations, or disputes stated by the outgoing predecessor auditor in their resignation filing before accepting engagement.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '5. Statutory Engagement Contracting',
+          section: 'Section 139',
+          mandatoryRules: 'ICAI SA 210 (Agreeing the Terms of Audit Engagements)',
+          caroClause: 'Standard Audit Framework Acceptance',
+          deliverable: 'Signed ICAI SA 210 Engagement Letter',
+          objective: 'Formalizing the audit scope, objective, management responsibilities, applicable financial reporting framework, and audit fee structure.',
+        ),
+      ],
+    ),
+
+    // Module 2: Substantive Asset Verification & Title Due Diligence
+    _StatutoryAuditModule(
+      title: 'Module 2: Substantive Asset Verification & Title Due Diligence',
+      description: 'Focuses on physical and documentary verification of the balance sheet’s non-current and working assets, title holdings, and regulatory prohibitions.',
+      subTracks: [
+        _StatutoryAuditSubTrack(
+          subTrack: '1. Property, Plant & Immovable Assets Registry',
+          section: 'Section 143(1)(a)',
+          mandatoryRules: 'Rule 3 of Companies (Accounts) Rules, 2014; Ind AS 16 / AS 10',
+          caroClause: 'CARO 2020 Clause 3(i)(a), 3(i)(b), 3(i)(c)',
+          deliverable: 'Schedule III PPE & Intangible Assets Schedule',
+          objective: 'Auditing the Fixed Asset Register (FAR), physical count cycles, quantitative reconciliation, and confirming title deeds of all immovable properties stand strictly in the company’s legal name.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '2. Benami Property & Regulatory Proceedings',
+          section: 'Prohibition of Benami Property Transactions Act, 1988',
+          mandatoryRules: 'Section 2(8), Section 2(9)(D) of Benami Act; ICAI Guidance Note',
+          caroClause: 'CARO 2020 Clause 3(i)(d)',
+          deliverable: 'Benami Proceeding Disclosure Statement',
+          objective: 'Verifying court proceedings or notices initiated against the company for holding Benami properties, confirming appropriate disclosure or liability provision in accounts.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '3. Inventory Physical Count & Discrepancies',
+          section: 'Section 143(1)',
+          mandatoryRules: 'ICAI SA 501 (Audit Evidence - Specific Considerations for Inventory)',
+          caroClause: 'CARO 2020 Clause 3(ii)(a)',
+          deliverable: 'Physical Stock Verification Sheet (SA 501)',
+          objective: 'Assessing physical inventory verification procedures conducted by management and reporting material discrepancies exceeding 10% or more in aggregate for each class of stock.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '4. Bank Stock & Book Debt Reconciliations',
+          section: 'Section 179, Section 180(1)(c)',
+          mandatoryRules: 'RBI Master Directions on Working Capital; ICAI Guidance on Credit Facilities',
+          caroClause: 'CARO 2020 Clause 3(ii)(b)',
+          deliverable: 'Quarterly Stock vs Bank Return Variance Schedule',
+          objective: 'Auditing quarterly stock and book-debt statements submitted to banks for sanctioned working-capital limits (> ₹5 Cr) against accounting ledgers, reporting all differences.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '5. Capital Work-in-Progress (CWIP) & Impairment',
+          section: 'Section 143(3)',
+          mandatoryRules: 'Schedule III (Division I & II); Ind AS 36 / AS 28 (Impairment)',
+          caroClause: 'CARO 2020 Clause 3(i)(e)',
+          deliverable: 'CWIP / Intangible Aging Schedule (<1, 1-2, 2-3, >3 yrs)',
+          objective: 'Scrutinizing suspended capital projects, cost overruns against original approved budgets, completion timelines, and testing for asset impairment losses.',
+        ),
+      ],
+    ),
+
+    // Module 3: Corporate Liabilities, Solvency & Liquidity Assurance
+    _StatutoryAuditModule(
+      title: 'Module 3: Corporate Liabilities, Solvency & Liquidity Assurance',
+      description: 'Focuses on verifying third-party debt covenants, public deposits, financial solvency risks, and statutory remittances.',
+      subTracks: [
+        _StatutoryAuditSubTrack(
+          subTrack: '1. Public Deposit & Unsecured Loan Controls',
+          section: 'Sections 73, 74, 75, 76',
+          mandatoryRules: 'Companies (Acceptance of Deposits) Rules, 2014; RBI Act NBFC Rules',
+          caroClause: 'CARO 2020 Clause 3(v)',
+          deliverable: 'Form DPT-3 Audit Review Copy',
+          objective: 'Verifying compliance with credit-rating mandates, deposit repayment reserves, and confirming deemed deposits from directors/shareholders follow statutory limits.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '2. Debt Repayment Defaults & Wilful Defaulter Scrutiny',
+          section: 'Section 143(1)',
+          mandatoryRules: 'RBI Master Circular on Wilful Defaulters; Companies Act Sec 180',
+          caroClause: 'CARO 2020 Clause 3(ix)(a), 3(ix)(b)',
+          deliverable: 'Lender-Wise Default & Restructuring Table',
+          objective: 'Auditing defaults in repayment of principal and interest to banks, financial institutions, or debenture holders, and verifying if the company was declared a Wilful Defaulter.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '3. Fund Diversion & Short-Term Loan Utilization',
+          section: 'Section 143(1)(a)',
+          mandatoryRules: 'ICAI Guidance Note on Audit of Borrowings; RBI End-Use Guidelines',
+          caroClause: 'CARO 2020 Clause 3(ix)(c), 3(ix)(d), 3(ix)(e)',
+          deliverable: 'End-Use of Borrowings Verification Report',
+          objective: 'Proving term loans were utilized solely for sanctioned purposes and verifying that short-term loans were not funneled into long-term capital investments or subsidiary financing.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '4. Undisputed & Litigated Statutory Dues',
+          section: 'Section 143(3)',
+          mandatoryRules: "Employees' PF Act, ESI Act, CGST Act, Income Tax Act",
+          caroClause: 'CARO 2020 Clause 3(vii)(a), 3(vii)(b)',
+          deliverable: 'Statutory Dues Outstanding (>6 Months) Schedule',
+          objective: 'Compiling undisputed statutory liabilities unpaid for more than 6 months from due date, along with disputed statutory demands pending before appellate authorities (CIT(A), ITAT, High Court).',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '5. Going Concern & 12-Month Solvency Assessment',
+          section: 'Section 134(5)',
+          mandatoryRules: 'ICAI SA 570 (Revised) Going Concern; Schedule III Financial Ratios',
+          caroClause: 'CARO 2020 Clause 3(xix)',
+          deliverable: '12-Month Solvency Assessment Memo (SA 570)',
+          objective: 'Evaluating financial ratios (Current, Debt-Equity, Debt Service Coverage), asset-liability realization schedules, and board plans to confirm operational capability for the next 12 months.',
+        ),
+      ],
+    ),
+
+    // Module 4: Related Parties, Corporate Capital & Statutory Fraud
+    _StatutoryAuditModule(
+      title: 'Module 4: Related Parties, Corporate Capital & Statutory Fraud',
+      description: 'Focuses on detecting capital misallocations, director loans, undisclosed income, preferential issues, and white-collar fraud investigations.',
+      subTracks: [
+        _StatutoryAuditSubTrack(
+          subTrack: '1. Preferential Issue & Private Placement Scrutiny',
+          section: 'Section 42, Section 62',
+          mandatoryRules: 'Companies (Prospectus & Allotment of Securities) Rules, 2014',
+          caroClause: 'CARO 2020 Clause 3(x)(a), 3(x)(b)',
+          deliverable: 'Form PAS-3 / PAS-4 Compliance Review Memo',
+          objective: 'Confirming equity/convertible funds raised via private placement complied with Section 42/62 rules and proceeds were used strictly for stated prospectus objectives.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '2. Director Loans & Cross-Entity Investments',
+          section: 'Section 185, Section 186',
+          mandatoryRules: 'Companies (Meetings of Board & its Powers) Rules, 2014',
+          caroClause: 'CARO 2020 Clause 3(iv), Clause 3(iii)',
+          deliverable: 'Sec 185 / 186 Loan & Guarantee Register (Form MBP-2)',
+          objective: 'Auditing director loans, inter-corporate deposits, guarantees, and securities to ensure they fall within the 60% paid-up capital or 100% free reserves ceiling limits.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '3. Related Party Contract Approvals',
+          section: 'Section 177, Section 188',
+          mandatoryRules: 'Rule 15 of Companies (Meetings of Board) Rules; Ind AS 24 / AS 18',
+          caroClause: 'CARO 2020 Clause 3(xiii)',
+          deliverable: 'Form AOC-2 Compliance Verification Schedule',
+          objective: "Verifying Audit Committee omnibus approvals, Board/Shareholder resolutions, arm's length pricing evidence, and related-party disclosure completeness.",
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '4. Undisclosed Income & Search Surrenders',
+          section: 'Section 143(3)',
+          mandatoryRules: 'Income Tax Act, 1961 (Search u/s 132 / Survey u/s 133A)',
+          caroClause: 'CARO 2020 Clause 3(viii)',
+          deliverable: 'Tax Surrendered Income Reconciliation Note',
+          objective: 'Confirming that undisclosed or unrecorded income surrendered during income-tax search/survey assessments has been recorded in the books of accounts during the year.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '5. Statutory Fraud Detection & MCA Reporting',
+          section: 'Section 143(12), Section 447',
+          mandatoryRules: 'Rule 13 of Companies (Audit & Auditors) Rules, 2014; ICAI SA 240',
+          caroClause: 'CARO 2020 Clause 3(xi)(a), 3(xi)(b), 3(xi)(c)',
+          deliverable: 'Form ADT-4 (Whistleblower & Fraud Dossier to MCA)',
+          objective: 'Investigating frauds by/on the company, evaluating whistleblower grievances, and executing mandatory reporting of frauds (≥ ₹1 Cr) to the Central Government within 60 days.',
+        ),
+      ],
+    ),
+
+    // Module 5: Audit Opinion, Regulatory Closures & Archival
+    _StatutoryAuditModule(
+      title: 'Module 5: Audit Opinion, Regulatory Closures & Archival',
+      description: 'Focuses on final financial reporting, Internal Financial Controls (IFC) certification, CSR audit compliance, audit opinion formation, and tamper-proof archival.',
+      subTracks: [
+        _StatutoryAuditSubTrack(
+          subTrack: '1. Internal Financial Controls over Reporting (ICFR)',
+          section: 'Section 143(3)(i)',
+          mandatoryRules: 'ICAI Guidance Note on Audit of Internal Financial Controls',
+          caroClause: "Annexure to Independent Auditor's Report (IFC Opinion)",
+          deliverable: 'IFC Adequacy & Operating Effectiveness Report',
+          objective: 'Testing design and operational effectiveness of enterprise IT general controls, financial authorization workflows, and segregation of duties (SoD).',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '2. Corporate Social Responsibility (CSR) Audit',
+          section: 'Section 135',
+          mandatoryRules: 'Companies (CSR Policy) Rules, 2014; ICAI Technical Guidance Note',
+          caroClause: 'CARO 2020 Clause 3(xx)(a), 3(xx)(b)',
+          deliverable: 'Form CSR-1 / CSR-2 Working Paper Schedule',
+          objective: 'Verifying calculation of 2% average net profits under Section 198, tracking unspent ongoing project funds transferred to Section 135(6) accounts within 30 days.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '3. Management Representations & Subsequent Events',
+          section: 'Section 143(2)',
+          mandatoryRules: 'ICAI SA 580 (Written Representations); ICAI SA 560 (Subsequent Events)',
+          caroClause: 'General Substantive Review Procedures',
+          deliverable: 'Signed Management Representation Letter (MRL)',
+          objective: 'Obtaining written management attestations regarding full record disclosure, absence of unrecorded liabilities, and reviewing material financial events occurring after balance sheet date.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: "4. Independent Auditor's Report Formulation",
+          section: 'Section 143(2), Section 143(3)',
+          mandatoryRules: 'ICAI SA 700 (Unmodified), SA 705 (Modifications), SA 706 (Emphasis of Matter)',
+          caroClause: 'Full Statutory Audit Sign-off',
+          deliverable: 'Independent Auditor’s Report + Full CARO Annexure',
+          objective: 'Drafting the formal audit opinion (Unqualified, Qualified, Adverse, or Disclaimer of Opinion) covering True & Fair view, Rule 11 statutory clauses, and CARO disclosures.',
+        ),
+        _StatutoryAuditSubTrack(
+          subTrack: '5. Digital Identity Attestation & 7-Year Lock',
+          section: 'Section 128(5)',
+          mandatoryRules: 'Gazette No. 1-CA(7)/192/2019; ICAI Peer Review Board Rules',
+          caroClause: 'ICAI Mandatory Document Tracking',
+          deliverable: 'UDIN Registration Certificate + Sealed Archival Hash',
+          objective: 'Generating the mandatory 18-digit Unique Document Identification Number (UDIN) on the ICAI portal, locking the audit file, and enforcing the statutory 7-year retention rule under Section 128(5).',
+        ),
+      ],
+    ),
+  ];
+
+  // ─── STATUTORY FINANCIAL AUDIT MODULES (COMPANIES ACT 2013 & CARO 2020) ───
+  Widget _buildStatutoryAuditModuleView(_StatutoryAuditModule module, bool isMobile, int moduleIndex) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Module Header Banner matching image style
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0F7FF),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFD0E1FD)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                module.title,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                module.description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF475569),
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Verification Matrix Table
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: SizedBox(
+              width: 1280,
+              child: Column(
+                children: [
+                  // Table Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFFFFF),
+                      border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(
+                          width: 200,
+                          child: Text(
+                            'SUB-TRACK',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 160,
+                          child: Text(
+                            'SECTION (COMPANIES ACT, 2013)',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 220,
+                          child: Text(
+                            'MANDATORY RULES & STANDARDS',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 180,
+                          child: Text(
+                            'CARO 2020 / AUDIT CLAUSE',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 180,
+                          child: Text(
+                            'STATUTORY DELIVERABLE / FORM',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'CORE AUDIT VERIFICATION OBJECTIVE',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Table Rows
+                  ...module.subTracks.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    final isLast = index == module.subTracks.length - 1;
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: isLast
+                            ? null
+                            : const Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Sub-track
+                          SizedBox(
+                            width: 200,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.subTrack,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 2. Section
+                          SizedBox(
+                            width: 160,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.section,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF2563EB),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 3. Mandatory Rules
+                          SizedBox(
+                            width: 220,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.mandatoryRules,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF475569),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 4. CARO Clause
+                          SizedBox(
+                            width: 180,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.caroClause,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 5. Deliverable
+                          SizedBox(
+                            width: 180,
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF0FDF4),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                                ),
+                                child: Text(
+                                  item.deliverable,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF166534),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 6. Objective
+                          Expanded(
+                            child: Text(
+                              item.objective,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF334155),
+                                height: 1.45,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Quick Navigation Bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    if (moduleIndex > 0) {
+                      _activeSubTab = 4 + moduleIndex - 1;
+                    } else {
+                      _activeSubTab = 3; // Direct Bank BRS Engine
+                    }
+                  });
+                },
+                icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                label: Text(
+                  moduleIndex > 0
+                      ? 'Previous: Module $moduleIndex'
+                      : 'Previous: Direct Bank BRS',
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF334155),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              Text(
+                'Module ${moduleIndex + 1} of ${_statutoryAuditModules.length}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              if (moduleIndex < _statutoryAuditModules.length - 1)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _activeSubTab = 4 + moduleIndex + 1;
+                    });
+                  },
+                  icon: const Icon(LucideIcons.arrowRight, size: 14),
+                  label: Text(
+                    'Next: Module ${moduleIndex + 2}',
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFF86EFAC)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFF166534)),
+                      SizedBox(width: 6),
+                      Text(
+                        'All 5 Modules Ready',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF166534),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ─── TAX AUDIT MODULE DATA STRUCTURES (SEC 44AB & FORM 3CD) ───
+  static const List<_TaxAuditModule> _taxAuditModules = [
+    // Module 1: Applicability, Accounting Policies & Profit Adjustments
+    _TaxAuditModule(
+      title: 'Module 1: Applicability, Accounting Policies & Profit Adjustments',
+      description: 'Audits tax thresholds, books of account eligibility, compliance with the Income Computation and Disclosure Standards (ICDS), and conversions of capital assets into stock.',
+      subTracks: [
+        _TaxAuditSubTrack(
+          subTrack: '1. Thresholds & Presumptive Exclusions',
+          actSection: 'Section 44AB, Section 44AD, Section 44ADA',
+          rules: 'Rule 6G(1)(a)/(b)',
+          form3cdClause: 'Clauses 1 to 8, Clause 12',
+          deliverable: 'Form 3CA / Form 3CB Audit Report',
+          objective: 'Verifying whether turnover exceeds ₹1 Cr (or ₹10 Cr if cash transactions \u2264 5%) and evaluating opt-outs from presumptive schemes.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '2. Books of Accounts & Storage Location',
+          actSection: 'Section 44AA',
+          rules: 'Rule 6F',
+          form3cdClause: 'Clause 11(a)-(c)',
+          deliverable: 'Books of Account Examination Sheet',
+          objective: 'Auditing the list of books maintained (Cash Book, Journal, Ledgers), whether computer-generated or manual, and physical storage addresses.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '3. Method of Accounting & ICDS Deviations',
+          actSection: 'Section 145, Section 145A',
+          rules: 'Rule 144; Notification No. S.O. 3079(E)',
+          form3cdClause: 'Clause 13(a)-(f)',
+          deliverable: 'ICDS I to X Reconciliation Schedule',
+          objective: 'Scrutinizing mercantile vs. cash methods, valuation adjustments for tax (inclusive of taxes under Sec 145A), and deviations from 10 ICDS standards.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '4. Stock Valuation & Inventory Deviations',
+          actSection: 'Section 145A',
+          rules: 'Rule 115; ICDS II (Valuation of Inventories)',
+          form3cdClause: 'Clause 14(a)-(b)',
+          deliverable: 'Closing Stock Valuation Variance Matrix',
+          objective: 'Reporting methods used for valuing finished goods/raw materials and quantifying deviations from cost or net realizable value (NRV).',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '5. Capital Asset Conversion into Stock',
+          actSection: 'Section 45(2)',
+          rules: 'Rule 8',
+          form3cdClause: 'Clause 15',
+          deliverable: 'Capital Conversion & Fair Value Schedule',
+          objective: 'Tracking fixed/capital assets converted into stock-in-trade, recording dates of acquisition, cost, and fair market value (FMV) on date of conversion.',
+        ),
+      ],
+    ),
+
+    // Module 2: Statutory Business Disallowances & Cash Watchdogs
+    _TaxAuditModule(
+      title: 'Module 2: Statutory Business Disallowances & Cash Watchdogs',
+      description: 'Focuses on identifying illegal, non-business, or restricted expenses that must be added back to P&L to determine correct taxable business income.',
+      subTracks: [
+        _TaxAuditSubTrack(
+          subTrack: '1. Cash Expenditure Watchdog',
+          actSection: 'Section 40A(3), Section 40A(3A)',
+          rules: 'Rule 6DD',
+          form3cdClause: 'Clause 21(d)(A) & (B)',
+          deliverable: 'Sec 40A(3) Disallowance Ledger',
+          objective: 'Aggregating payments exceeding ₹10,000/day (or ₹35,000 for transporters) made in cash and verifying genuine exemptions under Rule 6DD.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '2. Withholding Tax Non-Compliance Disallowance',
+          actSection: 'Section 40(a)(ia), Section 40(a)(i)',
+          rules: 'Rule 30, Rule 31A',
+          form3cdClause: 'Clause 21(b)',
+          deliverable: '30% Expenditure Disallowance Statement',
+          objective: 'Flagging 30% disallowance on resident vendor payments and 100% on non-resident payments where TDS was not deducted or deposited late.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '3. Personal Expenses, Fines & Political Donations',
+          actSection: 'Section 37(1), Section 40(a)(iib)',
+          rules: 'Explanation 1, 2, 3 to Sec 37(1)',
+          form3cdClause: 'Clause 21(a)',
+          deliverable: 'Non-Business & Penal Expenses Matrix',
+          objective: 'Adding back personal expenses, statutory fines/penalties for law violations, CSR expenditures, and corporate political advertisements.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '4. Related Party Payments (Excessive / Unreasonable)',
+          actSection: 'Section 40A(2)(b)',
+          rules: '—',
+          form3cdClause: 'Clause 23',
+          deliverable: 'Related Party Payment Scrutiny Note',
+          objective: 'Evaluating whether payments for goods/services made to directors, relatives, or substantial interest holders exceed prevailing open-market value.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '5. Deemed Income & Prior Period Items',
+          actSection: 'Section 41(1), Section 145',
+          rules: '—',
+          form3cdClause: 'Clause 24, Clause 27(b)',
+          deliverable: 'Trading Liability Remission & Prior Item List',
+          objective: 'Auditing remission/cessation of expired creditor liabilities and listing debits/credits pertaining to previous financial years.',
+        ),
+      ],
+    ),
+
+    // Module 3: MSME Protections, Deductions on Actual Payment & Statutory Dues
+    _TaxAuditModule(
+      title: 'Module 3: MSME Protections, Deductions on Actual Payment & Statutory Dues',
+      description: 'Audits expenses allowable only on actual discharge, delayed vendor settlements under the MSMED Act, and employee benefit remittances.',
+      subTracks: [
+        _TaxAuditSubTrack(
+          subTrack: '1. MSME Timely Payment Enforcement',
+          actSection: 'Section 43B(h)',
+          rules: 'Section 15 & 16 of MSMED Act, 2006',
+          form3cdClause: 'Clause 22, Clause 26',
+          deliverable: 'MSME Overdue (>15/45 Days) Disallowance Tracker',
+          objective: 'Tracking invoices from Micro/Small enterprises unpaid within 15 days (or 45 days under contract) to disallow the deduction until actual payment.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '2. Deductions on Actual Payment Basis',
+          actSection: 'Section 43B(a)-(g)',
+          rules: '—',
+          form3cdClause: 'Clause 26',
+          deliverable: 'Sec 43B Payment Verification Ledger',
+          objective: 'Verifying whether taxes, duties, cess, employee bonus, and bank loan interest were actually paid on or before the ITR filing due date.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '3. Employee Welfare Funds (PF / ESI) Timing',
+          actSection: 'Section 36(1)(va), Section 2(24)(x)',
+          rules: "Employees' Provident Fund & ESI Schemes",
+          form3cdClause: 'Clause 20(b)',
+          deliverable: 'Statutory Dues Clock (PF/ESI Deposit Table)',
+          objective: 'Auditing employee salary deductions for PF/ESI and flagging permanent disallowances if deposited even one day past the statutory monthly due date.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '4. Tax Depreciation & Asset Blocks',
+          actSection: 'Section 32, Section 50',
+          rules: 'Rule 5',
+          form3cdClause: 'Clause 18(a)-(e)',
+          deliverable: 'Form 3CD Depreciation Schedule',
+          objective: 'Computing block-wise depreciation, testing the < 180-day half-rate rule on additions, and determining short-term capital gains on block wipeouts.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '5. Special Deductions & Scientific Research',
+          actSection: 'Section 33AB, 35, 35D',
+          rules: 'Rule 5C, 5D, 6',
+          form3cdClause: 'Clause 19',
+          deliverable: 'Amortization of Preliminary Expenses Sheet',
+          objective: 'Verifying amounts debited to P&L for scientific research, telecommunication licenses, or 1/5th amortizations of preliminary company incorporation expenses.',
+        ),
+      ],
+    ),
+
+    // Module 4: Withholding Taxes, GST Expense Split & Cash Loans
+    _TaxAuditModule(
+      title: 'Module 4: Withholding Taxes, GST Expense Split & Cash Loans',
+      description: 'Audits end-to-end TDS/TCS liabilities, the comprehensive GST expense breakdown under Clause 44, and unaccounted loan acceptances/repayments.',
+      subTracks: [
+        _TaxAuditSubTrack(
+          subTrack: '1. TDS / TCS Master Compliance Verification',
+          actSection: 'Chapter XVII-B (Sec 192 to 195, 194Q, 206C)',
+          rules: 'Rule 30, Rule 31A',
+          form3cdClause: 'Clause 34(a), (b), (c)',
+          deliverable: 'Clause 34 Master Schedule (.XLSX)',
+          objective: 'Reconciling expense accounts against TAN returns (Form 24Q, 26Q), tracing short-deductions, non-deductions, and late-deposit interest under Sec 201(1A).',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '2. Clause 44 GST Expense Breakdown',
+          actSection: 'Section 44AB read with CGST Act, 2017',
+          rules: 'Circular No. 10/2022; ICAI Tax Audit Guidance',
+          form3cdClause: 'Clause 44',
+          deliverable: 'Clause 44 Expenditure Bifurcation Matrix',
+          objective: 'Splitting total annual expenditure between registered entities (exempt, composition, standard) and unregistered suppliers.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '3. Unaccounted Cash Loans & Deposits',
+          actSection: 'Section 269SS, Section 269ST',
+          rules: 'Rule 47',
+          form3cdClause: 'Clause 31(a)-(bb)',
+          deliverable: 'Sec 269SS/ST Cash Receipt Register',
+          objective: 'Scrutinizing loans, deposits, or transaction settlements exceeding ₹20,000 taken or accepted otherwise than by account-payee cheque/bank transfer.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '4. Cash Loan Repayments & Advances',
+          actSection: 'Section 269T',
+          rules: 'Rule 47',
+          form3cdClause: 'Clause 31(c)-(e)',
+          deliverable: 'Sec 269T Repayment Ledger',
+          objective: 'Auditing repayment of loans, deposits, or advances exceeding ₹20,000 to verify that funds were returned strictly through verified banking channels.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '5. Dividend & Foreign Receipts',
+          actSection: 'Section 115BBDA, Section 285A',
+          rules: 'Rule 114DA',
+          form3cdClause: 'Clause 36, Clause 41',
+          deliverable: 'Dividend & International Transaction Memo',
+          objective: 'Disclosing distributed dividends, tax deductions under Sec 194, and evaluating reporting on outbound remittances (Form 15CA/CB).',
+        ),
+      ],
+    ),
+
+    // Module 5: Ratios, Tax Credits, Losses & e-Filing Closures
+    _TaxAuditModule(
+      title: 'Module 5: Ratios, Tax Credits, Losses & e-Filing Closures',
+      description: 'Validates analytical balance sheet ratios, tax-loss adjustments, deduction claims under Chapter VI-A, and final digital XML/JSON submission.',
+      subTracks: [
+        _TaxAuditSubTrack(
+          subTrack: '1. Business Financial Ratio Analysis',
+          actSection: 'Section 44AB',
+          rules: 'ICAI Guidance Note on Tax Audit',
+          form3cdClause: 'Clause 40',
+          deliverable: 'Comparative Financial Ratio Statement',
+          objective: 'Computing Gross Profit/Turnover, Net Profit/Turnover, Stock-in-Trade Turnover, and Material Consumed ratios compared against the previous financial year.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '2. Brought-Forward Losses & Depreciation',
+          actSection: 'Section 72, Section 73, Section 79',
+          rules: '—',
+          form3cdClause: 'Clause 32(a)-(e)',
+          deliverable: 'Loss Set-off & Carry-Forward Matrix',
+          objective: 'Auditing availability of business/speculation losses and checking change in shareholding (> 51%) under Section 79 to restrict loss carry-forward.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '3. Deductions under Chapter VI-A & 10AA',
+          actSection: 'Section 80-IA, 80-IB, 80-IC, 80JJAA',
+          rules: 'Rule 18BBB, 19AB',
+          form3cdClause: 'Clause 33',
+          deliverable: 'Chapter VI-A Statutory Eligibility Memo',
+          objective: 'Certifying claims for profits from industrial undertakings, SEZ units (Sec 10AA), and new employee generation benefits under Section 80JJAA.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '4. Minimum Alternate Tax (MAT) Scrutiny',
+          actSection: 'Section 115JB',
+          rules: 'Rule 40B; Form 29B',
+          form3cdClause: 'Clause 37 (General Reporting)',
+          deliverable: 'Book Profit & MAT Working Sheet',
+          objective: 'Auditing book profit calculations, adjustments for non-taxable reserves, and generating certified Form 29B for corporate clients.',
+        ),
+        _TaxAuditSubTrack(
+          subTrack: '5. Tax Audit Final Sign-Off & e-Portal Filing',
+          actSection: 'Section 288 (Authorized Representative)',
+          rules: 'Rule 131; Notification No. 1/2021',
+          form3cdClause: 'Final Sign-Off',
+          deliverable: '1-Click Form 3CD JSON/XML + UDIN Certificate',
+          objective: 'Compiling the complete 44-clause dataset into the official Income Tax e-filing JSON schema, validating hashes, and generating the mandatory UDIN.',
+        ),
+      ],
+    ),
+  ];
+
+  // ─── TAX AUDIT MODULES (SECTION 44AB & FORM 3CD) ───
+  Widget _buildTaxAuditModuleView(_TaxAuditModule module, bool isMobile, int moduleIndex) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Module Header Banner
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFFBEB),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFFDE68A)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(color: const Color(0xFFFCD34D)),
+                    ),
+                    child: Text(
+                      'SEC 44AB • FORM 3CD MODULE ${moduleIndex + 1}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFB45309),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  const Icon(LucideIcons.fileSpreadsheet, size: 16, color: Color(0xFFB45309)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                module.title,
+                style: const TextStyle(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                module.description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF475569),
+                  height: 1.35,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Verification Matrix Table
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: SizedBox(
+              width: 1280,
+              child: Column(
+                children: [
+                  // Table Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFFFFFF),
+                      border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                    ),
+                    child: const Row(
+                      children: [
+                        SizedBox(
+                          width: 200,
+                          child: Text(
+                            'SUB-TRACK',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 170,
+                          child: Text(
+                            'INCOME TAX ACT, 1961',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 210,
+                          child: Text(
+                            'INCOME TAX RULES, 1962',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 170,
+                          child: Text(
+                            'FORM 3CD CLAUSE',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 190,
+                          child: Text(
+                            'STATUTORY DELIVERABLE / SCHEDULE',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            'CORE AUDIT VERIFICATION OBJECTIVE',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Table Rows
+                  ...module.subTracks.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final item = entry.value;
+                    final isLast = index == module.subTracks.length - 1;
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        border: isLast
+                            ? null
+                            : const Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Sub-track
+                          SizedBox(
+                            width: 200,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.subTrack,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 2. Income Tax Act
+                          SizedBox(
+                            width: 170,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.actSection,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFFD97706),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 3. Income Tax Rules
+                          SizedBox(
+                            width: 210,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.rules,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF475569),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 4. Form 3CD Clause
+                          SizedBox(
+                            width: 170,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                item.form3cdClause,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 5. Deliverable
+                          SizedBox(
+                            width: 190,
+                            child: Align(
+                              alignment: Alignment.topLeft,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFFFFBEB),
+                                  borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(color: const Color(0xFFFDE68A)),
+                                ),
+                                child: Text(
+                                  item.deliverable,
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFB45309),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 6. Objective
+                          Expanded(
+                            child: Text(
+                              item.objective,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF334155),
+                                height: 1.45,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 18),
+
+        // Quick Navigation Bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    if (moduleIndex > 0) {
+                      _activeSubTab = 5 + moduleIndex - 1;
+                    } else {
+                      _activeSubTab = 4; // Statutory Dues Clock (PF/ESI)
+                    }
+                  });
+                },
+                icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                label: Text(
+                  moduleIndex > 0
+                      ? 'Previous: Module $moduleIndex'
+                      : 'Previous: Statutory Dues Clock',
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF334155),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.white,
+                ),
+              ),
+              Text(
+                'Module ${moduleIndex + 1} of ${_taxAuditModules.length}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+              if (moduleIndex < _taxAuditModules.length - 1)
+                ElevatedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _activeSubTab = 5 + moduleIndex + 1;
+                    });
+                  },
+                  icon: const Icon(LucideIcons.arrowRight, size: 14),
+                  label: Text(
+                    'Next: Module ${moduleIndex + 2}',
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFD97706),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF3C7),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFFCD34D)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFFB45309)),
+                      SizedBox(width: 6),
+                      Text(
+                        'All 5 Modules Ready',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   // ─── GENERAL SUITE CONTENT FOR OTHER AUDITOR ROLES ───
   Widget _buildGeneralAuditorSuiteContent(bool isMobile) {
     final subTabs = _getSuiteSubTabs();
@@ -3445,6 +4745,11 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           'Smart Vouching & Sampler',
           'Fixed Asset & Depreciation',
           'Direct Bank BRS Engine',
+          'Corporate Governance, Appointment & Pre-Audit Controls',
+          'Substantive Asset Verification & Title Due Diligence',
+          'Corporate Liabilities, Solvency & Liquidity Assurance',
+          'Related Parties, Corporate Capital & Statutory Fraud',
+          'Audit Opinion, Regulatory Closures & Archival',
         ];
       case 1:
         return [
@@ -3453,6 +4758,11 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           'Clause 44 Expense Breakdown',
           'Sec 43B(h) MSME Payment Tracker',
           'Statutory Dues Clock (PF/ESI)',
+          'Applicability, Accounting Policies & Profit Adjustments',
+          'Statutory Business Disallowances & Cash Watchdogs',
+          'MSME Protections, Deductions on Actual Payment & Statutory Dues',
+          'Withholding Taxes, GST Expense Split & Cash Loans',
+          'Ratios, Tax Credits, Losses & e-Filing Closures',
         ];
       case 2:
         return [
