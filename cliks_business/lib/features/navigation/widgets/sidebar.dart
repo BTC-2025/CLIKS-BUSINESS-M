@@ -1089,16 +1089,6 @@ class Sidebar extends ConsumerWidget {
                         .read(navigationProvider.notifier)
                         .setRoute(AppRoute.marketing),
                   ),
-
-
-                  _buildMacOSItem(
-                    icon: LucideIcons.sparkles,
-                    label: 'Refer & Earn',
-                    isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref
-                        .read(navigationProvider.notifier)
-                        .setRoute(AppRoute.referral),
-                  ),
                 ] else if (navigation.currentModule == AppModule.payments) ...[
                   // + Add Money Button (for Payments module)
                   Padding(
@@ -1186,14 +1176,6 @@ class Sidebar extends ConsumerWidget {
                         .read(navigationProvider.notifier)
                         .setRoute(AppRoute.planner),
                   ),
-                  _buildMacOSItem(
-                    icon: LucideIcons.sparkles,
-                    label: 'Refer & Earn',
-                    isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref
-                        .read(navigationProvider.notifier)
-                        .setRoute(AppRoute.referral),
-                  ),
                 ] else if (navigation.currentModule == AppModule.social) ...[
                   _buildMacOSItem(
                     icon: LucideIcons.userCheck,
@@ -1211,14 +1193,6 @@ class Sidebar extends ConsumerWidget {
                         .read(navigationProvider.notifier)
                         .setRoute(AppRoute.tradingDocs),
                   ),
-                  _buildMacOSItem(
-                    icon: LucideIcons.sparkles,
-                    label: 'Refer & Earn',
-                    isSelected: navigation.currentRoute == AppRoute.referral,
-                    onTap: () => ref
-                        .read(navigationProvider.notifier)
-                        .setRoute(AppRoute.referral),
-                  ),
                 ] else if (navigation.currentModule == AppModule.profile) ...[
                   _buildMacOSItem(
                     icon: LucideIcons.user,
@@ -1233,10 +1207,26 @@ class Sidebar extends ConsumerWidget {
             ),
           ),
 
+          // Refer & Earn Section (centered with purple gift icon as in reference image)
+          _buildMacOSReferAndEarn(context, ref, navigation),
+
           // Bottom Area (Storage, Badges, Settings, Help)
           _buildMacOSBottomSection(context, ref, navigation),
         ],
       ),
+    );
+  }
+
+  Widget _buildMacOSReferAndEarn(
+    BuildContext context,
+    WidgetRef ref,
+    NavigationState navigation,
+  ) {
+    return _MacOSReferAndEarnTile(
+      isSelected: navigation.currentRoute == AppRoute.referral,
+      onTap: () => ref
+          .read(navigationProvider.notifier)
+          .setRoute(AppRoute.referral),
     );
   }
 
@@ -2378,3 +2368,133 @@ class _SidebarBottomFixed extends ConsumerWidget {
     );
   }
 }
+
+class _MacOSReferAndEarnTile extends StatefulWidget {
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _MacOSReferAndEarnTile({
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  State<_MacOSReferAndEarnTile> createState() => _MacOSReferAndEarnTileState();
+}
+
+class _MacOSReferAndEarnTileState extends State<_MacOSReferAndEarnTile>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _colorController;
+  late final Animation<Color?> _textColorAnimation;
+  late final Animation<Color?> _iconColorAnimation;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _colorController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 550),
+    );
+
+    // Smoothly shifts between vibrant violet and emerald green on hover
+    _textColorAnimation = ColorTween(
+      begin: const Color(0xFF7C3AED), // Vibrant Violet
+      end: const Color(0xFF166534),   // Signature Emerald Green
+    ).animate(
+      CurvedAnimation(
+        parent: _colorController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    _iconColorAnimation = ColorTween(
+      begin: const Color(0xFF8B5CF6), // Bright Violet
+      end: const Color(0xFF15803D),   // Vibrant Green
+    ).animate(
+      CurvedAnimation(
+        parent: _colorController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _colorController.dispose();
+    super.dispose();
+  }
+
+  void _onEnter() {
+    setState(() {
+      _isHovered = true;
+    });
+    _colorController.repeat(reverse: true);
+  }
+
+  void _onExit() {
+    setState(() {
+      _isHovered = false;
+    });
+    _colorController.stop();
+    _colorController.reset();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 14, right: 14, top: 4, bottom: 18),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => _onEnter(),
+        onExit: (_) => _onExit(),
+        child: GestureDetector(
+          onTap: widget.onTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedBuilder(
+            animation: _colorController,
+            builder: (context, child) {
+              final Color activeTextColor = _isHovered
+                  ? (_textColorAnimation.value ?? const Color(0xFF7C3AED))
+                  : (widget.isSelected
+                      ? const Color(0xFF7C3AED)
+                      : const Color(0xFF475569));
+
+              final Color activeIconColor = _isHovered
+                  ? (_iconColorAnimation.value ?? const Color(0xFF8B5CF6))
+                  : const Color(0xFF8B5CF6);
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    LucideIcons.gift,
+                    size: _isHovered ? 19.5 : 18.0,
+                    color: activeIconColor,
+                  ),
+                  const SizedBox(width: 8),
+                  AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 180),
+                    curve: Curves.easeOut,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: _isHovered ? 14.0 : 13.5,
+                      fontWeight: _isHovered
+                          ? FontWeight.w900
+                          : (widget.isSelected ? FontWeight.w800 : FontWeight.w700),
+                      color: activeTextColor,
+                      letterSpacing: _isHovered ? 0.2 : -0.2,
+                    ),
+                    child: const Text('Refer & Earn'),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
