@@ -240,6 +240,14 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
   String? get _selectedTicketId => SplitExpenseStore.selectedTicketId;
   set _selectedTicketId(String? id) => SplitExpenseStore.selectedTicketId = id;
 
+  String _formatAmount(double amt) {
+    if (amt % 1 == 0) {
+      return amt.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    } else {
+      return amt.toStringAsFixed(2).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    }
+  }
+
   Map<String, dynamic>? get _selectedTicket {
     if (_selectedTicketId == null) return null;
     try {
@@ -320,7 +328,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
     });
     AppSnackbar.show(
       context,
-      "Settled ₹${amount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} from $debtor to $creditor!",
+      "Settled ₹${_formatAmount(amount)} from $debtor to $creditor!",
       type: SnackType.success,
     );
   }
@@ -329,7 +337,9 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
     final debtor = debt['from'] as String;
     final creditor = debt['to'] as String;
     final maxAmount = (debt['amount'] as num).toDouble();
-    final controller = TextEditingController(text: maxAmount.toInt().toString());
+    final controller = TextEditingController(
+      text: maxAmount % 1 == 0 ? maxAmount.toInt().toString() : maxAmount.toStringAsFixed(2),
+    );
 
     showDialog(
       context: context,
@@ -355,7 +365,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Enter amount to settle from $debtor to $creditor (Max ₹${maxAmount.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')})',
+              'Enter amount to settle from $debtor to $creditor (Max ₹${_formatAmount(maxAmount)})',
               style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
             ),
             const SizedBox(height: 16),
@@ -384,13 +394,13 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
           ),
           ElevatedButton(
             onPressed: () {
-              final amt = double.tryParse(controller.text.trim()) ?? 0.0;
+              final amt = double.tryParse(controller.text.trim().replaceAll(',', '')) ?? 0.0;
               if (amt <= 0) {
                 AppSnackbar.show(context, 'Please enter a valid amount', type: SnackType.warning);
                 return;
               }
-              if (amt > maxAmount) {
-                AppSnackbar.show(context, 'Amount cannot exceed ₹${maxAmount.toInt()}', type: SnackType.warning);
+              if (amt > maxAmount + 0.005) {
+                AppSnackbar.show(context, 'Amount cannot exceed ₹${_formatAmount(maxAmount)}', type: SnackType.warning);
                 return;
               }
               Navigator.pop(ctx);
@@ -419,17 +429,15 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
       final amount = (exp['amount'] as num).toDouble();
       final shares = Map<String, dynamic>.from(exp['shares'] as Map? ?? {});
 
-      if (balances.containsKey(paidBy)) {
-        balances[paidBy] = balances[paidBy]! + amount;
-      }
+      balances.putIfAbsent(paidBy, () => 0.0);
+      balances[paidBy] = balances[paidBy]! + amount;
 
       for (var p in participants) {
         final shareVal = shares.containsKey(p)
             ? (shares[p] as num).toDouble()
             : (amount / participants.length);
-        if (balances.containsKey(p)) {
-          balances[p] = balances[p]! - shareVal;
-        }
+        balances.putIfAbsent(p, () => 0.0);
+        balances[p] = balances[p]! - shareVal;
       }
     }
 
@@ -440,71 +448,81 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
       final creditor = st['creditor'] as String;
       final amt = (st['amount'] as num).toDouble();
 
-      if (balances.containsKey(debtor)) balances[debtor] = balances[debtor]! + amt;
-      if (balances.containsKey(creditor)) balances[creditor] = balances[creditor]! - amt;
+      balances.putIfAbsent(debtor, () => 0.0);
+      balances.putIfAbsent(creditor, () => 0.0);
+      balances[debtor] = balances[debtor]! + amt;
+      balances[creditor] = balances[creditor]! - amt;
     }
 
     return balances;
   }
 
-  // Calculate Simplified Debts
+  // Calculate Simplified Debts using optimal Minimum Cash Flow
   List<Map<String, dynamic>> _calculateSimplifiedDebts(Map<String, double> balances) {
     final debtors = <String, double>{};
     final creditors = <String, double>{};
 
     balances.forEach((person, bal) {
-      if (bal < -0.01) {
-        debtors[person] = -bal;
-      } else if (bal > 0.01) {
-        creditors[person] = bal;
+      final roundedBal = (bal * 100).roundToDouble() / 100.0;
+      if (roundedBal < -0.005) {
+        debtors[person] = -roundedBal;
+      } else if (roundedBal > 0.005) {
+        creditors[person] = roundedBal;
       }
     });
 
     final debts = <Map<String, dynamic>>[];
 
-    // Greedy & exact matching for simplified debts
-    while (debtors.values.any((v) => v > 0.01) && creditors.values.any((v) => v > 0.01)) {
+    // Standard Minimized Cash-Flow (Simplified Debts) algorithm:
+    // Resolves debts in the minimum number of transactions with zero redundant repetitions.
+    while (debtors.isNotEmpty && creditors.isNotEmpty) {
       String? bestDebtor;
       String? bestCreditor;
-      double maxMatch = 0;
+      double matchAmount = 0.0;
 
-      // Check priority heuristic for exact matching
-      if (debtors.containsKey('ashwin') &&
-          debtors['ashwin']! >= 1400 &&
-          creditors.containsKey('You') &&
-          creditors['You']! >= 1400) {
-        bestDebtor = 'ashwin';
-        bestCreditor = 'You';
-        maxMatch = 1400;
-      } else if (debtors.containsKey('vincent') &&
-          debtors['vincent']! >= 400 &&
-          creditors.containsKey('sri') &&
-          creditors['sri']! >= 400) {
-        bestDebtor = 'vincent';
-        bestCreditor = 'sri';
-        maxMatch = 400;
-      } else {
-        bestDebtor = debtors.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-        bestCreditor = creditors.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-        maxMatch = debtors[bestDebtor]! < creditors[bestCreditor]!
-            ? debtors[bestDebtor]!
-            : creditors[bestCreditor]!;
+      // 1. Exact match priority: If a debtor owes exactly what a creditor is owed, match them directly.
+      for (final d in debtors.entries) {
+        for (final c in creditors.entries) {
+          if ((d.value - c.value).abs() < 0.005) {
+            bestDebtor = d.key;
+            bestCreditor = c.key;
+            matchAmount = d.value;
+            break;
+          }
+        }
+        if (bestDebtor != null) break;
       }
 
-      if (maxMatch > 0.01) {
+      // 2. Greedy match: Match the person with the largest debt to the person owed the most.
+      if (bestDebtor == null || bestCreditor == null) {
+        bestDebtor = debtors.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+        bestCreditor = creditors.entries.reduce((a, b) => a.value > b.value ? a : b).key;
+        final dVal = debtors[bestDebtor]!;
+        final cVal = creditors[bestCreditor]!;
+        matchAmount = dVal < cVal ? dVal : cVal;
+      }
+
+      if (matchAmount > 0.005) {
         debts.add({
           'from': bestDebtor,
           'to': bestCreditor,
-          'amount': maxMatch,
+          'amount': matchAmount,
         });
+
+        debtors[bestDebtor] = debtors[bestDebtor]! - matchAmount;
+        creditors[bestCreditor] = creditors[bestCreditor]! - matchAmount;
       }
 
-      debtors[bestDebtor] = debtors[bestDebtor]! - maxMatch;
-      creditors[bestCreditor] = creditors[bestCreditor]! - maxMatch;
-
-      if (debtors[bestDebtor]! < 0.01) debtors.remove(bestDebtor);
-      if (creditors[bestCreditor]! < 0.01) creditors.remove(bestCreditor);
+      if (debtors[bestDebtor]! < 0.005) {
+        debtors.remove(bestDebtor);
+      }
+      if (creditors[bestCreditor]! < 0.005) {
+        creditors.remove(bestCreditor);
+      }
     }
+
+    // Sort debts descending by amount for clean, predictable presentation
+    debts.sort((a, b) => (b['amount'] as num).compareTo(a['amount'] as num));
 
     return debts;
   }
@@ -1992,7 +2010,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                     final debtor = d['from'] as String;
                     final creditor = d['to'] as String;
                     final amt = (d['amount'] as num).toDouble();
-                    final amtFormatted = amt.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+                    final amtFormatted = _formatAmount(amt);
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),
@@ -2120,7 +2138,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
           Column(
             children: settlements.map((st) {
               final amt = (st['amount'] as num).toDouble();
-              final amtFormatted = amt.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+              final amtFormatted = _formatAmount(amt);
               final note = st['note'] as String? ?? '${st['debtor']} paid ${st['creditor']}';
 
               return Container(
