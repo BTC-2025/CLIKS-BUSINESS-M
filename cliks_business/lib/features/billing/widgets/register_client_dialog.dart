@@ -164,8 +164,17 @@ class _RegisterClientDialogState extends State<RegisterClientDialog> {
                         const SizedBox(width: 12),
                         ElevatedButton(
                           onPressed: () {
-                            // TODO: Register Client
-                            Navigator.pop(context);
+                            final name = _nameController.text.trim();
+                            final email = _emailController.text.trim();
+                            final income = _incomeController.text.trim();
+                            Navigator.pop(context, {
+                              'name': name.isNotEmpty ? name : 'New Taxpayer',
+                              'email': email.isNotEmpty ? email : 'client@email.com',
+                              'regime': _selectedRegime,
+                              'estIncome': income.isNotEmpty ? '₹$income' : '₹10,00,000',
+                              'pendingFilings': '0 Filings',
+                              'status': 'Active',
+                            });
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF1B5E20), // Green matching theme

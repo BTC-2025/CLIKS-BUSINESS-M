@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -85,10 +86,18 @@ class AuditHubPage extends StatefulWidget {
 
 class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderStateMixin {
   final int _activeWorkplace = 1; // 1: FIN-PRO Firm
-  int _activeAdvisoryTab = 6; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: Auditor Suite, 7: consult, 8: Reports, 9: Senior CA
+  int _activeAdvisoryTab = 1; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: Auditor Suite, 7: consult, 8: Reports, 9: Senior CA
   int _selectedAuditorIndex = 0; // 0: Statutory, 1: Tax, 2: Internal, 3: Cost, 4: Secretarial, 5: Forensic
   int _activeSubTab = 0; // Sub-tab index
   bool _showTeamRequests = false;
+  bool _showClientRequests = false;
+  Map<String, dynamic>? _selectedLedgerRequest;
+  String _clientSearchQuery = '';
+
+  final List<Map<String, dynamic>> _outboundDocumentRequests = [];
+
+  final List<Map<String, dynamic>> _taxpayerClients = [];
+
   bool _aruntestRemoved = false;
   final TextEditingController _emailController = TextEditingController();
 
@@ -4935,6 +4944,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 onTap: () => setState(() {
                   _activeAdvisoryTab = index;
                   _showTeamRequests = false;
+                  _showClientRequests = false;
+                  _selectedLedgerRequest = null;
                 }),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
@@ -5569,121 +5580,795 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   }
 
   Widget _buildAdvisoryClientsTab(bool isMobile) {
+    if (_showClientRequests) {
+      return _buildClientRequestsLedgerView(isMobile);
+    }
+    return _buildClientsTableView(isMobile);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CLIENTS TABLE VIEW (Matches Screenshot 1)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildClientsTableView(bool isMobile) {
+    final filtered = _taxpayerClients.where((c) {
+      final q = _clientSearchQuery.toLowerCase();
+      if (q.isEmpty) return true;
+      return (c['name'] as String).toLowerCase().contains(q) ||
+          (c['email'] as String).toLowerCase().contains(q);
+    }).toList();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Top Action & Search Bar
+        // Top Action & Search Bar Container (Matches Screenshot 1)
         if (isMobile)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        onChanged: (v) => setState(() => _clientSearchQuery = v),
+                        decoration: const InputDecoration(
+                          hintText: 'Search taxpayers by name or email...',
+                          hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                          border: InputBorder.none,
+                          isDense: true,
+                        ),
+                        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => setState(() => _showClientRequests = true),
+                        icon: const Icon(LucideIcons.helpCircle, size: 14, color: Color(0xFF2563EB)),
+                        label: const Text(
+                          'Client Requests',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
+                          backgroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final res = await showDialog<Map<String, dynamic>>(
+                            context: context,
+                            builder: (_) => const RegisterClientDialog(),
+                          );
+                          if (res != null) {
+                            setState(() => _taxpayerClients.add(res));
+                          }
+                        },
+                        icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
+                        label: const Text(
+                          'Add Taxpayer Client',
+                          style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF166534),
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(LucideIcons.search, size: 18, color: Color(0xFF94A3B8)),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    onChanged: (v) => setState(() => _clientSearchQuery = v),
+                    decoration: const InputDecoration(
+                      hintText: 'Search taxpayers by name or email...',
+                      hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                OutlinedButton.icon(
+                  onPressed: () => setState(() => _showClientRequests = true),
+                  icon: const Icon(LucideIcons.helpCircle, size: 16, color: Color(0xFF2563EB)),
+                  label: const Text(
+                    'Client Requests',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF2563EB)),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                    backgroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final res = await showDialog<Map<String, dynamic>>(
+                      context: context,
+                      builder: (_) => const RegisterClientDialog(),
+                    );
+                    if (res != null) {
+                      setState(() => _taxpayerClients.add(res));
+                    }
+                  },
+                  icon: const Icon(LucideIcons.plus, size: 16, color: Colors.white),
+                  label: const Text(
+                    'Add Taxpayer Client',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF166534),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    elevation: 0,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+        const SizedBox(height: 14),
+
+        // Table Header Row matching Screenshot 1
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
             children: [
-              Container(
-                height: 40,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+              Expanded(flex: 3, child: _buildTableHeaderFilterBadge('TAXPAYER NAME')),
+              Expanded(flex: 3, child: _buildTableHeaderFilterBadge('EMAIL ADDRESS')),
+              Expanded(flex: 2, child: _buildTableHeaderFilterBadge('REGIME')),
+              Expanded(flex: 3, child: _buildTableHeaderFilterBadge('EST. GROSS INCOME')),
+              Expanded(flex: 2, child: _buildTableHeaderFilterBadge('PENDING FILINGS')),
+              Expanded(flex: 2, child: _buildTableHeaderFilterBadge('STATUS')),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // Table Body Rows (only shown if taxpayers exist; empty by default matching Screenshot 1)
+        if (filtered.isNotEmpty)
+          Column(
+            children: filtered.map((c) {
+              final status = c['status'] as String;
+              final isVerified = status == 'Active';
+              final isPending = status == 'Pending Audit';
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(8),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: const TextField(
-                  decoration: InputDecoration(
-                    icon: Icon(LucideIcons.search, size: 14, color: Colors.black45),
-                    hintText: 'Search taxpayers by name or email...',
-                    hintStyle: TextStyle(fontSize: 11, color: Colors.black45),
-                    border: InputBorder.none,
-                    isDense: true,
-                    contentPadding: EdgeInsets.symmetric(vertical: 10),
-                  ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(LucideIcons.building, color: Color(0xFF15803D), size: 14),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              c['name'] as String,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        c['email'] as String,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        c['regime'] as String,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        c['estIncome'] as String,
+                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Text(
+                        c['pendingFilings'] as String,
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFD97706)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isVerified
+                              ? const Color(0xFFDCFCE7)
+                              : isPending
+                                  ? const Color(0xFFFEF3C7)
+                                  : const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: isVerified
+                                ? const Color(0xFF15803D)
+                                : isPending
+                                    ? const Color(0xFFB45309)
+                                    : const Color(0xFF475569),
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildTableHeaderFilterBadge(String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.5,
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.filter, size: 8.5, color: Color(0xFF94A3B8)),
+              Icon(LucideIcons.chevronDown, size: 8.5, color: Color(0xFF94A3B8)),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // CLIENT REQUESTS: OUTBOUND DOCUMENT REQUESTS LEDGER (Screenshot 2)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildClientRequestsLedgerView(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Top Action Bar matching Screenshot 2
+        Row(
+          children: [
+            OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _showClientRequests = false;
+                  _selectedLedgerRequest = null;
+                });
+              },
+              icon: const Icon(LucideIcons.arrowLeft, size: 14, color: Color(0xFF0F172A)),
+              label: const Text(
+                'Back to Clients',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF0F172A),
                 ),
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => showDialog(context: context, builder: (_) => const RequestDocumentDialog()),
-                      icon: const Icon(LucideIcons.helpCircle, size: 13, color: Color(0xFF2563EB)),
-                      label: const Text('Client Requests', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF93C5FD)),
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => showDialog(context: context, builder: (_) => const RegisterClientDialog()),
-                      icon: const Icon(LucideIcons.plus, size: 13),
-                      label: const Text('Add Taxpayer Client', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF166534),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                  ),
-                ],
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                backgroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
+            ),
+            const SizedBox(width: 14),
+            const Text(
+              '🤝 ',
+              style: TextStyle(fontSize: 18),
+            ),
+            const Text(
+              'Outbound Document Requests Ledger',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const Spacer(),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final result = await showDialog<Map<String, dynamic>>(
+                  context: context,
+                  builder: (_) => const RequestDocumentDialog(),
+                );
+                if (result != null) {
+                  setState(() {
+                    _outboundDocumentRequests.insert(0, result);
+                    _selectedLedgerRequest = result;
+                  });
+                }
+              },
+              icon: const Icon(LucideIcons.plusCircle, size: 16),
+              label: const Text(
+                'Create Document Requisition',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF166534),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 24),
+
+        // Main Content Area: Left Ledger + Right Collaboration Simulator (Screenshot 2)
+        if (isMobile)
+          Column(
+            children: [
+              if (_outboundDocumentRequests.isNotEmpty) ...[
+                _buildLedgerListCard(),
+                const SizedBox(height: 20),
+              ],
+              _buildCollaborationSimulatorCard(),
             ],
           )
         else
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Container(
-                  height: 40,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                child: _outboundDocumentRequests.isEmpty
+                    ? const SizedBox.shrink()
+                    : _buildLedgerListCard(),
+              ),
+              const SizedBox(width: 24),
+              SizedBox(
+                width: 380,
+                child: _buildCollaborationSimulatorCard(),
+              ),
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildLedgerListCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'REQUISITIONS LEDGER (${_outboundDocumentRequests.length})',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const Text(
+                'Click row to simulate collaboration',
+                style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          if (_outboundDocumentRequests.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(36),
+              child: const Column(
+                children: [
+                  Icon(LucideIcons.fileSpreadsheet, size: 36, color: Color(0xFF94A3B8)),
+                  SizedBox(height: 12),
+                  Text(
+                    'No outbound document requisitions found.',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF64748B)),
                   ),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      icon: Icon(LucideIcons.search, size: 14, color: Colors.black45),
-                      hintText: 'Search taxpayers by name or email...',
-                      hintStyle: TextStyle(fontSize: 12, color: Colors.black45),
-                      border: InputBorder.none,
-                      isDense: true,
-                      contentPadding: EdgeInsets.symmetric(vertical: 10),
+                  SizedBox(height: 4),
+                  Text(
+                    'Click "+ Create Document Requisition" to issue requests to taxpayers.',
+                    style: TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                  ),
+                ],
+              ),
+            )
+          else
+            Column(
+              children: _outboundDocumentRequests.map((req) {
+                final isSelected = _selectedLedgerRequest == req;
+                final priority = req['priority'] as String? ?? 'Medium';
+                final status = req['status'] as String? ?? 'Awaiting Upload';
+
+                Color priorityBg = const Color(0xFFEFF6FF);
+                Color priorityColor = const Color(0xFF2563EB);
+                if (priority == 'Critical') {
+                  priorityBg = const Color(0xFFFEE2E2);
+                  priorityColor = const Color(0xFFDC2626);
+                } else if (priority == 'High') {
+                  priorityBg = const Color(0xFFFEF3C7);
+                  priorityColor = const Color(0xFFD97706);
+                }
+
+                Color statusBg = const Color(0xFFFEF3C7);
+                Color statusColor = const Color(0xFFD97706);
+                if (status.contains('Verified') || status.contains('Compliant')) {
+                  statusBg = const Color(0xFFDCFCE7);
+                  statusColor = const Color(0xFF15803D);
+                } else if (status.contains('Uploaded') || status.contains('Review')) {
+                  statusBg = const Color(0xFFEFF6FF);
+                  statusColor = const Color(0xFF2563EB);
+                }
+
+                return InkWell(
+                  onTap: () => setState(() => _selectedLedgerRequest = req),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isSelected ? const Color(0xFFDCFCE7) : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: isSelected ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0)),
+                          ),
+                          child: Icon(
+                            LucideIcons.fileText,
+                            size: 16,
+                            color: isSelected ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    req['id'] as String? ?? '',
+                                    style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800, color: Color(0xFF64748B)),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      req['title'] as String? ?? '',
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                '${req['client']} • ${req['category']}',
+                                style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                'Deadline: ${req['deadline'] ?? req['date']}',
+                                style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: priorityBg, borderRadius: BorderRadius.circular(6)),
+                              child: Text(
+                                priority,
+                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: priorityColor),
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: statusBg, borderRadius: BorderRadius.circular(6)),
+                              child: Text(
+                                status,
+                                style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: statusColor),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // Right Collaboration Simulator Card (Matches Screenshot 2)
+  Widget _buildCollaborationSimulatorCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '🔬 Client Collaboration Simulator',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 18),
+
+          // Dashed box matching Screenshot 2 when no request selected
+          if (_selectedLedgerRequest == null)
+            CustomPaint(
+              painter: const _DashedRectPainter(
+                color: Color(0xFFCBD5E1),
+                strokeWidth: 1.2,
+                dash: 4.0,
+                gap: 4.0,
+                radius: 12.0,
+              ),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 36),
+                child: const Center(
+                  child: Text(
+                    'Select a request from the ledger to simulate\ntaxpayer file uploads and audits.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 13,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: () => showDialog(context: context, builder: (_) => const RequestDocumentDialog()),
-                icon: const Icon(LucideIcons.helpCircle, size: 14, color: Color(0xFF2563EB)),
-                label: const Text('Client Requests', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+            )
+          else ...[
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        _selectedLedgerRequest!['id'] as String? ?? '',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _selectedLedgerRequest!['status'] as String? ?? '',
+                          style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _selectedLedgerRequest!['title'] as String? ?? '',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Client: ${_selectedLedgerRequest!['client']}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                  Text(
+                    'Category: ${_selectedLedgerRequest!['category']}',
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Simulation Action 1: Upload File
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _selectedLedgerRequest!['status'] = 'File Uploaded (signed_doc.pdf)';
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Taxpayer simulated upload: signed_doc.pdf attached!'),
+                      backgroundColor: Color(0xFF2563EB),
+                    ),
+                  );
+                },
+                icon: const Icon(LucideIcons.uploadCloud, size: 14, color: Color(0xFF2563EB)),
+                label: const Text(
+                  'Simulate Taxpayer File Upload (PDF)',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                ),
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFF93C5FD)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () => showDialog(context: context, builder: (_) => const RegisterClientDialog()),
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text('Add Taxpayer Client', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold)),
+            ),
+            const SizedBox(height: 10),
+
+            // Simulation Action 2: Run Audit
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _selectedLedgerRequest!['status'] = 'Verified & Compliant';
+                  });
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Verification Audit complete: Requisition verified!'),
+                      backgroundColor: Color(0xFF166534),
+                    ),
+                  );
+                },
+                icon: const Icon(LucideIcons.checkCircle2, size: 14),
+                label: const Text(
+                  'Run Audit Verification & Approve',
+                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF166534),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 10),
 
-        const SizedBox(height: 16),
-        _buildClientCard('Acme Technologies', 'INV-2026-041', 'Active', '9876543210'),
-        const SizedBox(height: 10),
-        _buildClientCard('Ravi Traders', 'INV-2026-038', 'Pending Audit', '9812345678'),
-      ],
+            // Clear Selection
+            Center(
+              child: TextButton(
+                onPressed: () => setState(() => _selectedLedgerRequest = null),
+                child: const Text('Clear Selection', style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
@@ -7324,3 +8009,56 @@ class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
     return oldDelegate.height != height || oldDelegate.child != child;
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+// DASHED RECTANGLE BORDER PAINTER (Matches Screenshot 2)
+// ═══════════════════════════════════════════════════════════════
+class _DashedRectPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double gap;
+  final double dash;
+  final double radius;
+
+  const _DashedRectPainter({
+    this.color = const Color(0xFFCBD5E1),
+    this.strokeWidth = 1.2,
+    this.dash = 4.0,
+    this.gap = 4.0,
+    this.radius = 12.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+    final path = Path()..addRRect(rrect);
+
+    for (final metric in path.computeMetrics()) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final length = math.min(dash, metric.length - distance);
+        final extract = metric.extractPath(distance, distance + length);
+        canvas.drawPath(extract, paint);
+        distance += dash + gap;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedRectPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.strokeWidth != strokeWidth ||
+        oldDelegate.dash != dash ||
+        oldDelegate.gap != gap ||
+        oldDelegate.radius != radius;
+  }
+}
+

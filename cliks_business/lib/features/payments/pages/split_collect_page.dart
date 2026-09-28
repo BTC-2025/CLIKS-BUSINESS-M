@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../widgets/create_split_ticket_dialog.dart';
 
@@ -540,12 +538,12 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setModalState) {
-          final totalAmount = double.tryParse(amountController.text.trim()) ?? 0.0;
+          final totalAmount = double.tryParse(amountController.text.trim().replaceAll(',', '')) ?? 0.0;
           final equalShare = participants.isNotEmpty ? (totalAmount / participants.length) : 0.0;
 
           double sumCustomShares = 0.0;
           for (var p in participants) {
-            sumCustomShares += double.tryParse(customShareControllers[p]!.text.trim()) ?? 0.0;
+            sumCustomShares += double.tryParse(customShareControllers[p]!.text.trim().replaceAll(',', '')) ?? 0.0;
           }
           final diff = totalAmount - sumCustomShares;
 
@@ -858,28 +856,53 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                             );
                           }),
                           if (isCustomSplit) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Icon(
-                                  diff.abs() < 0.01 ? LucideIcons.checkCircle : LucideIcons.alertCircle,
-                                  size: 14,
-                                  color: diff.abs() < 0.01 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
-                                ),
-                                const SizedBox(width: 6),
-                                Expanded(
-                                  child: Text(
-                                    diff.abs() < 0.01
-                                        ? 'Allocated: ₹${sumCustomShares.toStringAsFixed(2)} (100% matched)'
-                                        : 'Allocated: ₹${sumCustomShares.toStringAsFixed(2)} (Difference: ₹${diff.toStringAsFixed(2)})',
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: diff.abs() < 0.01 ? const Color(0xFF10B981) : const Color(0xFFEF4444),
+                            const SizedBox(height: 8),
+                            Builder(
+                              builder: (context) {
+                                String formatAmt(double val) {
+                                  final s = val.toStringAsFixed(2);
+                                  final parts = s.split('.');
+                                  final intPart = parts[0];
+                                  final decPart = parts[1];
+                                  if (intPart.length > 3) {
+                                    final last3 = intPart.substring(intPart.length - 3);
+                                    final rest = intPart.substring(0, intPart.length - 3);
+                                    return '$rest,$last3.$decPart';
+                                  }
+                                  return s;
+                                }
+
+                                final String allocText;
+                                final bool isMatched = diff.abs() < 0.01;
+                                if (isMatched) {
+                                  allocText = 'Allocated: ₹${formatAmt(sumCustomShares)} (100% matched)';
+                                } else if (diff < 0) {
+                                  allocText = 'Allocated: ₹${formatAmt(sumCustomShares)} (Over: ₹${formatAmt(-diff)})';
+                                } else {
+                                  allocText = 'Allocated: ₹${formatAmt(sumCustomShares)} (Remaining: ₹${formatAmt(diff)})';
+                                }
+
+                                return Row(
+                                  children: [
+                                    Icon(
+                                      isMatched ? LucideIcons.checkCircle : LucideIcons.alertCircle,
+                                      size: 14,
+                                      color: isMatched ? const Color(0xFF10B981) : const Color(0xFFDC2626),
                                     ),
-                                  ),
-                                ),
-                              ],
+                                    const SizedBox(width: 6),
+                                    Expanded(
+                                      child: Text(
+                                        allocText,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: isMatched ? const Color(0xFF10B981) : const Color(0xFFDC2626),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                );
+                              },
                             ),
                           ],
                         ],
@@ -906,10 +929,77 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                             return;
                           }
 
+                          if (isCustomSplit && diff.abs() >= 0.01) {
+                            showDialog(
+                              context: context,
+                              builder: (ctx2) => Dialog(
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                                backgroundColor: Colors.white,
+                                child: Container(
+                                  width: 380,
+                                  padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 28),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 52,
+                                        height: 52,
+                                        decoration: const BoxDecoration(
+                                          color: Color(0xFFEFF6FF),
+                                          shape: BoxShape.circle,
+                                        ),
+                                        child: const Icon(
+                                          LucideIcons.alertCircle,
+                                          color: Color(0xFF2563EB),
+                                          size: 26,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 18),
+                                      Text(
+                                        'The sum of custom shares (₹${sumCustomShares.toStringAsFixed(2)}) must exactly match the total expense amount (₹${totalAmount.toStringAsFixed(2)})!',
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontSize: 15.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF0F172A),
+                                          height: 1.45,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 24),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        height: 46,
+                                        child: ElevatedButton(
+                                          onPressed: () => Navigator.pop(ctx2),
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: const Color(0xFF2563EB),
+                                            foregroundColor: Colors.white,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius: BorderRadius.circular(12),
+                                            ),
+                                            elevation: 0,
+                                          ),
+                                          child: const Text(
+                                            'Got it',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14.5,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+
                           final Map<String, double> finalShares = {};
                           if (isCustomSplit) {
                             for (var p in participants) {
-                              final shareVal = double.tryParse(customShareControllers[p]!.text.trim()) ?? 0.0;
+                              final shareVal = double.tryParse(customShareControllers[p]!.text.trim().replaceAll(',', '')) ?? 0.0;
                               finalShares[p] = shareVal;
                             }
                           } else {

@@ -66,7 +66,15 @@ class _RequestDocumentDialogState extends State<RequestDocumentDialog> {
       ),
     );
 
-    Navigator.pop(context);
+    Navigator.pop(context, {
+      'id': 'REQ-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+      'title': title.isNotEmpty ? title : 'Statutory Document Request',
+      'client': clientName,
+      'category': _selectedCategory,
+      'priority': _selectedPriority,
+      'date': DateTime.now().toString().split(' ')[0],
+      'status': 'Awaiting Upload',
+    });
   }
 
   @override
