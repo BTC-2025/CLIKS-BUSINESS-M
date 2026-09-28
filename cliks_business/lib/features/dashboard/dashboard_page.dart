@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/navigation/navigation_provider.dart';
+import 'widgets/configure_quick_actions_dialog.dart';
 
 class DashboardPage extends ConsumerWidget {
   const DashboardPage({super.key});
@@ -14,6 +15,10 @@ class DashboardPage extends ConsumerWidget {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final activeIds = ref.watch(dashboardShortcutsProvider);
+    final activeShortcuts = allDashboardShortcuts
+        .where((s) => activeIds.contains(s.id))
+        .toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -58,34 +63,23 @@ class DashboardPage extends ConsumerWidget {
                 spacing: 12,
                 runSpacing: 12,
                 children: [
-                  _QuickActionTile(label: 'New Invoice', icon: LucideIcons.filePlus, color: AppColors.success, route: AppRoute.newInvoice),
-                  _QuickActionTile(label: 'Sales Orders', icon: LucideIcons.shoppingBag, color: AppColors.blue, route: AppRoute.sales),
-                  _QuickActionTile(label: 'Add Product', icon: LucideIcons.box, color: Colors.orange, route: AppRoute.products),
-                  _QuickActionTile(label: 'POS Billing', icon: LucideIcons.monitor, color: Colors.teal, route: AppRoute.pos),
-                  _QuickActionTile(label: 'Add Expense', icon: LucideIcons.trendingDown, color: AppColors.red, route: AppRoute.recordExpense),
-                  _QuickActionTile(label: 'Attendance', icon: LucideIcons.clock, color: Colors.blueAccent, route: AppRoute.attendance),
-                  _QuickActionTile(label: 'Suppliers', icon: LucideIcons.users, color: Colors.purple, route: AppRoute.suppliers),
-                  _QuickActionTile(label: 'Add Customer', icon: LucideIcons.userPlus, color: Colors.pink, route: AppRoute.addCustomer),
-                  _QuickActionTile(label: 'New Purchase PO', icon: LucideIcons.fileText, color: Colors.indigo, route: AppRoute.newPO),
-                  _QuickActionTile(label: 'Staff Claim', icon: LucideIcons.dollarSign, color: Colors.green, route: AppRoute.lodgeStaffClaim),
-                  _QuickActionTile(label: 'Onboard Staff', icon: LucideIcons.userCheck, color: Colors.lightGreen, route: AppRoute.staff),
-                  _QuickActionTile(label: 'GST Records', icon: LucideIcons.layers, color: Colors.amber, route: AppRoute.gst),
-                  _QuickActionTile(label: 'Marketing Hub', icon: LucideIcons.megaphone, color: Colors.deepOrange, route: AppRoute.marketing),
-                  _QuickActionTile(label: 'FIN-PRO Audit Hub', icon: LucideIcons.activity, color: Colors.redAccent, route: AppRoute.auditHub),
-                  _QuickActionTile(label: 'Purchase Bills', icon: LucideIcons.receipt, color: Colors.blue, route: AppRoute.purchase),
-                  _QuickActionTile(label: 'New Purchase Bill', icon: LucideIcons.fileSpreadsheet, color: Colors.cyan, route: AppRoute.newPurchaseBill),
-                  _QuickActionTile(label: 'Purchase Returns', icon: LucideIcons.arrowLeftRight, color: Colors.purple, route: AppRoute.returns),
-                  _QuickActionTile(label: 'New Purchase Return', icon: LucideIcons.undo, color: Colors.pinkAccent, route: AppRoute.purchaseReturn),
-                  _QuickActionTile(label: 'Sales Returns', icon: LucideIcons.refreshCw, color: Colors.orange, route: AppRoute.returns),
-                  _QuickActionTile(label: 'Stock Management', icon: LucideIcons.database, color: Colors.blue, route: AppRoute.stock),
-                  _QuickActionTile(label: 'Godown/Warehouse', icon: LucideIcons.home, color: Colors.brown, route: AppRoute.warehouse),
-                  _QuickActionTile(label: 'Barcode Generator', icon: LucideIcons.barcode, color: Colors.black, route: AppRoute.barcodeGen),
-                  _QuickActionTile(label: 'Split & Collect', icon: LucideIcons.split, color: Colors.deepPurple, route: AppRoute.splitCollect),
-                  _QuickActionTile(label: 'Payments Ledger', icon: LucideIcons.bookOpen, color: AppColors.primaryGreen, route: AppRoute.transaction),
-                  _QuickActionTile(label: 'Company Wallet', icon: LucideIcons.wallet, color: AppColors.blue, route: AppRoute.wallet),
-                  _QuickActionTile(label: 'Loyalty Rewards', icon: LucideIcons.gift, color: AppColors.red, route: AppRoute.rewards),
-                  _QuickActionTile(label: 'Staff Payroll', icon: LucideIcons.creditCard, color: Colors.indigoAccent, route: AppRoute.payroll),
-                  _QuickActionTile(label: 'Double Entry Accounting', icon: LucideIcons.calculator, color: Colors.teal, route: AppRoute.accounting),
+                  ...activeShortcuts.map(
+                    (s) => _QuickActionTile(
+                      label: s.label,
+                      icon: s.icon,
+                      color: s.color,
+                      route: s.route,
+                    ),
+                  ),
+                  _ManageShortcutsButton(
+                    onTap: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) =>
+                            const ConfigureQuickActionsDialog(),
+                      );
+                    },
+                  ),
                 ],
               ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
             ),
@@ -743,6 +737,113 @@ class _QuickActionTile extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _ManageShortcutsButton extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _ManageShortcutsButton({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(10),
+        child: CustomPaint(
+          painter: _DashedBorderPainter(
+            color: const Color(0xFF93C5FD),
+            borderRadius: 10,
+            dashLength: 3.5,
+            spaceLength: 3.5,
+            strokeWidth: 1.2,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(LucideIcons.plus, color: Color(0xFF475569), size: 12),
+                SizedBox(width: 4),
+                Text(
+                  '+ Manage Shortcuts',
+                  style: TextStyle(
+                    color: Color(0xFF334155),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashedBorderPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  final double dashLength;
+  final double spaceLength;
+  final double borderRadius;
+
+  _DashedBorderPainter({
+    required this.color,
+    this.strokeWidth = 1.0,
+    this.dashLength = 4.0,
+    this.spaceLength = 3.0,
+    this.borderRadius = 10.0,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = strokeWidth
+      ..style = PaintingStyle.stroke;
+
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        strokeWidth / 2,
+        strokeWidth / 2,
+        size.width - strokeWidth,
+        size.height - strokeWidth,
+      ),
+      Radius.circular(borderRadius),
+    );
+
+    final path = Path()..addRRect(rrect);
+    final pathMetrics = path.computeMetrics();
+
+    for (final metric in pathMetrics) {
+      double distance = 0.0;
+      while (distance < metric.length) {
+        final start = distance;
+        final end = distance + dashLength;
+        final segment = metric.extractPath(
+          start,
+          end > metric.length ? metric.length : end,
+        );
+        canvas.drawPath(segment, paint);
+        distance += dashLength + spaceLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) =>
+      color != oldDelegate.color ||
+      strokeWidth != oldDelegate.strokeWidth ||
+      dashLength != oldDelegate.dashLength ||
+      spaceLength != oldDelegate.spaceLength ||
+      borderRadius != oldDelegate.borderRadius;
 }
 
 class _ChartLinePainter extends CustomPainter {

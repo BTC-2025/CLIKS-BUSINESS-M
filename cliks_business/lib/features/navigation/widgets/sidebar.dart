@@ -195,6 +195,14 @@ class Sidebar extends ConsumerWidget {
                       ),
                     ),
                   ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: const Color(0xFF166534).withValues(alpha: 0.18),
+                    ),
+                  ),
                   _SidebarExpandable(
                     icon: LucideIcons.wallet,
                     label: 'Finance',
@@ -770,7 +778,16 @@ class Sidebar extends ConsumerWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 6),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    child: Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: const Color(0xFF166534).withValues(alpha: 0.18),
+                    ),
+                  ),
+
+                  const SizedBox(height: 2),
 
                   // 3. Expandable Groups
                   _buildMacOSExpandable(
@@ -1228,137 +1245,88 @@ class Sidebar extends ConsumerWidget {
     WidgetRef ref,
     NavigationState navigation,
   ) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // 1. Storage Card
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          child: MouseRegion(
-            cursor: SystemMouseCursors.click,
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => const MacOsStoragePage(),
-                  ),
-                );
-              },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      LucideIcons.cloud,
-                      color: Color(0xFF2563EB),
-                      size: 18,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Text(
-                            'Storage',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11.5,
-                              color: Color(0xFF1E293B),
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            '921.00 MB of 1.00 GB used',
-                            style: TextStyle(
-                              fontSize: 9.5,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFC7D2FE),
-                          width: 2,
-                        ),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        '90%',
-                        style: TextStyle(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF7C3AED),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFDCF2E4), width: 1)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 8),
 
-        // 2. Dual Badges Capsule (Subscription Button)
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFF0C1938),
-            borderRadius: BorderRadius.circular(12),
-            border: navigation.currentRoute == AppRoute.subscription
-                ? Border.all(color: const Color(0xFFF2C94C), width: 1.5)
-                : null,
-          ),
-          child: Material(
-            color: Colors.transparent,
-            child: Tooltip(
-              message: 'Subscription Plans',
-              child: InkWell(
-                borderRadius: BorderRadius.circular(12),
+          // 1. Storage Card (Compact size)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  ref
-                      .read(navigationProvider.notifier)
-                      .setRoute(AppRoute.subscription);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const MacOsStoragePage(),
+                    ),
+                  );
                 },
-                child: Padding(
+                child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
-                    vertical: 8,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      // Badge 1: 293 DAYS BOOK ELITE
-                      _buildMacOSDaysBadge(
-                        '293',
-                        'DAYS',
-                        'BOOK',
-                        'ELITE',
-                        const Color(0xFFF2C94C),
+                      const Icon(
+                        LucideIcons.cloud,
+                        color: Color(0xFF2563EB),
+                        size: 15,
                       ),
-                      Container(width: 1, height: 26, color: Colors.white24),
-                      // Badge 2: 354 DAYS FIN-PRO FIRM
-                      _buildMacOSDaysBadge(
-                        '354',
-                        'DAYS',
-                        'FIN-PRO',
-                        'FIRM',
-                        const Color(0xFFF2C94C),
+                      const SizedBox(width: 8),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Storage',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11.5,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            SizedBox(height: 1),
+                            Text(
+                              '0 KB of 1.00 GB used',
+                              style: TextStyle(
+                                fontSize: 9.5,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        width: 26,
+                        height: 26,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFDBEAFE),
+                          shape: BoxShape.circle,
+                        ),
+                        alignment: Alignment.center,
+                        child: const Text(
+                          '0%',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -1366,46 +1334,100 @@ class Sidebar extends ConsumerWidget {
               ),
             ),
           ),
-        ),
 
-        const SizedBox(height: 4),
-
-        // 3. Settings Item
-        _buildMacOSItem(
-          icon: LucideIcons.settings,
-          label: 'Settings',
-          isSelected: navigation.currentRoute == AppRoute.settings,
-          onTap: () {
-            ref
-                .read(navigationProvider.notifier)
-                .setModuleAndRoute(AppModule.books, AppRoute.settings);
-          },
-          trailing: const Icon(
-            LucideIcons.chevronRight,
-            size: 14,
-            color: Color(0xFF9CA3AF),
+          // 2. Dual Badges Capsule (Subscription Button - Previous Original Design)
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0C1938),
+              borderRadius: BorderRadius.circular(12),
+              border: navigation.currentRoute == AppRoute.subscription
+                  ? Border.all(color: const Color(0xFFF2C94C), width: 1.5)
+                  : null,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: Tooltip(
+                message: 'Subscription Plans',
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () {
+                    ref
+                        .read(navigationProvider.notifier)
+                        .setRoute(AppRoute.subscription);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        // Badge 1: 293 DAYS BOOK ELITE
+                        _buildMacOSDaysBadge(
+                          '293',
+                          'DAYS',
+                          'BOOK',
+                          'ELITE',
+                          const Color(0xFFF2C94C),
+                        ),
+                        Container(width: 1, height: 26, color: Colors.white24),
+                        // Badge 2: 354 DAYS FIN-PRO FIRM
+                        _buildMacOSDaysBadge(
+                          '354',
+                          'DAYS',
+                          'FIN-PRO',
+                          'FIRM',
+                          const Color(0xFFF2C94C),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
-        ),
 
-        // 4. Help & Support Item
-        _buildMacOSItem(
-          icon: LucideIcons.helpCircle,
-          label: 'Help & Support',
-          isSelected: navigation.currentRoute == AppRoute.help,
-          onTap: () {
-            ref
-                .read(navigationProvider.notifier)
-                .setModuleAndRoute(AppModule.books, AppRoute.help);
-          },
-          trailing: const Icon(
-            LucideIcons.chevronRight,
-            size: 14,
-            color: Color(0xFF9CA3AF),
+          const SizedBox(height: 4),
+
+          // 3. Settings Item
+          _buildMacOSItem(
+            icon: LucideIcons.settings,
+            label: 'Settings',
+            isSelected: navigation.currentRoute == AppRoute.settings,
+            onTap: () {
+              ref
+                  .read(navigationProvider.notifier)
+                  .setModuleAndRoute(AppModule.books, AppRoute.settings);
+            },
+            trailing: const Icon(
+              LucideIcons.chevronRight,
+              size: 14,
+              color: Color(0xFF9CA3AF),
+            ),
           ),
-        ),
 
-        const SizedBox(height: 10),
-      ],
+          // 4. Help & Support Item
+          _buildMacOSItem(
+            icon: LucideIcons.helpCircle,
+            label: 'Help & Support',
+            isSelected: navigation.currentRoute == AppRoute.help,
+            onTap: () {
+              ref
+                  .read(navigationProvider.notifier)
+                  .setModuleAndRoute(AppModule.books, AppRoute.help);
+            },
+            trailing: const Icon(
+              LucideIcons.chevronRight,
+              size: 14,
+              color: Color(0xFF9CA3AF),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+        ],
+      ),
     );
   }
 
@@ -1981,8 +2003,10 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
   }
 }
 
-class _MobileSidebarBottomFixed extends ConsumerWidget {
-  const _MobileSidebarBottomFixed();
+typedef _MobileSidebarBottomFixed = _SidebarBottomFixed;
+
+class _SidebarBottomFixed extends ConsumerWidget {
+  const _SidebarBottomFixed();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1990,9 +2014,9 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
     final double bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, 10 + bottomPadding),
+      padding: EdgeInsets.fromLTRB(12, 10, 12, 10 + bottomPadding),
       decoration: const BoxDecoration(
-        color: AppColors.sidebarBackground,
+        color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFDCF2E4), width: 1)),
       ),
       child: Column(
@@ -2045,12 +2069,23 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () {
-          final scaffold = Scaffold.maybeOf(context);
-          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-          ref.read(navigationProvider.notifier).setRoute(AppRoute.storage);
+          final isMacOS =
+              Theme.of(context).platform == TargetPlatform.macOS ||
+              defaultTargetPlatform == TargetPlatform.macOS;
+          if (isMacOS) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const MacOsStoragePage(),
+              ),
+            );
+          } else {
+            final scaffold = Scaffold.maybeOf(context);
+            if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
+            ref.read(navigationProvider.notifier).setRoute(AppRoute.storage);
+          }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
           decoration: BoxDecoration(
             color: const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(10),
@@ -2058,8 +2093,8 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 17),
-              const SizedBox(width: 9),
+              const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 15),
+              const SizedBox(width: 8),
               const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2069,7 +2104,7 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
                       'Storage',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 12.5,
+                        fontSize: 11.5,
                         color: Color(0xFF0F172A),
                       ),
                     ),
@@ -2077,7 +2112,7 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
                     Text(
                       '0 KB of 1.00 GB used',
                       style: TextStyle(
-                        fontSize: 10.5,
+                        fontSize: 9.5,
                         fontWeight: FontWeight.w500,
                         color: Color(0xFF475569),
                       ),
@@ -2086,8 +2121,8 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
                 ),
               ),
               Container(
-                width: 32,
-                height: 32,
+                width: 26,
+                height: 26,
                 decoration: const BoxDecoration(
                   color: Color(0xFFDBEAFE),
                   shape: BoxShape.circle,
@@ -2096,7 +2131,7 @@ class _MobileSidebarBottomFixed extends ConsumerWidget {
                 child: const Text(
                   '0%',
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: 9.5,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2563EB),
                   ),

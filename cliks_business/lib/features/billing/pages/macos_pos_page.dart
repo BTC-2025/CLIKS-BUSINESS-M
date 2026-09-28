@@ -1238,8 +1238,6 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         _buildHeaderCard(),
                         const SizedBox(height: 12),
                         _buildSearchAndFilters(),
-                        const SizedBox(height: 10),
-                        _buildWarehouseDropdown(),
                         const SizedBox(height: 12),
                         _buildProductCatalogGrid(constraints.maxWidth - 430),
                         const SizedBox(height: 40),
@@ -1254,6 +1252,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                   height: constraints.maxHeight,
                   child: Container(
                     margin: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
@@ -1266,7 +1265,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                         ),
                       ],
                     ),
-                    child: _buildRightCheckoutPanel(),
+                    child: _buildRightCheckoutPanel(isFixedBottom: true),
                   ),
                 ),
               ],
@@ -1282,18 +1281,17 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                   _buildHeaderCard(),
                   const SizedBox(height: 12),
                   _buildSearchAndFilters(),
-                  const SizedBox(height: 10),
-                  _buildWarehouseDropdown(),
                   const SizedBox(height: 12),
                   _buildProductCatalogGrid(constraints.maxWidth),
                   const SizedBox(height: 20),
                   Container(
+                    clipBehavior: Clip.antiAlias,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                    child: _buildRightCheckoutPanel(),
+                    child: _buildRightCheckoutPanel(isFixedBottom: false),
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -1480,6 +1478,11 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
 
     return Row(
       children: [
+        // Pill-shaped Warehouse Dropdown (near left of the search icon)
+        _buildWarehouseDropdown(),
+
+        const SizedBox(width: 10),
+
         // Pill-shaped Search bar
         Expanded(
           flex: 4,
@@ -1575,7 +1578,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
     );
   }
 
-  // Pill-shaped Curvy Warehouse Dropdown
+  // Pill-shaped Curvy Warehouse Dropdown (placed near left of search icon)
   Widget _buildWarehouseDropdown() {
     return PopupMenuButton<String>(
       onSelected: (val) {
@@ -1590,21 +1593,24 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
         const PopupMenuItem(value: 'Retail Store 1', child: Text('Retail Store #1')),
       ],
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFF1E293B), width: 1.2),
+          border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const Icon(LucideIcons.warehouse, size: 14, color: Color(0xFF166534)),
+            const SizedBox(width: 6),
             Text(
               _selectedWarehouse,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
             ),
-            const SizedBox(width: 6),
-            const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF1E293B)),
+            const SizedBox(width: 4),
+            const Icon(LucideIcons.chevronDown, size: 13, color: Color(0xFF64748B)),
           ],
         ),
       ),
@@ -1927,12 +1933,12 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
   // ═══════════════════════════════════════════════════════════════
   // 4. RIGHT CHECKOUT & CART PANEL
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildRightCheckoutPanel() {
-    return SingleChildScrollView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+  Widget _buildRightCheckoutPanel({bool isFixedBottom = true}) {
+    final topSection = Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           // ─── A. CUSTOMER INFORMATION ───
           const Row(
@@ -2066,9 +2072,9 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ),
           ],
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
 
-          // ─── B. CART ITEMS ───
+          // ─── B. CART HEADER ───
           Row(
             children: [
               Text(
@@ -2114,111 +2120,129 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ],
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
+        ],
+      ),
+    );
 
-          if (_cart.isEmpty)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 28),
-              alignment: Alignment.center,
-              child: const Text(
-                'Your cart is empty.\nTap products on the left to add items.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
-              ),
-            )
-          else
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _cart.length,
-              separatorBuilder: (_, _) => const Divider(height: 14, color: Color(0xFFF3F4F6)),
-              itemBuilder: (context, index) {
-                final line = _cart[index];
-
-                return Row(
-                  children: [
-                    // Name & Unit Price
-                    Expanded(
-                      flex: 4,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            line.product.name,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            '₹${_formatIndianCurrency(line.product.price)} / ${line.product.unit}',
-                            style: const TextStyle(fontSize: 10.5, color: Color(0xFF6B7280)),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    // Stepper: [-] X PCS [+]
-                    Container(
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFFE5E7EB)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          InkWell(
-                            onTap: () => _decrementCartItem(index),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6),
-                              child: Icon(LucideIcons.minus, size: 11, color: Color(0xFF374151)),
-                            ),
-                          ),
-                          Text(
-                            '${line.quantity}  ${line.product.unit}',
-                            style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
-                          ),
-                          InkWell(
-                            onTap: () => _incrementCartItem(index),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6),
-                              child: Icon(LucideIcons.plus, size: 11, color: Color(0xFF374151)),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    // Line Total
-                    Text(
-                      '₹${_formatIndianCurrency(line.total)}',
-                      style: const TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-
-                    const SizedBox(width: 8),
-
-                    // Trash button
-                    InkWell(
-                      onTap: () => _removeCartItem(index),
-                      child: const Icon(LucideIcons.trash2, size: 13, color: Color(0xFFEF4444)),
-                    ),
-                  ],
-                );
-              },
+    final cartListWidget = _cart.isEmpty
+        ? Container(
+            padding: const EdgeInsets.symmetric(vertical: 28),
+            alignment: Alignment.center,
+            child: const Text(
+              'Your cart is empty.\nTap products on the left to add items.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF9CA3AF), fontSize: 12),
             ),
+          )
+        : ListView.separated(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+            shrinkWrap: !isFixedBottom,
+            itemCount: _cart.length,
+            separatorBuilder: (_, _) => const Divider(height: 14, color: Color(0xFFF3F4F6)),
+            itemBuilder: (context, index) {
+              final line = _cart[index];
 
-          const SizedBox(height: 16),
+              return Row(
+                children: [
+                  // Name & Unit Price
+                  Expanded(
+                    flex: 4,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          line.product.name,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF111827),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          '₹${_formatIndianCurrency(line.product.price)} / ${line.product.unit}',
+                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF6B7280)),
+                        ),
+                      ],
+                    ),
+                  ),
 
+                  // Stepper: [-] X PCS [+]
+                  Container(
+                    height: 26,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF3F4F6),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        InkWell(
+                          onTap: () => _decrementCartItem(index),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6),
+                            child: Icon(LucideIcons.minus, size: 11, color: Color(0xFF374151)),
+                          ),
+                        ),
+                        Text(
+                          '${line.quantity}  ${line.product.unit}',
+                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
+                        ),
+                        InkWell(
+                          onTap: () => _incrementCartItem(index),
+                          child: const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6),
+                            child: Icon(LucideIcons.plus, size: 11, color: Color(0xFF374151)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  // Line Total
+                  Text(
+                    '₹${_formatIndianCurrency(line.total)}',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+
+                  const SizedBox(width: 8),
+
+                  // Trash button
+                  InkWell(
+                    onTap: () => _removeCartItem(index),
+                    child: const Icon(LucideIcons.trash2, size: 13, color: Color(0xFFEF4444)),
+                  ),
+                ],
+              );
+            },
+          );
+
+    final bottomPaymentSection = Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Color(0x0A000000),
+            blurRadius: 6,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           // ─── C. PAYMENT SUMMARY ───
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -2236,7 +2260,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
 
           // Four input columns: DISCOUNT, GST TAX, PTS REDEEMED, PTS EARNED
           Row(
@@ -2348,7 +2372,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
 
           // Subtotal lines
           Row(
@@ -2358,7 +2382,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
               Text('₹${_formatIndianCurrency(_subtotal)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
             ],
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -2366,7 +2390,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
               Text('₹${_formatIndianCurrency(_gstAmount)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF111827))),
             ],
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -2378,7 +2402,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
 
           // Payable Amount row
           Row(
@@ -2392,7 +2416,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
               Text(
                 '₹${_formatIndianCurrency(_payableAmount)}',
                 style: const TextStyle(
-                  fontSize: 22,
+                  fontSize: 20,
                   fontWeight: FontWeight.w900,
                   color: Color(0xFF111827),
                   letterSpacing: -0.5,
@@ -2401,7 +2425,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // 3 Quick Payment Buttons: Cash (F1), UPI (F2), Card (F3)
           Row(
@@ -2462,5 +2486,26 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
         ],
       ),
     );
+
+    if (isFixedBottom) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          topSection,
+          Expanded(child: cartListWidget),
+          bottomPaymentSection,
+        ],
+      );
+    } else {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          topSection,
+          cartListWidget,
+          bottomPaymentSection,
+        ],
+      );
+    }
   }
 }
+
