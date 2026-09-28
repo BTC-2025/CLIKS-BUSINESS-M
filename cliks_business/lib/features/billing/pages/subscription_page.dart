@@ -22,6 +22,10 @@ class _SubscriptionTierData {
   final IconData icon;
   final List<String> features;
   final bool isCurrentPlan;
+  final bool isTopTier;
+  final Widget? extraWidget;
+  final String? billingCycleText;
+  final String? billingSubtext;
 
   const _SubscriptionTierData({
     required this.tierNumber,
@@ -35,6 +39,10 @@ class _SubscriptionTierData {
     required this.icon,
     required this.features,
     this.isCurrentPlan = false,
+    this.isTopTier = false,
+    this.extraWidget,
+    this.billingCycleText,
+    this.billingSubtext,
   });
 }
 
@@ -44,6 +52,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   static const Color _darkForestGreen = Color(0xFF135029);
   static const Color _lightMintGreen = Color(0xFFEAFAE3);
   static const Color _mintBorder = Color(0xFFD1F2C2);
+
+  // Section Navigation Tabs (BUSINESS, FIN-PRO, PARTNER LAUNCH DESK)
+  int _selectedMainTab = 0; // 0: BUSINESS, 1: FIN-PRO, 2: PARTNER LAUNCH DESK
+  int _selectedPartnerTab = 0; // 0: Investor Club, 1: Products & Ideas
+
+  // Tier tracking for Upgrade logic:
+  // "A person can go from starter plan to elite plan , like upgrading ,
+  // but if he puts the elite or any other plan , the plan which is before it button should not work , the button above it can work"
+  int _currentBusinessTier = 1; // 1: Starter, 2: Standard, 3: Premium, 4: Elite
+  int _currentFinProTier = 1; // 1: Solo (Active), 2: Firm (Top tier with Gold UI)
+  int _finProTeamMembers = 3; // Stepper counter in Fin-Pro Firm
+  int _currentInvestorTier = 1; // 1: Basic Investor, 2: Pro Investor (Top tier with Gold UI)
+  int _currentProductsTier = 1; // 1: Monthly Innovator, 2: Yearly Founder (Top tier with Gold UI)
 
   // Scroll Controller & GlobalKeys for seamless section navigation
   final ScrollController _scrollController = ScrollController();
@@ -176,7 +197,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     ),
     _SubscriptionTierData(
       tierNumber: 4,
-      topTag: 'CURRENTLY ACTIVE PLAN',
+      topTag: 'ELITE ENTERPRISE',
       name: 'Tier 4 (Elite)',
       headline:
           'Maximum performance, unlimited scale & dedicated 24/7 VIP governance.',
@@ -194,7 +215,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         'Guaranteed 99.99% Enterprise Uptime SLA',
         'Dedicated FIN-PRO Manager & 24/7 VIP Support',
       ],
-      isCurrentPlan: true,
+      isCurrentPlan: false,
+      isTopTier: true,
     ),
   ];
 
@@ -217,19 +239,31 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             Container(key: _topHeaderKey, child: _buildTopHeader(isMobile)),
             const SizedBox(height: 18),
 
-            // ─── 2. ACTIVE PLAN HERO BANNER (Elite Suite with Next Renewal & Amount) ───
+            // ─── 2. ACTIVE PLAN HERO BANNER (Dark green color long tab) ───
             Container(key: _activePlanKey, child: _buildActivePlanBanner(isMobile)),
+            const SizedBox(height: 20),
+
+            // ─── 3. 3-SECTION PILL SELECTOR (Directly below "Active plan" dark green long tab) ───
+            _buildMainTabSelector(),
             const SizedBox(height: 28),
 
-            // ─── 3. UPGRADE WORKSPACE TIER SECTION TITLE ───
-            Container(key: _upgradeTiersKey, child: _buildUpgradeSectionHeader()),
-            const SizedBox(height: 18),
+            if (_selectedMainTab == 0) ...[
+              // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
+              Container(key: _upgradeTiersKey, child: _buildUpgradeSectionHeader()),
+              const SizedBox(height: 18),
 
-            // ─── 4. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH DARK FOREST GREEN HIGHLIGHTS) ───
-            _buildFourTierCards(),
+              // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
+              _buildFourTierCards(),
+            ] else if (_selectedMainTab == 1) ...[
+              // ─── FIN-PRO SECTION ───
+              _buildFinProSection(isMobile),
+            ] else ...[
+              // ─── PARTNER LAUNCH DESK SECTION ───
+              _buildPartnerLaunchDeskSection(isMobile),
+            ],
             const SizedBox(height: 36),
 
-            // ─── 5. BILLING & STATEMENT HISTORY ───
+            // ─── BILLING & STATEMENT HISTORY ───
             Container(key: _billingHistoryKey, child: _buildBillingHistorySection()),
           ],
         ),
@@ -348,6 +382,44 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // 2. ACTIVE PLAN HERO BANNER: Elite Suite (Dark Forest Green)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildActivePlanBanner(bool isMobile) {
+    String activePlanName;
+    String activePlanDesc;
+    String activeRenewalAmount;
+
+    if (_selectedMainTab == 0) {
+      final activeTierData = _tiers.firstWhere(
+        (t) => t.tierNumber == _currentBusinessTier,
+        orElse: () => _tiers.first,
+      );
+      activePlanName = activeTierData.name;
+      activePlanDesc =
+          'Your workspace is configured with high-performance ERP pipelines under the ${activeTierData.name} tier.';
+      activeRenewalAmount = '${activeTierData.fullAnnualPrice} + GST';
+    } else if (_selectedMainTab == 1) {
+      final isFirm = _currentFinProTier == 2;
+      activePlanName = isFirm ? 'Fin-Pro Firm' : 'Fin-Pro Solo';
+      activePlanDesc = isFirm
+          ? 'Your practice is equipped with multi-client auditing, collaborative team management, and direct API sandbox access.'
+          : 'Your practice is equipped with solo practitioner client ledgers and direct audit verification logs.';
+      activeRenewalAmount = isFirm ? '₹17,988 + GST' : '₹9,588 + GST';
+    } else {
+      if (_selectedPartnerTab == 0) {
+        final isPro = _currentInvestorTier == 2;
+        activePlanName = isPro ? 'Pro Investor' : 'Basic Investor';
+        activePlanDesc = isPro
+            ? 'Your desk has full access to 50 curated pitches, interactive deal rooms, and 1-on-1 consultations.'
+            : 'Your desk has access to 20 curated startup pitches and direct founder contact channels.';
+        activeRenewalAmount = isPro ? '₹23,988 + GST' : '₹11,988 + GST';
+      } else {
+        final isYearly = _currentProductsTier == 2;
+        activePlanName = isYearly ? 'Yearly Founder' : 'Monthly Innovator';
+        activePlanDesc = isYearly
+            ? 'Annual sovereign tier with lifetime fee freeze, unlimited pitches, and VIP gala entry.'
+            : 'Monthly access for founders seeking foundational product testing.';
+        activeRenewalAmount = isYearly ? '₹4,999 + GST' : '₹499 + GST';
+      }
+    }
+
     final leftPart = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -383,7 +455,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    'Elite Suite',
+                    activePlanName,
                     style: GoogleFonts.inter(
                       fontSize: 21,
                       fontWeight: FontWeight.w900,
@@ -395,7 +467,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ),
               const SizedBox(height: 3),
               Text(
-                'Your workspace is configured with high-performance ERP pipelines under the Business Elite Suite tier.',
+                activePlanDesc,
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
                   color: Colors.white.withValues(alpha: 0.82),
@@ -467,7 +539,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ),
               const SizedBox(height: 3),
               Text(
-                '₹8,999 + GST',
+                activeRenewalAmount,
                 style: GoogleFonts.inter(
                   fontSize: isMobile ? 14.5 : 16,
                   fontWeight: FontWeight.w800,
@@ -512,9 +584,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // ═══════════════════════════════════════════════════════════════
   // 3. UPGRADE WORKSPACE TIER SECTION TITLE
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildUpgradeSectionHeader() {
-    final days = _remainingTime.inDays;
-
+  Widget _buildUpgradeSectionHeader([String title = 'Upgrade Workspace Tier']) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -536,7 +606,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  'Upgrade Workspace Tier',
+                  title,
                   style: GoogleFonts.inter(
                     fontSize: 22,
                     fontWeight: FontWeight.w800,
@@ -604,14 +674,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ),
           ],
         ),
-        const SizedBox(height: 5),
-        Text(
-          'Choose the ideal tier for your business scale. Special promotional discount active: save up to 82% before offer expires in $days days.',
-          style: GoogleFonts.inter(
-            fontSize: 13,
-            color: const Color(0xFF64748B),
-          ),
-        ),
       ],
     );
   }
@@ -627,7 +689,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     return LayoutBuilder(
       builder: (context, constraints) {
         final cards = _tiers
-            .map((tier) => _buildSingleSubscriptionCard(tier, days, hours, mins))
+            .map(
+              (tier) => _buildSingleSubscriptionCard(
+                tier: tier,
+                activeTierNumber: _currentBusinessTier,
+                onUpgrade: (newTier) {
+                  setState(() => _currentBusinessTier = newTier);
+                },
+                days: days,
+                hours: hours,
+                mins: mins,
+              ),
+            )
             .toList();
 
         // Responsive horizontal scroll guard on smaller window sizes to avoid overflow
@@ -680,72 +753,96 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // ═══════════════════════════════════════════════════════════════
   // INDIVIDUAL SUBSCRIPTION CARD (Enterprise SaaS Aesthetic)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildSingleSubscriptionCard(
-    _SubscriptionTierData tier,
-    int days,
-    int hours,
-    int mins,
-  ) {
+  Widget _buildSingleSubscriptionCard({
+    required _SubscriptionTierData tier,
+    required int activeTierNumber,
+    required ValueChanged<int> onUpgrade,
+    required int days,
+    required int hours,
+    required int mins,
+  }) {
     final int tierNum = tier.tierNumber;
     final bool isTier1 = tierNum == 1;
     final bool isTier2 = tierNum == 2;
     final bool isTier3 = tierNum == 3;
-    final bool isTier4 = tierNum == 4;
+    final bool isCurrent = tierNum == activeTierNumber;
+    final bool isGold = tier.isTopTier;
 
     // Distinct Tier Accents & Color Themes
-    final Color accentColor = isTier1
-        ? const Color(0xFF475569) // Cool Slate Blue
-        : (isTier2
-              ? const Color(0xFF0D9488) // Clean Teal / Emerald
+    final Color accentColor = isGold
+        ? const Color(0xFFB45309) // Rich Warm Gold / Amber for top tiers
+        : (isTier1
+              ? const Color(0xFF475569) // Cool Slate Blue
+              : (isTier2
+                    ? const Color(0xFF0D9488) // Clean Teal / Emerald
+                    : (isTier3
+                          ? const Color(0xFF2563EB) // Vibrant Royal Blue / Indigo
+                          : const Color(0xFFB45309))));
+
+    // Gold UI ONLY for higher plan (All Top Tiers)!
+    // Currently active plan is normally highlighted (Clean Brand Green, ZERO gold)
+    final Color cardBorderColor = isGold
+        ? const Color(0xFFD4AF37) // Luxury Gold border ONLY for top tiers
+        : (isCurrent
+              ? _darkForestGreen // Normally highlighted for active plan
               : (isTier3
-                    ? const Color(0xFF2563EB) // Vibrant Royal Blue / Indigo
-                    : const Color(0xFFB45309))); // Rich Warm Gold / Amber
+                    ? const Color(0xFF2563EB) // Royal Blue border
+                    : const Color(0xFFE2E8F0)));
 
-    final Color cardBorderColor = isTier4
-        ? const Color(0xFFD4AF37) // Luxury Champagne Gold border
-        : (isTier3
-              ? const Color(0xFF2563EB) // Royal Blue border
-              : const Color(0xFFE2E8F0));
+    final double borderWidth = isGold ? 2.4 : (isCurrent ? 2.0 : (isTier3 ? 1.8 : 1.2));
 
-    final double borderWidth = isTier4 ? 2.4 : (isTier3 ? 2.0 : 1.2);
-
-    final List<BoxShadow> cardShadow = isTier3
+    final List<BoxShadow> cardShadow = isGold
         ? [
             BoxShadow(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.14),
-              blurRadius: 22,
+              color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
+              blurRadius: 24,
               offset: const Offset(0, 6),
             ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
-              blurRadius: 8,
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
+              blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ]
-        : (isTier4
-              ? [
-                  BoxShadow(
-                    color: const Color(0xFFD4AF37).withValues(alpha: 0.28),
-                    blurRadius: 24,
-                    offset: const Offset(0, 6),
-                  ),
-                  BoxShadow(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.14),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 12,
-                    offset: const Offset(0, 4),
-                  ),
-                ]);
+        : (isCurrent
+            ? [
+                BoxShadow(
+                  color: _darkForestGreen.withValues(alpha: 0.15),
+                  blurRadius: 18,
+                  offset: const Offset(0, 4),
+                ),
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.03),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ]
+            : (isTier3
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.14),
+                        blurRadius: 22,
+                        offset: const Offset(0, 6),
+                      ),
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]));
 
     return Container(
       decoration: BoxDecoration(
-        color: isTier4 ? const Color(0xFFFFFDF5) : Colors.white,
+        color: isGold
+            ? const Color(0xFFFFFDF5) // Luxury Gold background ONLY for top tiers
+            : (isCurrent ? const Color(0xFFF9FDF9) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorderColor, width: borderWidth),
         boxShadow: cardShadow,
@@ -757,142 +854,162 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-          // ─── 1. TOP PILL BADGE (Aligned across all cards) ───
-          Container(
-            height: 28,
-            alignment: Alignment.centerLeft,
-            child: _buildTierTopBadge(tier),
-          ),
-          const SizedBox(height: 14),
-
-          // ─── 2. TIER ICON & TOP-RIGHT DISCOUNT TAG ───
-          SizedBox(
-            height: 44,
-            child: Row(
-              children: [
-                _buildTierIcon(tier, accentColor),
-                const Spacer(),
-                _buildDiscountTag(tier),
-              ],
+            // ─── 1. TOP PILL BADGE (Aligned across all cards) ───
+            Container(
+              height: 28,
+              alignment: Alignment.centerLeft,
+              child: _buildTierTopBadge(tier, isCurrent),
             ),
-          ),
-          const SizedBox(height: 14),
+            const SizedBox(height: 14),
 
-          // ─── 3. TIER NAME (Identical height for all cards) ───
-          Container(
-            height: 28,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              tier.name,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: isTier4
-                    ? const Color(0xFF78350F)
-                    : const Color(0xFF0F172A),
-                letterSpacing: -0.3,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // ─── 4. TIER HEADLINE (Strict identical 42px height for all cards) ───
-          SizedBox(
-            height: 42,
-            child: Text(
-              tier.headline,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
-                height: 1.35,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Container(
-            height: 32,
-            alignment: Alignment.centerLeft,
-            child: _buildBlinkingOfferButton(tier, days, hours, mins),
-          ),
-          const SizedBox(height: 8),
-
-          // ─── 5. PRICING CONTAINER (Identical height & padding across all cards) ───
-          _buildPricingBox(tier),
-          const SizedBox(height: 16),
-
-          // ─── 6. ACTION CTA BUTTON (Strict 44px height across all cards) ───
-          _buildCtaButton(tier, accentColor),
-          const SizedBox(height: 20),
-
-          // ─── 7. WHAT'S INCLUDED HEADER (Starts on identical horizontal axis) ───
-          Text(
-            "WHAT'S INCLUDED",
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: isTier4
-                  ? const Color(0xFF92400E)
-                  : const Color(0xFF64748B),
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ─── 8. FEATURES LIST (Checklist with clean theme icons & standard line-height) ───
-          ...tier.features.map(
-            (f) => Padding(
-              padding: const EdgeInsets.only(bottom: 9.0),
+            // ─── 2. TIER ICON & TOP-RIGHT DISCOUNT TAG ───
+            SizedBox(
+              height: 44,
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 17,
-                    height: 17,
-                    margin: const EdgeInsets.only(top: 2),
-                    decoration: BoxDecoration(
-                      color: isTier4
-                          ? const Color(0xFFFEF3C7)
-                          : accentColor.withValues(alpha: 0.12),
-                      border: isTier4
-                          ? Border.all(
-                              color: const Color(0xFFFDE68A),
-                              width: 1.0,
-                            )
-                          : null,
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Icon(
-                        LucideIcons.check,
-                        size: 10.5,
-                        color: isTier4 ? const Color(0xFFB45309) : accentColor,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 9),
-                  Expanded(
-                    child: Text(
-                      f,
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF334155),
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
+                  _buildTierIcon(tier, accentColor, isCurrent),
+                  const Spacer(),
+                  _buildDiscountTag(tier, isCurrent),
                 ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 14),
+
+            // ─── 3. TIER NAME (Identical height for all cards) ───
+            Container(
+              height: 28,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                tier.name,
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: isGold
+                      ? const Color(0xFF78350F)
+                      : const Color(0xFF0F172A),
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // ─── 4. TIER HEADLINE (Strict identical 42px height for all cards) ───
+            SizedBox(
+              height: 42,
+              child: Text(
+                tier.headline,
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: const Color(0xFF64748B),
+                  height: 1.35,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              height: 32,
+              alignment: Alignment.centerLeft,
+              child: _buildBlinkingOfferButton(tier, days, hours, mins, isCurrent),
+            ),
+            const SizedBox(height: 8),
+
+            // ─── 5. PRICING CONTAINER (Identical height & padding across all cards) ───
+            _buildPricingBox(tier, isCurrent),
+            const SizedBox(height: 14),
+
+            // ─── OPTIONAL EXTRA WIDGET (e.g. Stepper in Fin-Pro Firm) ───
+            if (tier.extraWidget != null) ...[
+              tier.extraWidget!,
+              const SizedBox(height: 14),
+            ],
+
+            // ─── 6. ACTION CTA BUTTON (Strict 44px height across all cards) ───
+            _buildCtaButton(
+              tier: tier,
+              accentColor: accentColor,
+              activeTierNumber: activeTierNumber,
+              onUpgrade: onUpgrade,
+            ),
+            const SizedBox(height: 20),
+
+            // ─── 7. WHAT'S INCLUDED HEADER (Starts on identical horizontal axis) ───
+            Text(
+              "WHAT'S INCLUDED",
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: isGold
+                    ? const Color(0xFF92400E)
+                    : const Color(0xFF64748B),
+                letterSpacing: 0.8,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // ─── 8. FEATURES LIST (Checklist with clean theme icons & standard line-height) ───
+            ...tier.features.map(
+              (f) => Padding(
+                padding: const EdgeInsets.only(bottom: 9.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 17,
+                      height: 17,
+                      margin: const EdgeInsets.only(top: 2),
+                      decoration: BoxDecoration(
+                        color: isGold
+                            ? const Color(0xFFFEF3C7)
+                            : (isCurrent
+                                  ? const Color(0xFFECFDF5)
+                                  : accentColor.withValues(alpha: 0.12)),
+                        border: isGold
+                            ? Border.all(
+                                color: const Color(0xFFFDE68A),
+                                width: 1.0,
+                              )
+                            : (isCurrent
+                                  ? Border.all(
+                                      color: const Color(0xFFA7F3D0),
+                                      width: 1.0,
+                                    )
+                                  : null),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Icon(
+                          LucideIcons.check,
+                          size: 10.5,
+                          color: isGold
+                              ? const Color(0xFFB45309)
+                              : (isCurrent ? _darkForestGreen : accentColor),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Text(
+                        f,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF334155),
+                          height: 1.35,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // ANIMATED BLINKING OFFER BUTTON FOR macOS TIER TABS
@@ -902,32 +1019,38 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     int days,
     int hours,
     int mins,
+    bool isCurrent,
   ) {
     return AnimatedBuilder(
       animation: _blinkAnimation,
       builder: (context, child) {
-        final t = _blinkAnimation.value;
-        final bool isTier4 = tier.tierNumber == 4;
+        final double t = _blinkAnimation.value;
+        // Gold UI for all Top Tiers (always gold)!
+        final bool isGold = tier.isTopTier;
         final bool isTier3 = tier.tierNumber == 3;
         final bool isTier2 = tier.tierNumber == 2;
 
-        final Color baseColor = isTier4
+        final Color baseColor = isGold
             ? const Color(0xFFB45309)
-            : (isTier3
-                ? const Color(0xFF1D4ED8)
-                : (isTier2 ? const Color(0xFF0F766E) : const Color(0xFF334155)));
+            : (isCurrent
+                  ? _darkForestGreen
+                  : (isTier3
+                        ? const Color(0xFF1D4ED8)
+                        : (isTier2 ? const Color(0xFF0F766E) : const Color(0xFF334155))));
 
-        final Color glowColor = isTier4
+        final Color glowColor = isGold
             ? const Color(0xFFF59E0B)
-            : (isTier3
-                ? const Color(0xFF3B82F6)
-                : (isTier2 ? const Color(0xFF14B8A6) : const Color(0xFF64748B)));
+            : (isCurrent
+                  ? const Color(0xFF10B981)
+                  : (isTier3
+                        ? const Color(0xFF3B82F6)
+                        : (isTier2 ? const Color(0xFF14B8A6) : const Color(0xFF64748B))));
 
-        final Color dotColor = isTier4
+        final Color dotColor = isGold
             ? const Color(0xFFEA580C)
-            : (isTier3
-                ? const Color(0xFF2563EB)
-                : const Color(0xFFEF4444));
+            : (isCurrent
+                  ? const Color(0xFF059669)
+                  : (isTier3 ? const Color(0xFF2563EB) : const Color(0xFFEF4444)));
 
         return Tooltip(
           message: 'Special Promotional Discount Active • ${tier.discountTag}',
@@ -937,20 +1060,20 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4.5),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: isTier4
+                  colors: isGold
                       ? [
                           Color.lerp(const Color(0xFFFFFBEB), const Color(0xFFFEF3C7), t)!,
                           Color.lerp(const Color(0xFFFDE68A), const Color(0xFFFCD34D), t)!,
                         ]
                       : (isTier3
-                          ? [
-                              Color.lerp(const Color(0xFFEFF6FF), const Color(0xFFDBEAFE), t)!,
-                              Color.lerp(const Color(0xFFBFDBFE), const Color(0xFF93C5FD), t)!,
-                            ]
-                          : [
-                              Color.lerp(const Color(0xFFF0FDF4), const Color(0xFFDCFCE7), t)!,
-                              Color.lerp(const Color(0xFFBBF7D0), const Color(0xFF86EFAC), t)!,
-                            ]),
+                            ? [
+                                Color.lerp(const Color(0xFFEFF6FF), const Color(0xFFDBEAFE), t)!,
+                                Color.lerp(const Color(0xFFBFDBFE), const Color(0xFF93C5FD), t)!,
+                              ]
+                            : [
+                                Color.lerp(const Color(0xFFF0FDF4), const Color(0xFFDCFCE7), t)!,
+                                Color.lerp(const Color(0xFFBBF7D0), const Color(0xFF86EFAC), t)!,
+                              ]),
                 ),
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
@@ -1020,7 +1143,115 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  Widget _buildTierTopBadge(_SubscriptionTierData tier) {
+  Widget _buildTierTopBadge(_SubscriptionTierData tier, bool isCurrent) {
+    if (isCurrent) {
+      if (tier.isTopTier) {
+        // Gold badge for active top tier (Elite always stays gold!)
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFD97706), Color(0xFFB45309)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD97706).withValues(alpha: 0.35),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
+              const SizedBox(width: 5),
+              Text(
+                'CURRENTLY ACTIVE PLAN',
+                style: GoogleFonts.inter(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.6,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Normally highlighted badge for active non-top plan (Clean green checkmark, NO gold)
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
+        decoration: BoxDecoration(
+          color: _darkForestGreen,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: _darkForestGreen.withValues(alpha: 0.28),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.checkCheck, size: 12, color: Colors.white),
+            const SizedBox(width: 5),
+            Text(
+              'CURRENTLY ACTIVE PLAN',
+              style: GoogleFonts.inter(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Gold UI for all top tiers (Tier 4 Elite, Fin-Pro Firm, Pro Investor, Yearly Founder)
+    if (tier.isTopTier) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFFD97706), Color(0xFFB45309)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFD97706).withValues(alpha: 0.35),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
+            const SizedBox(width: 5),
+            Text(
+              tier.topTag.isNotEmpty && tier.topTag != 'CURRENTLY ACTIVE PLAN'
+                  ? tier.topTag
+                  : 'ELITE ENTERPRISE',
+              style: GoogleFonts.inter(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+                letterSpacing: 0.6,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (tier.tierNumber == 3) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
@@ -1054,41 +1285,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       );
     }
 
-    if (tier.tierNumber == 4) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFD97706), Color(0xFFB45309)],
-          ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFD97706).withValues(alpha: 0.35),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
-            const SizedBox(width: 5),
-            Text(
-              'CURRENTLY ACTIVE PLAN',
-              style: GoogleFonts.inter(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.6,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
     if (tier.tierNumber == 2) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1098,7 +1294,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           border: Border.all(color: const Color(0xFFCCFBF1)),
         ),
         child: Text(
-          'STANDARD',
+          tier.topTag,
           style: GoogleFonts.inter(
             fontSize: 10,
             fontWeight: FontWeight.w800,
@@ -1109,7 +1305,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       );
     }
 
-    // Tier 1 (Starter)
+    // Tier 1 (Starter / Solo / Basic)
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -1118,7 +1314,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
       child: Text(
-        'STARTER',
+        tier.topTag,
         style: GoogleFonts.inter(
           fontSize: 10,
           fontWeight: FontWeight.w800,
@@ -1129,22 +1325,27 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  Widget _buildTierIcon(_SubscriptionTierData tier, Color accentColor) {
-    final bool isTier4 = tier.tierNumber == 4;
+  Widget _buildTierIcon(_SubscriptionTierData tier, Color accentColor, bool isCurrent) {
+    final bool isGold = tier.isTopTier;
     final bool isTier3 = tier.tierNumber == 3;
     final bool isTier2 = tier.tierNumber == 2;
 
-    final Color bgColor = isTier4
-        ? const Color(0xFFFEF3C7)
-        : (isTier3
-              ? const Color(0xFFEFF6FF)
-              : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
+    // Gold UI for all top tiers!
+    final Color bgColor = isGold
+        ? const Color(0xFFFEF3C7) // Luxury Gold background for top tiers
+        : (isCurrent
+              ? const Color(0xFFECFDF5) // Clean mint for active plan
+              : (isTier3
+                    ? const Color(0xFFEFF6FF)
+                    : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9))));
 
-    final Color borderColor = isTier4
-        ? const Color(0xFFD4AF37)
-        : (isTier3
-              ? const Color(0xFFBFDBFE)
-              : (isTier2 ? const Color(0xFF99F6E4) : const Color(0xFFCBD5E1)));
+    final Color borderColor = isGold
+        ? const Color(0xFFD4AF37) // Gold border for top tiers
+        : (isCurrent
+              ? const Color(0xFFA7F3D0) // Emerald border for active plan
+              : (isTier3
+                    ? const Color(0xFFBFDBFE)
+                    : (isTier2 ? const Color(0xFF99F6E4) : const Color(0xFFCBD5E1))));
 
     return Container(
       width: 44,
@@ -1152,8 +1353,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isTier4 ? 1.5 : 1.2),
-        boxShadow: isTier4
+        border: Border.all(color: borderColor, width: isGold || isCurrent ? 1.5 : 1.2),
+        boxShadow: isGold
             ? [
                 BoxShadow(
                   color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
@@ -1161,47 +1362,64 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   offset: const Offset(0, 2),
                 ),
               ]
-            : null,
+            : (isCurrent
+                ? [
+                    BoxShadow(
+                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ]
+                : null),
       ),
       child: Center(
         child: Icon(
           tier.icon,
           size: 20,
-          color: isTier4 ? const Color(0xFFB45309) : accentColor,
+          color: isGold
+              ? const Color(0xFFB45309) // Gold icon for top tiers
+              : (isCurrent ? _darkForestGreen : accentColor),
         ),
       ),
     );
   }
 
-  Widget _buildDiscountTag(_SubscriptionTierData tier) {
-    final bool isTier4 = tier.tierNumber == 4;
+  Widget _buildDiscountTag(_SubscriptionTierData tier, bool isCurrent) {
+    final bool isGold = tier.isTopTier;
     final bool isTier3 = tier.tierNumber == 3;
     final bool isTier2 = tier.tierNumber == 2;
 
-    final Color bgColor = isTier4
+    // Gold tag for top tiers
+    final Color bgColor = isGold
         ? const Color(0xFFFEF3C7)
-        : (isTier3
-              ? const Color(0xFFEFF6FF)
-              : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9)));
+        : (isCurrent
+              ? const Color(0xFFECFDF5)
+              : (isTier3
+                    ? const Color(0xFFEFF6FF)
+                    : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9))));
 
-    final Color textColor = isTier4
+    final Color textColor = isGold
         ? const Color(0xFF78350F)
-        : (isTier3
-              ? const Color(0xFF2563EB)
-              : (isTier2 ? const Color(0xFF0D9488) : const Color(0xFF475569)));
+        : (isCurrent
+              ? const Color(0xFF065F46)
+              : (isTier3
+                    ? const Color(0xFF2563EB)
+                    : (isTier2 ? const Color(0xFF0D9488) : const Color(0xFF475569))));
 
-    final Color borderColor = isTier4
+    final Color borderColor = isGold
         ? const Color(0xFFD4AF37)
-        : (isTier3
-              ? const Color(0xFFBFDBFE)
-              : (isTier2 ? const Color(0xFFCCFBF1) : const Color(0xFFE2E8F0)));
+        : (isCurrent
+              ? const Color(0xFFA7F3D0)
+              : (isTier3
+                    ? const Color(0xFFBFDBFE)
+                    : (isTier2 ? const Color(0xFFCCFBF1) : const Color(0xFFE2E8F0))));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: borderColor, width: isTier4 ? 1.3 : 1.0),
+        border: Border.all(color: borderColor, width: isGold ? 1.3 : 1.0),
       ),
       child: Text(
         tier.discountTag,
@@ -1215,18 +1433,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  Widget _buildPricingBox(_SubscriptionTierData tier) {
-    final bool isTier4 = tier.tierNumber == 4;
+  Widget _buildPricingBox(_SubscriptionTierData tier, bool isCurrent) {
+    // Gold pricing box for top tiers (always gold)! Active non-top plan is clean neutral (ZERO gold)
+    final bool isGold = tier.isTopTier;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: isTier4 ? const Color(0xFFFFFDF0) : const Color(0xFFF8FAFC),
+        color: isGold ? const Color(0xFFFFFDF0) : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isTier4 ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
-          width: isTier4 ? 1.4 : 1.0,
+          color: isGold ? const Color(0xFFFDE68A) : const Color(0xFFE2E8F0),
+          width: isGold ? 1.4 : 1.0,
         ),
       ),
       child: Column(
@@ -1256,7 +1475,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 style: GoogleFonts.inter(
                   fontSize: 28,
                   fontWeight: FontWeight.w900,
-                  color: isTier4
+                  color: isGold
                       ? const Color(0xFF78350F)
                       : const Color(0xFF0F172A),
                   letterSpacing: -0.8,
@@ -1277,7 +1496,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
           // Billed annually at ₹X / yr
           Text(
-            'Billed annually at ${tier.fullAnnualPrice} / yr',
+            tier.billingCycleText ?? 'Billed annually at ${tier.fullAnnualPrice} / yr',
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
@@ -1288,7 +1507,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
           // Price per organization, billed annually
           Text(
-            'Price per organization, billed annually',
+            tier.billingSubtext ?? 'Price per organization, billed annually',
             style: GoogleFonts.inter(
               fontSize: 10.5,
               fontWeight: FontWeight.w500,
@@ -1300,20 +1519,68 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  Widget _buildCtaButton(_SubscriptionTierData tier, Color accentColor) {
-    if (tier.isCurrentPlan) {
+  Widget _buildCtaButton({
+    required _SubscriptionTierData tier,
+    required Color accentColor,
+    required int activeTierNumber,
+    required ValueChanged<int> onUpgrade,
+  }) {
+    final int tierNum = tier.tierNumber;
+    final bool isCurrent = tierNum == activeTierNumber;
+    final bool isBelow = tierNum < activeTierNumber;
+    final bool isAbove = tierNum > activeTierNumber;
+
+    if (isCurrent) {
+      if (tier.isTopTier) {
+        // Elite plan active CTA button - Gold themed!
+        return Container(
+          height: 44,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF3C7),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFD4AF37), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                LucideIcons.checkCheck,
+                size: 16,
+                color: Color(0xFF78350F),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                'Currently Active Plan',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF78350F),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      // Normally highlighted button for currently active non-top plan (Clean green checkmark, NO gold)
       return Container(
         height: 44,
         width: double.infinity,
         decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFEF3C7), Color(0xFFFDE68A)],
-          ),
+          color: const Color(0xFFECFDF5),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFD4AF37), width: 1.6),
+          border: Border.all(color: const Color(0xFFA7F3D0), width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFFD4AF37).withValues(alpha: 0.25),
+              color: const Color(0xFF10B981).withValues(alpha: 0.12),
               blurRadius: 6,
               offset: const Offset(0, 2),
             ),
@@ -1325,7 +1592,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             const Icon(
               LucideIcons.checkCheck,
               size: 16,
-              color: Color(0xFF78350F),
+              color: Color(0xFF065F46),
             ),
             const SizedBox(width: 7),
             Text(
@@ -1333,7 +1600,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: const Color(0xFF78350F),
+                color: const Color(0xFF065F46),
               ),
             ),
           ],
@@ -1341,18 +1608,55 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       );
     }
 
+    if (isBelow) {
+      // "the plan which is before it button should not work"
+      return SizedBox(
+        height: 44,
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: null, // Disabled - button does not work
+          style: OutlinedButton.styleFrom(
+            side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+            backgroundColor: const Color(0xFFF8FAFC),
+            disabledForegroundColor: const Color(0xFF94A3B8),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(LucideIcons.ban, size: 13, color: Color(0xFF94A3B8)),
+              const SizedBox(width: 6),
+              Text(
+                'Downgrade Unavailable',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // isAbove: "the button above it can work" - Gold for all top tiers!
+    final bool isGold = tier.isTopTier;
     return SizedBox(
       height: 44,
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () => _showUpgradeDialog(tier),
+        onPressed: () => _showPlanUpgradeDialog(tier, onUpgrade),
         style: ElevatedButton.styleFrom(
-          backgroundColor: accentColor,
+          backgroundColor: isGold ? const Color(0xFFB45309) : accentColor,
           foregroundColor: Colors.white,
-          elevation: tier.tierNumber == 3 ? 2 : 0,
-          shadowColor: tier.tierNumber == 3
-              ? accentColor.withValues(alpha: 0.35)
-              : null,
+          elevation: isGold || tier.tierNumber == 3 ? 2 : 0,
+          shadowColor: isGold
+              ? const Color(0xFFD4AF37).withValues(alpha: 0.4)
+              : (tier.tierNumber == 3 ? accentColor.withValues(alpha: 0.35) : null),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -1362,7 +1666,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
-              'Start free trial',
+              'Upgrade Plan',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
@@ -1377,7 +1681,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  void _showUpgradeDialog(_SubscriptionTierData tier) {
+  void _showPlanUpgradeDialog(
+    _SubscriptionTierData tier,
+    ValueChanged<int> onUpgrade,
+  ) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -1395,7 +1702,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Start Trial - ${tier.name}',
+                'Upgrade Plan - ${tier.name}',
                 style: GoogleFonts.inter(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
@@ -1409,7 +1716,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Get instant 14-day free access to all features under ${tier.name}. No credit card required to start.',
+              'Upgrade your workspace to access all capabilities under ${tier.name}. Instant activation with prorated billing.',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 color: const Color(0xFF334155),
@@ -1450,14 +1757,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'After Trial:',
+                        'Billing Cycle:',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: const Color(0xFF64748B),
                         ),
                       ),
                       Text(
-                        'Billed annually at ${tier.fullAnnualPrice} / yr',
+                        tier.billingCycleText ?? '${tier.fullAnnualPrice} / yr',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.w700,
@@ -1482,27 +1789,28 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
+              onUpgrade(tier.tierNumber);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    '14-day free trial activated for ${tier.name}!',
+                    'Successfully upgraded to ${tier.name}!',
                     style: GoogleFonts.inter(),
                   ),
-                  backgroundColor: const Color(0xFF0F172A),
+                  backgroundColor: const Color(0xFF135029),
                   behavior: SnackBarBehavior.floating,
                   width: 420,
                 ),
               );
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0F172A),
+              backgroundColor: const Color(0xFF135029),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
             child: Text(
-              'Start 14-Day Free Trial',
+              'Confirm Upgrade to ${tier.name}',
               style: GoogleFonts.inter(fontWeight: FontWeight.w700),
             ),
           ),
@@ -1512,173 +1820,746 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 4. BILLING & STATEMENT HISTORY
+  // TOP 3-SECTION PILL SELECTOR (BUSINESS | FIN-PRO | PARTNER LAUNCH DESK)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildBillingHistorySection() {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
+  Widget _buildMainTabSelector() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEAFAE3), // Soft mint green background
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: const Color(0xFFD1F2C2), width: 1.2),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildMainTabItem(
+              index: 0,
+              label: 'BUSINESS',
+              icon: LucideIcons.shieldCheck,
+              activeColor: _darkForestGreen,
+            ),
+            const SizedBox(width: 4),
+            _buildMainTabItem(
+              index: 1,
+              label: 'FIN-PRO',
+              icon: LucideIcons.award,
+              activeColor: _darkForestGreen,
+            ),
+            const SizedBox(width: 4),
+            _buildMainTabItem(
+              index: 2,
+              label: 'PARTNER LAUNCH DESK',
+              icon: LucideIcons.crown,
+              activeColor: const Color(0xFF312E81),
+            ),
+          ],
+        ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Icon(
-                LucideIcons.history,
-                color: _darkForestGreen,
-                size: 18,
+    );
+  }
+
+  Widget _buildMainTabItem({
+    required int index,
+    required String label,
+    required IconData icon,
+    required Color activeColor,
+  }) {
+    final bool isSelected = _selectedMainTab == index;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedMainTab = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(26),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.35),
+                    blurRadius: 10,
+                    offset: const Offset(0, 3),
+                  ),
+                ]
+              : null,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? Colors.white : const Color(0xFF1E3A2B),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
+                color: isSelected ? Colors.white : const Color(0xFF1E3A2B),
+                letterSpacing: 0.5,
               ),
-              const SizedBox(width: 10),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // FIN-PRO SECTION (Completely matching Business section SaaS UI)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildFinProSection(bool isMobile) {
+    final days = _remainingTime.inDays;
+    final hours = _remainingTime.inHours % 24;
+    final mins = _remainingTime.inMinutes % 60;
+
+    final finProTiers = [
+      _SubscriptionTierData(
+        tierNumber: 1,
+        topTag: 'SOLO PRACTITIONER',
+        name: 'Fin-Pro Solo',
+        headline:
+            'Perfect for solo practitioners and independent chartered accountants.',
+        originalMonthlyPrice: '₹1,199',
+        offerMonthlyPrice: '₹799',
+        fullAnnualPrice: '₹9,588',
+        discountTag: 'Save ₹400',
+        icon: LucideIcons.shieldCheck,
+        billingCycleText: 'Billed annually at ₹9,588 / yr',
+        billingSubtext: 'Price per practitioner, billed annually',
+        extraWidget: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              const Icon(LucideIcons.user, size: 14, color: Color(0xFF64748B)),
+              const SizedBox(width: 8),
               Text(
-                'Billing & Statement History',
+                'Solo Practitioner License',
                 style: GoogleFonts.inter(
-                  fontSize: 16,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF475569),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '1 Seat',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF0F172A),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 20),
-
-          // Horizontal scroll table fallback to prevent overflow
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Table(
-              defaultColumnWidth: const FixedColumnWidth(130),
-              children: [
-                // Header Row
-                TableRow(
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.5),
-                    ),
+        ),
+        features: const [
+          'Manage up to 25 Active Client Ledgers',
+          'Standard Multi-Client GST/ITR Reporting',
+          'Direct Auditing & Daybook Verification Logs',
+          'Automated Exporting to CSV/Excel formats',
+          'Priority Email & Live Chat Support',
+          'Standard CA Digital Stamp & Verification',
+        ],
+      ),
+      _SubscriptionTierData(
+        tierNumber: 2,
+        topTag: 'FIRM ENTERPRISE',
+        name: 'Fin-Pro Firm',
+        headline:
+            'Designed for scaling accounting firms and collaborative auditing teams.',
+        originalMonthlyPrice: '₹2,499',
+        offerMonthlyPrice: '₹1,499',
+        fullAnnualPrice: '₹17,988',
+        discountTag: 'Save ₹1,000',
+        icon: LucideIcons.crown,
+        billingCycleText: 'Billed annually at ₹17,988 / yr',
+        billingSubtext: 'Price per firm, billed annually',
+        isTopTier: true,
+        extraWidget: Container(
+          height: 42,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              Text(
+                'Total Team Members:',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1E293B),
+                ),
+              ),
+              const Spacer(),
+              InkWell(
+                onTap: () {
+                  if (_finProTeamMembers > 1) {
+                    setState(() => _finProTeamMembers--);
+                  }
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
                   ),
-                  children: [
-                    _buildTh('INVOICE ID'),
-                    _buildTh('BILLING DATE'),
-                    _buildTh('TIER DETAILS'),
-                    _buildTh('PAYMENT MODE'),
-                    _buildTh('STATUS'),
-                    _buildTh('AMOUNT PAID'),
-                  ],
+                  child: const Center(
+                    child: Icon(LucideIcons.minus, size: 12, color: Color(0xFF334155)),
+                  ),
                 ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                child: Text(
+                  '$_finProTeamMembers',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+              InkWell(
+                onTap: () {
+                  setState(() => _finProTeamMembers++);
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  child: const Center(
+                    child: Icon(LucideIcons.plus, size: 12, color: Color(0xFF334155)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        features: [
+          'Manage Unlimited Active Client Ledgers',
+          'Custom White-Labeled Client Report Generation',
+          '$_finProTeamMembers Team Members included by default',
+          'Additional members at just ₹299/month each',
+          'Live Chat Support & Direct API Sandbox Access',
+          'Automated Audit Trail & Role Permissions',
+        ],
+      ),
+    ];
 
-                // Table Row Data
-                TableRow(
+    final cards = finProTiers
+        .map(
+          (tier) => _buildSingleSubscriptionCard(
+            tier: tier,
+            activeTierNumber: _currentFinProTier,
+            onUpgrade: (newTier) {
+              setState(() => _currentFinProTier = newTier);
+            },
+            days: days,
+            hours: hours,
+            mins: mins,
+          ),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildUpgradeSectionHeader('Upgrade Fin-Pro Practice Tier'),
+        const SizedBox(height: 18),
+        if (isMobile)
+          Column(
+            children: [
+              cards[0],
+              const SizedBox(height: 18),
+              cards[1],
+            ],
+          )
+        else
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildTd(
-                      'INV-2026-0743',
-                      isBold: true,
-                      color: _darkForestGreen,
-                    ),
-                    _buildTd('03 Jul 2026'),
-                    _buildTd('Tier 4 (Elite)', isBold: true),
-                    _buildTd('Cashfree PG'),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _lightMintGreen,
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: _mintBorder),
-                            ),
-                            child: Text(
-                              'Paid',
-                              style: GoogleFonts.inter(
-                                color: _darkForestGreen,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildTd(
-                      '₹11,988',
-                      isBold: true,
-                      color: const Color(0xFF0F172A),
-                    ),
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: 20),
+                    Expanded(child: cards[1]),
                   ],
                 ),
-                TableRow(
-                  children: [
-                    _buildTd(
-                      'INV-2025-0682',
-                      isBold: true,
-                      color: _darkForestGreen,
-                    ),
-                    _buildTd('03 Jul 2025'),
-                    _buildTd('Tier 3 (Growth)', isBold: true),
-                    _buildTd('HDFC NetBanking'),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2.5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _lightMintGreen,
-                              borderRadius: BorderRadius.circular(5),
-                              border: Border.all(color: _mintBorder),
-                            ),
-                            child: Text(
-                              'Paid',
-                              style: GoogleFonts.inter(
-                                color: _darkForestGreen,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    _buildTd(
-                      '₹6,588',
-                      isBold: true,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
-        ],
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // PARTNER LAUNCH DESK SECTION (Completely matching Business section SaaS UI)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildPartnerLaunchDeskSection(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sub-selector tabs: [ Investor Club ] [ Products & Ideas ]
+        Center(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildPartnerSubTab(
+                index: 0,
+                label: 'Investor Club',
+                icon: LucideIcons.crown,
+              ),
+              const SizedBox(width: 14),
+              _buildPartnerSubTab(
+                index: 1,
+                label: 'Products & Ideas',
+                icon: LucideIcons.zap,
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        if (_selectedPartnerTab == 0)
+          _buildInvestorClubTab(isMobile)
+        else
+          _buildProductsAndIdeasTab(isMobile),
+      ],
+    );
+  }
+
+  Widget _buildPartnerSubTab({
+    required int index,
+    required String label,
+    required IconData icon,
+  }) {
+    final bool isSelected = _selectedPartnerTab == index;
+    final Color activeColor =
+        index == 1 ? const Color(0xFFE11D48) : _darkForestGreen;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedPartnerTab = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(25),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          border: isSelected
+              ? null
+              : Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+            ),
+            const SizedBox(width: 9),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : const Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTh(String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0),
+  Widget _buildInvestorClubTab(bool isMobile) {
+    final days = _remainingTime.inDays;
+    final hours = _remainingTime.inHours % 24;
+    final mins = _remainingTime.inMinutes % 60;
+
+    final investorTiers = const [
+      _SubscriptionTierData(
+        tierNumber: 1,
+        topTag: 'BASIC INVESTOR',
+        name: 'Basic Investor',
+        headline:
+            'Access curated startup directories with a limit of 20 pitches.',
+        originalMonthlyPrice: '₹1,499',
+        offerMonthlyPrice: '₹999',
+        fullAnnualPrice: '₹11,988',
+        discountTag: 'Save ₹500',
+        icon: LucideIcons.shieldCheck,
+        billingCycleText: 'Billed annually at ₹11,988 / yr',
+        billingSubtext: 'Price per investor desk, billed annually',
+        features: [
+          'Access up to 20 startup pitches',
+          'Filter pitches by industry and funding goal',
+          'Direct contact channels with verified founders',
+          'Real-time notifications for newly listed ventures',
+          'Standard Deal Room Document Viewer',
+          'Weekly Curated Angel Syndicate Digest',
+        ],
+      ),
+      _SubscriptionTierData(
+        tierNumber: 2,
+        topTag: 'PRO INVESTOR',
+        name: 'Pro Investor',
+        headline:
+            'Expanded access for active investors with a limit of 50 pitches.',
+        originalMonthlyPrice: '₹2,999',
+        offerMonthlyPrice: '₹1,999',
+        fullAnnualPrice: '₹23,988',
+        discountTag: 'Save ₹1,000',
+        icon: LucideIcons.crown,
+        billingCycleText: 'Billed annually at ₹23,988 / yr',
+        billingSubtext: 'Price per investor desk, billed annually',
+        isTopTier: true,
+        features: [
+          'Access up to 50 startup pitches',
+          'Direct contact details for startup listings',
+          'Interactive deal rooms & shared pitch folders',
+          '1-on-1 deal flow consultations with steering team',
+          'VIP Access to Private Founder Demo Days',
+          'Priority Direct Syndicate Co-Investment Rights',
+        ],
+      ),
+    ];
+
+    final cards = investorTiers
+        .map(
+          (tier) => _buildSingleSubscriptionCard(
+            tier: tier,
+            activeTierNumber: _currentInvestorTier,
+            onUpgrade: (newTier) {
+              setState(() => _currentInvestorTier = newTier);
+            },
+            days: days,
+            hours: hours,
+            mins: mins,
+          ),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildUpgradeSectionHeader('Upgrade Investor Club Tier'),
+        const SizedBox(height: 18),
+        if (isMobile)
+          Column(
+            children: [
+              cards[0],
+              const SizedBox(height: 18),
+              cards[1],
+            ],
+          )
+        else
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: 20),
+                    Expanded(child: cards[1]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRODUCTS & IDEAS TAB (Completely matching our SaaS cards UI)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildProductsAndIdeasTab(bool isMobile) {
+    final days = _remainingTime.inDays;
+    final hours = _remainingTime.inHours % 24;
+    final mins = _remainingTime.inMinutes % 60;
+
+    final productsTiers = const [
+      _SubscriptionTierData(
+        tierNumber: 1,
+        topTag: 'FOUNDATIONAL INNOVATOR',
+        name: 'Monthly Innovator',
+        headline:
+            'Monthly access for founders seeking foundational product testing.',
+        originalMonthlyPrice: '₹699',
+        offerMonthlyPrice: '₹499',
+        fullAnnualPrice: '₹5,988',
+        discountTag: 'Save ₹200',
+        icon: LucideIcons.shieldCheck,
+        billingCycleText: 'Billed monthly at ₹499 / mo',
+        billingSubtext: 'Price per founder desk, billed monthly',
+        isTopTier: false,
+        features: [
+          'Early access to new platform updates',
+          'Standard community mastermind forum access',
+          'List active roadmaps/pitches in the Deal Marketplace',
+          'Standard investor-ready pitch templates',
+        ],
+      ),
+      _SubscriptionTierData(
+        tierNumber: 2,
+        topTag: 'YEARLY SOVEREIGN',
+        name: 'Yearly Founder',
+        headline:
+            'Annual sovereign tier with lifetime fee freeze and VIP gala entry.',
+        originalMonthlyPrice: '₹5,988',
+        offerMonthlyPrice: '₹4,999',
+        fullAnnualPrice: '₹4,999',
+        discountTag: 'Save ₹989',
+        icon: LucideIcons.crown,
+        billingCycleText: 'Billed annually at ₹4,999 / yr',
+        billingSubtext: 'Equivalent to ₹417 per month • Lifetime Freeze',
+        isTopTier: true,
+        features: [
+          'All features of Monthly Innovator tier',
+          'Unlimited active roadmaps/pitches in the Marketplace',
+          'Featured homepage and dashboard spotlight placement',
+          'VIP reserved seat at the Annual Founder\'s Gala',
+          'Lifetime subscription fee freeze guarantee',
+        ],
+      ),
+    ];
+
+    final cards = productsTiers
+        .map(
+          (tier) => _buildSingleSubscriptionCard(
+            tier: tier,
+            activeTierNumber: _currentProductsTier,
+            onUpgrade: (newTier) {
+              setState(() => _currentProductsTier = newTier);
+            },
+            days: days,
+            hours: hours,
+            mins: mins,
+          ),
+        )
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildUpgradeSectionHeader('Upgrade Workspace Tier'),
+        const SizedBox(height: 18),
+        if (isMobile)
+          Column(
+            children: [
+              cards[0],
+              const SizedBox(height: 18),
+              cards[1],
+            ],
+          )
+        else
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(child: cards[0]),
+                    const SizedBox(width: 20),
+                    Expanded(child: cards[1]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 4. BILLING & STATEMENT HISTORY (Matching uploaded Image 2 exactly)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildBillingHistorySection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Title & History Icon OUTSIDE on top of container
+        Row(
+          children: [
+            const Icon(
+              LucideIcons.history,
+              color: _darkForestGreen,
+              size: 19,
+            ),
+            const SizedBox(width: 9),
+            Text(
+              'Billing & Statement History',
+              style: GoogleFonts.inter(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: _darkForestGreen,
+                letterSpacing: -0.3,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        // White card container with table
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final double minWidth = 840;
+              final bool shouldScroll = constraints.maxWidth < minWidth;
+
+              final tableWidget = SizedBox(
+                width: shouldScroll ? minWidth : constraints.maxWidth,
+                child: Column(
+                  children: [
+                    // Table Header Bar (#F8FAFC)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8FAFC),
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(flex: 3, child: _buildTableHeaderText('INVOICE ID')),
+                          Expanded(flex: 3, child: _buildTableHeaderText('BILLING DATE')),
+                          Expanded(flex: 3, child: _buildTableHeaderText('TIER DETAILS')),
+                          Expanded(flex: 3, child: _buildTableHeaderText('PAYMENT MODE')),
+                          Expanded(flex: 2, child: _buildTableHeaderText('STATUS')),
+                          Expanded(flex: 2, child: _buildTableHeaderText('AMOUNT PAID', alignRight: true)),
+                        ],
+                      ),
+                    ),
+
+                    // Table Row 1 (From Image 2)
+                    _buildTableRow(
+                      invoiceId: 'INV-2026-0996',
+                      billingDate: '2026-09-10',
+                      tierDetails: 'Elite Suite',
+                      paymentMode: 'Cashfree PG',
+                      status: 'Paid',
+                      amountPaid: '₹8,999',
+                      isLast: false,
+                    ),
+
+                    // Table Row 2
+                    _buildTableRow(
+                      invoiceId: 'INV-2025-0682',
+                      billingDate: '2025-09-10',
+                      tierDetails: 'Tier 3 (Growth)',
+                      paymentMode: 'HDFC NetBanking',
+                      status: 'Paid',
+                      amountPaid: '₹7,188',
+                      isLast: false,
+                    ),
+
+                    // Table Row 3
+                    _buildTableRow(
+                      invoiceId: 'INV-2024-0321',
+                      billingDate: '2024-09-10',
+                      tierDetails: 'Tier 2 (Standard)',
+                      paymentMode: 'UPI AutoPay',
+                      status: 'Paid',
+                      amountPaid: '₹4,788',
+                      isLast: true,
+                    ),
+                  ],
+                ),
+              );
+
+              if (shouldScroll) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: tableWidget,
+                );
+              }
+              return tableWidget;
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTableHeaderText(String label, {bool alignRight = false}) {
+    return Align(
+      alignment: alignRight ? Alignment.centerRight : Alignment.centerLeft,
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
+          fontSize: 10.5,
+          fontWeight: FontWeight.w800,
           color: const Color(0xFF64748B),
           letterSpacing: 0.5,
         ),
@@ -1686,16 +2567,107 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  Widget _buildTd(String val, {bool isBold = false, Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      child: Text(
-        val,
-        style: GoogleFonts.inter(
-          fontSize: 12,
-          fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-          color: color ?? const Color(0xFF334155),
-        ),
+  Widget _buildTableRow({
+    required String invoiceId,
+    required String billingDate,
+    required String tierDetails,
+    required String paymentMode,
+    required String status,
+    required String amountPaid,
+    bool isLast = false,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : const Border(
+                bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+              ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Text(
+              invoiceId,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              billingDate,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              tierDetails,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              paymentMode,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    status,
+                    style: GoogleFonts.inter(
+                      color: const Color(0xFF15803D),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            flex: 2,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                amountPaid,
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
