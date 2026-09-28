@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
@@ -16,11 +17,30 @@ class _SimpleBillItem {
         rateController = TextEditingController(
           text: rate != null && rate > 0 ? rate.toStringAsFixed(2) : '',
         ),
-        qtyController = TextEditingController(text: qty.toString());
+        qtyController = TextEditingController(text: qty > 0 ? qty.toString() : '1');
 
-  double get rate => double.tryParse(rateController.text.trim()) ?? 0.0;
-  int get quantity => int.tryParse(qtyController.text.trim()) ?? 0;
-  double get total => rate * quantity;
+  double get rate {
+    final text = rateController.text.trim();
+    if (text.isEmpty) return 0.0;
+    final val = double.tryParse(text);
+    if (val == null || val.isNaN || val.isInfinite || val < 0) return 0.0;
+    return val;
+  }
+
+  int get quantity {
+    final text = qtyController.text.trim();
+    if (text.isEmpty) return 0;
+    final clean = text.length > 12 ? text.substring(0, 12) : text;
+    final val = int.tryParse(clean);
+    if (val == null || val < 0) return 0;
+    return val;
+  }
+
+  double get total {
+    final t = rate * quantity;
+    if (t.isNaN || t.isInfinite || t < 0) return 0.0;
+    return t;
+  }
 
   void dispose() {
     nameController.dispose();
@@ -42,10 +62,9 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
 
   late String _orderNumber;
   final List<_SimpleBillItem> _items = [];
-  bool _showCustomerError = false;
   bool _isCustomerFocused = false;
 
-  // Catalog for quick multi-select
+  // Catalog for quick multi-select and dropdown
   final List<Map<String, dynamic>> _catalogProducts = [
     {'name': 'Wireless Optical Mouse', 'rate': 499.00, 'category': 'Electronics'},
     {'name': 'Mechanical RGB Keyboard', 'rate': 2499.00, 'category': 'Electronics'},
@@ -55,6 +74,13 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
     {'name': 'Laptop Aluminum Stand', 'rate': 899.00, 'category': 'Accessories'},
     {'name': 'Noise Cancelling Headphones', 'rate': 3999.00, 'category': 'Audio'},
     {'name': 'Thermal Receipt Paper Roll (Pack of 10)', 'rate': 350.00, 'category': 'Supplies'},
+    {'name': 'Laser Barcode Scanner USB', 'rate': 1799.00, 'category': 'Supplies'},
+    {'name': 'Heavy Duty Cash Drawer', 'rate': 2899.00, 'category': 'Hardware'},
+    {'name': 'Bluetooth Thermal Receipt Printer', 'rate': 4200.00, 'category': 'Hardware'},
+    {'name': 'Full HD 1080p Webcam', 'rate': 1499.00, 'category': 'Electronics'},
+    {'name': 'Adjustable Desk Lamp with Wireless Charger', 'rate': 1299.00, 'category': 'Furniture'},
+    {'name': 'High-Speed Wi-Fi 6 Router', 'rate': 3199.00, 'category': 'Electronics'},
+    {'name': 'Cat-6 Ethernet Cable (5m)', 'rate': 249.00, 'category': 'Accessories'},
   ];
 
   @override
@@ -64,14 +90,6 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
 
     // Start with 1 empty item matching reference UI
     _items.add(_SimpleBillItem());
-
-    _customerController.addListener(() {
-      if (_showCustomerError && _customerController.text.trim().isNotEmpty) {
-        setState(() {
-          _showCustomerError = false;
-        });
-      }
-    });
 
     _customerFocusNode.addListener(() {
       setState(() {
@@ -127,25 +145,56 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
     return sum;
   }
 
-  void _openMultiProductDialog() {
+  String _formatCurrency(double amount) {
+    if (amount.isNaN || amount.isInfinite || amount < 0) return '0.00';
+    final parts = amount.toStringAsFixed(2).split('.');
+    final whole = parts[0];
+    final decimal = parts[1];
+    final regex = RegExp(r'(\d+?)(?=(\d{3})+(?!\d))');
+    final formattedWhole = whole.replaceAllMapped(regex, (match) => '${match[1]},');
+    return '$formattedWhole.$decimal';
+  }
+
+  String _formatNumber(int number) {
+    if (number < 0) return '0';
+    final str = number.toString();
+    final regex = RegExp(r'(\d+?)(?=(\d{3})+(?!\d))');
+    return str.replaceAllMapped(regex, (match) => '${match[1]},');
+  }
+
+  void _openProductDropdown([int? targetRowIndex]) {
+    final int rowIndex = targetRowIndex ?? (_items.isNotEmpty ? _items.length - 1 : 0);
     final selectedIndices = <int>{};
+    String searchQuery = '';
 
     showDialog(
       context: context,
       builder: (dialogCtx) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final filtered = _catalogProducts.where((p) {
+              if (searchQuery.trim().isEmpty) return true;
+              final q = searchQuery.toLowerCase();
+              final name = (p['name'] as String).toLowerCase();
+              final cat = (p['category'] as String).toLowerCase();
+              return name.contains(q) || cat.contains(q);
+            }).toList();
+
+            final allFilteredSelected = filtered.isNotEmpty &&
+                filtered.every((p) => selectedIndices.contains(_catalogProducts.indexOf(p)));
+
             return Dialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 580, maxHeight: 600),
+                constraints: const BoxConstraints(maxWidth: 580, maxHeight: 620),
                 child: Padding(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(22),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header
                       Row(
                         children: [
                           Container(
@@ -166,17 +215,17 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Add Multiple Products',
+                                  'Select Products from Records',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 17,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF0F172A),
                                   ),
                                 ),
                                 SizedBox(height: 2),
                                 Text(
-                                  'Select products from inventory to quickly populate your bill.',
-                                  style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                                  'Search, select specified products or select all to add to billing records.',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                                 ),
                               ],
                             ),
@@ -187,84 +236,213 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                      const SizedBox(height: 12),
-                      Flexible(
-                        child: ListView.separated(
-                          shrinkWrap: true,
-                          itemCount: _catalogProducts.length,
-                          separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                          itemBuilder: (context, idx) {
-                            final prod = _catalogProducts[idx];
-                            final isChecked = selectedIndices.contains(idx);
-                            final double rate = prod['rate'] as double;
+                      const SizedBox(height: 14),
 
-                            return InkWell(
+                      // Search bar
+                      Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: TextField(
+                          autofocus: true,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                            suffixIcon: searchQuery.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                                    onPressed: () {
+                                      setDialogState(() {
+                                        searchQuery = '';
+                                      });
+                                    },
+                                  )
+                                : null,
+                            hintText: 'Search products by name or category...',
+                            hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+                          ),
+                          onChanged: (val) {
+                            setDialogState(() {
+                              searchQuery = val;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // "Select All" & Counter Row
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            InkWell(
                               onTap: () {
                                 setDialogState(() {
-                                  if (isChecked) {
-                                    selectedIndices.remove(idx);
+                                  if (allFilteredSelected) {
+                                    for (final p in filtered) {
+                                      selectedIndices.remove(_catalogProducts.indexOf(p));
+                                    }
                                   } else {
-                                    selectedIndices.add(idx);
+                                    for (final p in filtered) {
+                                      selectedIndices.add(_catalogProducts.indexOf(p));
+                                    }
                                   }
                                 });
                               },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: isChecked,
-                                      activeColor: const Color(0xFF135029),
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                                      onChanged: (val) {
-                                        setDialogState(() {
-                                          if (val == true) {
-                                            selectedIndices.add(idx);
-                                          } else {
-                                            selectedIndices.remove(idx);
+                              borderRadius: BorderRadius.circular(6),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Checkbox(
+                                    value: allFilteredSelected,
+                                    activeColor: const Color(0xFF135029),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                    onChanged: (val) {
+                                      setDialogState(() {
+                                        if (val == true) {
+                                          for (final p in filtered) {
+                                            selectedIndices.add(_catalogProducts.indexOf(p));
                                           }
-                                        });
-                                      },
+                                        } else {
+                                          for (final p in filtered) {
+                                            selectedIndices.remove(_catalogProducts.indexOf(p));
+                                          }
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  Text(
+                                    'Select All (${filtered.length} products)',
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF1E293B),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (selectedIndices.isNotEmpty)
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEAFAE3),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                                ),
+                                child: Text(
+                                  '${selectedIndices.length} selected',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF166534),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+
+                      // Product List
+                      Flexible(
+                        child: filtered.isEmpty
+                            ? const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(24),
+                                  child: Text(
+                                    'No products match your search.',
+                                    style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                shrinkWrap: true,
+                                itemCount: filtered.length,
+                                separatorBuilder: (_, _) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                                itemBuilder: (context, idx) {
+                                  final prod = filtered[idx];
+                                  final originalIdx = _catalogProducts.indexOf(prod);
+                                  final isChecked = selectedIndices.contains(originalIdx);
+                                  final double rate = prod['rate'] as double;
+
+                                  return InkWell(
+                                    onTap: () {
+                                      setDialogState(() {
+                                        if (isChecked) {
+                                          selectedIndices.remove(originalIdx);
+                                        } else {
+                                          selectedIndices.add(originalIdx);
+                                        }
+                                      });
+                                    },
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                      child: Row(
                                         children: [
-                                          Text(
-                                            prod['name'] as String,
-                                            style: const TextStyle(
-                                              fontSize: 13.5,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF1E293B),
+                                          Checkbox(
+                                            value: isChecked,
+                                            activeColor: const Color(0xFF135029),
+                                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                                            onChanged: (val) {
+                                              setDialogState(() {
+                                                if (val == true) {
+                                                  selectedIndices.add(originalIdx);
+                                                } else {
+                                                  selectedIndices.remove(originalIdx);
+                                                }
+                                              });
+                                            },
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  prod['name'] as String,
+                                                  style: const TextStyle(
+                                                    fontSize: 13,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF1E293B),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  prod['category'] as String,
+                                                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                                ),
+                                              ],
                                             ),
                                           ),
                                           Text(
-                                            prod['category'] as String,
-                                            style: const TextStyle(fontSize: 11.5, color: Color(0xFF94A3B8)),
+                                            '₹${_formatCurrency(rate)}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13.5,
+                                              color: Color(0xFF135029),
+                                            ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Text(
-                                      '₹${rate.toStringAsFixed(2)}',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 14,
-                                        color: Color(0xFF135029),
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
-                            );
-                          },
-                        ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 14),
+
+                      // Footer Actions
                       Row(
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
@@ -273,7 +451,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(color: Color(0xFFCBD5E1)),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
                             ),
                             child: const Text('Cancel', style: TextStyle(color: Color(0xFF475569))),
                           ),
@@ -283,45 +461,25 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                                 ? null
                                 : () {
                                     Navigator.of(dialogCtx).pop();
-                                    setState(() {
-                                      // If initial row is untouched, overwrite it
-                                      bool usedFirst = false;
-                                      if (_items.length == 1 &&
-                                          _items[0].nameController.text.trim().isEmpty &&
-                                          _items[0].rateController.text.trim().isEmpty) {
-                                        usedFirst = true;
-                                      }
-
-                                      int count = 0;
-                                      for (final idx in selectedIndices) {
-                                        final itemData = _catalogProducts[idx];
-                                        if (count == 0 && usedFirst) {
-                                          _items[0].nameController.text = itemData['name'] as String;
-                                          _items[0].rateController.text =
-                                              (itemData['rate'] as double).toStringAsFixed(2);
-                                          _items[0].qtyController.text = '1';
-                                        } else {
-                                          _addNewRow(
-                                            name: itemData['name'] as String,
-                                            rate: itemData['rate'] as double,
-                                            qty: 1,
-                                          );
-                                        }
-                                        count++;
-                                      }
-                                    });
+                                    final chosen = selectedIndices
+                                        .map((i) => _catalogProducts[i])
+                                        .toList();
+                                    _applySelectedProductsToRecords(
+                                      rowIndex: rowIndex,
+                                      selectedProducts: chosen,
+                                    );
                                   },
                             icon: const Icon(LucideIcons.check, size: 16),
                             label: Text(
                               selectedIndices.isEmpty
-                                  ? 'Add Selected'
-                                  : 'Add Selected (${selectedIndices.length})',
+                                  ? 'Add to Records'
+                                  : 'Add to Records (${selectedIndices.length})',
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF135029),
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 11),
                             ),
                           ),
                         ],
@@ -337,23 +495,57 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
     );
   }
 
-  void _submitBill() {
-    final customerName = _customerController.text.trim();
-
-    if (customerName.isEmpty) {
-      setState(() {
-        _showCustomerError = true;
-      });
-      _customerFocusNode.requestFocus();
-      return;
-    }
+  void _applySelectedProductsToRecords({
+    required int rowIndex,
+    required List<Map<String, dynamic>> selectedProducts,
+  }) {
+    if (selectedProducts.isEmpty) return;
 
     setState(() {
-      _showCustomerError = false;
+      // Check if current row is blank
+      final bool isCurrentRowBlank = rowIndex >= 0 &&
+          rowIndex < _items.length &&
+          _items[rowIndex].nameController.text.trim().isEmpty &&
+          _items[rowIndex].rateController.text.trim().isEmpty;
+
+      int startIdx = 0;
+      if (isCurrentRowBlank) {
+        final firstProd = selectedProducts[0];
+        _items[rowIndex].nameController.text = firstProd['name'] as String;
+        _items[rowIndex].rateController.text =
+            (firstProd['rate'] as double).toStringAsFixed(2);
+        _items[rowIndex].qtyController.text = '1';
+        startIdx = 1;
+      }
+
+      // Remaining products are populated into separate records
+      // e.g. If 5 products are selected, all 5 appear in separate records!
+      for (int i = startIdx; i < selectedProducts.length; i++) {
+        final prod = selectedProducts[i];
+        final newItem = _SimpleBillItem(
+          name: prod['name'] as String,
+          rate: prod['rate'] as double,
+          qty: 1,
+        );
+        final int targetPos = rowIndex + (isCurrentRowBlank ? i : i + 1);
+        if (targetPos < _items.length) {
+          _items.insert(targetPos, newItem);
+        } else {
+          _items.add(newItem);
+        }
+      }
     });
+  }
+
+  void _submitBill() {
+    final rawCustomerName = _customerController.text.trim();
+    final customerName =
+        rawCustomerName.isNotEmpty ? rawCustomerName : 'Walk-in Customer';
 
     // Check if at least one item has content
-    final validItems = _items.where((i) => i.nameController.text.trim().isNotEmpty || i.rate > 0).toList();
+    final validItems = _items
+        .where((i) => i.nameController.text.trim().isNotEmpty || i.rate > 0)
+        .toList();
     if (validItems.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -445,7 +637,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text('Total Items / Qty:', style: TextStyle(color: Color(0xFF64748B), fontSize: 13)),
-                            Text('${validItems.length} items ($_totalQuantity pcs)', style: const TextStyle(fontWeight: FontWeight.w600)),
+                            Text('${validItems.length} items (${_formatNumber(_totalQuantity)} pcs)', style: const TextStyle(fontWeight: FontWeight.w600)),
                           ],
                         ),
                         const Divider(height: 20, color: Color(0xFFE2E8F0)),
@@ -454,7 +646,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                           children: [
                             const Text('Grand Total:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF0F172A))),
                             Text(
-                              '₹${_grandTotal.toStringAsFixed(2)}',
+                              '₹${_formatCurrency(_grandTotal)}',
                               style: const TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 18,
@@ -526,40 +718,48 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 800;
+          final isCompact = constraints.maxWidth < 860;
 
           return SingleChildScrollView(
             physics: const ClampingScrollPhysics(),
-            padding: EdgeInsets.symmetric(
-              horizontal: isCompact ? 16 : 36,
-              vertical: 24,
+            padding: EdgeInsets.only(
+              left: isCompact ? 16 : 32,
+              right: isCompact ? 16 : 32,
+              top: 32,
+              bottom: 48,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ─── 1. EYEBROW & HEADER ───
-                _buildHeader(isCompact),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 1180),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    // ─── 1. EYEBROW & HEADER ───
+                    _buildHeader(isCompact),
 
-                const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
-                // ─── 2. ORDER # & CUSTOMER NAME FIELDS ───
-                _buildOrderAndCustomerFields(isCompact),
+                    // ─── 2. ORDER # & CUSTOMER NAME FIELDS ───
+                    _buildOrderAndCustomerFields(isCompact),
 
-                const SizedBox(height: 28),
+                    const SizedBox(height: 24),
 
-                // ─── 3. PRODUCT ITEMS SECTION ───
-                _buildProductItemsSection(isCompact),
+                    // ─── 3. PRODUCT ITEMS SECTION ───
+                    _buildProductItemsSection(isCompact),
 
-                const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
-                // ─── 4. SUMMARY BAR & SUBMIT ACTION ───
-                _buildSummaryBar(isCompact),
+                    // ─── 4. SUMMARY BAR & SUBMIT ACTION ───
+                    _buildSummaryBar(isCompact),
 
-                const SizedBox(height: 48),
-              ],
+                    const SizedBox(height: 48),
+                  ],
+                ),
+              ),
             ),
           );
         },
@@ -568,89 +768,74 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
   }
 
   Widget _buildHeader(bool isCompact) {
-    return Column(
+    final titleSection = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Tag / Eyebrow
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(3.5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAFAE3),
-                borderRadius: BorderRadius.circular(5),
-                border: Border.all(color: const Color(0xFFD4EED1)),
-              ),
-              child: const Icon(
-                LucideIcons.receiptText,
-                color: Color(0xFF135029),
-                size: 14,
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Text(
-              'BILLING MODULE',
-              style: TextStyle(
-                color: Color(0xFF135029),
-                fontWeight: FontWeight.w700,
-                fontSize: 11.5,
-                letterSpacing: 0.8,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 10),
-
-        // Main Title Row
-        if (isCompact) ...[
-          const Text(
-            'Simple Billing',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
-              letterSpacing: -0.5,
-            ),
+        // Tag / Eyebrow Badge
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF0FDF4),
+            border: Border.all(color: const Color(0xFFBBF7D0)),
+            borderRadius: BorderRadius.circular(20),
           ),
-          const SizedBox(height: 4),
-          const Text(
-            'Generate quick bills, add multiple items, and keep track of your customer sales.',
-            style: TextStyle(fontSize: 13.5, color: Color(0xFF64748B)),
-          ),
-          const SizedBox(height: 14),
-          _buildViewRecordsButton(),
-        ] else ...[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Simple Billing',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Generate quick bills, add multiple items, and keep track of your customer sales.',
-                      style: TextStyle(fontSize: 14, color: Color(0xFF64748B)),
-                    ),
-                  ],
+              Icon(
+                LucideIcons.receiptText,
+                color: Color(0xFF166534),
+                size: 13,
+              ),
+              SizedBox(width: 6),
+              Text(
+                'SIMPLE BILLING SYSTEM',
+                style: TextStyle(
+                  color: Color(0xFF166534),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                  letterSpacing: 0.6,
                 ),
               ),
-              const SizedBox(width: 16),
-              _buildViewRecordsButton(),
             ],
           ),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          'Simple Billing',
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: -0.6,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Create instant point-of-sale customer bills with line-item accuracy.',
+          style: TextStyle(fontSize: 13.5, color: Color(0xFF64748B)),
+        ),
+      ],
+    );
+
+    if (isCompact) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          titleSection,
+          const SizedBox(height: 14),
+          _buildViewRecordsButton(),
         ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(child: titleSection),
+        const SizedBox(width: 16),
+        _buildViewRecordsButton(),
       ],
     );
   }
@@ -660,34 +845,36 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
       onTap: () {
         ref.read(navigationProvider.notifier).setRoute(AppRoute.billing);
       },
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(9),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: const Color(0xFFE2E8F0)),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(9),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.02),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(LucideIcons.history, size: 15, color: Color(0xFF166534)),
+            SizedBox(width: 8),
             Text(
-              'View Billing Records',
+              'View All Bills',
               style: TextStyle(
-                color: Color(0xFF334155),
+                color: Color(0xFF1E293B),
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
             ),
             SizedBox(width: 6),
-            Icon(LucideIcons.arrowRight, size: 15, color: Color(0xFF64748B)),
+            Icon(LucideIcons.arrowUpRight, size: 14, color: Color(0xFF94A3B8)),
           ],
         ),
       ),
@@ -700,46 +887,65 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
       children: [
         const Row(
           children: [
-            Icon(LucideIcons.receiptText, size: 14, color: Color(0xFF135029)),
+            Icon(LucideIcons.receipt, size: 14, color: Color(0xFF166534)),
             SizedBox(width: 6),
             Text(
-              'BILLING ORDER # ',
+              'BILLING ORDER #',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
-                color: Color(0xFF1E293B),
-              ),
-            ),
-            Text(
-              '*',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFDC2626),
+                color: Color(0xFF475569),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
         Container(
-          height: 48,
+          height: 46,
           width: double.infinity,
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFEAFAE3).withValues(alpha: 0.6),
+            color: const Color(0xFFF0FDF4),
             border: Border.all(color: const Color(0xFFBBF7D0)),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Text(
-            _orderNumber,
-            style: const TextStyle(
-              color: Color(0xFF166534),
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              letterSpacing: 0.2,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                _orderNumber,
+                style: const TextStyle(
+                  color: Color(0xFF166534),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 14,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.sparkles, size: 11, color: Color(0xFF166534)),
+                    SizedBox(width: 4),
+                    Text(
+                      'Auto-generated',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -753,264 +959,203 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
             Icon(LucideIcons.user, size: 14, color: Color(0xFF64748B)),
             SizedBox(width: 6),
             Text(
-              'CUSTOMER NAME ',
+              'CUSTOMER NAME',
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 0.5,
-                color: Color(0xFF1E293B),
+                color: Color(0xFF475569),
               ),
             ),
+            SizedBox(width: 6),
             Text(
-              '*',
+              '(Optional)',
               style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFDC2626),
+                fontSize: 11,
+                fontWeight: FontWeight.normal,
+                color: Color(0xFF94A3B8),
               ),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(
-                  color: _showCustomerError
-                      ? const Color(0xFFDC2626)
-                      : (_isCustomerFocused
-                          ? const Color(0xFF166534)
-                          : const Color(0xFFCBD5E1)),
-                  width: (_showCustomerError || _isCustomerFocused) ? 1.5 : 1.0,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: TextField(
-                controller: _customerController,
-                focusNode: _customerFocusNode,
-                style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
-                decoration: const InputDecoration(
-                  hintText: 'Enter Customer Name (e.g. John Doe / Sharma Enterprises)',
-                  hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                ),
-              ),
+        Container(
+          height: 46,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(
+              color: _isCustomerFocused
+                  ? const Color(0xFF166534)
+                  : const Color(0xFFCBD5E1),
+              width: _isCustomerFocused ? 1.5 : 1.0,
             ),
-
-            // Popover validation tooltip matching screenshot exactly with arrow pointer
-            if (_showCustomerError)
-              Positioned(
-                top: 50,
-                left: 16,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 18),
-                      child: CustomPaint(
-                        size: const Size(12, 6),
-                        painter: _TrianglePainter(),
-                      ),
-                    ),
-                    Material(
-                      elevation: 5,
-                      borderRadius: BorderRadius.circular(6),
-                      shadowColor: Colors.black.withValues(alpha: 0.15),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(2),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEA580C),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Icon(
-                                LucideIcons.alertTriangle,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            const Text(
-                              'Please fill in this field.',
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                                color: Color(0xFF1E293B),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-          ],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: TextField(
+            controller: _customerController,
+            focusNode: _customerFocusNode,
+            inputFormatters: [
+              LengthLimitingTextInputFormatter(80),
+            ],
+            style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A)),
+            decoration: InputDecoration(
+              prefixIcon: const Icon(LucideIcons.user, size: 15, color: Color(0xFF94A3B8)),
+              suffixIcon: _customerController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                      splashRadius: 14,
+                      onPressed: () {
+                        setState(() {
+                          _customerController.clear();
+                        });
+                      },
+                    )
+                  : null,
+              hintText: 'Enter Customer Name (or leave blank for Walk-in)',
+              hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
         ),
       ],
     );
 
-    if (isCompact) {
-      return Column(
-        children: [
-          orderField,
-          const SizedBox(height: 16),
-          customerField,
-        ],
-      );
-    }
+    final content = isCompact
+        ? Column(
+            children: [
+              orderField,
+              const SizedBox(height: 16),
+              customerField,
+            ],
+          )
+        : Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: orderField),
+              const SizedBox(width: 20),
+              Expanded(child: customerField),
+            ],
+          );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(child: orderField),
-        const SizedBox(width: 24),
-        Expanded(child: customerField),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: content,
     );
   }
 
   Widget _buildProductItemsSection(bool isCompact) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section Header Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Row(
-              children: [
-                Icon(LucideIcons.package, size: 18, color: Color(0xFF166534)),
-                SizedBox(width: 8),
-                Text(
-                  'Product Items',
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-            InkWell(
-              onTap: _openMultiProductDialog,
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header Row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF0FDF4),
-                  border: Border.all(color: const Color(0xFF86EFAC)),
+                  color: const Color(0xFFEAFAE3),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.plus, size: 14, color: Color(0xFF166534)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Add Multiple Products',
-                      style: TextStyle(
-                        color: Color(0xFF166534),
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12.5,
-                      ),
-                    ),
-                  ],
+                child: const Icon(LucideIcons.package, size: 16, color: Color(0xFF166534)),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Product Items',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
                 ),
               ),
-            ),
-          ],
-        ),
-
-        const SizedBox(height: 16),
-
-        // Product Items Table with horizontal overflow protection
-        LayoutBuilder(
-          builder: (context, constraints) {
-            const double minTableWidth = 680.0;
-            if (constraints.maxWidth < minTableWidth) {
-              return Scrollbar(
-                thumbVisibility: true,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: SizedBox(
-                    width: minTableWidth,
-                    child: _buildItemsTable(),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_items.length} ${_items.length == 1 ? 'record' : 'records'}',
+                  style: const TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
                   ),
                 ),
-              );
-            }
-            return _buildItemsTable();
-          },
-        ),
-
-        const SizedBox(height: 16),
-
-        // Add Multiple Products Dotted/Dashed Row matching screenshot
-        InkWell(
-          onTap: () => _addNewRow(),
-          borderRadius: BorderRadius.circular(8),
-          child: CustomPaint(
-            painter: _DashedBorderPainter(
-              color: const Color(0xFF86EFAC),
-              strokeWidth: 1.2,
-              dashWidth: 5.0,
-              dashSpace: 4.0,
-              borderRadius: 8.0,
-            ),
-            child: Container(
-              height: 48,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: const Color(0xFFF9FDF9),
-                borderRadius: BorderRadius.circular(8),
               ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(LucideIcons.plus, size: 16, color: Color(0xFF166534)),
-                  SizedBox(width: 6),
-                  Text(
-                    'Add Multiple Products',
-                    style: TextStyle(
-                      color: Color(0xFF166534),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            ],
           ),
-        ),
-      ],
+
+          const SizedBox(height: 18),
+
+          // Product Items Table with horizontal overflow protection
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double minTableWidth = 750.0;
+              if (constraints.maxWidth < minTableWidth) {
+                return Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: SizedBox(
+                      width: minTableWidth,
+                      child: _buildItemsTable(),
+                    ),
+                  ),
+                );
+              }
+              return _buildItemsTable();
+            },
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildItemsTable() {
     return Column(
       children: [
-        // Column Headers
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Row(
+        // Column Headers Bar
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFF1F5F9)),
+          ),
+          child: const Row(
             children: [
-              const Expanded(
+              Expanded(
                 flex: 5,
                 child: Text(
                   'PRODUCT NAME',
@@ -1022,8 +1167,8 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
+              SizedBox(width: 12),
+              Expanded(
                 flex: 2,
                 child: Text(
                   'SELLING RATE (₹)',
@@ -1035,8 +1180,8 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
+              SizedBox(width: 12),
+              Expanded(
                 flex: 2,
                 child: Text(
                   'QUANTITY',
@@ -1048,8 +1193,24 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(
+              SizedBox(width: 12),
+              // ADD Column Header
+              SizedBox(
+                width: 44,
+                child: Center(
+                  child: Text(
+                    'ADD',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
                 flex: 2,
                 child: Align(
                   alignment: Alignment.centerRight,
@@ -1064,16 +1225,17 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
-              const SizedBox(
-                width: 44,
+              SizedBox(width: 12),
+              // ACTION Column Header (56px width so it NEVER wraps)
+              SizedBox(
+                width: 56,
                 child: Center(
                   child: Text(
                     'ACTION',
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                      letterSpacing: 0.2,
                       color: Color(0xFF64748B),
                     ),
                   ),
@@ -1083,21 +1245,23 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
           ),
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
 
         // Item Rows
         ListView.separated(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: _items.length,
-          separatorBuilder: (_, _) => const SizedBox(height: 10),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (context, index) {
             final item = _items[index];
 
-            return Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                // Product Name Field
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                // Product Name Field with Dropdown
                 Expanded(
                   flex: 5,
                   child: Container(
@@ -1107,23 +1271,49 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                       border: Border.all(color: const Color(0xFFCBD5E1)),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: TextField(
-                      controller: item.nameController,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                      decoration: const InputDecoration(
-                        hintText: 'Product Name (e.g. Wireless Mouse)',
-                        hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      ),
-                      onChanged: (_) => setState(() {}),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: item.nameController,
+                            inputFormatters: [
+                              LengthLimitingTextInputFormatter(100),
+                            ],
+                            style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                            decoration: const InputDecoration(
+                              hintText: 'Product Name (e.g. Wireless Mouse)',
+                              hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        Tooltip(
+                          message: 'Choose from product records',
+                          child: InkWell(
+                            onTap: () => _openProductDropdown(index),
+                            borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                            child: Container(
+                              height: 44,
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              alignment: Alignment.center,
+                              child: const Icon(
+                                LucideIcons.chevronDown,
+                                size: 16,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
 
                 const SizedBox(width: 12),
 
-                // Selling Rate Field
+                // Selling Rate Field (constrained to 12 digits + 2 decimals)
                 Expanded(
                   flex: 2,
                   child: Container(
@@ -1136,12 +1326,28 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                     child: TextField(
                       controller: item.rateController,
                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'^\d{0,12}(\.\d{0,2})?')),
+                        LengthLimitingTextInputFormatter(15),
+                      ],
                       style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
                       decoration: const InputDecoration(
+                        prefixIcon: Padding(
+                          padding: EdgeInsets.only(left: 10, right: 6),
+                          child: Text(
+                            '₹',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                        prefixIconConstraints: BoxConstraints(minWidth: 24, minHeight: 0),
                         hintText: '0.00',
                         hintStyle: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                       ),
                       onChanged: (_) => setState(() {}),
                     ),
@@ -1150,7 +1356,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
 
                 const SizedBox(width: 12),
 
-                // Quantity Field
+                // Quantity Field (constrained to 12 digits, digits only)
                 Expanded(
                   flex: 2,
                   child: Container(
@@ -1163,6 +1369,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                     child: TextField(
                       controller: item.qtyController,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(12),
+                      ],
                       style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
                       decoration: const InputDecoration(
                         hintText: '1',
@@ -1177,6 +1387,44 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
 
                 const SizedBox(width: 12),
 
+                // Add Record Icon Button between Quantity and Automatic Total
+                SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: Tooltip(
+                      message: 'Add New Record',
+                      child: InkWell(
+                        onTap: _addNewRow,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEAFAE3),
+                            border: Border.all(color: const Color(0xFF86EFAC)),
+                            borderRadius: BorderRadius.circular(8),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF166534).withValues(alpha: 0.08),
+                                blurRadius: 4,
+                                offset: const Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: const Icon(
+                            LucideIcons.plus,
+                            size: 17,
+                            color: Color(0xFF166534),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
                 // Automatic Total Text
                 Expanded(
                   flex: 2,
@@ -1185,7 +1433,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                     alignment: Alignment.centerRight,
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
-                      '₹${item.total.toStringAsFixed(2)}',
+                      '₹${_formatCurrency(item.total)}',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
@@ -1199,107 +1447,143 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
 
                 // Trash Action Button
                 SizedBox(
-                  width: 44,
+                  width: 56,
                   height: 44,
-                  child: IconButton(
-                    icon: const Icon(LucideIcons.trash2, size: 17, color: Color(0xFF94A3B8)),
-                    hoverColor: const Color(0xFFFEE2E2),
-                    splashRadius: 18,
-                    tooltip: 'Remove Item',
-                    onPressed: () => _removeItem(index),
+                  child: Center(
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton(
+                        icon: const Icon(LucideIcons.trash2, size: 17, color: Color(0xFF94A3B8)),
+                        hoverColor: const Color(0xFFFEE2E2),
+                        splashRadius: 18,
+                        tooltip: 'Remove Item',
+                        onPressed: () => _removeItem(index),
+                      ),
+                    ),
                   ),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
+      ),
       ],
     );
   }
 
   Widget _buildSummaryBar(bool isCompact) {
-    final qtySection = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final qtySection = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'TOTAL QUANTITY',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-            color: Color(0xFF64748B),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: const Icon(LucideIcons.layers, size: 18, color: Color(0xFF475569)),
         ),
-        const SizedBox(height: 4),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: '$_totalQuantity ',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'TOTAL QUANTITY',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+                color: Color(0xFF64748B),
               ),
-              const TextSpan(
-                text: 'items',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.normal,
-                  color: Color(0xFF64748B),
-                ),
+            ),
+            const SizedBox(height: 3),
+            RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '${_formatNumber(_totalQuantity)} ',
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const TextSpan(
+                    text: 'items',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.normal,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
 
-    final grandTotalSection = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final grandTotalSection = Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          'GRAND TOTAL',
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
-            color: Color(0xFF64748B),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAFAE3),
+            borderRadius: BorderRadius.circular(10),
           ),
+          child: const Icon(LucideIcons.receipt, size: 18, color: Color(0xFF166534)),
         ),
-        const SizedBox(height: 4),
-        Text(
-          '₹${_grandTotal.toStringAsFixed(2)}',
-          style: const TextStyle(
-            fontSize: 26,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF135029),
-            letterSpacing: -0.5,
-          ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'GRAND TOTAL',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+                color: Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '₹${_formatCurrency(_grandTotal)}',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF135029),
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
         ),
       ],
     );
 
     final submitButton = InkWell(
       onTap: _submitBill,
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       child: Container(
-        height: 46,
-        padding: const EdgeInsets.symmetric(horizontal: 28),
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 32),
         decoration: BoxDecoration(
           color: const Color(0xFF135029),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF135029).withValues(alpha: 0.25),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(LucideIcons.checkCircle2, color: Colors.white, size: 18),
             SizedBox(width: 8),
@@ -1309,6 +1593,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                 color: Colors.white,
                 fontSize: 14.5,
                 fontWeight: FontWeight.bold,
+                letterSpacing: 0.2,
               ),
             ),
           ],
@@ -1318,11 +1603,18 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
 
     if (isCompact) {
       return Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -1333,7 +1625,7 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                 grandTotalSection,
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
               child: submitButton,
@@ -1344,16 +1636,23 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           qtySection,
-          const SizedBox(width: 48),
+          const SizedBox(width: 44),
           grandTotalSection,
           const Spacer(),
           submitButton,
@@ -1361,90 +1660,4 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
       ),
     );
   }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-  final double dashWidth;
-  final double dashSpace;
-  final double borderRadius;
-
-  _DashedBorderPainter({
-    this.color = const Color(0xFF86EFAC),
-    this.strokeWidth = 1.2,
-    this.dashWidth = 5.0,
-    this.dashSpace = 4.0,
-    this.borderRadius = 8.0,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = strokeWidth
-      ..style = PaintingStyle.stroke;
-
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(
-        strokeWidth / 2,
-        strokeWidth / 2,
-        size.width - strokeWidth,
-        size.height - strokeWidth,
-      ),
-      Radius.circular(borderRadius),
-    );
-
-    final path = Path()..addRRect(rrect);
-    final dashedPath = Path();
-
-    for (final metric in path.computeMetrics()) {
-      double distance = 0.0;
-      while (distance < metric.length) {
-        final length = (distance + dashWidth < metric.length)
-            ? dashWidth
-            : metric.length - distance;
-        dashedPath.addPath(
-          metric.extractPath(distance, distance + length),
-          Offset.zero,
-        );
-        distance += dashWidth + dashSpace;
-      }
-    }
-
-    canvas.drawPath(dashedPath, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) =>
-      oldDelegate.color != color ||
-      oldDelegate.strokeWidth != strokeWidth ||
-      oldDelegate.dashWidth != dashWidth ||
-      oldDelegate.dashSpace != dashSpace ||
-      oldDelegate.borderRadius != borderRadius;
-}
-
-class _TrianglePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-    final borderPaint = Paint()
-      ..color = const Color(0xFFE2E8F0)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    final path = Path();
-    path.moveTo(0, size.height);
-    path.lineTo(size.width / 2, 0);
-    path.lineTo(size.width, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-    canvas.drawPath(path, borderPaint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
