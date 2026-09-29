@@ -2443,7 +2443,7 @@ class _MacOSReferAndEarnTileState extends State<_MacOSReferAndEarnTile>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 14, right: 14, top: 4, bottom: 18),
+      padding: const EdgeInsets.only(left: 14, right: 14, top: 18, bottom: 12),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (_) => _onEnter(),
