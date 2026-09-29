@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/settings_form_widgets.dart';
 import '../../../widgets/app_ui_kit.dart';
@@ -162,7 +164,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -261,44 +263,29 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       Tab(text: 'Accounting'),
                       Tab(text: 'Payment'),
                       Tab(text: 'FIN-PRO'),
-                      Tab(text: 'Beta Club'),
+                      Tab(text: 'PLD'),
                     ],
                   ),
                 ),
               ),
             ];
           },
-          body: Theme.of(context).platform == TargetPlatform.macOS
-              ? IndexedStack(
-                  index: _tabController.index,
-                  children: [
-                    _buildOrgProfileTab(),
-                    _buildGeneralTab(),
-                    _buildTransactionTab(),
-                    _buildPrintTab(),
-                    _buildTaxesGstTab(),
-                    _buildContactsTab(),
-                    _buildAccountingTab(),
-                    _buildPaymentTab(),
-                    _buildFinProTab(),
-                    _buildBetaClubTab(),
-                  ],
-                )
-              : TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildOrgProfileTab(),
-                    _buildGeneralTab(),
-                    _buildTransactionTab(),
-                    _buildPrintTab(),
-                    _buildTaxesGstTab(),
-                    _buildContactsTab(),
-                    _buildAccountingTab(),
-                    _buildPaymentTab(),
-                    _buildFinProTab(),
-                    _buildBetaClubTab(),
-                  ],
-                ),
+          body: TabBarView(
+            controller: _tabController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: [
+              _buildOrgProfileTab(),
+              _buildGeneralTab(),
+              _buildTransactionTab(),
+              _buildPrintTab(),
+              _buildTaxesGstTab(),
+              _buildContactsTab(),
+              _buildAccountingTab(),
+              _buildPaymentTab(),
+              _buildFinProTab(),
+              _buildBetaClubTab(),
+            ],
+          ),
         ),
       ),
     );
@@ -824,7 +811,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Wrap(
@@ -1289,7 +1276,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           Container(
             padding: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -1488,11 +1475,11 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         ],
                       ),
                       const SizedBox(height: 12),
-                      Container(height: 4, width: double.infinity, color: AppColors.background),
+                      Container(height: 4, width: double.infinity, color: const Color(0xFFE2E8F0)),
                       const SizedBox(height: 4),
-                      Container(height: 4, width: 80, color: AppColors.background),
+                      Container(height: 4, width: 80, color: const Color(0xFFE2E8F0)),
                       const SizedBox(height: 4),
-                      Container(height: 4, width: 100, color: AppColors.background),
+                      Container(height: 4, width: 100, color: const Color(0xFFE2E8F0)),
                     ],
                   ),
                 ),
@@ -1961,6 +1948,8 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           if (isMobile)
             Column(
               children: [
+                _buildFinProVisibilitySection(),
+                const SizedBox(height: 16),
                 _buildProfessionalLedgerSection(),
                 const SizedBox(height: 16),
                 _buildFinProPlatinumSuiteCard(),
@@ -1970,7 +1959,16 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(flex: 3, child: _buildProfessionalLedgerSection()),
+                Expanded(
+                  flex: 3,
+                  child: Column(
+                    children: [
+                      _buildFinProVisibilitySection(),
+                      const SizedBox(height: 16),
+                      _buildProfessionalLedgerSection(),
+                    ],
+                  ),
+                ),
                 const SizedBox(width: 16),
                 Expanded(flex: 2, child: _buildFinProPlatinumSuiteCard()),
               ],
@@ -1978,6 +1976,26 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           const SizedBox(height: 32),
         ],
       ).animate().fadeIn(duration: 400.ms),
+    );
+  }
+
+  Widget _buildFinProVisibilitySection() {
+    return SettingsSectionCard(
+      title: 'Top Navigation Bar Display',
+      icon: const Icon(LucideIcons.layoutPanelTop, size: 18, color: AppColors.primaryGreen),
+      child: Consumer(
+        builder: (context, ref, _) {
+          final isVisible = ref.watch(finProTopButtonVisibleProvider);
+          return SettingsSwitchTile(
+            title: 'FIN-PRO Visible / ON',
+            subtitle: 'Show the FIN-PRO button in the top right navigation bar. When switched off, the button will be hidden.',
+            value: isVisible,
+            onChanged: (val) {
+              ref.read(finProTopButtonVisibleProvider.notifier).state = val;
+            },
+          );
+        },
+      ),
     );
   }
 
@@ -2054,7 +2072,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2095,7 +2113,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                         const Icon(LucideIcons.zap, color: Color(0xFFFFD700), size: 24),
                       ],
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     _buildFinProStatusItem(LucideIcons.globe, 'Multi-Currency Ledger', 'LOCAL CURRENCY ONLY', Colors.white38),
                     const SizedBox(height: 12),
                     _buildFinProStatusItem(LucideIcons.brainCircuit, 'AI Cashflow Engine', 'PREDICTIVE ANALYSIS UP', const Color(0xFF4CD964)),
@@ -2106,7 +2124,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               ),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: const BoxDecoration(
                   color: Colors.white10,
                   borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
@@ -2123,12 +2141,16 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       children: [
                         const Text(
                           '₹ 14.8L Safe Reserve',
-                          style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                          style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          '+8.4% growth forecasted',
-                          style: TextStyle(color: const Color(0xFF4CD964).withValues(alpha: 0.8), fontSize: 9),
+                        Flexible(
+                          child: Text(
+                            '+8.4% growth forecasted',
+                            style: TextStyle(color: const Color(0xFF4CD964).withValues(alpha: 0.8), fontSize: 9),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
                       ],
                     ),
@@ -2144,16 +2166,22 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
 
   Widget _buildFinProStatusItem(IconData icon, String label, String status, Color statusColor) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            Icon(icon, color: Colors.white38, size: 14),
-            const SizedBox(width: 10),
-            Text(label, style: const TextStyle(color: Colors.white60, fontSize: 11)),
-          ],
+        Icon(icon, color: Colors.white38, size: 14),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(color: Colors.white60, fontSize: 11),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-        Text(status, style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold)),
+        const SizedBox(width: 8),
+        Text(
+          status,
+          style: TextStyle(color: statusColor, fontSize: 9, fontWeight: FontWeight.bold),
+        ),
       ],
     );
   }
@@ -2163,7 +2191,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
       padding: const EdgeInsets.all(16),
       child: Container(
         width: double.infinity,
-        height: 400,
+        constraints: const BoxConstraints(minHeight: 400),
         decoration: BoxDecoration(
           color: const Color(0xFF1E1E2C),
           borderRadius: BorderRadius.circular(24),
@@ -2212,7 +2240,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       .moveY(begin: -5, end: 5, duration: 1500.ms, curve: Curves.easeInOutSine),
                   const SizedBox(height: 32),
                   const Text(
-                    'Join the Beta Club',
+                    'Partner launch Desk',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 28,
@@ -2237,7 +2265,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                       onPressed: () {
                         AppSnackbar.show(
                           context,
-                          "Application received! We'll notify you once your beta registration is verified.",
+                          "Application received! We'll notify you once your Partner launch Desk registration is verified.",
                           type: SnackType.success,
                         );
                       },

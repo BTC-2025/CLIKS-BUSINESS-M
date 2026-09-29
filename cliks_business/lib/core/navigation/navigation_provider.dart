@@ -120,3 +120,7 @@ final navigationProvider = StateNotifierProvider<NavigationNotifier, NavigationS
 
 /// Dedicated split-screen provider for mobile calculator view
 final mobileCalculatorSplitScreenProvider = StateProvider<bool>((ref) => false);
+
+/// Controls visibility of the FIN-PRO button in the top navigation bar (toggled in Settings -> FIN-PRO)
+final finProTopButtonVisibleProvider = StateProvider<bool>((ref) => false);
+

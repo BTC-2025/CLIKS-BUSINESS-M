@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../widgets/macos_right_utility_rail.dart';
 
 enum _StorageTab {
   home,
@@ -6015,54 +6016,57 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     );
   }
 
-  Widget _buildBetaLogo({double size = 26}) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Column(
+  Widget _buildBetaLogo({double size = 28}) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () {
+          ref.read(macosBetaAppsVisibleProvider.notifier).state = true;
+        },
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(
+            Container(
               width: size,
-              height: size * 0.95,
-              child: ClipRect(
-                child: FittedBox(
-                  fit: BoxFit.cover,
-                  alignment: const Alignment(0.0, -0.22),
-                  child: SizedBox(
-                    width: 70,
-                    height: 70,
-                    child: _buildLogoImage('beta_logo .jpg', fit: BoxFit.cover),
+              height: size,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(size > 26 ? 8 : 6),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
                   ),
+                ],
+              ),
+              padding: const EdgeInsets.all(3),
+              alignment: Alignment.center,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.file(
+                  File('/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/media_1790664964179.png'),
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  errorBuilder: (c, e, s) => _buildLogoImage('beta_logo .jpg', fit: BoxFit.contain),
                 ),
               ),
             ),
-            const SizedBox(height: 1),
+            const SizedBox(width: 8),
             Text(
-              'BETA',
+              'Beta',
               style: GoogleFonts.inter(
-                color: const Color(0xFF2563EB),
+                fontSize: 18,
                 fontWeight: FontWeight.w800,
-                fontSize: 7.0,
-                letterSpacing: 0.8,
-                height: 1.0,
+                color: const Color(0xFF0F172A),
+                letterSpacing: -0.3,
               ),
             ),
           ],
         ),
-        const SizedBox(width: 8),
-        Text(
-          'Beta',
-          style: GoogleFonts.inter(
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: const Color(0xFF0F172A),
-            letterSpacing: -0.3,
-          ),
-        ),
-      ],
+      ),
     );
   }
 

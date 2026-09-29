@@ -1,4 +1,6 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
@@ -33,9 +35,125 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _activeTool = 'beta';
+    _syncBetaLogoAssets();
+  }
+
+  void _syncBetaLogoAssets() {
+    try {
+      const src = '/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/media_1790664964179.png';
+      final srcFile = File(src);
+      if (srcFile.existsSync()) {
+        final bytes = srcFile.readAsBytesSync();
+        final targets = [
+          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /beta_logo .jpg',
+          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /beta_logo.png',
+          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference/beta_logo.png',
+          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/beta_logo.png',
+          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/images/beta_logo.png',
+        ];
+        for (final t in targets) {
+          try {
+            final f = File(t);
+            f.parent.createSync(recursive: true);
+            f.writeAsBytesSync(bytes);
+          } catch (_) {}
+        }
+      }
+    } catch (_) {}
+  }
+
+  @override
   void dispose() {
     _noteController.dispose();
     super.dispose();
+  }
+
+  Future<void> _launchWebUrl(String url) async {
+    try {
+      const channel = MethodChannel('com.cliks.business/url_launcher');
+      final result = await channel.invokeMethod<bool>('openUrl', {'url': url});
+      if (result == true) return;
+    } catch (_) {}
+
+    try {
+      if (Platform.isMacOS) {
+        final res = await Process.run('open', [url]);
+        if (res.exitCode == 0) return;
+        await Process.run('/usr/bin/open', [url]);
+      }
+    } catch (e) {
+      debugPrint('Error launching web URL: $e');
+    }
+  }
+
+  Widget _buildLogoImage(
+    String fileName, {
+    double? width,
+    double? height,
+    BoxFit fit = BoxFit.contain,
+    Color? color,
+  }) {
+    final candidatePaths = [
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /$fileName',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference/$fileName',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/$fileName',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/images/$fileName',
+    ];
+
+    for (final p in candidatePaths) {
+      final f = File(p);
+      if (f.existsSync()) {
+        return Image.file(
+          f,
+          width: width,
+          height: height,
+          fit: fit,
+          color: color,
+          colorBlendMode: color != null ? BlendMode.srcIn : null,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (ctx, err, stack) => _buildFallbackAsset(fileName, width, height, fit, color),
+        );
+      }
+    }
+
+    return _buildFallbackAsset(fileName, width, height, fit, color);
+  }
+
+  Widget _buildFallbackAsset(String fileName, double? width, double? height, BoxFit fit, Color? color) {
+    return Image.asset(
+      'assets/icons_images_reference /$fileName',
+      width: width,
+      height: height,
+      fit: fit,
+      color: color,
+      filterQuality: FilterQuality.high,
+      colorBlendMode: color != null ? BlendMode.srcIn : null,
+      errorBuilder: (ctx, err, stack) {
+        return Image.asset(
+          'assets/$fileName',
+          width: width,
+          height: height,
+          fit: fit,
+          color: color,
+          filterQuality: FilterQuality.high,
+          colorBlendMode: color != null ? BlendMode.srcIn : null,
+          errorBuilder: (ctx2, err2, stack2) {
+            return Image.asset(
+              'assets/images/$fileName',
+              width: width,
+              height: height,
+              fit: fit,
+              color: color,
+              filterQuality: FilterQuality.high,
+              colorBlendMode: color != null ? BlendMode.srcIn : null,
+            );
+          },
+        );
+      },
+    );
   }
 
   void _toggleTool(String tool) {
@@ -51,7 +169,9 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
   @override
   Widget build(BuildContext context) {
     ref.listen(macosBetaAppsVisibleProvider, (prev, next) {
-      if (!next && _activeTool != null) {
+      if (next && _activeTool == null) {
+        setState(() => _activeTool = 'beta');
+      } else if (!next && _activeTool != null) {
         setState(() => _activeTool = null);
       }
     });
@@ -88,9 +208,9 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
             children: [
               const SizedBox(height: 12),
 
-              // 1. Beta Icon Button (Script B)
-              _buildBetaCircleBtn(),
-              const SizedBox(height: 12),
+              // 1. Beta Apps Button (HD Squircle Leaf)
+              _buildBetaRailButton(),
+              const SizedBox(height: 10),
 
               // 2. Calendar Button
               _buildRailBoxBtn(
@@ -181,44 +301,78 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
 
   // --- Vertical Rail Button Builders ---
 
-  Widget _buildBetaCircleBtn() {
+  Widget _buildBetaImageHD({double? width, double? height, BoxFit fit = BoxFit.contain}) {
+    final candidatePaths = [
+      '/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/media_1790664964179.png',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /beta_logo .jpg',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference/beta_logo.png',
+      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/beta_logo.png',
+    ];
+
+    for (final p in candidatePaths) {
+      final f = File(p);
+      if (f.existsSync()) {
+        return Image.file(
+          f,
+          width: width,
+          height: height,
+          fit: fit,
+          filterQuality: FilterQuality.high,
+          errorBuilder: (ctx, err, stack) => _buildFallbackAsset('beta_logo .jpg', width, height, fit, null),
+        );
+      }
+    }
+
+    return _buildFallbackAsset('beta_logo .jpg', width, height, fit, null);
+  }
+
+  Widget _buildBetaLogoHD({
+    double size = 38,
+    double logoPadding = 4,
+    bool isActive = false,
+  }) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(size > 30 ? 10 : 7),
+        border: Border.all(
+          color: isActive ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+          width: isActive ? 1.8 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: isActive
+                ? const Color(0xFF2563EB).withValues(alpha: 0.25)
+                : Colors.black.withValues(alpha: 0.04),
+            blurRadius: isActive ? 6 : 3,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(logoPadding),
+      alignment: Alignment.center,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size > 30 ? 6 : 4),
+        child: _buildBetaImageHD(),
+      ),
+    );
+  }
+
+  Widget _buildBetaRailButton() {
     final isActive = _activeTool == 'beta';
     return Tooltip(
       message: 'Beta Apps',
-      child: GestureDetector(
-        onTap: () => _toggleTool('beta'),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: isActive ? const Color(0xFFD1FAE5) : const Color(0xFFE8F8F2),
-            border: Border.all(
-              color: const Color(0xFF10B981),
-              width: isActive ? 2.0 : 1.5,
-            ),
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'ℬ',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF0F766E),
-              fontFamily: 'serif',
-              fontStyle: FontStyle.italic,
-              height: 1.05,
-            ),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: () => _toggleTool('beta'),
+          child: _buildBetaLogoHD(
+            size: 38,
+            logoPadding: 5,
+            isActive: isActive,
           ),
         ),
       ),
@@ -300,6 +454,8 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
           padding: const EdgeInsets.fromLTRB(16, 16, 12, 12),
           child: Row(
             children: [
+              _buildBetaLogoHD(size: 28, logoPadding: 3, isActive: true),
+              const SizedBox(width: 8),
               const Text(
                 'BETA',
                 style: TextStyle(
@@ -313,12 +469,8 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
               // Edit button
               InkWell(
                 onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Customize shortcuts in Beta settings.'),
-                      duration: Duration(seconds: 1),
-                    ),
-                  );
+                  ref.read(navigationProvider.notifier).setModule(AppModule.books);
+                  ref.read(navigationProvider.notifier).setRoute(AppRoute.settings);
                 },
                 borderRadius: BorderRadius.circular(14),
                 child: Container(
@@ -465,21 +617,24 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                             ],
                           ),
                           alignment: Alignment.center,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.asset(
-                              'assets/images/icon2_image.png',
-                              width: 28,
-                              height: 28,
-                              fit: BoxFit.contain,
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: ClipOval(
+                              child: Transform.scale(
+                                scale: 1.20,
+                                child: _buildLogoImage(
+                                  'cliks_logo.png',
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                         onTap: () {
-                          ref.read(navigationProvider.notifier).setModuleAndRoute(
-                                AppModule.books,
-                                AppRoute.dashboard,
-                              );
+                          _launchWebUrl('https://cliks.beta-softnet.com/');
                         },
                       ),
                       _buildAppLauncherTile(
@@ -500,12 +655,19 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                             ],
                           ),
                           alignment: Alignment.center,
-                          child: const Icon(LucideIcons.send, color: Color(0xFF2563EB), size: 20),
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: _buildLogoImage(
+                              'bnx_mail_logo.png',
+                              width: 28,
+                              height: 28,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
                         onTap: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Opening BNXmail Workspace...')),
-                          );
+                          _launchWebUrl('https://www.bnxmail.com/login');
                         },
                       ),
                       _buildAppLauncherTile(
@@ -526,10 +688,19 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                             ],
                           ),
                           alignment: Alignment.center,
-                          child: const Icon(LucideIcons.candlestickChart, color: Color(0xFF2563EB), size: 22),
+                          child: SizedBox(
+                            width: 26,
+                            height: 26,
+                            child: _buildLogoImage(
+                              'bit_tool_logo.png',
+                              width: 26,
+                              height: 26,
+                              fit: BoxFit.contain,
+                            ),
+                          ),
                         ),
                         onTap: () {
-                          setState(() => _activeTool = 'calculator');
+                          _launchWebUrl('https://bit-tool.com/');
                         },
                       ),
                       _buildAppLauncherTile(
@@ -553,7 +724,7 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                           child: const Icon(LucideIcons.shield, color: Color(0xFF374151), size: 22),
                         ),
                         onTap: () {
-                          setState(() => _activeTool = 'security');
+                          _launchWebUrl('https://www.b2auth.com/');
                         },
                       ),
                       _buildAppLauncherTile(
@@ -574,21 +745,24 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                             ],
                           ),
                           alignment: Alignment.center,
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(14),
-                            child: Image.asset(
-                              'assets/images/icon2_image.png',
-                              width: 28,
-                              height: 28,
-                              fit: BoxFit.contain,
+                          child: SizedBox(
+                            width: 30,
+                            height: 30,
+                            child: ClipOval(
+                              child: Transform.scale(
+                                scale: 1.18,
+                                child: _buildLogoImage(
+                                  'cliks_business_img.png',
+                                  width: 30,
+                                  height: 30,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
                             ),
                           ),
                         ),
                         onTap: () {
-                          ref.read(navigationProvider.notifier).setModuleAndRoute(
-                                AppModule.books,
-                                AppRoute.betaClub,
-                              );
+                          _launchWebUrl('https://www.cliksbusiness.com/');
                         },
                       ),
                     ],
