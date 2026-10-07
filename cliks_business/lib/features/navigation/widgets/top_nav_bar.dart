@@ -687,41 +687,39 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   ),
                   const SizedBox(width: 8),
 
-                  // 3. FIN-PRO Capsule button (controlled via Settings -> FIN-PRO)
-                  if (ref.watch(finProTopButtonVisibleProvider)) ...[
-                    _buildMacOSCapsuleButton(
-                      onTap: () {
-                        ref
-                            .read(navigationProvider.notifier)
-                            .setModuleAndRoute(
-                              AppModule.books,
-                              AppRoute.auditHub,
-                            );
-                      },
-                      tooltip: 'FIN-PRO Audit Hub',
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            LucideIcons.landmark,
+                  // 3. FIN PRO Capsule button (visible on top right in macOS header)
+                  _buildMacOSCapsuleButton(
+                    onTap: () {
+                      ref
+                          .read(navigationProvider.notifier)
+                          .setModuleAndRoute(
+                            AppModule.books,
+                            AppRoute.auditHub,
+                          );
+                    },
+                    tooltip: 'FIN-PRO Audit Hub',
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.landmark,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                        SizedBox(width: 7),
+                        Text(
+                          'FIN PRO',
+                          style: TextStyle(
                             color: Colors.white,
-                            size: 16,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
-                          SizedBox(width: 7),
-                          Text(
-                            'FIN-PRO',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                  ],
+                  ),
+                  const SizedBox(width: 8),
 
                   // 4. User Profile Capsule button (ravinew2004 ▾ / ▴)
                   _buildMacOSCapsuleButton(
