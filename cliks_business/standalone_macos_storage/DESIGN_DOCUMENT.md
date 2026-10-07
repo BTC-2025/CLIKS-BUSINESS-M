@@ -7,6 +7,7 @@ This document details the visual design, token systems, UI architecture, layout 
 ## 1. Visual Hierarchy & Philosophy
 
 The storage page adheres to modern desktop design principles:
+
 - **Clean Whitespace & Separation**: Distinct borders with hairline thickness (`1.0px`), subtle shadow elevations, and crisp contrast.
 - **Mac Native Aesthetics**: Crisp Lucide vector iconography, SF-style typography rendering via Google Fonts `Inter`, and platform-tailored cursor interactions (`SystemMouseCursors.click`).
 - **Data Scannability**: Visual gauges, colored status capsules, and tabular breakdown layouts for quick information digestion.
@@ -16,6 +17,7 @@ The storage page adheres to modern desktop design principles:
 ## 2. Color Palette & Design Tokens
 
 ### Backgrounds & Surfaces
+
 | Token Name | Hex Code | Purpose |
 | :--- | :--- | :--- |
 | `surfacePrimary` | `#FFFFFF` | Main canvas, cards, and sidebar background |
@@ -24,6 +26,7 @@ The storage page adheres to modern desktop design principles:
 | `surfaceHighlight` | `#EFF6FF` | Sidebar storage card background |
 
 ### Borders & Dividers
+
 | Token Name | Hex Code | Purpose |
 | :--- | :--- | :--- |
 | `borderLight` | `#E2E8F0` | Structural dividers, sidebar borders, header bottom line |
@@ -31,6 +34,7 @@ The storage page adheres to modern desktop design principles:
 | `borderAccent` | `#DBEAFE` | Storage indicator and highlighted card outlines |
 
 ### Text & Content
+
 | Token Name | Hex Code | Purpose |
 | :--- | :--- | :--- |
 | `textPrimary` | `#0F172A` | Major titles, section headings, bold metrics |
@@ -39,10 +43,11 @@ The storage page adheres to modern desktop design principles:
 | `textHint` | `#94A3B8` | Sidebar group headers, empty state text |
 
 ### Brand & Functional Colors
+
 | Token Name | Hex Code | Purpose |
 | :--- | :--- | :--- |
 | `brandPrimary` | `#2563EB` | Active nav items, primary buttons, links, progress bars |
-| `brandPrimaryDark`| `#1D4ED8` | Button hover and pressed states |
+| `brandPrimaryDark` | `#1D4ED8` | Button hover and pressed states |
 | `brandSuccess` | `#16A34A` | Healthy storage status, Cliks Business accent |
 | `brandWarning` | `#F59E0B` | Warning threshold, moderate quota consumption |
 | `brandDanger` | `#EF4444` | High-usage alert badge, permanent deletion, empty bin |
@@ -88,12 +93,14 @@ The storage page adheres to modern desktop design principles:
 ## 5. UI Components Breakdown
 
 ### 1. Storage Overview Metric Card
+
 - Shows used quota vs. maximum quota (e.g. `0 KB / 1.00 GB`).
 - Contains a customized `LinearProgressIndicator` with rounded ends.
 - Includes quick-action buttons: "Free Up Space" and "Upgrade Storage".
 - Status indicator pill: "Optimal" (Green) or "Critical" (Red).
 
 ### 2. Application Breakdown Cards (Grid/List)
+
 - Each card represents an app in the ecosystem:
   - **BNX Mail**: Email & attachments usage
   - **Cliks**: Workspaces, chat history, channel media
@@ -101,6 +108,7 @@ The storage page adheres to modern desktop design principles:
 - Shows individual progress bars, percentage of total pool, and file count.
 
 ### 3. Analytics & Largest Files Table
+
 - Column headers:
   - File Name (with file-type icon: PDF, Image, Spreadsheet, Archive)
   - Location / Path
@@ -110,6 +118,7 @@ The storage page adheres to modern desktop design principles:
 - Hover effect on rows with soft `#F8FAFC` background.
 
 ### 4. Recycle Bin
+
 - Header with item count and total reclaimable space.
 - Search input with clear button.
 - Filter buttons: `ALL`, `BNX Mail`, `Cliks`, `Cliks Business`.
@@ -120,6 +129,7 @@ The storage page adheres to modern desktop design principles:
   - Action buttons: "Restore" (Blue) and "Delete" (Red outline).
 
 ### 5. Settings Sub-Panel
+
 - Tab navigation: `General` | `Privacy` | `Connected Apps`.
 - Form controls:
   - Custom dropdowns for unit preference (`GB` / `TB`) and decimal precision.

@@ -6,7 +6,7 @@ A self-contained, enterprise-grade macOS desktop storage management interface bu
 
 ## 📁 Directory Structure
 
-```
+```text
 standalone_macos_storage/
 ├── standalone_macos_storage.dart      # Primary barrel export file
 ├── pages/
@@ -33,11 +33,13 @@ standalone_macos_storage/
 The interface follows the Apple macOS Human Interface Guidelines (HIG) with modern desktop design aesthetics:
 
 ### 1. Top Header Bar
+
 - **Back Navigation**: Fluid back button with tooltip and automatic `Navigator.pop()` or custom `onBack` handler.
 - **Beta Brand Identity**: High-DPI Beta badge with rounded glass border, hover cursor, and click handler.
 - **Account Dropdown**: Pill-shaped action button opening a profile card with user avatar, email (`ravinew2004@bnxmail.com`), account management options, and sign-out actions.
 
 ### 2. Desktop Two-Pane Layout
+
 - **Left Navigation Rail (220px)**:
   - **Home**: Overview of total storage and ecosystem health.
   - **Application Storage**: Dedicated views for BNX Mail, Cliks, and Cliks Business.
@@ -47,6 +49,7 @@ The interface follows the Apple macOS Human Interface Guidelines (HIG) with mode
   - Dynamically switches views with smooth transitions and bouncing desktop scroll physics.
 
 ### 3. Dedicated Views
+
 1. **Home / Overview**:
    - Top banner with total capacity (e.g. 1.00 GB), percentage bar, high-usage alert badge.
    - Breakdown cards for each ecosystem app with live progress bars and item counts.
@@ -81,6 +84,7 @@ The interface follows the Apple macOS Human Interface Guidelines (HIG) with mode
    - Storage access permissions (`only_me`, `connected`, `shared`).
 
 ### 4. Custom Painters
+
 - `_DonutRingPainter`: High-performance custom canvas painter for circular storage gauges.
 - `_EcosystemDonutChartPainter`: Multi-color ecosystem storage breakdown donut.
 - `_BnxMailIconPainter`: Vector path painter for BNX Mail envelope & wing logo.
@@ -91,15 +95,19 @@ The interface follows the Apple macOS Human Interface Guidelines (HIG) with mode
 ## 🚀 How to Add to a New Project
 
 ### Step 1: Copy the Folder
+
 Copy the entire `standalone_macos_storage/` folder into your new project's `lib/` directory:
-```
+
+```text
 my_new_project/
   └── lib/
       └── standalone_macos_storage/
 ```
 
 ### Step 2: Add Dependencies to `pubspec.yaml`
+
 Ensure your new project has the following packages in `pubspec.yaml`:
+
 ```yaml
 dependencies:
   flutter:
@@ -110,17 +118,21 @@ dependencies:
 ```
 
 ### Step 3: Register Assets (Optional but Recommended)
+
 In your `pubspec.yaml`, register the bundled assets if you want local image resolution:
+
 ```yaml
 flutter:
   assets:
     - lib/standalone_macos_storage/assets/
 ```
+
 *(Note: If assets are not declared in `pubspec.yaml`, the UI will automatically fall back to built-in vector CustomPainters without throwing any runtime errors).*
 
 ### Step 4: Import and Use
 
-#### A. Open as a Full-Screen Page:
+#### A. Open as a Full-Screen Page
+
 ```dart
 import 'package:flutter/material.dart';
 import 'standalone_macos_storage/standalone_macos_storage.dart';
@@ -137,7 +149,8 @@ void openStoragePage(BuildContext context) {
 }
 ```
 
-#### B. Open as a Modal / Dialog:
+#### B. Open as a Modal / Dialog
+
 ```dart
 import 'standalone_macos_storage/standalone_macos_storage.dart';
 
@@ -145,7 +158,8 @@ import 'standalone_macos_storage/standalone_macos_storage.dart';
 MacOsStorageBreakdownDialog.show(context);
 ```
 
-#### C. Embed in your App's Sidebar:
+#### C. Embed in your App's Sidebar
+
 ```dart
 import 'standalone_macos_storage/standalone_macos_storage.dart';
 
@@ -157,8 +171,10 @@ SidebarStorageCard(
 )
 ```
 
-#### D. If Your New Project Doesn't Use Riverpod Globally:
+#### D. If Your New Project Doesn't Use Riverpod Globally
+
 Simply wrap `MacOsStoragePage` in a `ProviderScope`:
+
 ```dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'standalone_macos_storage/standalone_macos_storage.dart';
@@ -173,6 +189,7 @@ ProviderScope(
 ## ⚙️ Customization Parameters
 
 `MacOsStoragePage` accepts optional callbacks:
+
 - `onBack`: Custom action when the top-left return arrow is tapped. If omitted, it automatically calls `Navigator.of(context).pop()`.
 - `onBetaLogoTap`: Custom action when the top Beta logo is clicked.
 - `backButtonTooltip`: Custom tooltip for the back button (defaults to `'Back to App'`).
