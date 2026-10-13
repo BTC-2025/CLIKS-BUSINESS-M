@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/roster_shift_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -212,7 +213,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -300,6 +301,69 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Time & Attendance Tracking',
+      mainValue: '94.2% Present',
+      subtitle: 'Biometric punches, shift rosters, GPS geofencing & regularizations',
+      badgeText: 'LIVE ATTENDANCE',
+      badgeIcon: LucideIcons.clock,
+      isMobile: isMobile,
+      chips: const [
+        MacOsBentoHeroChip(
+          label: 'Late Punches',
+          value: '1 Late',
+          icon: LucideIcons.alertCircle,
+          accentColor: Color(0xFFDC2626),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Active Shifts',
+          value: '3 Roster',
+          icon: LucideIcons.layoutPanelTop,
+          accentColor: Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Punch Claims',
+          value: '0 Claims',
+          icon: LucideIcons.refreshCw,
+          accentColor: Color(0xFF166534),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: _triggerRegularizeMissedPunch,
+            icon: const Icon(LucideIcons.refreshCw, size: 13),
+            label: const Text('Regularize', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _triggerManualPunchEntry,
+            icon: const Icon(LucideIcons.plus, size: 13),
+            label: const Text('Manual Punch', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

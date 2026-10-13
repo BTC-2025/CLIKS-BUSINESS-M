@@ -9,6 +9,7 @@ import '../widgets/assign_task_dialog.dart';
 import '../widgets/register_client_dialog.dart';
 import '../widgets/invite_team_dialog.dart';
 import '../widgets/verify_icai_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -181,12 +182,21 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
+          if (isMacOS) ...[
+            SliverToBoxAdapter(
+              child: _buildMacOsBentoHero(isMobile),
+            ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 12),
+            ),
+          ],
+
           // ─── CARD 1: TOP AUDITOR ROLE CARDS & ICAI VERIFICATION ───
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 isMobile ? 14 : 24,
-                isMobile ? 12 : 16,
+                (isMacOS ? 0 : (isMobile ? 12 : 16)),
                 isMobile ? 14 : 24,
                 0,
               ),
@@ -229,6 +239,69 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                   : _buildMainContent(isMobile, isFirmWorkplace)
                       .animate()
                       .fadeIn(duration: 500.ms, delay: 150.ms),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Auditor & Advisory Workspace',
+      mainValue: 'FIN-PRO Compliance Hub',
+      subtitle: 'Statutory, tax, forensic audit modules & ICAI digital workpapers',
+      badgeText: _isIcaiVerified ? 'ICAI VERIFIED' : 'ACTIVE PRACTICE',
+      badgeIcon: LucideIcons.shieldCheck,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Compliance Score',
+          value: '98.5%',
+          icon: LucideIcons.award,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Statutory Trackers',
+          value: '12 Active',
+          icon: LucideIcons.fileCheck,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Client Portfolios',
+          value: '${_taxpayerClients.length} Taxpayers',
+          icon: LucideIcons.building2,
+          accentColor: const Color(0xFF7C3AED),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => _showVerifyIcaDialog(context),
+            icon: const Icon(LucideIcons.shieldCheck, size: 13),
+            label: Text(_isIcaiVerified ? 'ICAI Details' : 'Verify ICAI', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () => showDialog(context: context, builder: (_) => const RegisterClientDialog()),
+            icon: const Icon(LucideIcons.userPlus, size: 13),
+            label: const Text('Add Client', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

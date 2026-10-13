@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -243,7 +244,7 @@ class _PayrollPageState extends ConsumerState<PayrollPage>
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -331,6 +332,69 @@ class _PayrollPageState extends ConsumerState<PayrollPage>
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Workforce Payroll Engine',
+      mainValue: '₹3,45,400.00',
+      subtitle: 'Monthly salary disbursements, statutory PF/ESI, advances & loans',
+      badgeText: 'LIVE PAYROLL',
+      badgeIcon: LucideIcons.wallet,
+      isMobile: isMobile,
+      chips: const [
+        MacOsBentoHeroChip(
+          label: 'Statutory PF/ESI',
+          value: '₹41,400 Filed',
+          icon: LucideIcons.shieldCheck,
+          accentColor: Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Outstanding Loans',
+          value: '₹50,000.00',
+          icon: LucideIcons.landmark,
+          accentColor: Color(0xFFDC2626),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Payslips',
+          value: '5 Generated',
+          icon: LucideIcons.fileText,
+          accentColor: Color(0xFF2563EB),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: _triggerAllocateLoan,
+            icon: const Icon(LucideIcons.sliders, size: 13),
+            label: const Text('Loans', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _triggerProcessPayroll,
+            icon: const Icon(LucideIcons.plus, size: 13),
+            label: const Text('Process Payroll', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

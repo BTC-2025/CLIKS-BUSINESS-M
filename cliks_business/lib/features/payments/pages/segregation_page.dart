@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../widgets/setup_target_wallet_dialog.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/bento/bento.dart';
 
 class SegregationPage extends StatefulWidget {
   const SegregationPage({super.key});
@@ -796,6 +797,7 @@ class _SegregationPageState extends State<SegregationPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -822,8 +824,10 @@ class _SegregationPageState extends State<SegregationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Summary (Gradient Stats & Actions)
-            _buildHeroSummary(context, isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+            // Hero Summary (Gradient Stats & Actions or Bento Hero)
+            isMacOS
+                ? _buildMacOsBentoHero(context, isMobile)
+                : _buildHeroSummary(context, isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
             const SizedBox(height: 20),
 
             // Quick Filter Tabs Bar
@@ -939,6 +943,60 @@ class _SegregationPageState extends State<SegregationPage> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
+    final double totalSaved = _wallets.fold(0.0, (sum, item) => sum + (item['saved'] as double));
+    final double totalTarget = _wallets.fold(0.0, (sum, item) => sum + (item['target'] as double));
+    final int accomplishment = totalTarget > 0 ? ((totalSaved / totalTarget).clamp(0.0, 1.0) * 100).toInt() : 0;
+    final int targetMetCount = _wallets.where((w) => (w['saved'] as double) >= (w['target'] as double) && w['isClaimed'] != true).length;
+
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Dedicated Purpose Wallets & Reserves',
+      mainValue: '₹ ${_formatCurrency(totalSaved)}',
+      subtitle: 'Target goal progress, isolated capital pools & ringfenced business funds',
+      badgeText: 'RINGFENCED FUNDS ACTIVE',
+      badgeIcon: LucideIcons.shieldCheck,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Cumulative Target',
+          value: '₹ ${_formatCurrency(totalTarget)}',
+          icon: LucideIcons.target,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Goals Met',
+          value: '$targetMetCount Goals',
+          icon: LucideIcons.trophy,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Overall Progress',
+          value: '$accomplishment% Funded',
+          icon: LucideIcons.trendingUp,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => SetupTargetWalletDialog(onWalletCreated: _addNewWallet),
+          );
+        },
+        icon: const Icon(LucideIcons.plus, size: 14),
+        label: const Text('Setup Purpose Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }

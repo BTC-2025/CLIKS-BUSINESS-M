@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../widgets/bento/bento.dart';
 
 class TradingDocsPage extends StatelessWidget {
   const TradingDocsPage({super.key});
@@ -10,23 +11,60 @@ class TradingDocsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final paddingVal = isMobile ? 16.0 : (isMacOS ? 24.0 : 32.0);
 
     return Scaffold(
+      backgroundColor: isMacOS ? const Color(0xFFF8F9FB) : null,
       body: SingleChildScrollView(
         padding: EdgeInsets.all(paddingVal),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header Banner
-            _buildHeaderBanner(context, isMobile).animate().fadeIn(duration: 450.ms).slideY(begin: -0.05, end: 0),
-            const SizedBox(height: 36),
+            if (isMacOS)
+              _buildMacOsBentoHero(isMobile)
+            else
+              _buildHeaderBanner(context, isMobile).animate().fadeIn(duration: 450.ms).slideY(begin: -0.05, end: 0),
+            SizedBox(height: isMacOS ? 24 : 36),
 
             // Courses Wrap Layout (Zero Overflow)
             _buildCoursesGrid(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Social Trading & Wealth Academy',
+      mainValue: '4 Mastery Academies',
+      subtitle: 'Master stock trading, automated investments, mutual funds, or safe sovereign gold bonds',
+      badgeText: 'INTEGRATED WEALTH CAMPUS',
+      badgeIcon: LucideIcons.graduationCap,
+      isMobile: isMobile,
+      chips: const [
+        MacOsBentoHeroChip(
+          label: 'Course Modules',
+          value: '25 Lessons',
+          icon: LucideIcons.bookOpen,
+          accentColor: Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Trading Sandbox',
+          value: 'Realtime Paper',
+          icon: LucideIcons.trendingUp,
+          accentColor: Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Certification',
+          value: 'SEBI Aligned',
+          icon: LucideIcons.award,
+          accentColor: Color(0xFFD97706),
+        ),
+      ],
     );
   }
 

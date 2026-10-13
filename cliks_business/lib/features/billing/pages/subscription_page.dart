@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../widgets/bento/bento.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -224,6 +225,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 18.0 : 32.0;
 
     return Scaffold(
@@ -240,7 +242,12 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             const SizedBox(height: 18),
 
             // ─── 2. ACTIVE PLAN HERO BANNER (Dark green color long tab) ───
-            Container(key: _activePlanKey, child: _buildActivePlanBanner(isMobile)),
+            Container(
+              key: _activePlanKey,
+              child: isMacOS
+                  ? _buildMacOsBentoHero(isMobile)
+                  : _buildActivePlanBanner(isMobile),
+            ),
             const SizedBox(height: 20),
 
             // ─── 3. 3-SECTION PILL SELECTOR (Directly below "Active plan" dark green long tab) ───
@@ -375,6 +382,120 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         const SizedBox(width: 16),
         billingCyclePill,
       ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    String activePlanName;
+    String activePlanDesc;
+    String activeRenewalAmount;
+
+    if (_selectedMainTab == 0) {
+      final activeTierData = _tiers.firstWhere(
+        (t) => t.tierNumber == _currentBusinessTier,
+        orElse: () => _tiers.first,
+      );
+      activePlanName = activeTierData.name;
+      activePlanDesc =
+          'Configured with high-performance ERP pipelines under the ${activeTierData.name} tier.';
+      activeRenewalAmount = '${activeTierData.fullAnnualPrice} + GST';
+    } else if (_selectedMainTab == 1) {
+      final isFirm = _currentFinProTier == 2;
+      activePlanName = isFirm ? 'Fin-Pro Firm' : 'Fin-Pro Solo';
+      activePlanDesc = isFirm
+          ? 'Multi-client auditing, team collaboration, and direct API sandbox access.'
+          : 'Solo practitioner client ledgers and direct audit verification logs.';
+      activeRenewalAmount = isFirm ? '₹17,988 + GST' : '₹9,588 + GST';
+    } else {
+      if (_selectedPartnerTab == 0) {
+        final isPro = _currentInvestorTier == 2;
+        activePlanName = isPro ? 'Pro Investor' : 'Basic Investor';
+        activePlanDesc = isPro
+            ? 'Full access to 50 curated pitches, interactive deal rooms, and consultations.'
+            : 'Access to 20 curated startup pitches and direct founder contact channels.';
+        activeRenewalAmount = isPro ? '₹23,988 + GST' : '₹11,988 + GST';
+      } else {
+        final isYearly = _currentProductsTier == 2;
+        activePlanName = isYearly ? 'Yearly Founder' : 'Monthly Innovator';
+        activePlanDesc = isYearly
+            ? 'Annual sovereign tier with lifetime fee freeze, unlimited pitches, and gala entry.'
+            : 'Monthly access for founders seeking foundational product testing.';
+        activeRenewalAmount = isYearly ? '₹4,999 + GST' : '₹499 + GST';
+      }
+    }
+
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Enterprise Subscription & Licensing',
+      mainValue: activePlanName,
+      subtitle: activePlanDesc,
+      badgeText: 'ANNUAL BILLING',
+      badgeIcon: LucideIcons.sparkles,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Renewal Amount',
+          value: activeRenewalAmount,
+          icon: LucideIcons.creditCard,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Next Renewal',
+          value: '12 Jul 2027',
+          icon: LucideIcons.calendar,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Special Offer',
+          value: '${_remainingTime.inDays} Days Left',
+          icon: LucideIcons.timer,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () {
+              Scrollable.ensureVisible(
+                _billingHistoryKey.currentContext ?? context,
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOutCubic,
+              );
+            },
+            icon: const Icon(LucideIcons.fileText, size: 13),
+            label: const Text('Invoices', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              Scrollable.ensureVisible(
+                _upgradeTiersKey.currentContext ?? context,
+                duration: const Duration(milliseconds: 600),
+                curve: Curves.easeInOutCubic,
+              );
+            },
+            icon: const Icon(LucideIcons.arrowUpRight, size: 13),
+            label: const Text('Upgrade Tier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

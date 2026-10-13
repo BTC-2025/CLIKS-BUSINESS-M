@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/modals/finance_modals.dart';
+import '../../../widgets/bento/bento.dart';
 import '../providers/accounting_provider.dart';
 import '../providers/expenses_provider.dart';
 
@@ -369,7 +370,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           children: [
             // ─── HERO FINANCIAL CARD ───
             isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -397,7 +398,59 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    final entries = ref.watch(accountingEntriesProvider);
+    final totalExpenses = entries
+        .where((e) => e.entryType == 'Expense' || e.entryType == 'Office Expenses')
+        .fold(42500.0, (sum, item) => sum + item.amount);
+    final itcCredit = totalExpenses * 0.18;
+    final subscriptions = ref.watch(expensesSubscriptionsProvider);
+    final reimbursements = ref.watch(expensesReimbursementsProvider);
 
+    return MacOsSoftUiBentoHero(
+      title: 'Operational Expenses & ITC',
+      mainValue: '₹${_formatCurrency(totalExpenses)}',
+      subtitle: 'Recorded operational costs, input tax credits & subscriptions',
+      badgeText: 'LIVE',
+      badgeIcon: LucideIcons.trendingDown,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'GST ITC',
+          value: '₹${_formatCurrency(itcCredit)}',
+          icon: LucideIcons.percent,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Subscriptions',
+          value: '${subscriptions.length} Active',
+          icon: LucideIcons.calendar,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Claims',
+          value: '${reimbursements.length} Lodged',
+          icon: LucideIcons.receipt,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: _openRecordExpenseModal,
+        icon: const Icon(LucideIcons.plus, size: 13),
+        label: const Text('Record Expense', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+    );
+  }
 
   // ═══════════════════════════════════════════════════════════════
   // HERO SUMMARY CARD

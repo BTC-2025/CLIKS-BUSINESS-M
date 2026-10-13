@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../widgets/bento/bento.dart';
 
 class HelpPage extends ConsumerStatefulWidget {
   const HelpPage({super.key});
@@ -91,11 +92,12 @@ class _HelpPageState extends ConsumerState<HelpPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final paddingVal = isMobile ? 16.0 : (isMacOS ? 24.0 : 32.0);
 
     return Scaffold(
       primary: false,
-      backgroundColor: Colors.white,
+      backgroundColor: isMacOS ? const Color(0xFFF8F9FB) : Colors.white,
       body: SafeArea(
         child: ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -107,46 +109,79 @@ class _HelpPageState extends ConsumerState<HelpPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header Pill Badge: HELP CENTER
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB),
-                    borderRadius: BorderRadius.circular(10),
+                if (isMacOS) ...[
+                  MacOsSoftUiBentoHero(
+                    margin: EdgeInsets.zero,
+                    title: 'Help & Customer Support Hub',
+                    mainValue: '24/7 SLA Support',
+                    subtitle: 'Access interactive FAQs, documentation guides or lodge priority support tickets',
+                    badgeText: 'ENTERPRISE DESK ONLINE',
+                    badgeIcon: LucideIcons.lifeBuoy,
+                    isMobile: isMobile,
+                    chips: [
+                      MacOsBentoHeroChip(
+                        label: 'Open Support Tickets',
+                        value: '${_tickets.length} Active',
+                        icon: LucideIcons.ticket,
+                        accentColor: const Color(0xFF166534),
+                      ),
+                      MacOsBentoHeroChip(
+                        label: 'Average Response Time',
+                        value: '< 15 mins',
+                        icon: LucideIcons.clock,
+                        accentColor: const Color(0xFF2563EB),
+                      ),
+                      MacOsBentoHeroChip(
+                        label: 'Knowledgebase Articles',
+                        value: '${_faqs.length} Guides',
+                        icon: LucideIcons.bookOpen,
+                        accentColor: const Color(0xFFD97706),
+                      ),
+                    ],
                   ),
-                  child: const Text(
-                    'HELP CENTER',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+                  const SizedBox(height: 24),
+                ] else ...[
+                  // Header Pill Badge: HELP CENTER
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2563EB),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Text(
+                      'HELP CENTER',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
+                  const SizedBox(height: 12),
 
-                // Title
-                const Text(
-                  'Help & Customer Support',
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF111827),
-                    letterSpacing: -0.5,
+                  // Title
+                  const Text(
+                    'Help & Customer Support',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 6),
+                  const SizedBox(height: 6),
 
-                // Subtitle
-                const Text(
-                  'Access common guides or log direct tickets to our dedicated customer support squad.',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    color: Color(0xFF4B5563),
+                  // Subtitle
+                  const Text(
+                    'Access common guides or log direct tickets to our dedicated customer support squad.',
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: Color(0xFF4B5563),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
+                  const SizedBox(height: 32),
+                ],
 
                 // Two-column layout matching design
                 if (isMobile)

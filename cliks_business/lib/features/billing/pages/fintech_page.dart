@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../widgets/bento/bento.dart';
 
 class FintechPage extends StatefulWidget {
   const FintechPage({super.key});
@@ -24,6 +25,7 @@ class _FintechPageState extends State<FintechPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
@@ -33,10 +35,12 @@ class _FintechPageState extends State<FintechPage> {
         slivers: [
           // ─── HERO SUMMARY CARD (FINTECH BUSINESS) ───
           SliverToBoxAdapter(
-            child: _buildHeroSummary(isMobile)
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
+            child: isMacOS
+                ? _buildMacOsBentoHero(isMobile)
+                : _buildHeroSummary(isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
           ),
 
           const SliverToBoxAdapter(
@@ -58,6 +62,58 @@ class _FintechPageState extends State<FintechPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Fintech & Capital Solutions',
+      mainValue: 'FIN-PRO Business Gateway',
+      subtitle: 'Instant working capital, invoice discounting & digital compliance infrastructure',
+      badgeText: 'CREDIT READY',
+      badgeIcon: LucideIcons.cpu,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Credit Rating',
+          value: 'AAA (98.5%)',
+          icon: LucideIcons.shieldCheck,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Approved Line',
+          value: '₹25,00,000',
+          icon: LucideIcons.wallet,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Discounting Rate',
+          value: '8.4% p.a.',
+          icon: LucideIcons.percent,
+          accentColor: const Color(0xFF7C3AED),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () {
+          AppSnackbar.show(
+            context,
+            "Working capital credit application initialized.",
+            type: SnackType.success,
+          );
+        },
+        icon: const Icon(LucideIcons.arrowUpRight, size: 13),
+        label: const Text('Apply Facility', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }

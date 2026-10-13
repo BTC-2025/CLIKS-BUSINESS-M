@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/onboard_staff_employee_dialog.dart';
 import '../widgets/file_performance_review_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -272,7 +273,7 @@ class _StaffPageState extends ConsumerState<StaffPage>
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -360,6 +361,77 @@ class _StaffPageState extends ConsumerState<StaffPage>
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               elevation: 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    double totalPayroll = 0;
+    double totalRating = 0;
+    for (var emp in _allEmployees) {
+      totalPayroll += emp.monthlySalary;
+      totalRating += emp.rating;
+    }
+    final avgRating = (totalRating / _allEmployees.length).toStringAsFixed(2);
+
+    return MacOsSoftUiBentoHero(
+      title: 'HR Staff & Employees Directory',
+      mainValue: '${_allEmployees.length} Active Staff',
+      subtitle: 'Employee profiles, reporting hierarchy, payroll details & appraisals',
+      badgeText: 'LIVE ROSTER',
+      badgeIcon: LucideIcons.users,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Monthly Payroll',
+          value: '₹${totalPayroll.toStringAsFixed(0)}',
+          icon: LucideIcons.creditCard,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Avg Performance',
+          value: '$avgRating / 5.0',
+          icon: LucideIcons.award,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Shift Roster',
+          value: '3 Shifts',
+          icon: LucideIcons.calendarDays,
+          accentColor: const Color(0xFF7C3AED),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: _triggerFileAppraisal,
+            icon: const Icon(LucideIcons.fileEdit, size: 13),
+            label: const Text('Appraisal', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _triggerOnboardStaff,
+            icon: const Icon(LucideIcons.userPlus, size: 13),
+            label: const Text('Onboard', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

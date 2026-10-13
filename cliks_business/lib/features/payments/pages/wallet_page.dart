@@ -1,8 +1,10 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/add_money_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class WalletPage extends StatelessWidget {
   const WalletPage({super.key});
@@ -11,6 +13,7 @@ class WalletPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
@@ -39,12 +42,69 @@ class WalletPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Hero Summary (Gradient Stats & Actions)
-            _buildHeroSummary(context, isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+            isMacOS
+                ? _buildMacOsBentoHero(context, isMobile)
+                : _buildHeroSummary(context, isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
             SizedBox(height: isMobile ? 14 : 28),
 
             // Wallet History Table Card
             _buildHistoryCard(isMobile).animate().fadeIn(duration: 500.ms, delay: 100.ms),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Digital Treasury & Cloud Wallet',
+      mainValue: '₹ 0',
+      subtitle: 'Encrypted reserve balance, escrow deposits & instant payout liquidity',
+      badgeText: 'TREASURY ACTIVE',
+      badgeIcon: LucideIcons.wallet,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Total Deposits',
+          value: '₹0',
+          icon: LucideIcons.arrowDownLeft,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Withdrawals',
+          value: '₹0',
+          icon: LucideIcons.arrowUpRight,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Pending Escrow',
+          value: '₹0',
+          icon: LucideIcons.clock,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const AddMoneyDialog(),
+          );
+        },
+        icon: const Icon(LucideIcons.plus, size: 13),
+        label: const Text('Add Money', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );
@@ -234,24 +294,42 @@ class WalletPage extends StatelessWidget {
           ),
           const Divider(height: 1, color: AppColors.border),
 
-          // Scrollable table to avoid horizontal overflow on mobile
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: isMobile ? 600 : 800),
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(AppColors.hoverBackground),
-                headingRowHeight: 36,
-                columns: const [
-                  DataColumn(label: Text('TRANSACTION ID', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('DATE & TIME', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('DESCRIPTION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('DIRECTION', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('AMOUNT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                ],
-                rows: const [],
-              ),
-            ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tableWidth = math.max(constraints.maxWidth, 800.0);
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: tableWidth,
+                  child: Table(
+                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                    columnWidths: const {
+                      0: FlexColumnWidth(1.8), // TRANSACTION ID
+                      1: FlexColumnWidth(1.6), // DATE & TIME
+                      2: FlexColumnWidth(2.6), // DESCRIPTION
+                      3: FlexColumnWidth(1.4), // DIRECTION
+                      4: FlexColumnWidth(1.4), // AMOUNT
+                    },
+                    children: const [
+                      TableRow(
+                        decoration: BoxDecoration(
+                          color: AppColors.hoverBackground,
+                          border: Border(bottom: BorderSide(color: AppColors.border)),
+                        ),
+                        children: [
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('TRANSACTION ID', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('DATE & TIME', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('DIRECTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('AMOUNT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
 
           // No records indicator

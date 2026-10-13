@@ -1,10 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/navigation/navigation_provider.dart';
+import '../../widgets/bento/bento.dart';
 import 'widgets/configure_quick_actions_dialog.dart';
 
 class DashboardPage extends ConsumerWidget {
@@ -13,464 +14,514 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
+    final isMobile = screenWidth < 700;
+    final isTablet = screenWidth >= 700 && screenWidth < 1100;
+    final isDesktop = screenWidth >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+
     final activeIds = ref.watch(dashboardShortcutsProvider);
     final activeShortcuts = allDashboardShortcuts
         .where((s) => activeIds.contains(s.id))
         .toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: const Color(0xFFF8FBF9), // Subtle clean tint
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ─── FINANCIAL SUMMARY HERO CARD ───
+          // ─── 1. TOP BENTO HERO BANNER ───
           SliverToBoxAdapter(
-            child: (isMacOS
-                    ? _buildMacOSBusinessOverview(context, isMobile)
-                    : _buildHeroSummary(context, isMobile))
-                .animate()
-                .fadeIn(duration: 400.ms)
-                .slideY(begin: -0.05, end: 0),
-          ),
-
-          const SliverToBoxAdapter(
-            child: SizedBox(height: 16),
-          ),
-
-
-          // Quick Action Center Header
-          SliverPadding(
-            padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24),
-            sliver: SliverToBoxAdapter(
-              child: const Text(
-                'Quick Action Center',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
-              ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isMobile ? 14 : 24,
+                isMobile ? 12 : 20,
+                isMobile ? 14 : 24,
+                0,
+              ),
+              child: isMacOS
+                  ? MacOsSoftUiBentoHero(
+                      title: 'Business Overview',
+                      mainValue: '₹10,21,25,50,71,294',
+                      subtitle: 'Monitor your enterprise performance and operations.',
+                      badgeText: 'LIVE',
+                      isMobile: isMobile,
+                      margin: EdgeInsets.zero,
+                      chips: const [
+                        MacOsBentoHeroChip(
+                          label: 'Revenue',
+                          value: '₹10,21,25,50,71,294',
+                          icon: LucideIcons.trendingUp,
+                          accentColor: Color(0xFF166534),
+                        ),
+                        MacOsBentoHeroChip(
+                          label: 'Purchases',
+                          value: '₹13,84,791',
+                          icon: LucideIcons.shoppingCart,
+                          accentColor: Color(0xFF2563EB),
+                        ),
+                        MacOsBentoHeroChip(
+                          label: 'Operating Expenses',
+                          value: '₹3,14,61,64,99,53,93,93...',
+                          icon: LucideIcons.banknote,
+                          accentColor: Color(0xFFDC2626),
+                        ),
+                        MacOsBentoHeroChip(
+                          label: 'Est. Net Profit',
+                          value: '₹0',
+                          icon: LucideIcons.wallet,
+                          accentColor: Color(0xFF166534),
+                        ),
+                      ],
+                      trailingAction: InkWell(
+                        onTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) =>
+                                const ConfigureQuickActionsDialog(),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                LucideIcons.settings2,
+                                size: 12,
+                                color: Color(0xFF334155),
+                              ),
+                              SizedBox(width: 5),
+                              Text(
+                                'Customise',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : BentoHeroBanner(
+                      title: 'BUSINESS OVERVIEW',
+                      netProfitText: 'Est. Net Profit: ₹0',
+                      isMobile: isMobile,
+                      chips: const [
+                        BentoHeroChipData(
+                          label: 'Revenue',
+                          value: '₹10,21,25,50,71,294',
+                          icon: LucideIcons.trendingUp,
+                        ),
+                        BentoHeroChipData(
+                          label: 'Purchases',
+                          value: '₹13,84,791',
+                          icon: LucideIcons.shoppingCart,
+                        ),
+                        BentoHeroChipData(
+                          label: 'Expenses',
+                          value: '₹3,14,61,64,99,53,93,93...',
+                          icon: LucideIcons.banknote,
+                        ),
+                      ],
+                      onCustomiseTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) =>
+                              const ConfigureQuickActionsDialog(),
+                        );
+                      },
+                    )
+                      .animate()
+                      .fadeIn(duration: 400.ms, curve: Curves.easeOut)
+                      .slideY(begin: -0.04, end: 0, curve: Curves.easeOut),
             ),
           ),
 
           const SliverToBoxAdapter(
-            child: SizedBox(height: 16),
+            child: SizedBox(height: 20),
           ),
 
-          // Quick Actions Wrap
+          // ─── 2. BENTO METRIC CARDS ───
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24),
             sliver: SliverToBoxAdapter(
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  ...activeShortcuts.map(
-                    (s) => _QuickActionTile(
-                      label: s.label,
-                      icon: s.icon,
-                      color: s.color,
-                      route: s.route,
+              child: _buildMetricCards(context, ref, isMobile, isTablet, isDesktop),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 28),
+          ),
+
+          // ─── 3. QUICK ACTION CENTER (BENTO MODULE) ───
+          SliverPadding(
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24),
+            sliver: SliverToBoxAdapter(
+              child: BentoCard(
+                title: 'Quick Action Center',
+                subtitle: 'Rapid navigation to essential business tasks & workflows',
+                icon: LucideIcons.zap,
+                iconColor: const Color(0xFF166534),
+                iconBackgroundColor: const Color(0xFFDCF2E4),
+                badge: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCF2E4),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '1-CLICK ACCESS',
+                    style: GoogleFonts.inter(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF166534),
+                      letterSpacing: 0.5,
                     ),
                   ),
-                  _ManageShortcutsButton(
-                    onTap: () {
-                      showDialog(
-                        context: context,
-                        builder: (context) =>
-                            const ConfigureQuickActionsDialog(),
-                      );
-                    },
+                ),
+                trailing: InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) =>
+                          const ConfigureQuickActionsDialog(),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.slidersHorizontal,
+                            size: 13, color: Color(0xFF475569)),
+                        const SizedBox(width: 5),
+                        Text(
+                          'Configure',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF334155),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ],
-              ).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+                ),
+                child: Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    ...activeShortcuts.map(
+                      (shortcut) => BentoActionCard(
+                        label: shortcut.label,
+                        icon: shortcut.icon,
+                        color: shortcut.color,
+                        onTap: () {
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(shortcut.route);
+                        },
+                      ),
+                    ),
+                    _ManageShortcutsDashedButton(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) =>
+                              const ConfigureQuickActionsDialog(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              )
+                  .animate()
+                  .fadeIn(duration: 400.ms, delay: 150.ms, curve: Curves.easeOut)
+                  .slideY(begin: 0.03, end: 0, curve: Curves.easeOut),
             ),
           ),
 
           const SliverToBoxAdapter(
-            child: SizedBox(height: 32),
+            child: SizedBox(height: 28),
           ),
 
-          // Business Overview Charts Section
+          // ─── 4. ANALYTICS & CHARTS SECTION ───
           SliverPadding(
             padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24),
             sliver: SliverToBoxAdapter(
-              child: isMobile
+              child: isDesktop
                   ? Column(
-                      children: [
-                        _buildSalesPerformanceCard(context, isMobile),
-                        const SizedBox(height: 20),
-                        _buildExpenseDistributionCard(context),
-                        const SizedBox(height: 20),
-                        _buildTopPerformingProductsCard(context),
-                      ],
-                    )
-                  : Column(
                       children: [
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(flex: 3, child: _buildSalesPerformanceCard(context, isMobile)),
+                            Expanded(
+                              flex: 3,
+                              child: _buildSalesPerformanceCard(context),
+                            ),
                             const SizedBox(width: 20),
-                            Expanded(flex: 2, child: _buildExpenseDistributionCard(context)),
+                            Expanded(
+                              flex: 2,
+                              child: _buildExpenseDistributionCard(context, ref),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 20),
-                        _buildTopPerformingProductsCard(context),
+                        _buildTopPerformingProductsCard(context, ref),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        _buildSalesPerformanceCard(context),
+                        const SizedBox(height: 18),
+                        _buildExpenseDistributionCard(context, ref),
+                        const SizedBox(height: 18),
+                        _buildTopPerformingProductsCard(context, ref),
                       ],
                     ),
             ),
           ),
+
           const SliverToBoxAdapter(
-            child: SizedBox(height: 30),
+            child: SizedBox(height: 36),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMacOSBusinessOverview(BuildContext context, bool isMobile) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(
-        isMobile ? 14 : 24,
-        isMobile ? 12 : 20,
-        isMobile ? 14 : 24,
-        0,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header Row: Business Overview title & subtitle + Customise button
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
-                      'Business Overview',
-                      style: TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF135029),
-                        letterSpacing: -0.5,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Monitor your enterprise performance and operations.',
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              InkWell(
-                onTap: () {},
-                borderRadius: BorderRadius.circular(10),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF135029),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.slidersHorizontal, size: 15, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        'Customise',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // 3 Statistics Cards
-          if (isMobile)
-            Column(
-              children: [
-                _buildMacOSStatCard(
-                  icon: LucideIcons.trendingUp,
-                  iconColor: const Color(0xFF135029),
-                  iconBg: const Color(0xFFEAFAE3),
-                  hasLiveBadge: true,
-                  label: 'Total Sales Revenue',
-                  amount: '₹10,21,25,50,71,294',
-                ),
-                const SizedBox(height: 12),
-                _buildMacOSStatCard(
-                  icon: LucideIcons.shoppingCart,
-                  iconColor: const Color(0xFF2563EB),
-                  iconBg: const Color(0xFFEFF6FF),
-                  hasLiveBadge: true,
-                  label: 'Total Purchases',
-                  amount: '₹13,84,791',
-                ),
-                const SizedBox(height: 12),
-                _buildMacOSStatCard(
-                  icon: LucideIcons.banknote,
-                  iconColor: const Color(0xFFEA580C),
-                  iconBg: const Color(0xFFFFF7ED),
-                  hasLiveBadge: false,
-                  label: 'Total Expenses',
-                  amount: '₹3,14,61,64,99,53,93,93,80,00,00,00,00,00,00,00,00,00,00,000',
-                ),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMacOSStatCard(
-                    icon: LucideIcons.trendingUp,
-                    iconColor: const Color(0xFF135029),
-                    iconBg: const Color(0xFFEAFAE3),
-                    hasLiveBadge: true,
-                    label: 'Total Sales Revenue',
-                    amount: '₹10,21,25,50,71,294',
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _buildMacOSStatCard(
-                    icon: LucideIcons.shoppingCart,
-                    iconColor: const Color(0xFF2563EB),
-                    iconBg: const Color(0xFFEFF6FF),
-                    hasLiveBadge: true,
-                    label: 'Total Purchases',
-                    amount: '₹13,84,791',
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _buildMacOSStatCard(
-                    icon: LucideIcons.banknote,
-                    iconColor: const Color(0xFFEA580C),
-                    iconBg: const Color(0xFFFFF7ED),
-                    hasLiveBadge: false,
-                    label: 'Total Expenses',
-                    amount: '₹3,14,61,64,99,53,93,93,80,00,00,00,00,00,00,00,00,00,00,000',
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
+  Widget _buildMetricCards(
+    BuildContext context,
+    WidgetRef ref,
+    bool isMobile,
+    bool isTablet,
+    bool isDesktop,
+  ) {
+    final revenueCard = BentoMetricCard(
+      label: 'Total Sales Revenue',
+      value: '₹10,21,25,50,71,294',
+      icon: LucideIcons.trendingUp,
+      iconColor: const Color(0xFF166534),
+      iconBg: const Color(0xFFDCF2E4),
+      hasLiveBadge: true,
+      footerText: 'Fiscal Year Cumulative Sales',
+      onTap: () {
+        ref.read(navigationProvider.notifier).setRoute(AppRoute.sales);
+      },
+      animationDelayMs: 50,
     );
-  }
 
-  Widget _buildMacOSStatCard({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBg,
-    required bool hasLiveBadge,
-    required String label,
-    required String amount,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+    final purchasesCard = BentoMetricCard(
+      label: 'Total Purchases',
+      value: '₹13,84,791',
+      icon: LucideIcons.shoppingCart,
+      iconColor: const Color(0xFF2563EB),
+      iconBg: const Color(0xFFEFF6FF),
+      trendText: '+4.2%',
+      isTrendPositive: true,
+      footerText: 'Vendor Orders & Inward Goods',
+      onTap: () {
+        ref.read(navigationProvider.notifier).setRoute(AppRoute.purchase);
+      },
+      animationDelayMs: 100,
+    );
+
+    final expensesCard = BentoMetricCard(
+      label: 'Total Expenses',
+      value: '₹3,14,61,64,99,53,93,93,80,00,00,00,00,00,00,00,00,00,00,000',
+      icon: LucideIcons.banknote,
+      iconColor: const Color(0xFFEA580C),
+      iconBg: const Color(0xFFFFF7ED),
+      trendText: 'Overhead',
+      isTrendPositive: false,
+      footerText: 'Operating & Admin Expenses',
+      onTap: () {
+        ref.read(navigationProvider.notifier).setRoute(AppRoute.expenses);
+      },
+      animationDelayMs: 150,
+    );
+
+    if (isMobile) {
+      return Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, color: iconColor, size: 18),
-              ),
-              if (hasLiveBadge)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEAFAE3),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Text(
-                    'Live',
-                    style: TextStyle(
-                      color: Color(0xFF135029),
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          revenueCard,
+          const SizedBox(height: 12),
+          purchasesCard,
+          const SizedBox(height: 12),
+          expensesCard,
+        ],
+      );
+    } else if (isTablet) {
+      return Column(
+        children: [
+          revenueCard,
           const SizedBox(height: 14),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF6B7280),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF111827),
-              letterSpacing: -0.3,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroSummary(BuildContext context, bool isMobile) {
-    return Container(
-      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
-      padding: EdgeInsets.all(isMobile ? 16 : 22),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.heroGradientColors,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.heroShadowColor,
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'BUSINESS OVERVIEW',
-                    style: TextStyle(
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.6),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Est. Net Profit: ₹0',
-                    style: TextStyle(
-                      fontSize: isMobile ? 24 : 30,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -0.5,
-                    ),
-                  ),
-                ],
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.activity, size: 13, color: Colors.greenAccent.shade100),
-                    const SizedBox(width: 4),
-                    Text(
-                      'LIVE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.greenAccent.shade100,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
           Row(
             children: [
-              _buildHeroChip('Revenue', '₹0', isMobile),
-              const SizedBox(width: 8),
-              _buildHeroChip('Purchases', '₹0', isMobile),
-              const SizedBox(width: 8),
-              _buildHeroChip('Expenses', '₹0', isMobile),
+              Expanded(child: purchasesCard),
+              const SizedBox(width: 14),
+              Expanded(child: expensesCard),
             ],
           ),
         ],
-      ),
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: revenueCard),
+        const SizedBox(width: 16),
+        Expanded(child: purchasesCard),
+        const SizedBox(width: 16),
+        Expanded(child: expensesCard),
+      ],
     );
   }
 
-  Widget _buildHeroChip(String label, String value, bool isMobile) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+  Widget _buildSalesPerformanceCard(BuildContext context) {
+    const months = [
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec'
+    ];
+    const salesValues = [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ];
+
+    return const BentoChartCard(
+      title: 'Sales Performance Analytics',
+      subtitle: 'Interactive monthly sales aggregation graph & revenue trends',
+      metricLabel: 'Aggregated Turnover',
+      metricValue: '₹10,21,25,50,71,294',
+      changePercentage: '+18.4%',
+      xLabels: months,
+      values: salesValues,
+      maxY: 1000.0,
+      lineColor: Color(0xFF166534),
+      gradientStartColor: Color(0xFFDCF2E4),
+    );
+  }
+
+  Widget _buildExpenseDistributionCard(BuildContext context, WidgetRef ref) {
+    return BentoCard(
+      title: 'Expense Distribution',
+      subtitle: 'Categorical allocation grouped by operational expense heads',
+      icon: LucideIcons.pieChart,
+      iconColor: const Color(0xFFEA580C),
+      iconBackgroundColor: const Color(0xFFFFF7ED),
+      badge: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: const Color(0xFFFFF7ED),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Text(
+          'BREAKDOWN',
+          style: GoogleFonts.inter(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFFEA580C),
+          ),
+        ),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(LucideIcons.receipt,
+                  size: 24, color: Color(0xFFEA580C)),
+            ),
+            const SizedBox(height: 14),
             Text(
-              label,
-              style: TextStyle(
-                fontSize: isMobile ? 9 : 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.55),
+              'No Expense Data Logged',
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1F2937),
               ),
             ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: isMobile ? 15 : 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+            const SizedBox(height: 6),
+            Text(
+              'Record operational business expenses to view your category distribution matrix and overhead audits.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF6B7280),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: () {
+                ref.read(navigationProvider.notifier).setRoute(AppRoute.recordExpense);
+              },
+              icon: const Icon(LucideIcons.plus, size: 14),
+              label: Text(
+                'Record Expense',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF166534),
+                side: const BorderSide(color: Color(0xFF166534)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
             ),
@@ -480,269 +531,115 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildSalesPerformanceCard(BuildContext context, bool isMobile) {
-    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Sales Performance', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                    SizedBox(height: 2),
-                    Text('Interactive monthly sales aggregation graph.', style: TextStyle(fontSize: 11, color: AppColors.secondaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.isMacOS ? const Color(0xFFEAFAE3) : const Color(0xFFE8F5E9),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: AppColors.isMacOS
-                        ? const Color(0xFF135029).withValues(alpha: 0.3)
-                        : const Color(0xFF81C784),
-                    width: 0.5,
-                  ),
-                ),
-                child: Text(
-                  'Live Stream',
-                  style: TextStyle(
-                    color: AppColors.isMacOS ? const Color(0xFF135029) : const Color(0xFF2E7D32),
-                    fontSize: 9.5,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
+  Widget _buildTopPerformingProductsCard(BuildContext context, WidgetRef ref) {
+    return BentoCard(
+      title: 'Top Performing Products',
+      subtitle: 'Highest volume contributors & sales velocity matrix',
+      icon: LucideIcons.package,
+      iconColor: const Color(0xFF2563EB),
+      iconBackgroundColor: const Color(0xFFEFF6FF),
+      badge: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF93C5FD), width: 0.5),
+        ),
+        child: Text(
+          'VOLUME MATRIX',
+          style: GoogleFonts.inter(
+            color: const Color(0xFF1D4ED8),
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: 24),
-          SizedBox(
-            height: 160,
-            child: Row(
-              children: [
-                // Y-Axis
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: ['₹1,000', '₹750', '₹500', '₹250', '₹0']
-                      .map((e) => Text(e, style: const TextStyle(fontSize: 9.5, color: Color(0xFF9CA3AF), fontWeight: FontWeight.bold)))
-                      .toList(),
-                ),
-                const SizedBox(width: 12),
-                // Chart lines & points
-                Expanded(
-                  child: Stack(
-                    children: [
-                      // Dashed horizontal guidelines
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: List.generate(5, (_) => Container(height: 0.5, color: const Color(0xFFE5E7EB))),
-                      ),
-                      // Custom painter for trend line
-                      Positioned.fill(
-                        child: CustomPaint(
-                          painter: _ChartLinePainter(),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
-          // X-Axis
-          Padding(
-            padding: const EdgeInsets.only(left: 45),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: months.map((m) => Text(m, style: const TextStyle(fontSize: 10, color: Color(0xFF6B7280), fontWeight: FontWeight.w600))).toList(),
-            ),
-          ),
-        ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildExpenseDistributionCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Expense Distribution', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-          const SizedBox(height: 2),
-          const Text('Expense allocation grouped by categories.', style: TextStyle(fontSize: 11, color: AppColors.secondaryText)),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5EAF4), style: BorderStyle.solid),
-            ),
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(LucideIcons.trendingUp, size: 28, color: Color(0xFF9CA3AF)),
-                SizedBox(height: 12),
-                Text('No Expense Data Logged', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF1F2937))),
-                SizedBox(height: 6),
-                Text(
-                  'Record business expenses under Purchases or Accounting to compile your category distribution breakdown.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 10, color: Color(0xFF6B7280), height: 1.4),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTopPerformingProductsCard(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4))],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Top Performing Products', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                    SizedBox(height: 2),
-                    Text('Highest volume contributors matrix.', style: TextStyle(fontSize: 11, color: AppColors.secondaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0F2FE),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFF7DD3FC), width: 0.5),
-                ),
-                child: const Text('VOLUME MATRIX', style: TextStyle(color: Color(0xFF0369A1), fontSize: 8.5, fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 36),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5EAF4)),
-            ),
-            child: const Center(
-              child: Text(
-                'No product sales analytics logged yet.',
-                style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-
-
-}
-
-// Removed DashboardStat and related card because they are now part of Hero summary
-
-class _QuickActionTile extends ConsumerWidget {
-  final String label;
-  final IconData icon;
-  final Color color;
-  final AppRoute route;
-
-  const _QuickActionTile({
-    required this.label,
-    required this.icon,
-    required this.color,
-    required this.route,
-  });
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          ref.read(navigationProvider.notifier).setRoute(route);
+      trailing: TextButton.icon(
+        onPressed: () {
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.products);
         },
-        borderRadius: BorderRadius.circular(10),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.65), // Frosted glass look
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
-            boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 4, offset: const Offset(0, 2)),
-            ],
+        icon: const Icon(LucideIcons.arrowRight, size: 13),
+        label: Text(
+          'View All Products',
+          style: GoogleFonts.inter(
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: const Color(0xFF166534),
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, color: color, size: 13),
-              const SizedBox(width: 6),
-              Flexible(
-                child: Text(
-                  label,
-                  style: const TextStyle(color: AppColors.darkText, fontSize: 11, fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
+        ),
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 46,
+              height: 46,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(LucideIcons.boxes,
+                  size: 22, color: Color(0xFF2563EB)),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'No Product Sales Analytics Logged Yet',
+              style: GoogleFonts.inter(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'As sales orders and invoice line items are fulfilled, top contributing items will appear here.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () {
+                ref.read(navigationProvider.notifier).setRoute(AppRoute.registerProduct);
+              },
+              icon: const Icon(LucideIcons.plus, size: 14),
+              label: Text(
+                'Register Product',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            ],
-          ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF166534),
+                foregroundColor: Colors.white,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ManageShortcutsButton extends StatelessWidget {
+class _ManageShortcutsDashedButton extends StatelessWidget {
   final VoidCallback onTap;
 
-  const _ManageShortcutsButton({required this.onTap});
+  const _ManageShortcutsDashedButton({required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -750,32 +647,32 @@ class _ManageShortcutsButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(12),
         child: CustomPaint(
           painter: _DashedBorderPainter(
-            color: const Color(0xFF93C5FD),
-            borderRadius: 10,
-            dashLength: 3.5,
+            color: const Color(0xFF86EFAC),
+            borderRadius: 12,
+            dashLength: 4.0,
             spaceLength: 3.5,
             strokeWidth: 1.2,
           ),
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
+              color: const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(LucideIcons.plus, color: Color(0xFF475569), size: 12),
-                SizedBox(width: 4),
+                const Icon(LucideIcons.plus, color: Color(0xFF166534), size: 14),
+                const SizedBox(width: 6),
                 Text(
                   '+ Manage Shortcuts',
-                  style: TextStyle(
-                    color: Color(0xFF334155),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+                  style: GoogleFonts.inter(
+                    color: const Color(0xFF166534),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
@@ -799,7 +696,7 @@ class _DashedBorderPainter extends CustomPainter {
     this.strokeWidth = 1.0,
     this.dashLength = 4.0,
     this.spaceLength = 3.0,
-    this.borderRadius = 10.0,
+    this.borderRadius = 12.0,
   });
 
   @override
@@ -845,66 +742,3 @@ class _DashedBorderPainter extends CustomPainter {
       spaceLength != oldDelegate.spaceLength ||
       borderRadius != oldDelegate.borderRadius;
 }
-
-class _ChartLinePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final chartGreen = AppColors.isMacOS ? const Color(0xFF135029) : const Color(0xFF2E7D32);
-    final paintLine = Paint()
-      ..color = chartGreen
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
-    final paintDot = Paint()
-      ..color = chartGreen
-      ..style = PaintingStyle.fill;
-
-    final paintDotInner = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    // Simulate sales data points across 12 months (starts at 0, peaks slightly, mostly zero/low activity)
-    final points = <Offset>[];
-    final values = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
-    final stepX = size.width / (values.length - 1);
-
-    for (int i = 0; i < values.length; i++) {
-      final x = i * stepX;
-      final y = size.height - (values[i] * size.height);
-      points.add(Offset(x, y));
-    }
-
-    // Draw connecting path (using a custom dotted pattern between points as shown in screenshot)
-    final path = Path();
-    path.moveTo(points.first.dx, points.first.dy);
-    for (int i = 1; i < points.length; i++) {
-      path.lineTo(points[i].dx, points[i].dy);
-    }
-    
-    // Draw dashed/dotted connection line between points
-    final pathMetrics = path.computeMetrics();
-    for (final metric in pathMetrics) {
-      double distance = 0.0;
-      const dashLength = 3.0;
-      const spaceLength = 4.0;
-      while (distance < metric.length) {
-        final start = distance;
-        final end = distance + dashLength;
-        final segment = metric.extractPath(start, end > metric.length ? metric.length : end);
-        canvas.drawPath(segment, paintLine);
-        distance += dashLength + spaceLength;
-      }
-    }
-
-    // Draw green rings on the chart points
-    for (final point in points) {
-      canvas.drawCircle(point, 5, paintLine);
-      canvas.drawCircle(point, 3, paintDotInner);
-      canvas.drawCircle(point, 1.5, paintDot);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-

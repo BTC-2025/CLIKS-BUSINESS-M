@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -58,7 +59,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
           // ─── FINANCIAL SUMMARY HERO CARD ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -108,6 +109,49 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Pending Value',
+      mainValue: '₹0',
+      subtitle: 'Sales orders pipeline & customer dispatch commitments',
+      badgeText: 'LIVE',
+      badgeIcon: LucideIcons.package,
+      isMobile: isMobile,
+      chips: const [
+        MacOsBentoHeroChip(
+          label: 'Active Orders',
+          value: '0',
+          icon: LucideIcons.listOrdered,
+          accentColor: Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Confirmed',
+          value: '0',
+          icon: LucideIcons.badgeCheck,
+          accentColor: Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Completed',
+          value: '₹0',
+          icon: LucideIcons.checkCheck,
+          accentColor: Color(0xFF0F172A),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: _triggerPrimaryAction,
+        icon: const Icon(LucideIcons.plus, size: 13),
+        label: const Text('New Order', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }
@@ -658,6 +702,16 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
   }
 
   Widget _buildTableOrList(bool isMobile) {
+    if (isMobile) {
+      return BentoEmptyState(
+        icon: LucideIcons.shoppingBag,
+        title: 'No sales orders found',
+        subtitle: 'Log and track customer purchases, dispatch dates, advance payments, and delivery timelines.',
+        actionLabel: 'New Order',
+        onAction: _triggerPrimaryAction,
+      );
+    }
+
     final headers = [
       'ORDER NUMBER',
       'CUSTOMER',
@@ -668,65 +722,43 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
       'ACTIONS',
     ];
 
-    if (isMobile) {
-      return Container(
-        height: 140,
-        alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(LucideIcons.shoppingBag, size: 40, color: AppColors.secondaryText.withValues(alpha: 0.4)),
-            const SizedBox(height: 10),
-            const Text(
-              'No active sales orders found.',
-              style: TextStyle(fontSize: 11, color: AppColors.secondaryText),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Container(
-        constraints: const BoxConstraints(minWidth: 900),
-        child: Table(
-          columnWidths: const {
-            0: FlexColumnWidth(1.5),
-            1: FlexColumnWidth(2),
-            2: FlexColumnWidth(1.5),
-            3: FlexColumnWidth(1.2),
-            4: FlexColumnWidth(1.2),
-            5: FlexColumnWidth(1.2),
-            6: FlexColumnWidth(1.2),
-          },
-          children: [
-            TableRow(
-              decoration: const BoxDecoration(
-                border: Border(bottom: BorderSide(color: Color(0xFFF3F4F6), width: 1.5)),
-              ),
-              children: headers.map((h) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF9FAFB),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFF3F4F6)),
+          ),
+          child: Row(
+            children: headers.map((h) {
+              final flex = (h == 'CUSTOMER') ? 2 : (h == 'ORDER NUMBER' || h == 'DISPATCH DATE') ? 2 : 1;
+              return Expanded(
+                flex: flex,
                 child: Text(
                   h,
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6B7280)),
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6B7280),
+                    letterSpacing: 0.5,
+                  ),
                 ),
-              )).toList(),
-            ),
-            TableRow(
-              children: List.generate(headers.length, (idx) {
-                if (idx == 1) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 40),
-                    child: Text('No recorded orders yet.', style: TextStyle(fontSize: 12, color: Color(0xFF6B7280))),
-                  );
-                }
-                return const SizedBox();
-              }),
-            ),
-          ],
+              );
+            }).toList(),
+          ),
         ),
-      ),
+        const SizedBox(height: 12),
+        BentoEmptyState(
+          icon: LucideIcons.shoppingBag,
+          title: 'No recorded orders yet',
+          subtitle: 'Log and track customer purchases, dispatch dates, advance payments, and delivery timelines.',
+          actionLabel: 'Create Sales Order',
+          onAction: _triggerPrimaryAction,
+        ),
+      ],
     );
   }
 }

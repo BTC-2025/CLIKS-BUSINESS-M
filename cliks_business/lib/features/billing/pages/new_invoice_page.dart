@@ -475,11 +475,11 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
             columnWidths: const {
               0: FixedColumnWidth(180), // Description
               1: FixedColumnWidth(90),  // HSN
-              2: FixedColumnWidth(60),  // Qty
-              3: FixedColumnWidth(80),  // Unit
-              4: FixedColumnWidth(80),  // Price
-              5: FixedColumnWidth(60),  // Disc %
-              6: FixedColumnWidth(80),  // GST %
+              2: FixedColumnWidth(65),  // Qty
+              3: FixedColumnWidth(100), // Unit
+              4: FixedColumnWidth(85),  // Price
+              5: FixedColumnWidth(65),  // Disc %
+              6: FixedColumnWidth(100), // GST %
               7: FixedColumnWidth(40),  // Delete
             },
             children: [
@@ -546,9 +546,11 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
                           final unitOpts = settings.unitsList.contains(unitVal) ? settings.unitsList : [...settings.unitsList, unitVal];
                           return DropdownButtonFormField<String>(
                             initialValue: unitOpts.contains(unitVal) ? unitVal : unitOpts.first,
+                            isExpanded: true,
+                            icon: const Icon(LucideIcons.chevronDown, size: 14),
                             decoration: _tableInputDecoration(),
                             style: const TextStyle(fontSize: 12, color: AppColors.darkText),
-                            items: unitOpts.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                            items: unitOpts.map((u) => DropdownMenuItem(value: u, child: Text(u, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis))).toList(),
                             onChanged: (val) {
                               setState(() {
                                 item['unit'] = val;
@@ -595,9 +597,11 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
                           final gstOpts = settings.gstRates.contains(gstVal) ? settings.gstRates : [...settings.gstRates, gstVal];
                           return DropdownButtonFormField<String>(
                             initialValue: gstOpts.contains(gstVal) ? gstVal : gstOpts.first,
+                            isExpanded: true,
+                            icon: const Icon(LucideIcons.chevronDown, size: 14),
                             decoration: _tableInputDecoration(),
                             style: const TextStyle(fontSize: 12, color: AppColors.darkText),
-                            items: gstOpts.map((g) => DropdownMenuItem(value: g, child: Text(g))).toList(),
+                            items: gstOpts.map((g) => DropdownMenuItem(value: g, child: Text(g, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis))).toList(),
                             onChanged: (val) {
                               setState(() {
                                 item['gst'] = val;

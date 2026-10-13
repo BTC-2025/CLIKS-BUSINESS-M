@@ -8,6 +8,7 @@ import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/settings_form_widgets.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../widgets/bento/bento.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -163,83 +164,92 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isMacOS ? const Color(0xFFF8F9FB) : Colors.white,
       body: SafeArea(
         child: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
               SliverToBoxAdapter(
-                child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: const Icon(LucideIcons.arrowLeft, color: AppColors.darkText),
-                            onPressed: () => Navigator.of(context).maybePop(),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
-                          ),
-                          const SizedBox(width: 12),
-                          const Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                child: isMacOS
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _buildMacOsBentoHero(isMobile),
+                      )
+                    : Container(
+                        color: Colors.white,
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
-                                Text(
-                                  'Advanced Engine Configuration',
-                                  style: TextStyle(
-                                    color: AppColors.darkText,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.arrowLeft, color: AppColors.darkText),
+                                  onPressed: () => Navigator.of(context).maybePop(),
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
                                 ),
-                                Text(
-                                  'Manage dynamic deployment switches and metadata',
-                                  style: TextStyle(
-                                    color: AppColors.secondaryText,
-                                    fontSize: 11,
+                                const SizedBox(width: 12),
+                                const Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Advanced Engine Configuration',
+                                        style: TextStyle(
+                                          color: AppColors.darkText,
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Manage dynamic deployment switches and metadata',
+                                        style: TextStyle(
+                                          color: AppColors.secondaryText,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 40,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            AppSnackbar.show(
-                              context,
-                              "Deployment successful! System preferences updated globally.",
-                              type: SnackType.success,
-                            );
-                          },
-                          icon: const Icon(LucideIcons.rocket, size: 16),
-                          label: const Text(
-                            'DEPLOY CONFIGURATION',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryGreen,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: double.infinity,
+                              height: 40,
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  AppSnackbar.show(
+                                    context,
+                                    "Deployment successful! System preferences updated globally.",
+                                    type: SnackType.success,
+                                  );
+                                },
+                                icon: const Icon(LucideIcons.rocket, size: 16),
+                                label: const Text(
+                                  'DEPLOY CONFIGURATION',
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primaryGreen,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 12),
-                    ],
-                  ),
-                ),
               ),
               SliverPersistentHeader(
                 pinned: true,
@@ -286,6 +296,58 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
               _buildBetaClubTab(),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Advanced System Configuration',
+      mainValue: 'Settings & Switches',
+      subtitle: 'Manage organization profile, transaction prefixes, GST modes & printing setup',
+      badgeText: 'PREFERENCES',
+      badgeIcon: LucideIcons.sliders,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'GST Mode',
+          value: _enableGstMode ? 'Active' : 'Disabled',
+          icon: LucideIcons.shieldCheck,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Print Profile',
+          value: _pageDim,
+          icon: LucideIcons.printer,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Billing Style',
+          value: '$_billingType Mode',
+          icon: LucideIcons.receipt,
+          accentColor: const Color(0xFF7C3AED),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () {
+          AppSnackbar.show(
+            context,
+            "Deployment successful! System preferences updated globally.",
+            type: SnackType.success,
+          );
+        },
+        icon: const Icon(LucideIcons.rocket, size: 13),
+        label: const Text('Deploy Config', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

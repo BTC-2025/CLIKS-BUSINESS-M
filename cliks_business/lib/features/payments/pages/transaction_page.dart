@@ -1,9 +1,11 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/customer_payment_dialog.dart';
 import '../widgets/supplier_disbursement_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class TransactionPage extends StatefulWidget {
   const TransactionPage({super.key});
@@ -81,6 +83,7 @@ class _TransactionPageState extends State<TransactionPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
@@ -91,7 +94,12 @@ class _TransactionPageState extends State<TransactionPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Hero Summary (Gradient Stats & Actions)
-            _buildHeroSummary(context, isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+            isMacOS
+                ? _buildMacOsBentoHero(context, isMobile)
+                : _buildHeroSummary(context, isMobile)
+                    .animate()
+                    .fadeIn(duration: 400.ms)
+                    .slideY(begin: -0.05, end: 0),
             SizedBox(height: isMobile ? 14 : 28),
 
             // Segment Tabs Row
@@ -102,6 +110,79 @@ class _TransactionPageState extends State<TransactionPage> {
             _buildRecordsCard(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
+    final double combinedBalance = _transactions.fold(0.0, (sum, item) => sum + (item['total'] as double));
+    final double receivables = _transactions.where((t) => t['status'] != 'Reconciled').fold(0.0, (sum, item) => sum + ((item['total'] as double) - (item['paid'] as double)));
+    final double dailyColl = _transactions.fold(0.0, (sum, item) => sum + (item['paid'] as double));
+    final String efficiency = combinedBalance > 0 ? ((dailyColl / combinedBalance) * 100).toStringAsFixed(1) : '0.0';
+
+    final String combinedFmt = combinedBalance.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    final String receivablesFmt = receivables.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    final String dailyCollFmt = dailyColl.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Settlements & Cashflow Ledger',
+      mainValue: '₹ $combinedFmt',
+      subtitle: 'Net merchant collections, vendor disbursements & automated clearing cycles',
+      badgeText: 'SETTLEMENTS LIVE',
+      badgeIcon: LucideIcons.arrowLeftRight,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Pending Receivables',
+          value: '₹ $receivablesFmt',
+          icon: LucideIcons.arrowDownLeft,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Total Collected',
+          value: '₹ $dailyCollFmt',
+          icon: LucideIcons.badgeCheck,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Recovery Ratio',
+          value: '$efficiency%',
+          icon: LucideIcons.percent,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => _openTransactionSheet(null, isSupplier: true),
+            icon: const Icon(LucideIcons.arrowUpRight, size: 13),
+            label: const Text('Pay Supplier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () => _openTransactionSheet(null, isSupplier: false),
+            icon: const Icon(LucideIcons.arrowDownLeft, size: 13),
+            label: const Text('Receive Payment', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -334,67 +415,111 @@ class _TransactionPageState extends State<TransactionPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Scrollable table to avoid horizontal overflow on mobile
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: isMobile ? 800 : 1000),
-              child: DataTable(
-                headingRowColor: WidgetStateProperty.all(AppColors.hoverBackground),
-                headingRowHeight: 44,
-                columns: const [
-                  DataColumn(label: Text('RECEIPT ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('CUSTOMER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('INVOICE LINKED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('PAID AMOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('MODE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('RECONCILIATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                  DataColumn(label: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                ],
-                rows: _transactions.map((tx) {
-                  return DataRow(cells: [
-                    DataCell(Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                    DataCell(Text(tx['date'], style: const TextStyle(fontSize: 12))),
-                    DataCell(Text(tx['customer'], style: const TextStyle(fontSize: 12))),
-                    DataCell(Text(tx['invoice'], style: const TextStyle(fontSize: 12))),
-                    DataCell(Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 12))),
-                    DataCell(Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 12))),
-                    DataCell(Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(4)),
-                      child: Text(tx['mode'], style: const TextStyle(fontSize: 10)),
-                    )),
-                    DataCell(Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: tx['status'] == 'Reconciled' ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
-                        borderRadius: BorderRadius.circular(4),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tableWidth = math.max(constraints.maxWidth, 980.0);
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: tableWidth,
+                  child: Table(
+                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                    columnWidths: const {
+                      0: FlexColumnWidth(1.8), // RECEIPT ID
+                      1: FlexColumnWidth(1.3), // DATE
+                      2: FlexColumnWidth(2.0), // CUSTOMER
+                      3: FlexColumnWidth(1.6), // INVOICE LINKED
+                      4: FlexColumnWidth(1.6), // TOTAL ORIGINAL
+                      5: FlexColumnWidth(1.6), // PAID AMOUNT
+                      6: FlexColumnWidth(1.2), // MODE
+                      7: FlexColumnWidth(1.6), // RECONCILIATION
+                      8: FlexColumnWidth(1.2), // ACTIONS
+                    },
+                    children: [
+                      TableRow(
+                        decoration: const BoxDecoration(
+                          color: AppColors.hoverBackground,
+                          border: Border(bottom: BorderSide(color: AppColors.border)),
+                        ),
+                        children: const [
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('RECEIPT ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('CUSTOMER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('INVOICE LINKED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('MODE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('RECONCILIATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                        ],
                       ),
-                      child: Text(tx['status'], style: TextStyle(fontSize: 10, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E))),
-                    )),
-                    DataCell(Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          icon: const Icon(LucideIcons.pencil, size: 14, color: AppColors.blue),
-                          onPressed: () => _openTransactionSheet(tx),
-                          constraints: const BoxConstraints(),
-                          padding: const EdgeInsets.all(4),
-                        ),
-                        IconButton(
-                          icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.red),
-                          onPressed: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
-                          constraints: const BoxConstraints(),
-                          padding: const EdgeInsets.all(4),
-                        ),
-                      ],
-                    )),
-                  ]);
-                }).toList(),
-              ),
-            ),
+                      ..._transactions.map((tx) {
+                        return TableRow(
+                          decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                          ),
+                          children: [
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['date'], style: const TextStyle(fontSize: 12))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['customer'], style: const TextStyle(fontSize: 12))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['invoice'], style: const TextStyle(fontSize: 12))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 12))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 12))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(4)),
+                                  child: Text(tx['mode'], style: const TextStyle(fontSize: 10)),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: tx['status'] == 'Reconciled' ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(tx['status'], style: TextStyle(fontSize: 10, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E))),
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.pencil, size: 14, color: AppColors.blue),
+                                    onPressed: () => _openTransactionSheet(tx),
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.red),
+                                    onPressed: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
+                                    constraints: const BoxConstraints(),
+                                    padding: const EdgeInsets.all(4),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
 
           if (_transactions.isEmpty)

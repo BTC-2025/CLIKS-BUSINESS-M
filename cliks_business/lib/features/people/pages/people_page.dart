@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../widgets/enroll_contact_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 /// People Network & Escrow Page
 /// Mobile-fit UI styled like TransactionPage with gradient hero summary,
@@ -217,7 +218,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           children: [
             // 1. Hero Summary Card (Gradient Card styled exactly like Transaction Page)
             isMacOS
-                ? _buildHeroSummary(context, isMobile)
+                ? _buildMacOsBentoHero(context, isMobile)
                 : _buildHeroSummary(context, isMobile)
                     .animate()
                     .fadeIn(duration: 350.ms)
@@ -248,6 +249,70 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     .fadeIn(duration: 450.ms, delay: 160.ms),
           ],
         ),
+      ),
+    );
+  }
+
+  // ===========================================================================
+  // MACOS SOFT UI BENTO HERO
+  // ===========================================================================
+  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'People Network & Mutual Credit',
+      mainValue: '₹ ${_fmt(_netReceivables)}',
+      subtitle: 'Net ledger balances, escrow agreements & borrower-lender tracking',
+      badgeText: 'NETWORK ACTIVE',
+      badgeIcon: LucideIcons.users,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Total Contacts',
+          value: '$_totalContacts Verified',
+          icon: LucideIcons.userCheck,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Receivables',
+          value: '₹ ${_fmt(_netReceivables)}',
+          icon: LucideIcons.arrowDownLeft,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Payables',
+          value: '₹ ${_fmt(_netPayables)}',
+          icon: LucideIcons.arrowUpRight,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () => _openGeneralLogModal(isMobile),
+            icon: const Icon(LucideIcons.repeat, size: 13),
+            label: const Text('Log Entry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _openAddContactDialog,
+            icon: const Icon(LucideIcons.userPlus, size: 13),
+            label: const Text('Add Contact', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
       ),
     );
   }

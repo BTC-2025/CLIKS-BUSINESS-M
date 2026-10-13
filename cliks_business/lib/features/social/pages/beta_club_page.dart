@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../widgets/bento/bento.dart';
 
 class BetaClubPage extends StatefulWidget {
   const BetaClubPage({super.key});
@@ -101,7 +102,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
             children: [
               // Header Banner
               Theme.of(context).platform == TargetPlatform.macOS
-                  ? _buildHeaderBanner(context, isMobile)
+                  ? _buildMacOsBentoHero(isMobile)
                   : _buildHeaderBanner(
                       context,
                       isMobile,
@@ -157,6 +158,50 @@ class _BetaClubPageState extends State<BetaClubPage> {
                     ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'SME Deal & Venture Marketplace',
+      mainValue: '${_deals.length} Active Deals',
+      subtitle: 'Connect directly with verified founders, review pitch decks, and unlock investment deals',
+      badgeText: 'VENTURE CONNECT LIVE',
+      badgeIcon: LucideIcons.trendingUp,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Marketplace Deals',
+          value: '${_deals.length} Open',
+          icon: LucideIcons.briefcase,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Studio Pitches',
+          value: '${_studioPitches.length} Submitted',
+          icon: LucideIcons.fileSpreadsheet,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        const MacOsBentoHeroChip(
+          label: 'Region Filter',
+          value: 'India (GPS)',
+          icon: LucideIcons.mapPin,
+          accentColor: Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () => _showListVentureDialog(context),
+        icon: const Icon(LucideIcons.rocket, size: 14),
+        label: const Text('List Your Venture', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

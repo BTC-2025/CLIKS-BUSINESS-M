@@ -1,7 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_radius.dart';
 import '../../core/theme/app_spacing.dart';
 
 class AppCard extends StatefulWidget {
@@ -33,8 +33,13 @@ class _AppCardState extends State<AppCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDesktop = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+            defaultTargetPlatform == TargetPlatform.windows ||
+            defaultTargetPlatform == TargetPlatform.linux);
+
     final card = MouseRegion(
-      onEnter: (_) => widget.onTap != null
+      onEnter: (_) => widget.onTap != null || isDesktop
           ? setState(() => _hovered = true)
           : null,
       onExit: (_) => setState(() => _hovered = false),
@@ -42,26 +47,40 @@ class _AppCardState extends State<AppCard> {
           ? SystemMouseCursors.click
           : SystemMouseCursors.basic,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
         transform: Matrix4.identity()
-          ..scale(_hovered && widget.onTap != null ? 1.008 : 1.0),
+          ..translate(
+            0.0,
+            _hovered && widget.onTap != null ? -2.0 : 0.0,
+            0.0,
+          ),
         decoration: BoxDecoration(
           color: widget.backgroundColor ?? AppColors.cardBackground,
-          borderRadius: AppRadius.md,
+          borderRadius: BorderRadius.circular(16),
           border: widget.border ??
-              Border.all(color: AppColors.border),
+              Border.all(
+                color: _hovered && widget.onTap != null
+                    ? AppColors.primaryGreen.withValues(alpha: 0.35)
+                    : const Color(0xFFE5E7EB),
+                width: 1.0,
+              ),
           boxShadow: _hovered && widget.onTap != null
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.09),
-                    blurRadius: 20,
+                    color: Colors.black.withValues(alpha: 0.06),
+                    blurRadius: 18,
                     offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.04),
+                    color: Colors.black.withValues(alpha: 0.025),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -69,11 +88,11 @@ class _AppCardState extends State<AppCard> {
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: AppRadius.md,
+          borderRadius: BorderRadius.circular(16),
           child: InkWell(
             onTap: widget.onTap,
-            borderRadius: AppRadius.md,
-            splashColor: AppColors.primaryGreen.withValues(alpha: 0.04),
+            borderRadius: BorderRadius.circular(16),
+            splashColor: AppColors.primaryGreen.withValues(alpha: 0.05),
             highlightColor: Colors.transparent,
             child: Padding(
               padding:
@@ -85,7 +104,7 @@ class _AppCardState extends State<AppCard> {
       ),
     );
 
-    if (widget.withAnimation && Theme.of(context).platform != TargetPlatform.macOS) {
+    if (widget.withAnimation && !isDesktop) {
       return card
           .animate()
           .fadeIn(duration: 300.ms)
@@ -112,18 +131,18 @@ class AppAccentCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppColors.cardBackground,
-        borderRadius: AppRadius.md,
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: Colors.black.withValues(alpha: 0.025),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: AppRadius.md,
+        borderRadius: BorderRadius.circular(16),
         child: IntrinsicHeight(
           child: Row(
             children: [

@@ -12,6 +12,7 @@ import '../../../widgets/forms/app_text_field.dart';
 import '../../../services/location_provider.dart';
 import '../widgets/event_card.dart';
 import '../widgets/meetup_schedule_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class SocialPage extends ConsumerWidget {
   const SocialPage({super.key});
@@ -161,9 +162,9 @@ class SocialPage extends ConsumerWidget {
           children: [
             // Hero Banner
             isMacOS
-                ? heroBanner
+                ? _buildMacOsSocialHero(context, isMobile, locState)
                 : heroBanner.animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
-            SizedBox(height: AppSpacing.xxl),
+            SizedBox(height: isMacOS ? 20 : AppSpacing.xxl),
             
             // Tabs & Search
             if (isMobile)
@@ -336,6 +337,55 @@ class SocialPage extends ConsumerWidget {
               },
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacOsSocialHero(BuildContext context, bool isMobile, LocationState locState) {
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Business Networking & Founder Circles',
+      mainValue: '6 Active Meetups',
+      subtitle: 'Discover exclusive offline business meetups, trade summits, and high-impact founder summits',
+      badgeText: 'NETWORKING RADAR LIVE',
+      badgeIcon: LucideIcons.globe,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Selected City',
+          value: locState.location?.city ?? 'All Cities',
+          icon: LucideIcons.mapPin,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Verified Founders',
+          value: '2.4K Members',
+          icon: LucideIcons.users,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Upcoming Summits',
+          value: '4 This Month',
+          icon: LucideIcons.calendar,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (context) => const MeetupScheduleDialog(),
+          );
+        },
+        icon: const Icon(LucideIcons.plus, size: 14),
+        label: const Text('Schedule Meetup', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

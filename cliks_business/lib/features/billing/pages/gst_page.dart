@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../widgets/modals/finance_modals.dart';
+import '../../../widgets/bento/bento.dart';
 
 class GstPage extends ConsumerStatefulWidget {
   const GstPage({super.key});
@@ -14,15 +15,13 @@ class GstPage extends ConsumerStatefulWidget {
 }
 
 class _GstPageState extends ConsumerState<GstPage> {
-  int _activeTab = 0; // 0: GSTR-1 (Sales), 1: GSTR-2 (Purchase), 2: GSTR-3B (Liability), 3: GSTR-9 (Annual), 4: e-Invoice, 5: e-Way Logistics
+  int _activeTab = 0; // 0: GSTR-1 (Sales), 1: GSTR-2 (Purchase), 2: GSTR-3B (Liability), 3: GSTR-9 (Annual)
 
   final List<Map<String, dynamic>> _tabsInfo = [
     {'label': 'GSTR-1 (Sales)', 'icon': LucideIcons.fileText, 'color': const Color(0xFFD63384)},
     {'label': 'GSTR-2 (Purchase)', 'icon': LucideIcons.refreshCw, 'color': const Color(0xFF2563EB)},
     {'label': 'GSTR-3B (Liability)', 'icon': LucideIcons.xCircle, 'color': const Color(0xFF7C3AED)},
     {'label': 'GSTR-9 (Annual)', 'icon': LucideIcons.award, 'color': const Color(0xFFD97706)},
-    {'label': 'e-Invoice', 'icon': LucideIcons.qrCode, 'color': const Color(0xFF0D9488)},
-    {'label': 'e-Way Logistics', 'icon': LucideIcons.truck, 'color': const Color(0xFF1E40AF)},
   ];
 
   final TextEditingController _searchController = TextEditingController();
@@ -302,7 +301,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           // ─── FINANCIAL SUMMARY HERO CARD (Green Gradient) ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -350,6 +349,52 @@ class _GstPageState extends ConsumerState<GstPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'GST & Tax Compliance',
+      mainValue: '₹${_formatCurrency(_totalOutputGst)}',
+      subtitle: 'GSTR filing records, input tax credits & statutory tax reconciliation',
+      badgeText: 'LIVE COMPLIANCE',
+      badgeIcon: LucideIcons.shieldCheck,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Taxable Sales',
+          value: '₹${_formatCurrency(_totalTaxableSales)}',
+          icon: LucideIcons.fileText,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Output Tax',
+          value: '₹${_formatCurrency(_totalOutputGst)}',
+          icon: LucideIcons.scale,
+          accentColor: const Color(0xFFDC2626),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Eligible ITC',
+          value: '₹${_formatCurrency(_claimedItc)}',
+          icon: LucideIcons.percent,
+          accentColor: const Color(0xFF2563EB),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: _triggerPrimaryAction,
+        icon: const Icon(LucideIcons.plus, size: 13),
+        label: Text(_getFABLabel(), style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }
@@ -572,11 +617,8 @@ class _GstPageState extends ConsumerState<GstPage> {
       case 3:
         _generateGstr9cAudit();
         break;
-      case 5:
-        _openGenerateEWayBillModal();
-        break;
       default:
-        _openGenerateEInvoiceModal();
+        AppSnackbar.show(context, "GSTR-1 JSON export generated successfully!", type: SnackType.success);
         break;
     }
   }
@@ -589,10 +631,8 @@ class _GstPageState extends ConsumerState<GstPage> {
         return 'File GSTR-3B';
       case 3:
         return 'Certify 9C';
-      case 5:
-        return 'e-Way Bill';
       default:
-        return 'e-Invoice';
+        return 'Export GSTR-1';
     }
   }
 
@@ -641,8 +681,6 @@ class _GstPageState extends ConsumerState<GstPage> {
     if (_activeTab == 1) return _buildGstr2View(isMobile);
     if (_activeTab == 2) return _buildGstr3bView(isMobile);
     if (_activeTab == 3) return _buildGstr9View(isMobile);
-    if (_activeTab == 4) return _buildEInvoiceView(isMobile);
-    if (_activeTab == 5) return _buildEWayView(isMobile);
 
     return _buildGstr1View(isMobile);
   }
@@ -739,7 +777,7 @@ class _GstPageState extends ConsumerState<GstPage> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: SizedBox(
-                width: AppColors.isMacOS ? 1050 : 950,
+                width: AppColors.isMacOS ? 1180 : 1050,
                 child: Column(
                   children: [
                     Table(
@@ -959,7 +997,7 @@ class _GstPageState extends ConsumerState<GstPage> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: SizedBox(
-                width: 920,
+                width: AppColors.isMacOS ? 1120 : 1000,
                 child: Column(
                   children: [
                     Table(
@@ -1565,7 +1603,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
                   child: SizedBox(
-                    width: 850,
+                    width: AppColors.isMacOS ? 960 : 850,
                     child: Column(
                       children: [
                         Table(
@@ -1849,7 +1887,7 @@ class _GstPageState extends ConsumerState<GstPage> {
               scrollDirection: Axis.horizontal,
               physics: const BouncingScrollPhysics(),
               child: SizedBox(
-                width: 950,
+                width: AppColors.isMacOS ? 1060 : 950,
                 child: Column(
                   children: [
                     Table(

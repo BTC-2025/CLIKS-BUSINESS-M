@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../widgets/bento/bento.dart';
 
 class RewardsPage extends StatelessWidget {
   const RewardsPage({super.key});
@@ -11,6 +12,7 @@ class RewardsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
@@ -19,13 +21,18 @@ class RewardsPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
-            _buildHeader(isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
-            const SizedBox(height: 32),
+            if (isMacOS) ...[
+              _buildMacOsBentoHero(context, isMobile),
+              const SizedBox(height: 28),
+            ] else ...[
+              // Header Section
+              _buildHeader(isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.1, end: 0),
+              const SizedBox(height: 32),
 
-            // Active Plan Banner Card
-            _buildActivePlanBanner(context, isMobile).animate().fadeIn(duration: 500.ms, delay: 100.ms),
-            const SizedBox(height: 40),
+              // Active Plan Banner Card
+              _buildActivePlanBanner(context, isMobile).animate().fadeIn(duration: 500.ms, delay: 100.ms),
+              const SizedBox(height: 40),
+            ],
 
             // Section Header
             Wrap(
@@ -55,6 +62,55 @@ class RewardsPage extends StatelessWidget {
             // Booster Cards Grid/List
             _buildOffersGrid(context, isMobile).animate().fadeIn(duration: 500.ms, delay: 300.ms),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Loyalty Rewards & Booster Perks',
+      mainValue: '1,450 Points',
+      subtitle: 'Accumulated wallet cashback, partner multipliers & workspace discounts',
+      badgeText: 'GROWTH TIER 2',
+      badgeIcon: LucideIcons.coins,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Wallet Value',
+          value: '₹14.50',
+          icon: LucideIcons.wallet,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Booster Deals',
+          value: '4 Active',
+          icon: LucideIcons.zap,
+          accentColor: const Color(0xFFD97706),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Tier Multiplier',
+          value: '1.5x Rewards',
+          icon: LucideIcons.trendingUp,
+          accentColor: const Color(0xFF2563EB),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: () {
+          AppSnackbar.show(context, '1,450 loyalty points redeemed into workspace wallet balance.', type: SnackType.success);
+        },
+        icon: const Icon(LucideIcons.arrowUpRight, size: 13),
+        label: const Text('Redeem Points', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

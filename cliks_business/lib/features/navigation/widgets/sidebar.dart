@@ -289,14 +289,9 @@ class Sidebar extends ConsumerWidget {
                     label: 'Sales',
                     isInitiallyExpanded:
                         navigation.currentRoute == AppRoute.billing ||
-                        navigation.currentRoute == AppRoute.sales ||
                         navigation.currentRoute == AppRoute.customers ||
-                        navigation.currentRoute == AppRoute.returns ||
                         navigation.currentRoute == AppRoute.invoiceTemplates ||
-                        navigation.currentRoute == AppRoute.newSalesOrder ||
-                        navigation.currentRoute == AppRoute.addCustomer ||
-                        navigation.currentRoute == AppRoute.newCustomerReturn ||
-                        navigation.currentRoute == AppRoute.newSupplierReturn,
+                        navigation.currentRoute == AppRoute.addCustomer,
                     children: [
                       _SidebarSubItem(
                         label: 'Sales Invoice',
@@ -315,21 +310,6 @@ class Sidebar extends ConsumerWidget {
                         },
                       ),
                       _SidebarSubItem(
-                        label: 'Orders',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.sales ||
-                            navigation.currentRoute == AppRoute.newSalesOrder,
-                        onTap: () {
-                          final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) {
-                            Navigator.pop(context);
-                          }
-                          ref
-                              .read(navigationProvider.notifier)
-                              .setRoute(AppRoute.sales);
-                        },
-                      ),
-                      _SidebarSubItem(
                         label: 'Customers',
                         isSelected:
                             navigation.currentRoute == AppRoute.customers ||
@@ -342,24 +322,6 @@ class Sidebar extends ConsumerWidget {
                           ref
                               .read(navigationProvider.notifier)
                               .setRoute(AppRoute.customers);
-                        },
-                      ),
-                      _SidebarSubItem(
-                        label: 'Returns',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.returns ||
-                            navigation.currentRoute ==
-                                AppRoute.newCustomerReturn ||
-                            navigation.currentRoute ==
-                                AppRoute.newSupplierReturn,
-                        onTap: () {
-                          final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) {
-                            Navigator.pop(context);
-                          }
-                          ref
-                              .read(navigationProvider.notifier)
-                              .setRoute(AppRoute.returns);
                         },
                       ),
                     ],
@@ -854,14 +816,9 @@ class Sidebar extends ConsumerWidget {
                     label: 'Sales',
                     isInitiallyExpanded: [
                       AppRoute.billing,
-                      AppRoute.sales,
                       AppRoute.customers,
-                      AppRoute.returns,
-                      AppRoute.newSalesOrder,
                       AppRoute.addCustomer,
                       AppRoute.invoiceTemplates,
-                      AppRoute.newCustomerReturn,
-                      AppRoute.newSupplierReturn,
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
@@ -876,16 +833,6 @@ class Sidebar extends ConsumerWidget {
                             .setRoute(AppRoute.billing),
                       ),
                       _buildMacOSSubItem(
-                        icon: LucideIcons.fileSpreadsheet,
-                        label: 'Sales Orders',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.sales ||
-                            navigation.currentRoute == AppRoute.newSalesOrder,
-                        onTap: () => ref
-                            .read(navigationProvider.notifier)
-                            .setRoute(AppRoute.sales),
-                      ),
-                      _buildMacOSSubItem(
                         icon: LucideIcons.users,
                         label: 'Customers',
                         isSelected:
@@ -894,17 +841,6 @@ class Sidebar extends ConsumerWidget {
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.customers),
-                      ),
-                      _buildMacOSSubItem(
-                        icon: LucideIcons.rotateCcw,
-                        label: 'Returns',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.returns ||
-                            navigation.currentRoute ==
-                                AppRoute.newCustomerReturn,
-                        onTap: () => ref
-                            .read(navigationProvider.notifier)
-                            .setRoute(AppRoute.returns),
                       ),
                     ],
                   ),

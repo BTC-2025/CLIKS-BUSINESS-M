@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../widgets/compose_email_campaign_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -128,7 +129,7 @@ class _MarketingPageState extends State<MarketingPage> with SingleTickerProvider
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -219,6 +220,52 @@ class _MarketingPageState extends State<MarketingPage> with SingleTickerProvider
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Marketing & Campaigns Suite',
+      mainValue: '1,180 Total Reach',
+      subtitle: 'Email campaigns, lifecycle triggers, loyalty segmentation & conversion ROI',
+      badgeText: 'LIVE CAMPAIGNS',
+      badgeIcon: LucideIcons.megaphone,
+      isMobile: isMobile,
+      chips: const [
+        MacOsBentoHeroChip(
+          label: 'Total Reach',
+          value: '1,180 Users',
+          icon: LucideIcons.users,
+          accentColor: Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Campaign ROI',
+          value: '12.4% Avg',
+          icon: LucideIcons.trendingUp,
+          accentColor: Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Automations',
+          value: '4 Triggers',
+          icon: LucideIcons.zap,
+          accentColor: Color(0xFF7C3AED),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: _openComposeDialog,
+        icon: const Icon(LucideIcons.plus, size: 13),
+        label: const Text('Create Campaign', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
       ),
     );
   }

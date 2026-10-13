@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../widgets/warehouse_transfer_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -62,7 +63,7 @@ class _StockPageState extends ConsumerState<StockPage>
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -149,6 +150,69 @@ class _StockPageState extends ConsumerState<StockPage>
               side: const BorderSide(color: Color(0xFFD6E4FF)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Stock & Inventory Valuation',
+      mainValue: '₹0.00',
+      subtitle: 'Stock registry valuation, inward/outward logs & warehouse transfers',
+      badgeText: 'LIVE REGISTRY',
+      badgeIcon: LucideIcons.box,
+      isMobile: isMobile,
+      chips: const [
+        MacOsBentoHeroChip(
+          label: 'Low Stock Alerts',
+          value: '0 Items',
+          icon: LucideIcons.alertTriangle,
+          accentColor: Color(0xFFDC2626),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Godowns',
+          value: '0 Units',
+          icon: LucideIcons.warehouse,
+          accentColor: Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'In-Transit',
+          value: '0 Shifts',
+          icon: LucideIcons.truck,
+          accentColor: Color(0xFF166534),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: _triggerAdjustStock,
+            icon: const Icon(LucideIcons.sliders, size: 13),
+            label: const Text('Adjust', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _triggerWarehouseTransfer,
+            icon: const Icon(LucideIcons.arrowLeftRight, size: 13),
+            label: const Text('Transfer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

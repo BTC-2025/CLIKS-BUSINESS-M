@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../widgets/bento/bento.dart';
 
 class _TabItem {
   final String label;
@@ -59,7 +60,7 @@ class _ReturnsPageState extends ConsumerState<ReturnsPage>
           // ─── FINANCIAL SUMMARY HERO CARD ───
           SliverToBoxAdapter(
             child: isMacOS
-                ? _buildHeroSummary(isMobile)
+                ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
                     .fadeIn(duration: 400.ms)
@@ -141,6 +142,69 @@ class _ReturnsPageState extends ConsumerState<ReturnsPage>
               side: const BorderSide(color: Color(0xFFD6E4FF)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS SOFT UI BENTO HERO
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMacOsBentoHero(bool isMobile) {
+    return MacOsSoftUiBentoHero(
+      title: 'Returns & Claims Center',
+      mainValue: '₹0',
+      subtitle: 'Customer refunds, credit returns & supplier claim settlements',
+      badgeText: 'RETURNS ACTIVE',
+      badgeIcon: LucideIcons.undo2,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Supplier Recovery',
+          value: '₹0',
+          icon: LucideIcons.refreshCcw,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Pending Inspection',
+          value: '0 Items',
+          icon: LucideIcons.shieldAlert,
+          accentColor: const Color(0xFFD97706),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Stock Recompute',
+          value: 'Auto Sync',
+          icon: LucideIcons.lineChart,
+          accentColor: const Color(0xFF2563EB),
+        ),
+      ],
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: _triggerNewSupplierReturn,
+            icon: const Icon(LucideIcons.arrowUpRight, size: 13),
+            label: const Text('Supplier Return', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF166534),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: _triggerNewCustomerReturn,
+            icon: const Icon(LucideIcons.plus, size: 13),
+            label: const Text('Customer Return', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
           ),
         ],

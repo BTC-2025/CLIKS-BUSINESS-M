@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../widgets/create_split_ticket_dialog.dart';
+import '../../../widgets/bento/bento.dart';
 
 // Persistent In-Memory Store for Split Expenses across navigation tabs
 class SplitExpenseStore {
@@ -1105,6 +1106,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 28.0;
 
     return Scaffold(
@@ -1115,13 +1117,73 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top App Bar / Header Row matching Image 1
-            _buildTopHeader(context, isMobile),
+            if (isMacOS && _selectedTicket == null)
+              _buildMacOsBentoHero(context, isMobile)
+            else
+              _buildTopHeader(context, isMobile),
             const SizedBox(height: 20),
 
             _selectedTicket != null
                 ? _buildTicketDetailView(context, isMobile, _selectedTicket!)
                 : _buildTicketsListView(context, isMobile),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
+    double totalBudget = _tickets.fold(0.0, (sum, t) => sum + ((t['budget'] as num?)?.toDouble() ?? 0.0));
+    double totalSpent = 0.0;
+    int totalExpensesCount = 0;
+    for (final t in _tickets) {
+      final exps = (t['expenses'] as List<dynamic>?) ?? [];
+      totalExpensesCount += exps.length;
+      for (final e in exps) {
+        totalSpent += ((e['amount'] as num?)?.toDouble() ?? 0.0);
+      }
+    }
+    final totalSpentFmt = totalSpent.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    final totalBudgetFmt = totalBudget.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+    return MacOsSoftUiBentoHero(
+      margin: EdgeInsets.zero,
+      title: 'Splitwise & Team Disbursements',
+      mainValue: '₹ $totalSpentFmt',
+      subtitle: 'Collaborative expense sharing, settlement tracking & group reconciliation',
+      badgeText: 'SHARED EXPENSES LIVE',
+      badgeIcon: LucideIcons.split,
+      isMobile: isMobile,
+      chips: [
+        MacOsBentoHeroChip(
+          label: 'Active Split Tickets',
+          value: '${_tickets.length} Groups',
+          icon: LucideIcons.receipt,
+          accentColor: const Color(0xFF166534),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Total Group Budget',
+          value: '₹ $totalBudgetFmt',
+          icon: LucideIcons.wallet,
+          accentColor: const Color(0xFF2563EB),
+        ),
+        MacOsBentoHeroChip(
+          label: 'Recorded Expenses',
+          value: '$totalExpensesCount Entries',
+          icon: LucideIcons.badgePercent,
+          accentColor: const Color(0xFFD97706),
+        ),
+      ],
+      trailingAction: ElevatedButton.icon(
+        onPressed: _createNewTicket,
+        icon: const Icon(LucideIcons.plus, size: 14),
+        label: const Text('New Split Ticket', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
     );

@@ -56,7 +56,8 @@ class _PlannerPageState extends State<PlannerPage> {
       .where((s) => s['isSend'] == false && s['status'] == 'PENDING')
       .fold(0.0, (sum, s) => sum + (s['amount'] as num).toDouble());
 
-  int get _pendingTasks => _schedules.where((s) => s['status'] == 'PENDING').length;
+  int get _pendingTasks =>
+      _schedules.where((s) => s['status'] == 'PENDING').length;
 
   List<Map<String, dynamic>> get _filteredSchedules {
     return _schedules.where((s) {
@@ -95,27 +96,46 @@ class _PlannerPageState extends State<PlannerPage> {
                 foregroundColor: Colors.white,
                 elevation: 4,
                 icon: const Icon(LucideIcons.plus, size: 18),
-                label: const Text('Schedule', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                label: const Text(
+                  'Schedule',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
             )
           : null,
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(paddingVal, 20, paddingVal, isMobile ? 90 : 32),
+        padding: EdgeInsets.fromLTRB(
+          paddingVal,
+          20,
+          paddingVal,
+          isMobile ? 90 : 32,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeroSummary(context, isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
+            _buildHeroSummary(
+              context,
+              isMobile,
+            ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
             const SizedBox(height: 24),
 
             // Tabs and Search Row
-            _buildTabsAndSearchRow(isMobile).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+            _buildTabsAndSearchRow(
+              isMobile,
+            ).animate().fadeIn(duration: 400.ms, delay: 100.ms),
             const SizedBox(height: 20),
 
             // Scheduled Payment Cards List / Empty State
             if (_filteredSchedules.isEmpty)
-              _buildEmptyStateCard(context, isMobile).animate().fadeIn(duration: 450.ms)
+              _buildEmptyStateCard(
+                context,
+                isMobile,
+              ).animate().fadeIn(duration: 450.ms)
             else
-              _buildSchedulesList(context, isMobile).animate().fadeIn(duration: 500.ms),
+              _buildSchedulesList(
+                context,
+                isMobile,
+              ).animate().fadeIn(duration: 500.ms),
           ],
         ),
       ),
@@ -126,7 +146,12 @@ class _PlannerPageState extends State<PlannerPage> {
     final scheduleBtn = ElevatedButton.icon(
       onPressed: _openScheduleDialog,
       icon: const Icon(LucideIcons.plus, size: 14),
-      label: const Text('Schedule', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+      label: const Text(
+        'Schedule',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.white,
         foregroundColor: AppColors.stylishDarkGreen,
@@ -195,7 +220,11 @@ class _PlannerPageState extends State<PlannerPage> {
             children: [
               _buildHeroChip('To Send', '₹ ${_fmt(_totalToSend)}', isMobile),
               const SizedBox(width: 8),
-              _buildHeroChip('To Receive', '₹ ${_fmt(_totalToReceive)}', isMobile),
+              _buildHeroChip(
+                'To Receive',
+                '₹ ${_fmt(_totalToReceive)}',
+                isMobile,
+              ),
               const SizedBox(width: 8),
               _buildHeroChip('Pending Tasks', '$_pendingTasks', isMobile),
             ],
@@ -208,7 +237,10 @@ class _PlannerPageState extends State<PlannerPage> {
   Widget _buildHeroChip(String label, String value, bool isMobile) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 12,
+          vertical: isMobile ? 8 : 10,
+        ),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
@@ -266,15 +298,34 @@ class _PlannerPageState extends State<PlannerPage> {
                       color: AppColors.hoverBackground,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(LucideIcons.calendarDays, color: AppColors.primaryGreen, size: 18),
+                    child: const Icon(
+                      LucideIcons.calendarDays,
+                      color: AppColors.primaryGreen,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 10),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Payment Planner', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText), overflow: TextOverflow.ellipsis),
-                        Text('Transfers & Collections', style: TextStyle(fontSize: 11, color: AppColors.secondaryText), overflow: TextOverflow.ellipsis),
+                        Text(
+                          'Payment Planner',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.darkText,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          'Transfers & Collections',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: AppColors.secondaryText,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ],
                     ),
                   ),
@@ -286,7 +337,10 @@ class _PlannerPageState extends State<PlannerPage> {
               onTap: _openScheduleDialog,
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primaryGreen,
                   borderRadius: BorderRadius.circular(8),
@@ -296,7 +350,14 @@ class _PlannerPageState extends State<PlannerPage> {
                   children: [
                     Icon(LucideIcons.plus, color: Colors.white, size: 14),
                     SizedBox(width: 4),
-                    Text('Schedule', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Schedule',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -314,16 +375,34 @@ class _PlannerPageState extends State<PlannerPage> {
             color: AppColors.hoverBackground,
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Icon(LucideIcons.calendarDays, color: AppColors.primaryGreen, size: 22),
+          child: const Icon(
+            LucideIcons.calendarDays,
+            color: AppColors.primaryGreen,
+            size: 22,
+          ),
         ),
         const SizedBox(width: 16),
         const Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Payment Planner', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+              Text(
+                'Payment Planner',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkText,
+                ),
+              ),
               SizedBox(height: 4),
-              Text('Schedule and manage upcoming transfers and collections with ease.', style: TextStyle(fontSize: 13, color: AppColors.secondaryText, height: 1.4)),
+              Text(
+                'Schedule and manage upcoming transfers and collections with ease.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: AppColors.secondaryText,
+                  height: 1.4,
+                ),
+              ),
             ],
           ),
         ),
@@ -331,12 +410,17 @@ class _PlannerPageState extends State<PlannerPage> {
         ElevatedButton.icon(
           onPressed: _openScheduleDialog,
           icon: const Icon(LucideIcons.plus, size: 16),
-          label: const Text('Schedule Payment', style: TextStyle(fontWeight: FontWeight.bold)),
+          label: const Text(
+            'Schedule Payment',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: AppColors.primaryGreen,
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             elevation: 0,
           ),
         ),
@@ -403,7 +487,11 @@ class _PlannerPageState extends State<PlannerPage> {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: AppColors.border),
           boxShadow: [
-            BoxShadow(color: Colors.black.withValues(alpha: 0.015), blurRadius: 10, offset: const Offset(0, 4)),
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.015),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
         ),
         child: Column(
@@ -415,7 +503,12 @@ class _PlannerPageState extends State<PlannerPage> {
                 Expanded(
                   child: Text(
                     c['label'] as String,
-                    style: const TextStyle(color: AppColors.secondaryText, fontSize: 9.5, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                    style: const TextStyle(
+                      color: AppColors.secondaryText,
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.5,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -425,7 +518,11 @@ class _PlannerPageState extends State<PlannerPage> {
                     color: c['bgColor'] as Color,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(c['icon'] as IconData, color: iconColor, size: 16),
+                  child: Icon(
+                    c['icon'] as IconData,
+                    color: iconColor,
+                    size: 16,
+                  ),
                 ),
               ],
             ),
@@ -435,7 +532,11 @@ class _PlannerPageState extends State<PlannerPage> {
               fit: BoxFit.scaleDown,
               child: Text(
                 c['value'] as String,
-                style: TextStyle(color: AppColors.darkText, fontSize: isMobile ? 20 : 24, fontWeight: FontWeight.w900),
+                style: TextStyle(
+                  color: AppColors.darkText,
+                  fontSize: isMobile ? 20 : 24,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
             ),
           ],
@@ -466,12 +567,16 @@ class _PlannerPageState extends State<PlannerPage> {
     }
 
     return Row(
-      children: cardWidgets.map((c) => Expanded(
-        child: Padding(
-          padding: const EdgeInsets.only(right: 14.0),
-          child: c,
-        ),
-      )).toList(),
+      children: cardWidgets
+          .map(
+            (c) => Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 14.0),
+                child: c,
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 
@@ -500,7 +605,11 @@ class _PlannerPageState extends State<PlannerPage> {
   Widget _buildTabsAndSearchRow(bool isMobile) {
     final tabs = ['All', 'Send', 'Receive'];
 
-    final icons = [LucideIcons.list, LucideIcons.arrowUpRight, LucideIcons.arrowDownLeft];
+    final icons = [
+      LucideIcons.list,
+      LucideIcons.arrowUpRight,
+      LucideIcons.arrowDownLeft,
+    ];
 
     final tabsRow = Row(
       mainAxisSize: MainAxisSize.min,
@@ -515,24 +624,49 @@ class _PlannerPageState extends State<PlannerPage> {
               },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isActive ? const Color(0xFF166534) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: isActive ? Colors.transparent : const Color(0xFFE5E7EB)),
-                  boxShadow: isActive ? [BoxShadow(color: const Color(0xFF166534).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))] : [],
+                  border: Border.all(
+                    color: isActive
+                        ? Colors.transparent
+                        : const Color(0xFFE5E7EB),
+                  ),
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF166534,
+                            ).withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : [],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(icons[index], size: 14, color: isActive ? Colors.white : const Color(0xFF6B7280)),
+                    Icon(
+                      icons[index],
+                      size: 14,
+                      color: isActive ? Colors.white : const Color(0xFF6B7280),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       tabs[index],
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isActive ? FontWeight.w700 : FontWeight.w600,
-                        color: isActive ? Colors.white : const Color(0xFF374151),
+                        fontWeight: isActive
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: isActive
+                            ? Colors.white
+                            : const Color(0xFF374151),
                       ),
                     ),
                   ],
@@ -560,7 +694,11 @@ class _PlannerPageState extends State<PlannerPage> {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Icon(LucideIcons.pencil, size: 14, color: AppColors.secondaryText),
+              child: const Icon(
+                LucideIcons.pencil,
+                size: 14,
+                color: AppColors.secondaryText,
+              ),
             ),
           ),
         ),
@@ -578,7 +716,11 @@ class _PlannerPageState extends State<PlannerPage> {
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.search, color: AppColors.secondaryText, size: 16),
+          const Icon(
+            LucideIcons.search,
+            color: AppColors.secondaryText,
+            size: 16,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: TextField(
@@ -586,7 +728,10 @@ class _PlannerPageState extends State<PlannerPage> {
               onChanged: (val) => setState(() => _searchQuery = val),
               decoration: const InputDecoration(
                 hintText: 'Search schedules...',
-                hintStyle: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+                hintStyle: TextStyle(
+                  color: AppColors.secondaryText,
+                  fontSize: 13,
+                ),
                 border: InputBorder.none,
                 isDense: true,
               ),
@@ -599,7 +744,11 @@ class _PlannerPageState extends State<PlannerPage> {
                 _searchController.clear();
                 setState(() => _searchQuery = '');
               },
-              child: const Icon(LucideIcons.x, size: 14, color: AppColors.secondaryText),
+              child: const Icon(
+                LucideIcons.x,
+                size: 14,
+                color: AppColors.secondaryText,
+              ),
             ),
         ],
       ),
@@ -608,21 +757,11 @@ class _PlannerPageState extends State<PlannerPage> {
     if (isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          tabsRow,
-          const SizedBox(height: 14),
-          searchBar,
-        ],
+        children: [tabsRow, const SizedBox(height: 14), searchBar],
       );
     }
 
-    return Row(
-      children: [
-        tabsRow,
-        const Spacer(),
-        searchBar,
-      ],
-    );
+    return Row(children: [tabsRow, const Spacer(), searchBar]);
   }
 
   Widget _buildSchedulesList(BuildContext context, bool isMobile) {
@@ -630,9 +769,15 @@ class _PlannerPageState extends State<PlannerPage> {
       children: _filteredSchedules.map((item) {
         final isSend = item['isSend'] == true;
         final isCompleted = item['status'] == 'COMPLETED';
-        final color = isSend ? const Color(0xFFEF4444) : const Color(0xFF059669);
-        final bgColor = isSend ? const Color(0xFFFEF2F2) : const Color(0xFFECFDF5);
-        final icon = isSend ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft;
+        final color = isSend
+            ? const Color(0xFFEF4444)
+            : const Color(0xFF059669);
+        final bgColor = isSend
+            ? const Color(0xFFFEF2F2)
+            : const Color(0xFFECFDF5);
+        final icon = isSend
+            ? LucideIcons.arrowUpRight
+            : LucideIcons.arrowDownLeft;
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -642,7 +787,11 @@ class _PlannerPageState extends State<PlannerPage> {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: AppColors.border),
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.015), blurRadius: 10, offset: const Offset(0, 4)),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.015),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
           child: isMobile
@@ -669,8 +818,12 @@ class _PlannerPageState extends State<PlannerPage> {
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.bold,
-                                  color: isCompleted ? Colors.grey.shade500 : AppColors.darkText,
-                                  decoration: isCompleted ? TextDecoration.lineThrough : null,
+                                  color: isCompleted
+                                      ? Colors.grey.shade500
+                                      : AppColors.darkText,
+                                  decoration: isCompleted
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                   decorationColor: Colors.grey.shade400,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -678,11 +831,18 @@ class _PlannerPageState extends State<PlannerPage> {
                               const SizedBox(height: 2),
                               Row(
                                 children: [
-                                  const Icon(LucideIcons.clock, size: 11, color: AppColors.secondaryText),
+                                  const Icon(
+                                    LucideIcons.clock,
+                                    size: 11,
+                                    color: AppColors.secondaryText,
+                                  ),
                                   const SizedBox(width: 4),
                                   Text(
                                     item['date'] as String,
-                                    style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: AppColors.secondaryText,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -695,7 +855,12 @@ class _PlannerPageState extends State<PlannerPage> {
                           children: [
                             const Text(
                               'AMOUNT',
-                              style: TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: AppColors.secondaryText, letterSpacing: 0.3),
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.secondaryText,
+                                letterSpacing: 0.3,
+                              ),
                             ),
                             Text(
                               '₹${_fmt((item['amount'] as num).toDouble())}',
@@ -718,9 +883,14 @@ class _PlannerPageState extends State<PlannerPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: isCompleted ? const Color(0xFFECFDF5) : const Color(0xFFDCFCE7),
+                            color: isCompleted
+                                ? const Color(0xFFECFDF5)
+                                : const Color(0xFFDCFCE7),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
@@ -728,7 +898,9 @@ class _PlannerPageState extends State<PlannerPage> {
                             style: TextStyle(
                               fontSize: 9.5,
                               fontWeight: FontWeight.bold,
-                              color: isCompleted ? const Color(0xFF047857) : const Color(0xFF15803D),
+                              color: isCompleted
+                                  ? const Color(0xFF047857)
+                                  : const Color(0xFF15803D),
                             ),
                           ),
                         ),
@@ -737,7 +909,9 @@ class _PlannerPageState extends State<PlannerPage> {
                             InkWell(
                               onTap: () {
                                 setState(() {
-                                  item['status'] = (item['status'] == 'PENDING') ? 'COMPLETED' : 'PENDING';
+                                  item['status'] = (item['status'] == 'PENDING')
+                                      ? 'COMPLETED'
+                                      : 'PENDING';
                                 });
                                 AppSnackbar.show(
                                   context,
@@ -749,24 +923,37 @@ class _PlannerPageState extends State<PlannerPage> {
                               },
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 5,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFF0FDF4),
+                                  color: isCompleted
+                                      ? const Color(0xFFDCFCE7)
+                                      : const Color(0xFFF0FDF4),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFF86EFAC)),
+                                  border: Border.all(
+                                    color: const Color(0xFF86EFAC),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      isCompleted ? LucideIcons.checkCheck : LucideIcons.check,
+                                      isCompleted
+                                          ? LucideIcons.checkCheck
+                                          : LucideIcons.check,
                                       color: const Color(0xFF16A34A),
                                       size: 13,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
                                       isCompleted ? 'Done' : 'Mark Paid',
-                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF16A34A),
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -782,9 +969,15 @@ class _PlannerPageState extends State<PlannerPage> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFEFF6FF),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFF93C5FD)),
+                                  border: Border.all(
+                                    color: const Color(0xFF93C5FD),
+                                  ),
                                 ),
-                                child: const Icon(LucideIcons.pencil, color: Color(0xFF2563EB), size: 14),
+                                child: const Icon(
+                                  LucideIcons.pencil,
+                                  color: Color(0xFF2563EB),
+                                  size: 14,
+                                ),
                               ),
                             ),
                             const SizedBox(width: 6),
@@ -792,7 +985,9 @@ class _PlannerPageState extends State<PlannerPage> {
                               onTap: () {
                                 final name = item['name'];
                                 setState(() {
-                                  _schedules.removeWhere((s) => s['id'] == item['id']);
+                                  _schedules.removeWhere(
+                                    (s) => s['id'] == item['id'],
+                                  );
                                 });
                                 AppSnackbar.show(
                                   context,
@@ -806,9 +1001,15 @@ class _PlannerPageState extends State<PlannerPage> {
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFFEF2F2),
                                   borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                                  border: Border.all(
+                                    color: const Color(0xFFFCA5A5),
+                                  ),
                                 ),
-                                child: const Icon(LucideIcons.trash2, color: Color(0xFFEF4444), size: 14),
+                                child: const Icon(
+                                  LucideIcons.trash2,
+                                  color: Color(0xFFEF4444),
+                                  size: 14,
+                                ),
                               ),
                             ),
                           ],
@@ -840,8 +1041,12 @@ class _PlannerPageState extends State<PlannerPage> {
                             style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
-                              color: isCompleted ? Colors.grey.shade500 : AppColors.darkText,
-                              decoration: isCompleted ? TextDecoration.lineThrough : null,
+                              color: isCompleted
+                                  ? Colors.grey.shade500
+                                  : AppColors.darkText,
+                              decoration: isCompleted
+                                  ? TextDecoration.lineThrough
+                                  : null,
                               decorationColor: Colors.grey.shade400,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -849,17 +1054,29 @@ class _PlannerPageState extends State<PlannerPage> {
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(LucideIcons.clock, size: 12, color: AppColors.secondaryText),
+                              const Icon(
+                                LucideIcons.clock,
+                                size: 12,
+                                color: AppColors.secondaryText,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 item['date'] as String,
-                                style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  color: AppColors.secondaryText,
+                                ),
                               ),
                               const SizedBox(width: 8),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isCompleted ? const Color(0xFFECFDF5) : const Color(0xFFDCFCE7),
+                                  color: isCompleted
+                                      ? const Color(0xFFECFDF5)
+                                      : const Color(0xFFDCFCE7),
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
@@ -867,7 +1084,9 @@ class _PlannerPageState extends State<PlannerPage> {
                                   style: TextStyle(
                                     fontSize: 9.5,
                                     fontWeight: FontWeight.bold,
-                                    color: isCompleted ? const Color(0xFF047857) : const Color(0xFF15803D),
+                                    color: isCompleted
+                                        ? const Color(0xFF047857)
+                                        : const Color(0xFF15803D),
                                   ),
                                 ),
                               ),
@@ -884,7 +1103,12 @@ class _PlannerPageState extends State<PlannerPage> {
                       children: [
                         const Text(
                           'AMOUNT',
-                          style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText, letterSpacing: 0.5),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.secondaryText,
+                            letterSpacing: 0.5,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -910,19 +1134,27 @@ class _PlannerPageState extends State<PlannerPage> {
                           icon: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFF0FDF4),
+                              color: isCompleted
+                                  ? const Color(0xFFDCFCE7)
+                                  : const Color(0xFFF0FDF4),
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF86EFAC)),
+                              border: Border.all(
+                                color: const Color(0xFF86EFAC),
+                              ),
                             ),
                             child: Icon(
-                              isCompleted ? LucideIcons.checkCheck : LucideIcons.check,
+                              isCompleted
+                                  ? LucideIcons.checkCheck
+                                  : LucideIcons.check,
                               color: const Color(0xFF16A34A),
                               size: 16,
                             ),
                           ),
                           onPressed: () {
                             setState(() {
-                              item['status'] = (item['status'] == 'PENDING') ? 'COMPLETED' : 'PENDING';
+                              item['status'] = (item['status'] == 'PENDING')
+                                  ? 'COMPLETED'
+                                  : 'PENDING';
                             });
                             AppSnackbar.show(
                               context,
@@ -944,9 +1176,15 @@ class _PlannerPageState extends State<PlannerPage> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFEFF6FF),
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFF93C5FD)),
+                              border: Border.all(
+                                color: const Color(0xFF93C5FD),
+                              ),
                             ),
-                            child: const Icon(LucideIcons.pencil, color: Color(0xFF2563EB), size: 16),
+                            child: const Icon(
+                              LucideIcons.pencil,
+                              color: Color(0xFF2563EB),
+                              size: 16,
+                            ),
                           ),
                           onPressed: () => _openEditDialog(item),
                         ),
@@ -961,14 +1199,22 @@ class _PlannerPageState extends State<PlannerPage> {
                             decoration: BoxDecoration(
                               color: const Color(0xFFFEF2F2),
                               shape: BoxShape.circle,
-                              border: Border.all(color: const Color(0xFFFCA5A5)),
+                              border: Border.all(
+                                color: const Color(0xFFFCA5A5),
+                              ),
                             ),
-                            child: const Icon(LucideIcons.trash2, color: Color(0xFFEF4444), size: 16),
+                            child: const Icon(
+                              LucideIcons.trash2,
+                              color: Color(0xFFEF4444),
+                              size: 16,
+                            ),
                           ),
                           onPressed: () {
                             final name = item['name'];
                             setState(() {
-                              _schedules.removeWhere((s) => s['id'] == item['id']);
+                              _schedules.removeWhere(
+                                (s) => s['id'] == item['id'],
+                              );
                             });
                             AppSnackbar.show(
                               context,
@@ -1004,12 +1250,20 @@ class _PlannerPageState extends State<PlannerPage> {
               color: AppColors.hoverBackground,
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.calendar, color: AppColors.secondaryText, size: 36),
+            child: const Icon(
+              LucideIcons.calendar,
+              color: AppColors.secondaryText,
+              size: 36,
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
             'No Scheduled Payments Found',
-            style: TextStyle(color: AppColors.darkText, fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              color: AppColors.darkText,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 6),
           const Text(
@@ -1022,6 +1276,9 @@ class _PlannerPageState extends State<PlannerPage> {
   }
 
   String _fmt(double val) {
-    return val.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    return val.toInt().toString().replaceAllMapped(
+      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
+      (m) => '${m[1]},',
+    );
   }
 }

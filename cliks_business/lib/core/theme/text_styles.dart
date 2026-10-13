@@ -115,3 +115,7 @@ class AppTextStyles {
         height: 1.5,
       );
 }
+
+/// Alias for AppTextStyles conforming to design system naming convention
+typedef AppTypography = AppTextStyles;
+
