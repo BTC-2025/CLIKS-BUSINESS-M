@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../core/theme/app_colors.dart';
 
 class _SimpleBillItem {
   final TextEditingController nameController;
@@ -1147,11 +1148,11 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
       children: [
         // Column Headers Bar
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFF1F5F9)),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: const Row(
             children: [
@@ -1160,10 +1161,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                 child: Text(
                   'PRODUCT NAME',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF64748B),
+                    letterSpacing: 0.3,
+                    color: AppColors.darkText,
                   ),
                 ),
               ),
@@ -1173,10 +1174,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                 child: Text(
                   'SELLING RATE (₹)',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF64748B),
+                    letterSpacing: 0.3,
+                    color: AppColors.darkText,
                   ),
                 ),
               ),
@@ -1186,10 +1187,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                 child: Text(
                   'QUANTITY',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 13,
                     fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF64748B),
+                    letterSpacing: 0.3,
+                    color: AppColors.darkText,
                   ),
                 ),
               ),
@@ -1201,10 +1202,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   child: Text(
                     'ADD',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      color: Color(0xFF64748B),
+                      letterSpacing: 0.3,
+                      color: AppColors.darkText,
                     ),
                   ),
                 ),
@@ -1217,10 +1218,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   child: Text(
                     'AUTOMATIC TOTAL (₹)',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                      color: Color(0xFF64748B),
+                      letterSpacing: 0.3,
+                      color: AppColors.darkText,
                     ),
                   ),
                 ),
@@ -1233,10 +1234,10 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                   child: Text(
                     'ACTION',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      letterSpacing: 0.2,
-                      color: Color(0xFF64748B),
+                      letterSpacing: 0.3,
+                      color: AppColors.darkText,
                     ),
                   ),
                 ),

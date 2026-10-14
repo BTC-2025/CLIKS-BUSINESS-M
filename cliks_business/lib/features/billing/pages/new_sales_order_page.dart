@@ -269,17 +269,18 @@ class _NewSalesOrderPageState extends ConsumerState<NewSalesOrderPage> {
                             children: [
                               // Items header
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFF3F0FF),
+                                  color: const Color(0xFFF8FAFC),
                                   borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFFE5E7EB)),
                                 ),
                                 child: const Row(
                                   children: [
-                                    Expanded(flex: 3, child: Text('Product', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6D28D9)))),
-                                    Expanded(flex: 1, child: Text('Qty', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6D28D9)), textAlign: TextAlign.center)),
-                                    Expanded(flex: 2, child: Text('Tax', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6D28D9)), textAlign: TextAlign.center)),
-                                    Expanded(flex: 2, child: Text('Total', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF6D28D9)), textAlign: TextAlign.right)),
+                                    Expanded(flex: 3, child: Text('PRODUCT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), letterSpacing: 0.5))),
+                                    Expanded(flex: 1, child: Text('QTY', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), letterSpacing: 0.5), textAlign: TextAlign.center)),
+                                    Expanded(flex: 2, child: Text('TAX', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), letterSpacing: 0.5), textAlign: TextAlign.center)),
+                                    Expanded(flex: 2, child: Text('TOTAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF1E293B), letterSpacing: 0.5), textAlign: TextAlign.right)),
                                     SizedBox(width: 24),
                                   ],
                                 ),
@@ -448,18 +449,12 @@ class _NewSalesOrderPageState extends ConsumerState<NewSalesOrderPage> {
   Widget _card({required String title, required IconData icon, required List<Widget> children}) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        boxShadow: const [],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

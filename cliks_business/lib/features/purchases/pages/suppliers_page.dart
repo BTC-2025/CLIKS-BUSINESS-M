@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ─── Data Models ─────────────────────────────────────────────────────────────
 
@@ -747,15 +748,10 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -929,13 +925,11 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
 
   Widget _buildSuppliersTableHeader() {
     return Container(
-      height: 44,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
         border: Border(
-          top: BorderSide(color: Color(0xFFE2E8F0)),
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
         ),
       ),
       child: Row(
@@ -962,7 +956,7 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
       ),
       child: Row(
         children: [
@@ -2141,11 +2135,11 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 10.5,
+                style: GoogleFonts.inter(
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.4,
+                  color: const Color(0xFF1E293B),
+                  letterSpacing: 0.3,
                 ),
               ),
             ),

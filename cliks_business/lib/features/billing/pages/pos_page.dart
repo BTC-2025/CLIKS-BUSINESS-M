@@ -985,13 +985,13 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       children: [
         _buildTableHeaderRow(headers),
         ..._catalog.map((p) => TableRow(
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9)))),
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB)))),
           children: [
-            Padding(padding: const EdgeInsets.all(12), child: Text(p.sku, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-            Padding(padding: const EdgeInsets.all(12), child: Text(p.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-            Padding(padding: const EdgeInsets.all(12), child: Text(p.category, style: const TextStyle(fontSize: 11))),
-            Padding(padding: const EdgeInsets.all(12), child: Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534)))),
-            Padding(padding: const EdgeInsets.all(12), child: Text('${p.stock} Pcs', style: const TextStyle(fontSize: 11))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(p.sku, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(p.category, style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534)))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('${p.stock} Pcs', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
           ],
         )),
       ],
@@ -1038,14 +1038,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       children: [
         _buildTableHeaderRow(headers),
         ..._salesHistory.map((s) => TableRow(
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9)))),
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB)))),
           children: [
-            Padding(padding: const EdgeInsets.all(12), child: Text(s.billNo, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-            Padding(padding: const EdgeInsets.all(12), child: Text(s.customer, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold))),
-            Padding(padding: const EdgeInsets.all(12), child: Text('${s.itemCount} Items', style: const TextStyle(fontSize: 11))),
-            Padding(padding: const EdgeInsets.all(12), child: Text(s.paymentMode, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)))),
-            Padding(padding: const EdgeInsets.all(12), child: Text('₹${s.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534)))),
-            Padding(padding: const EdgeInsets.all(12), child: Text(s.time, style: const TextStyle(fontSize: 11))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.billNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.customer, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('${s.itemCount} Items', style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.paymentMode, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹${s.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534)))),
+            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.time, style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
           ],
         )),
       ],
@@ -1342,13 +1342,13 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
     return TableRow(
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
-        border: Border(bottom: BorderSide(color: AppColors.border, width: 1.5)),
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
       ),
       children: headers.map((h) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         child: Text(
           h,
-          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText),
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText),
         ),
       )).toList(),
     );

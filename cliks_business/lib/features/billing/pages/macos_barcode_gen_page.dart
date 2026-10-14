@@ -304,7 +304,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
                 child: Column(
                   children: [
@@ -654,7 +654,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.01),
@@ -762,7 +762,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                         border: Border.all(
                           color: isSelected
                               ? const Color(0xFF16A34A)
-                              : const Color(0xFFE2E8F0),
+                              : const Color(0xFFE5E7EB),
                           width: isSelected ? 2.0 : 1.0,
                         ),
                       ),
@@ -838,7 +838,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -982,7 +982,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             child: Row(
               children: [
@@ -1025,7 +1025,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1736,7 +1736,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1941,7 +1941,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                                 color: _bgTintColor,
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
-                                  color: const Color(0xFFE2E8F0),
+                                  color: const Color(0xFFE5E7EB),
                                 ),
                               ),
                             ),
@@ -2005,7 +2005,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
           data: SliderThemeData(
             trackHeight: 3,
             activeTrackColor: const Color(0xFF14532D),
-            inactiveTrackColor: const Color(0xFFE2E8F0),
+            inactiveTrackColor: const Color(0xFFE5E7EB),
             thumbColor: const Color(0xFF14532D),
             overlayColor: const Color(0xFF14532D).withValues(alpha: 0.1),
             thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
@@ -2031,7 +2031,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.02),
@@ -2361,7 +2361,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                               // Divider
                               Container(
                                 height: 1,
-                                color: const Color(0xFFE2E8F0),
+                                color: const Color(0xFFE5E7EB),
                               ),
 
                               const SizedBox(height: 12),
@@ -2425,7 +2425,7 @@ class _MacOsBarcodeGenPageState extends State<MacOsBarcodeGenPage> {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
                           ),
                           child: Text(
                             'Format: ${_generationFormat.toUpperCase().replaceAll(' (STANDARD)', '')}',

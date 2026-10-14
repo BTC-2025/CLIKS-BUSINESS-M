@@ -409,9 +409,11 @@ class _TransactionPageState extends State<TransactionPage> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.tableBorder),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -439,72 +441,72 @@ class _TransactionPageState extends State<TransactionPage> {
                     children: [
                       TableRow(
                         decoration: const BoxDecoration(
-                          color: AppColors.hoverBackground,
-                          border: Border(bottom: BorderSide(color: AppColors.border)),
+                          color: Color(0xFFF8FAFC),
+                          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                         ),
                         children: const [
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('RECEIPT ID', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('DATE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('CUSTOMER', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('INVOICE LINKED', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('MODE', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('RECONCILIATION', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: Text('ACTIONS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('RECEIPT ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('CUSTOMER', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('INVOICE LINKED', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('MODE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('RECONCILIATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('ACTIONS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
                         ],
                       ),
                       ..._transactions.map((tx) {
                         return TableRow(
                           decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                           ),
                           children: [
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['date'], style: const TextStyle(fontSize: 12))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['customer'], style: const TextStyle(fontSize: 12))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text(tx['invoice'], style: const TextStyle(fontSize: 12))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 12))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13), child: Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 12))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['date'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['customer'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['invoice'], style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600))),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(color: const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(4)),
-                                  child: Text(tx['mode'], style: const TextStyle(fontSize: 10)),
+                                  decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
+                                  child: Text(tx['mode'], style: const TextStyle(fontSize: 12, color: AppColors.darkText)),
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                     color: tx['status'] == 'Reconciled' ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
-                                    borderRadius: BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: Text(tx['status'], style: TextStyle(fontSize: 10, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E))),
+                                  child: Text(tx['status'], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E))),
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   IconButton(
-                                    icon: const Icon(LucideIcons.pencil, size: 14, color: AppColors.blue),
+                                    icon: const Icon(LucideIcons.pencil, size: 15, color: AppColors.blue),
                                     onPressed: () => _openTransactionSheet(tx),
                                     constraints: const BoxConstraints(),
                                     padding: const EdgeInsets.all(4),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 8),
                                   IconButton(
-                                    icon: const Icon(LucideIcons.trash2, size: 14, color: Colors.red),
+                                    icon: const Icon(LucideIcons.trash2, size: 15, color: Colors.red),
                                     onPressed: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
                                     constraints: const BoxConstraints(),
                                     padding: const EdgeInsets.all(4),
@@ -529,7 +531,7 @@ class _TransactionPageState extends State<TransactionPage> {
               child: const Center(
                 child: Text(
                   'No transaction matching records found.',
-                  style: TextStyle(color: AppColors.secondaryText, fontSize: 14),
+                  style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
                 ),
               ),
             ),
@@ -562,8 +564,8 @@ class _TransactionPageState extends State<TransactionPage> {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.tableBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -575,22 +577,22 @@ class _TransactionPageState extends State<TransactionPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.hoverBackground,
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
                   'ACC-DEFL',
-                  style: TextStyle(color: AppColors.primaryGreen, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppColors.primaryGreen, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppColors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: const Text(
                   'CASH',
-                  style: TextStyle(color: AppColors.blue, fontSize: 10, fontWeight: FontWeight.bold),
+                  style: TextStyle(color: AppColors.blue, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -629,8 +631,8 @@ class _TransactionPageState extends State<TransactionPage> {
       padding: const EdgeInsets.all(40),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, style: BorderStyle.solid),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.tableBorder),
       ),
       child: Center(
         child: Column(
@@ -646,7 +648,7 @@ class _TransactionPageState extends State<TransactionPage> {
             const Text(
               'Move money between Cash-in-Hand and Bank accounts',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+              style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
             ),
           ],
         ),

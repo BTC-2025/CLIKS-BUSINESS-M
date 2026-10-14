@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/app_ui_kit.dart';
 
@@ -408,24 +409,28 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       ],
     );
 
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          titleSection,
-          const SizedBox(height: 14),
-          actions,
-        ],
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (isMobile || constraints.maxWidth < 680) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              titleSection,
+              const SizedBox(height: 14),
+              actions,
+            ],
+          );
+        }
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(child: titleSection),
-        const SizedBox(width: 16),
-        actions,
-      ],
+        return Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(child: titleSection),
+            const SizedBox(width: 16),
+            actions,
+          ],
+        );
+      },
     );
   }
 
@@ -543,13 +548,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.6,
+              Flexible(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.6,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
@@ -662,14 +671,18 @@ class _BillingPageState extends ConsumerState<BillingPage> {
   Widget _buildTableHeaderCell(String text, {Alignment alignment = Alignment.centerLeft}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF64748B),
-          letterSpacing: 0.3,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: alignment,
+        child: Text(
+          text,
+          style: GoogleFonts.inter(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1E293B),
+            letterSpacing: 0.3,
+          ),
         ),
       ),
     );
@@ -678,7 +691,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
   Widget _buildTableCell(Widget child, {Alignment alignment = Alignment.centerLeft}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       child: ClipRect(child: child),
     );
   }
@@ -709,20 +722,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x04000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+            boxShadow: const [],
           ),
+          clipBehavior: Clip.antiAlias,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1180.0);
+                final tableWidth = math.max(constraints.maxWidth, 1060.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -732,17 +740,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                       columnWidths: const {
                         0: FlexColumnWidth(2.6), // INVOICE
-                        1: FlexColumnWidth(2.8), // CLIENT
-                        2: FlexColumnWidth(1.8), // DUE DATE
-                        3: FlexColumnWidth(1.8), // AMOUNT
-                        4: FlexColumnWidth(2.4), // STATUS
-                        5: FixedColumnWidth(168), // ACTIONS
+                        1: FlexColumnWidth(2.6), // CLIENT
+                        2: FlexColumnWidth(1.6), // DUE DATE
+                        3: FlexColumnWidth(1.6), // AMOUNT
+                        4: FlexColumnWidth(2.2), // STATUS
+                        5: FixedColumnWidth(185), // ACTIONS
                       },
                       children: [
                         TableRow(
                           decoration: const BoxDecoration(
                             color: Color(0xFFF8FAFC),
-                            border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                           ),
                           children: [
                             _buildTableHeaderCell('INVOICE ▽'),
@@ -757,7 +765,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                           final isEInv = inv['hasEInvoice'] == true;
                           return TableRow(
                             decoration: const BoxDecoration(
-                              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                              border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                             ),
                             children: [
                               _buildTableCell(
@@ -814,15 +822,21 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     Text(
                                       inv['client'] ?? '',
                                       style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                     if (inv['email'] != null && (inv['email'] as String).isNotEmpty)
                                       Text(
                                         inv['email'] as String,
                                         style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
                                       ),
                                     Text(
                                       inv['subClient'] ?? '',
                                       style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF16A34A)),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
                                     ),
                                   ],
                                 ),
@@ -841,9 +855,13 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 ),
                               ),
                               _buildTableCell(
-                                Text(
-                                  inv['amount'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Text(
+                                    inv['amount'] ?? '',
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                  ),
                                 ),
                               ),
                               _buildTableCell(
@@ -909,40 +927,44 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 ),
                               ),
                               _buildTableCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    _buildActionIconButton(
-                                      icon: LucideIcons.history,
-                                      tooltip: 'Audit Log',
-                                      onTap: () => _showAuditLogDialog(inv['id']),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    _buildActionIconButton(
-                                      icon: LucideIcons.share2,
-                                      tooltip: 'Share',
-                                      onTap: () => AppSnackbar.show(context, 'Public billing share link copied to clipboard.', type: SnackType.info),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    _buildActionIconButton(
-                                      icon: LucideIcons.printer,
-                                      tooltip: 'Print Invoice',
-                                      onTap: () => AppSnackbar.show(context, 'Sent ${inv['id']} to thermal printer queue.', type: SnackType.success),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    _buildActionIconButton(
-                                      icon: LucideIcons.edit3,
-                                      tooltip: 'Edit',
-                                      onTap: () => _showEditInvoiceDialog(inv),
-                                    ),
-                                    const SizedBox(width: 3),
-                                    _buildActionIconButton(
-                                      icon: LucideIcons.trash2,
-                                      tooltip: 'Delete',
-                                      color: const Color(0xFFEF4444),
-                                      onTap: () => _confirmDeleteInvoice(inv),
-                                    ),
-                                  ],
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      _buildActionIconButton(
+                                        icon: LucideIcons.history,
+                                        tooltip: 'Audit Log',
+                                        onTap: () => _showAuditLogDialog(inv['id']),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      _buildActionIconButton(
+                                        icon: LucideIcons.share2,
+                                        tooltip: 'Share',
+                                        onTap: () => AppSnackbar.show(context, 'Public billing share link copied to clipboard.', type: SnackType.info),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      _buildActionIconButton(
+                                        icon: LucideIcons.printer,
+                                        tooltip: 'Print Invoice',
+                                        onTap: () => AppSnackbar.show(context, 'Sent ${inv['id']} to thermal printer queue.', type: SnackType.success),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      _buildActionIconButton(
+                                        icon: LucideIcons.edit3,
+                                        tooltip: 'Edit',
+                                        onTap: () => _showEditInvoiceDialog(inv),
+                                      ),
+                                      const SizedBox(width: 3),
+                                      _buildActionIconButton(
+                                        icon: LucideIcons.trash2,
+                                        tooltip: 'Delete',
+                                        color: const Color(0xFFEF4444),
+                                        onTap: () => _confirmDeleteInvoice(inv),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                                 alignment: Alignment.centerRight,
                               ),
@@ -1001,20 +1023,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x04000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+            boxShadow: const [],
           ),
+          clipBehavior: Clip.antiAlias,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1260.0);
+                final tableWidth = math.max(constraints.maxWidth, 1060.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -1028,14 +1045,14 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                         2: FlexColumnWidth(2.0), // ORIGINAL INVOICE
                         3: FlexColumnWidth(1.6), // RETURN DATE
                         4: FlexColumnWidth(1.6), // AMOUNT
-                        5: FlexColumnWidth(2.8), // STATUS
-                        6: FixedColumnWidth(130), // ACTIONS
+                        5: FlexColumnWidth(2.6), // STATUS
+                        6: FixedColumnWidth(155), // ACTIONS
                       },
                       children: [
                         TableRow(
                           decoration: const BoxDecoration(
                             color: Color(0xFFF8FAFC),
-                            border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                           ),
                           children: [
                             _buildTableHeaderCell('RETURN REF # ▽'),
@@ -1144,16 +1161,20 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 ),
                               ),
                               _buildTableCell(
-                                OutlinedButton(
-                                  onPressed: () => _showReturnDetailsDialog(ret),
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                  ),
-                                  child: const Text(
-                                    'View Details',
-                                    style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: OutlinedButton(
+                                    onPressed: () => _showReturnDetailsDialog(ret),
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    ),
+                                    child: const Text(
+                                      'View Details',
+                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                    ),
                                   ),
                                 ),
                                 alignment: Alignment.centerRight,
@@ -1214,20 +1235,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x04000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+            boxShadow: const [],
           ),
+          clipBehavior: Clip.antiAlias,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1220.0);
+                final tableWidth = math.max(constraints.maxWidth, 1100.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -1236,14 +1252,14 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     child: Table(
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                       columnWidths: const {
-                        0: FlexColumnWidth(2.0), // CLAIM REF #
-                        1: FlexColumnWidth(2.0), // PRODUCT / ITEM
-                        2: FlexColumnWidth(2.4), // CUSTOMER / SUPPLIER
-                        3: FlexColumnWidth(1.4), // SERIAL / IMEI
-                        4: FlexColumnWidth(2.0), // CLAIM TYPE
-                        5: FlexColumnWidth(2.2), // STATUS
+                        0: FlexColumnWidth(1.8), // CLAIM REF #
+                        1: FlexColumnWidth(1.8), // PRODUCT / ITEM
+                        2: FlexColumnWidth(2.2), // CUSTOMER / SUPPLIER
+                        3: FlexColumnWidth(1.3), // SERIAL / IMEI
+                        4: FlexColumnWidth(1.8), // CLAIM TYPE
+                        5: FlexColumnWidth(2.6), // STATUS
                         6: FlexColumnWidth(1.4), // PERIOD
-                        7: FixedColumnWidth(140), // ACTIONS
+                        7: FixedColumnWidth(155), // ACTIONS
                       },
                       children: [
                         TableRow(
@@ -1345,12 +1361,16 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                           children: [
                                             const Icon(LucideIcons.warehouse, size: 10, color: Color(0xFF15803D)),
                                             const SizedBox(width: 4),
-                                            Text(
-                                              clm['godown'] as String,
-                                              style: const TextStyle(
-                                                fontSize: 9,
-                                                fontWeight: FontWeight.w600,
-                                                color: Color(0xFF15803D),
+                                            Flexible(
+                                              child: Text(
+                                                clm['godown'] as String,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  fontSize: 9,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF15803D),
+                                                ),
                                               ),
                                             ),
                                           ],
@@ -1367,22 +1387,26 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 ),
                               ),
                               _buildTableCell(
-                                OutlinedButton(
-                                  onPressed: () {
-                                    if (status == 'ACTIVE') {
-                                      _showWarrantyDetailDialog(clm);
-                                    } else {
-                                      _showMoveReturnedProductsDialog(clm);
-                                    }
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                                  ),
-                                  child: Text(
-                                    status == 'ACTIVE' ? 'View Detail' : 'Manage Claim',
-                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      if (status == 'ACTIVE') {
+                                        _showWarrantyDetailDialog(clm);
+                                      } else {
+                                        _showMoveReturnedProductsDialog(clm);
+                                      }
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    ),
+                                    child: Text(
+                                      status == 'ACTIVE' ? 'View Detail' : 'Manage Claim',
+                                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                    ),
                                   ),
                                 ),
                                 alignment: Alignment.centerRight,
@@ -1680,20 +1704,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x04000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
+            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+            boxShadow: const [],
           ),
+          clipBehavior: Clip.antiAlias,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1180.0);
+                final tableWidth = math.max(constraints.maxWidth, 1060.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -1702,13 +1721,13 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     child: Table(
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                       columnWidths: const {
-                        0: FlexColumnWidth(2.2), // CHALLAN NO #
-                        1: FlexColumnWidth(2.6), // CUSTOMER / CLIENT
-                        2: FlexColumnWidth(2.0), // LINKED INVOICE
-                        3: FlexColumnWidth(1.6), // CHALLAN TYPE
-                        4: FlexColumnWidth(1.8), // CHALLAN DATE
-                        5: FlexColumnWidth(2.0), // STATUS
-                        6: FixedColumnWidth(130), // ACTIONS
+                        0: FlexColumnWidth(2.0), // CHALLAN NO #
+                        1: FlexColumnWidth(2.4), // CUSTOMER / CLIENT
+                        2: FlexColumnWidth(1.8), // LINKED INVOICE
+                        3: FlexColumnWidth(1.5), // CHALLAN TYPE
+                        4: FlexColumnWidth(1.6), // CHALLAN DATE
+                        5: FlexColumnWidth(1.8), // STATUS
+                        6: FixedColumnWidth(155), // ACTIONS
                       },
                       children: [
                         TableRow(
@@ -1801,36 +1820,40 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 ),
                               ),
                               _buildTableCell(
-                                OutlinedButton(
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (ctx) => AlertDialog(
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                        title: Text('Challan Details: ${ch['challanNo']}'),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment: CrossAxisAlignment.start,
-                                          children: [
-                                            Text('Customer: ${ch['client']}', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                            Text('Linked Invoice: ${ch['invoice']}'),
-                                            Text('Challan Type: ${ch['type']}'),
-                                            Text('Challan Date: ${ch['date']}'),
-                                            Text('Current Status: ${ch['status']}'),
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) => AlertDialog(
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                          title: Text('Challan Details: ${ch['challanNo']}'),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text('Customer: ${ch['client']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                              Text('Linked Invoice: ${ch['invoice']}'),
+                                              Text('Challan Type: ${ch['type']}'),
+                                              Text('Challan Date: ${ch['date']}'),
+                                              Text('Current Status: ${ch['status']}'),
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
                                           ],
                                         ),
-                                        actions: [
-                                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  style: OutlinedButton.styleFrom(
-                                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      );
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                    ),
+                                    child: const Text('View Details', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
                                   ),
-                                  child: const Text('View Details', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
                                 ),
                                 alignment: Alignment.centerRight,
                               ),
@@ -2600,55 +2623,64 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       ),
     );
 
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final needsWrap = isMobile || constraints.maxWidth < (leftExtraAction != null ? 820 : 660);
+        if (needsWrap) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: searchInput),
-              if (leftExtraAction != null) ...[
-                const SizedBox(width: 8),
-                leftExtraAction,
-              ],
+              Row(
+                children: [
+                  Expanded(child: searchInput),
+                  if (leftExtraAction != null) ...[
+                    const SizedBox(width: 8),
+                    leftExtraAction,
+                  ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    dateWidget,
+                    const SizedBox(width: 8),
+                    statusDropdown,
+                    const SizedBox(width: 8),
+                    funnelBtn,
+                    if (extraAction != null) ...[
+                      const SizedBox(width: 8),
+                      extraAction,
+                    ],
+                  ],
+                ),
+              ),
             ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: dateWidget),
-              const SizedBox(width: 8),
-              Expanded(child: statusDropdown),
-              const SizedBox(width: 8),
-              funnelBtn,
-            ],
-          ),
-          if (extraAction != null) ...[
-            const SizedBox(height: 10),
-            extraAction,
-          ],
-        ],
-      );
-    }
+          );
+        }
 
-    return Row(
-      children: [
-        Expanded(child: searchInput),
-        if (leftExtraAction != null) ...[
-          const SizedBox(width: 12),
-          leftExtraAction,
-        ],
-        const SizedBox(width: 12),
-        dateWidget,
-        const SizedBox(width: 10),
-        statusDropdown,
-        const SizedBox(width: 10),
-        funnelBtn,
-        if (extraAction != null) ...[
-          const SizedBox(width: 12),
-          extraAction,
-        ],
-      ],
+        return Row(
+          children: [
+            Expanded(child: searchInput),
+            if (leftExtraAction != null) ...[
+              const SizedBox(width: 12),
+              leftExtraAction,
+            ],
+            const SizedBox(width: 12),
+            dateWidget,
+            const SizedBox(width: 10),
+            statusDropdown,
+            const SizedBox(width: 10),
+            funnelBtn,
+            if (extraAction != null) ...[
+              const SizedBox(width: 12),
+              extraAction,
+            ],
+          ],
+        );
+      },
     );
   }
 

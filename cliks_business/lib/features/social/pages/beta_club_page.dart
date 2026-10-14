@@ -373,7 +373,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9), // Soft slate pill background
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.tableBorder),
       ),
       child: Row(
         children: [
@@ -610,7 +610,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+        border: Border.all(color: AppColors.tableBorder),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF0F172A).withValues(alpha: 0.04),
@@ -658,7 +658,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFF8FAFC),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: AppColors.tableBorder),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1574,7 +1574,7 @@ class _BetaClubPageState extends State<BetaClubPage> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
+              border: Border.all(color: AppColors.tableBorder),
             ),
             child: Icon(icon, size: 16, color: AppColors.secondaryText),
           ),

@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../widgets/app_ui_kit.dart';
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1501,15 +1502,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x04000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: LayoutBuilder(
@@ -1537,7 +1533,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     TableRow(
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
-                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                       ),
                       children: [
                         _buildTableHeaderCell('CUSTOMER NAME ▽'),
@@ -1554,7 +1550,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     ...filtered.map((cust) {
                       return TableRow(
                         decoration: const BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                         ),
                         children: [
                           // Col 0: Customer Name + Avatar + Code + Status
@@ -1797,14 +1793,14 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   Widget _buildTableHeaderCell(String text, {Alignment alignment = Alignment.centerLeft}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Text(
         text,
-        style: const TextStyle(
-          fontSize: 10,
+        style: GoogleFonts.inter(
+          fontSize: 13,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF64748B),
-          letterSpacing: 0.4,
+          color: const Color(0xFF1E293B),
+          letterSpacing: 0.3,
         ),
       ),
     );
@@ -1813,7 +1809,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   Widget _buildTableCell(Widget child, {Alignment alignment = Alignment.centerLeft}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: ClipRect(child: child),
     );
   }

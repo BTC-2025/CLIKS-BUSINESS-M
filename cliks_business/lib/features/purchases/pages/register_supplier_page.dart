@@ -144,7 +144,7 @@ class _RegisterSupplierPageState extends ConsumerState<RegisterSupplierPage> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFF8FAFC),
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
                           ),
                           child: Text(
                             'Code: $_vendorCode',
@@ -713,7 +713,7 @@ class _RegisterSupplierPageState extends ConsumerState<RegisterSupplierPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(

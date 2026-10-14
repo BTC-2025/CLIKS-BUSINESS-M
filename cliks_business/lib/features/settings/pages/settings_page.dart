@@ -1213,7 +1213,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white,
-                    border: Border.all(color: AppColors.border, width: 2),
+                    border: Border.all(color: AppColors.tableBorder, width: 2),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -1442,7 +1442,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.border),
+                    border: Border.all(color: AppColors.tableBorder),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
@@ -1497,7 +1497,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Stack(
             children: [
@@ -1897,7 +1897,7 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Column(
             children: [

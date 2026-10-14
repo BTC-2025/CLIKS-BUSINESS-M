@@ -5960,10 +5960,10 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           child: Text(
             label,
             style: const TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF64748B),
-              letterSpacing: 0.5,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkText,
+              letterSpacing: 0.3,
             ),
             overflow: TextOverflow.ellipsis,
           ),
@@ -5974,7 +5974,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
@@ -6922,8 +6922,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppColors.tableBorder),
+            boxShadow: const [],
           ),
           clipBehavior: Clip.antiAlias,
           child: LayoutBuilder(
@@ -6932,10 +6933,10 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 children: [
                   // Table Header Row
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     decoration: const BoxDecoration(
-                      color: Color(0xFFFFFFFF),
-                      border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                      color: Color(0xFFF8FAFC),
+                      border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                     ),
                     child: Row(
                       children: [
@@ -6962,9 +6963,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                             child: Text(
                               'ACTIONS',
                               style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF64748B),
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkText,
                                 letterSpacing: 0.3,
                               ),
                             ),
@@ -6977,7 +6978,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                   // Member row (aruntest)
                   if (!_aruntestRemoved)
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       child: Row(
                         children: [
                           // Team Member
@@ -7140,9 +7141,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
         Text(
           title,
           style: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF64748B),
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: AppColors.darkText,
             letterSpacing: 0.3,
           ),
         ),
@@ -7152,7 +7153,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           decoration: BoxDecoration(
             color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,

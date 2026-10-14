@@ -284,7 +284,7 @@ class _PlannerPageState extends State<PlannerPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: AppColors.tableBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -485,14 +485,8 @@ class _PlannerPageState extends State<PlannerPage> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.015),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          border: Border.all(color: AppColors.tableBorder),
+          boxShadow: const [],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -692,7 +686,7 @@ class _PlannerPageState extends State<PlannerPage> {
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppColors.border),
+                border: Border.all(color: AppColors.tableBorder),
               ),
               child: const Icon(
                 LucideIcons.pencil,
@@ -712,7 +706,7 @@ class _PlannerPageState extends State<PlannerPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.tableBorder),
       ),
       child: Row(
         children: [
@@ -785,14 +779,8 @@ class _PlannerPageState extends State<PlannerPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.015),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
+            border: Border.all(color: AppColors.tableBorder),
+            boxShadow: const [],
           ),
           child: isMobile
               ? Column(
@@ -1239,7 +1227,7 @@ class _PlannerPageState extends State<PlannerPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: AppColors.tableBorder),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

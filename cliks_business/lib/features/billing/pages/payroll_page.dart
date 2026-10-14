@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -895,15 +896,10 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -956,12 +952,11 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
                     children: [
                       // Header Row with Sort/Filter Pills (Image 1)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
-                            top: BorderSide(color: Color(0xFFE2E8F0)),
-                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                            bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
                           ),
                         ),
                         child: Row(
@@ -996,9 +991,9 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
                             child: InkWell(
                               onTap: () => _openPayslipDetailsDialog(record),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                                 decoration: const BoxDecoration(
-                                  border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                                  border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                                 ),
                                 child: Row(
                                   children: [
@@ -1499,10 +1494,10 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
+            style: GoogleFonts.inter(
+              fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
+              color: const Color(0xFF1E293B),
               letterSpacing: 0.3,
             ),
           ),

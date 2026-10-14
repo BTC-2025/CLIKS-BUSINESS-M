@@ -674,14 +674,8 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
       child: SingleChildScrollView(
@@ -701,7 +695,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
               else
                 for (int i = 0; i < filtered.length; i++) ...[
                   if (i > 0)
-                    const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+                    const Divider(height: 1, thickness: 1, color: Color(0xFFE5E7EB)),
                   _buildTableRow(filtered[i]),
                 ],
             ],
@@ -713,10 +707,10 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
 
   Widget _buildTableHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.2)),
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
       ),
       child: Row(
         children: [
@@ -749,9 +743,9 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(
-                fontSize: 11,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF94A3B8),
+                color: Color(0xFF475569),
                 letterSpacing: 0.5,
               ),
             ),
@@ -767,7 +761,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
 
   Widget _buildTableRow(ProductItem product) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 20.0),
       color: Colors.white,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,

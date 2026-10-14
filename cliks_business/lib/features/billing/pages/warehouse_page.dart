@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -1288,15 +1289,10 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
           const minWidth = 980.0;
@@ -1312,14 +1308,10 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
                 children: [
                   // Table Header Row with sort/filter icons
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     decoration: const BoxDecoration(
                       color: Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
-                      ),
-                      border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                      border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                     ),
                     child: Row(
                       children: [
@@ -1341,9 +1333,9 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
                       child: InkWell(
                         onTap: () => _openStockMovementDetailsDialog(item),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                           ),
                           child: Row(
                             children: [
@@ -1466,10 +1458,10 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 10,
+            style: GoogleFonts.inter(
+              fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
+              color: const Color(0xFF1E293B),
               letterSpacing: 0.3,
             ),
           ),

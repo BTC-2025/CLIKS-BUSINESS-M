@@ -558,11 +558,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: const [
-                BoxShadow(color: Color(0x08000000), blurRadius: 14, offset: Offset(0, 4)),
-              ],
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: AppColors.tableBorder),
+              boxShadow: const [],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -879,14 +877,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.tableBorder),
+        boxShadow: const [],
       ),
       child: Row(
         children: [
@@ -958,14 +950,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.tableBorder),
+        boxShadow: const [],
       ),
       child: Material(
         color: Colors.transparent,

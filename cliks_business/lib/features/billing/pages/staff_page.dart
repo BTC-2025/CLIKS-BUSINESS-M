@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -955,15 +956,10 @@ class _StaffPageState extends ConsumerState<StaffPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
+        border: Border.all(color: AppColors.tableBorder),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
           const minWidth = 1040.0;
@@ -979,14 +975,14 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                 children: [
                   // Table Header Row with Sort/Filter Pills
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     decoration: const BoxDecoration(
                       color: Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(16),
                         topRight: Radius.circular(16),
                       ),
-                      border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                      border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                     ),
                     child: Row(
                       children: [
@@ -997,13 +993,13 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                         Expanded(flex: 20, child: _buildSortableHeader('PERSONAL INFO')),
                         Expanded(flex: 18, child: _buildSortableHeader('RESIDENTIAL ADDRESS')),
                         const SizedBox(
-                          width: 50,
+                          width: 60,
                           child: Text(
                             'ACTION',
                             style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF64748B),
+                              fontSize: 13,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.darkText,
                               letterSpacing: 0.3,
                             ),
                           ),
@@ -1026,9 +1022,9 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                   else
                     ..._filteredEmployees.map((emp) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         decoration: const BoxDecoration(
-                          border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                         ),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
@@ -1381,12 +1377,12 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                         children: [
                           // Table Header
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                             decoration: const BoxDecoration(
                               color: Color(0xFFF8FAFC),
                               border: Border(
-                                top: BorderSide(color: Color(0xFFE2E8F0)),
-                                bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                                top: BorderSide(color: Color(0xFFE5E7EB)),
+                                bottom: BorderSide(color: Color(0xFFE5E7EB)),
                               ),
                             ),
                             child: Row(
@@ -1405,9 +1401,9 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                           // Table Rows (Image 1 & 2)
                           ..._employees.map((emp) {
                             return Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                               decoration: const BoxDecoration(
-                                border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                                border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                               ),
                               child: Row(
                                 children: [
@@ -1669,12 +1665,12 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                     children: [
                       // Table Header Row
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
-                            top: BorderSide(color: Color(0xFFE2E8F0)),
-                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                            top: BorderSide(color: Color(0xFFE5E7EB)),
+                            bottom: BorderSide(color: Color(0xFFE5E7EB)),
                           ),
                         ),
                         child: Row(
@@ -1692,9 +1688,9 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                         final progressRatio = (emp.kpiScore / 100.0).clamp(0.0, 1.0);
 
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                           ),
                           child: Row(
                             children: [
@@ -1959,8 +1955,8 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
-                            top: BorderSide(color: Color(0xFFE2E8F0)),
-                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                            top: BorderSide(color: Color(0xFFE5E7EB)),
+                            bottom: BorderSide(color: Color(0xFFE5E7EB)),
                           ),
                         ),
                         child: Row(
@@ -1991,9 +1987,9 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                       else
                         ...claims.map((claim) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                             decoration: const BoxDecoration(
-                              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                              border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                             ),
                             child: Row(
                               children: [
@@ -2037,9 +2033,9 @@ class _StaffPageState extends ConsumerState<StaffPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkText,
               letterSpacing: 0.3,
             ),
           ),
@@ -2050,7 +2046,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -2079,9 +2075,9 @@ class _TableHeaderText extends StatelessWidget {
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: const TextStyle(
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF64748B),
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: AppColors.darkText,
         letterSpacing: 0.3,
       ),
     );

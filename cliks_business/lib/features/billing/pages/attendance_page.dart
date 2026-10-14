@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../widgets/roster_shift_dialog.dart';
 import '../../../widgets/bento/bento.dart';
@@ -633,12 +634,11 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
       padding: EdgeInsets.all(isMobile ? 16 : 24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1138,13 +1138,18 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
     return TableRow(
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
-        border: Border(bottom: BorderSide(color: AppColors.border, width: 1.5)),
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
       ),
       children: headers.map((h) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         child: Text(
           h,
-          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: AppColors.secondaryText),
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF1E293B),
+            letterSpacing: 0.3,
+          ),
         ),
       )).toList(),
     );

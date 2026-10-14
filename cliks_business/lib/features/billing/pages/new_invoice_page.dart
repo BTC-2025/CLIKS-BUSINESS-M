@@ -630,7 +630,7 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.secondaryText, fontSize: 9, fontWeight: FontWeight.bold),
+        style: const TextStyle(color: AppColors.darkText, fontSize: 13, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -1322,7 +1322,7 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
       fillColor: Colors.white,
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),
-        borderSide: const BorderSide(color: AppColors.border),
+        borderSide: const BorderSide(color: AppColors.tableBorder),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(6),

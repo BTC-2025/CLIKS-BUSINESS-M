@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../widgets/bento/bento.dart';
 
 class SubscriptionPage extends StatefulWidget {
@@ -2582,14 +2583,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
+            border: Border.all(color: AppColors.tableBorder),
+            boxShadow: const [],
           ),
           clipBehavior: Clip.antiAlias,
           child: LayoutBuilder(
@@ -2603,11 +2598,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   children: [
                     // Table Header Bar (#F8FAFC)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
                         border: Border(
-                          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
                         ),
                       ),
                       child: Row(
@@ -2679,10 +2674,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       child: Text(
         label,
         style: GoogleFonts.inter(
-          fontSize: 10.5,
-          fontWeight: FontWeight.w800,
-          color: const Color(0xFF64748B),
-          letterSpacing: 0.5,
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: AppColors.darkText,
+          letterSpacing: 0.3,
         ),
       ),
     );
@@ -2698,12 +2693,12 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     bool isLast = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         border: isLast
             ? null
             : const Border(
-                bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+                bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
               ),
       ),
       child: Row(

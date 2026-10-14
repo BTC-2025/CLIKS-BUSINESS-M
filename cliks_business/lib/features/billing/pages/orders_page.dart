@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/bento/bento.dart';
@@ -384,15 +385,10 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFF3F4F6)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -416,7 +412,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -448,7 +444,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -495,7 +491,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -532,7 +528,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Column(
             children: [
@@ -578,7 +574,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: AppColors.tableBorder),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -726,11 +722,11 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF9FAFB),
+            color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFF3F4F6)),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
           child: Row(
             children: headers.map((h) {
@@ -739,11 +735,11 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
                 flex: flex,
                 child: Text(
                   h,
-                  style: const TextStyle(
-                    fontSize: 11,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF6B7280),
-                    letterSpacing: 0.5,
+                    color: const Color(0xFF1E293B),
+                    letterSpacing: 0.3,
                   ),
                 ),
               );

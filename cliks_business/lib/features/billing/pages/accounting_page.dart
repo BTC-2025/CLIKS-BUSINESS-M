@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../widgets/bento/bento.dart';
 
@@ -17,6 +19,11 @@ class _BankAccountData {
   double expenses;
   String lastTxn;
   bool isHighlighted;
+  String? accountNumber;
+  String? ifsc;
+  String? branch;
+  String? accountType;
+  String? status;
 
   _BankAccountData({
     required this.id,
@@ -27,6 +34,11 @@ class _BankAccountData {
     this.expenses = 0,
     this.lastTxn = 'No transactions yet',
     this.isHighlighted = false,
+    this.accountNumber,
+    this.ifsc,
+    this.branch,
+    this.accountType,
+    this.status,
   });
 }
 
@@ -62,8 +74,8 @@ class AccountingPage extends ConsumerStatefulWidget {
 }
 
 class _AccountingPageState extends ConsumerState<AccountingPage> {
-  // Active Tab Index (defaults to 4: Cash & Bank to match Image 1, or tabs 5 / 6)
-  int _activeTab = 4;
+  // Active Tab Index (defaults to 0: P & L to match Image 1 & 2)
+  int _activeTab = 0;
 
   final List<String> _tabLabels = [
     'P & L',
@@ -106,8 +118,87 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   String _sortColumn = 'date';
   bool _sortAscending = false;
 
+  // Receivables & Payables state (Images 4 & 5)
   final TextEditingController _rpSearchController = TextEditingController();
-  final String _rpSelectedStatus = 'All Statuses';
+  final TextEditingController _rpMinController = TextEditingController();
+  final TextEditingController _rpMaxController = TextEditingController();
+  String _rpSelectedStatus = 'All Statuses';
+  DateTime? _rpFromDate;
+  DateTime? _rpToDate;
+
+  int _overdueInvoicesCount = 25;
+  double _overdueAmount = 918822.0;
+  final double _totalReceivables = 918822.0;
+
+  // Invoice dataset matching Image 5 exactly
+  final List<Map<String, dynamic>> _invoicesList = [
+    {
+      'partyName': 'Walk-in Customer',
+      'invNumber': 'POS-604969',
+      'dueDate': '2026-10-12',
+      'pendingAmount': 0.0,
+      'status': 'Paid',
+    },
+    {
+      'partyName': 'sanjay123',
+      'invNumber': 'POS-480307',
+      'dueDate': '2026-09-29',
+      'pendingAmount': 0.0,
+      'status': 'Paid',
+    },
+    {
+      'partyName': 'Walk-in Customer',
+      'invNumber': 'POS-540526',
+      'dueDate': '2026-09-28',
+      'pendingAmount': 0.0,
+      'status': 'Paid',
+    },
+    {
+      'partyName': 'Walk-in Customer',
+      'invNumber': 'POS-530310',
+      'dueDate': '2026-09-28',
+      'pendingAmount': 0.0,
+      'status': 'Paid',
+    },
+    {
+      'partyName': 'santhoshhhhhh',
+      'invNumber': 'INV-CN-9933',
+      'dueDate': '2026-09-27',
+      'pendingAmount': 10620.0,
+      'status': 'Overdue',
+    },
+  ];
+
+  List<Map<String, dynamic>> get _filteredInvoices {
+    return _invoicesList.where((inv) {
+      if (_rpSearchController.text.isNotEmpty) {
+        final query = _rpSearchController.text.toLowerCase().trim();
+        final party = (inv['partyName'] ?? '').toString().toLowerCase();
+        final numStr = (inv['invNumber'] ?? '').toString().toLowerCase();
+        if (!party.contains(query) && !numStr.contains(query)) {
+          return false;
+        }
+      }
+      if (_rpSelectedStatus != 'All Statuses') {
+        if (inv['status'] != _rpSelectedStatus) return false;
+      }
+      if (_rpMinController.text.isNotEmpty) {
+        final minVal = double.tryParse(_rpMinController.text.trim());
+        if (minVal != null &&
+            (inv['pendingAmount'] as num).toDouble() < minVal) {
+          return false;
+        }
+      }
+      if (_rpMaxController.text.isNotEmpty) {
+        final maxVal = double.tryParse(_rpMaxController.text.trim());
+        if (maxVal != null &&
+            (inv['pendingAmount'] as num).toDouble() > maxVal) {
+          return false;
+        }
+      }
+      return true;
+    }).toList();
+  }
 
   final List<Map<String, dynamic>> _partyDataset = [
     {
@@ -156,6 +247,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   void initState() {
     super.initState();
     _rpSearchController.addListener(() => setState(() {}));
+    _rpMinController.addListener(() => setState(() {}));
+    _rpMaxController.addListener(() => setState(() {}));
 
     // Initialize Day Book records matching Image 3 exactly
     _dayBookRecords = [
@@ -230,14 +323,16 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   @override
   void dispose() {
     _rpSearchController.dispose();
+    _rpMinController.dispose();
+    _rpMaxController.dispose();
     super.dispose();
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   // CALCULATED METRICS
   // ══════════════════════════════════════════════════════════════════════════
-  double _grossRevenue = 100000706.88;
-  double _totalExpenses = 98856717.40;
+  double _grossRevenue = 1000000706880.0;
+  double _totalExpenses = 98866717.40;
   double get _netProfit => _grossRevenue - _totalExpenses;
   final double _gstPayable = 3962249874.20;
   double _totalCashBalance = 0.0;
@@ -259,7 +354,6 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -275,18 +369,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (isMacOS) ...[
-                _buildMacOsBentoHero(isMobile),
-                const SizedBox(height: 20),
-              ] else ...[
-                // 1. PAGE HEADER (Icon + Title + Record Entry Button)
-                _buildPageHeader(isMobile),
-                const SizedBox(height: 20),
+              // 1. PAGE HEADER (Icon + Title + Record Entry Button)
+              _buildPageHeader(isMobile),
+              const SizedBox(height: 20),
 
-                // 2. 4 TOP METRIC CARDS (Gross Revenue, Expenses, Net Profit, GST)
-                _buildTopMetrics(screenWidth),
-                const SizedBox(height: 22),
-              ],
+              // 2. 4 TOP METRIC CARDS (Gross Revenue, Expenses, Net Profit, GST)
+              _buildTopMetrics(screenWidth),
+              const SizedBox(height: 22),
 
               // 3. TAB PILLS NAVIGATION
               _buildTabPills(isMobile),
@@ -376,7 +465,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: const Icon(
-                  LucideIcons.receiptText,
+                  LucideIcons.fileText,
                   color: Colors.white,
                   size: 20,
                 ),
@@ -439,7 +528,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Icon(
-                LucideIcons.receiptText,
+                LucideIcons.fileText,
                 color: Colors.white,
                 size: 20,
               ),
@@ -520,10 +609,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       value: '₹${_formatNumber(_netProfit)}',
       accentColor: const Color(0xFF0EA5E9), // Cyan / Sky
       iconBgColor: const Color(0xFFE0F2FE),
-      iconWidget: const Icon(
-        LucideIcons.indianRupee,
-        color: Color(0xFF0284C7),
-        size: 18,
+      iconWidget: const Text(
+        '₹',
+        style: TextStyle(
+          color: Color(0xFF0284C7),
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
 
@@ -537,6 +629,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         color: Color(0xFF10B981),
         size: 18,
       ),
+      onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
 
     // Wide screen: 4 cards in a single row
@@ -597,31 +690,35 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required Color accentColor,
     required Color iconBgColor,
     required Widget iconWidget,
+    VoidCallback? onTap,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Stack(
-          children: [
-            // Top accent border indicator
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Container(height: 3.5, color: accentColor),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x06000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
             ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              // Top accent border indicator
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(height: 3.5, color: accentColor),
+              ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
               child: Column(
@@ -694,8 +791,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // ══════════════════════════════════════════════════════════════════════════
   // 3. TAB PILLS NAVIGATION
@@ -708,18 +806,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         children: List.generate(_tabLabels.length, (index) {
           final isSelected = _activeTab == index;
 
-          // Color coding matching Image 1, 2, and 3
+          // Color coding matching Image 1, 2, 3, 4, 5
           Color selectedBg;
-          if (index == 4) {
-            selectedBg = const Color(
-              0xFFF59E0B,
-            ); // Amber / Orange for Cash & Bank (Image 1)
+          if (index == 0) {
+            selectedBg = const Color(0xFF4F46E5); // Indigo for P & L (Image 1 & 2)
+          } else if (index == 1) {
+            selectedBg = const Color(0xFF2563EB); // Blue for Balance Sheet (Image 3)
+          } else if (index == 2) {
+            selectedBg = const Color(0xFF7C3AED); // Purple for Receivables & Payables (Image 4 & 5)
+          } else if (index == 3) {
+            selectedBg = const Color(0xFFEF4444); // Red for Expenses
+          } else if (index == 4) {
+            selectedBg = const Color(0xFFF59E0B); // Amber for Cash & Bank
           } else if (index == 5) {
-            selectedBg = const Color(0xFF059669); // Emerald for GST (Image 2)
+            selectedBg = const Color(0xFF059669); // Emerald for GST
           } else if (index == 6) {
-            selectedBg = const Color(
-              0xFF3B5998,
-            ); // Slate / Navy for Day Book (Image 3)
+            selectedBg = const Color(0xFF3B5998); // Slate for Day Book
           } else {
             selectedBg = const Color(0xFF166534); // Forest Green for others
           }
@@ -779,11 +881,11 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   Widget _buildActiveTabContent(bool isMobile, double screenWidth) {
     switch (_activeTab) {
       case 0:
-        return _buildPLTab(isMobile);
+        return _buildPLTab(isMobile, screenWidth);
       case 1:
-        return _buildBalanceSheetTab(isMobile);
+        return _buildBalanceSheetTab(isMobile, screenWidth);
       case 2:
-        return _buildReceivablesPayablesTab(isMobile);
+        return _buildReceivablesPayablesTab(isMobile, screenWidth);
       case 3:
         return _buildExpensesTab(isMobile);
       case 4:
@@ -793,7 +895,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       case 6:
         return _buildDayBookTab(isMobile, screenWidth);
       default:
-        return _buildCashBankTab(isMobile, screenWidth);
+        return _buildPLTab(isMobile, screenWidth);
     }
   }
 
@@ -1221,7 +1323,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       badgeBgColor: const Color(0xFFFEF3C7),
       amount: '₹3,96,22,49,874.28',
       onViewDetail: () =>
-          _openGstDetailModal(context, 'GSTR-1 Summary', '₹3,96,22,49,874.28'),
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
 
     final gstr3bCard = _buildGstBentoCard(
@@ -1232,7 +1334,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       badgeBgColor: const Color(0xFFFEF3C7),
       amount: '₹0',
       onViewDetail: () =>
-          _openGstDetailModal(context, 'GSTR-3B Summary', '₹0.00'),
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
 
     final itcCard = _buildGstBentoCard(
@@ -1243,7 +1345,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       badgeBgColor: const Color(0xFFFEF3C7),
       amount: '₹9,18,822',
       onViewDetail: () =>
-          _openGstDetailModal(context, 'ITC Summary', '₹9,18,822.00'),
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
 
     if (screenWidth >= 980) {
@@ -1405,15 +1507,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x06000000),
-            blurRadius: 10,
-            offset: Offset(0, 3),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: SingleChildScrollView(
@@ -1589,13 +1686,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         children: [
           Text(
             title,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w800,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
               color: isSelected
-                  ? const Color(0xFF0F172A)
-                  : const Color(0xFF64748B),
-              letterSpacing: 0.5,
+                  ? const Color(0xFF166534)
+                  : const Color(0xFF1E293B),
+              letterSpacing: 0.3,
             ),
           ),
           const SizedBox(width: 4),
@@ -1647,116 +1744,296 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // TAB 0: P & L
+  // TAB 0: P & L (IMAGES 1 & 2)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildPLTab(bool isMobile) {
+  Widget _buildPLTab(bool isMobile, double screenWidth) {
+    final revenueCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(
+                LucideIcons.arrowUpRight,
+                color: Color(0xFF10B981),
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Revenue Breakdown',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildPLRevenueItem(
+            label: 'Sales Revenue',
+            amount: '₹10,00,00,07,06,880',
+            pct: '100%',
+          ),
+          _buildPLRevenueItem(
+            label: 'Service Income',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLRevenueItem(
+            label: 'Other Income',
+            amount: '₹0',
+            pct: '0%',
+          ),
+        ],
+      ),
+    );
+
+    final expenseCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: const [
+              Icon(
+                LucideIcons.arrowDownRight,
+                color: Color(0xFFEF4444),
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Expense Breakdown',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildPLExpenseItem(
+            label: 'Office Expenses',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Rent & Utilities',
+            amount: '₹30,000',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Salary & Wages',
+            amount: '₹65,200',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Marketing & Advertising',
+            amount: '₹50,000',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Travel & Meals',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Vehicle Expenses',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Software & Subscription',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Repairs & Maintenance',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Bank Charges',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Taxes & Government Fees',
+            amount: '₹2,02,821.4',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Insurance',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Inventory Purchase',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildPLExpenseItem(
+            label: 'Miscellaneous',
+            amount: '₹9,85,18,696',
+            pct: '100%',
+          ),
+        ],
+      ),
+    );
+
+    if (screenWidth >= 950) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(flex: 4, child: revenueCard),
+          const SizedBox(width: 20),
+          Expanded(flex: 5, child: expenseCard),
+        ],
+      );
+    }
+
     return Column(
       children: [
-        _buildBentoSectionCard(
-          title: 'Revenue Sources',
-          total: '₹10,00,00,706.88',
-          accentColor: const Color(0xFF10B981),
-          items: [
-            {'label': 'Sales Revenue', 'value': '₹8,50,00,000.00', 'pct': 0.85},
-            {
-              'label': 'Services & Consultations',
-              'value': '₹1,20,00,706.88',
-              'pct': 0.12,
-            },
-            {
-              'label': 'Other Operational Income',
-              'value': '₹30,00,000.00',
-              'pct': 0.03,
-            },
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildBentoSectionCard(
-          title: 'Direct & Indirect Expenses',
-          total: '₹9,88,56,717.40',
-          accentColor: const Color(0xFFEF4444),
-          items: [
-            {
-              'label': 'Raw Materials & Procurement',
-              'value': '₹6,40,00,000.00',
-              'pct': 0.65,
-            },
-            {
-              'label': 'Salaries & Wages',
-              'value': '₹2,10,56,717.40',
-              'pct': 0.21,
-            },
-            {
-              'label': 'Rent, Logistics & Utilities',
-              'value': '₹1,38,00,000.00',
-              'pct': 0.14,
-            },
-          ],
-        ),
+        revenueCard,
+        const SizedBox(height: 20),
+        expenseCard,
       ],
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // TAB 1: BALANCE SHEET
-  // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildBalanceSheetTab(bool isMobile) {
-    return Column(
-      children: [
-        _buildBentoSectionCard(
-          title: 'Total Assets',
-          total: '₹14,50,00,000.00',
-          accentColor: const Color(0xFF2563EB),
-          items: [
-            {
-              'label': 'Cash in Hand & Bank Balances',
-              'value': '₹5,05,000.00',
-              'pct': 0.05,
-            },
-            {
-              'label': 'Trade Receivables & Outstanding',
-              'value': '₹4,45,00,000.00',
-              'pct': 0.35,
-            },
-            {
-              'label': 'Inventory & Stock at Godown',
-              'value': '₹9,99,95,000.00',
-              'pct': 0.60,
-            },
-          ],
-        ),
-        const SizedBox(height: 16),
-        _buildBentoSectionCard(
-          title: 'Liabilities & Equity',
-          total: '₹14,50,00,000.00',
-          accentColor: const Color(0xFF7C3AED),
-          items: [
-            {
-              'label': 'Trade Payables to Suppliers',
-              'value': '₹3,50,00,000.00',
-              'pct': 0.24,
-            },
-            {
-              'label': 'GST & Statutory Dues',
-              'value': '₹3,96,22,49,874.20',
-              'pct': 0.28,
-            },
-            {
-              'label': "Owner's Equity & Retained Earnings",
-              'value': '₹7,03,77,50,125.80',
-              'pct': 0.48,
-            },
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ══════════════════════════════════════════════════════════════════════════
-  // TAB 2: RECEIVABLES & PAYABLES
-  // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildReceivablesPayablesTab(bool isMobile) {
+  Widget _buildPLRevenueItem({
+    required String label,
+    required String amount,
+    required String pct,
+  }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF334155),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '($pct)',
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF10B981),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPLExpenseItem({
+    required String label,
+    required String amount,
+    required String pct,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFEE2E2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF991B1B),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '($pct)',
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFEF4444),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 1: BALANCE SHEET (IMAGE 3)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildBalanceSheetTab(bool isMobile, double screenWidth) {
+    final assetsCard = Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1776,135 +2053,1902 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Row(
+                children: const [
+                  Icon(
+                    LucideIcons.briefcase,
+                    color: Color(0xFF2563EB),
+                    size: 19,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Assets',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                onPressed: () => _openLedgerSettingsModal(context, 'Assets'),
+                icon: const Icon(
+                  LucideIcons.settings,
+                  color: Color(0xFF94A3B8),
+                  size: 17,
+                ),
+                tooltip: 'Asset Settings',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildBalanceSheetRow(
+            label: 'Cash in Hand',
+            amount: '₹0',
+            isPink: false,
+          ),
+          _buildBalanceSheetRow(
+            label: 'Bank Balance',
+            amount: '₹5,05,000',
+            isPink: false,
+          ),
+          _buildBalanceSheetRow(
+            label: 'Inventory Value',
+            amount: '₹80,87,81,36,83,773.3',
+            isPink: false,
+          ),
+          _buildBalanceSheetRow(
+            label: 'Accounts Receivable',
+            amount: '₹9,18,822',
+            isPink: false,
+          ),
+          _buildBalanceSheetRow(
+            label: 'Fixed Assets',
+            amount: '₹0',
+            isPink: false,
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            decoration: BoxDecoration(
+              color: const Color(0xFFDCFCE7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFA7F3D0)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text(
+                  'Total Assets',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF166534),
+                  ),
+                ),
+                Text(
+                  '₹80,87,81,51,07,595.3',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF15803D),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final liabilitiesCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(
+                    LucideIcons.scale,
+                    color: Color(0xFFEF4444),
+                    size: 19,
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'Liabilities & Equity',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              IconButton(
+                onPressed: () =>
+                    _openLedgerSettingsModal(context, 'Liabilities & Equity'),
+                icon: const Icon(
+                  LucideIcons.settings,
+                  color: Color(0xFF94A3B8),
+                  size: 17,
+                ),
+                tooltip: 'Liabilities Settings',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          _buildBalanceSheetRow(
+            label: 'Accounts Payable',
+            amount: '₹-9,71,63,707',
+            isPink: true,
+          ),
+          _buildBalanceSheetRow(
+            label: 'GST Payable',
+            amount: '₹3,96,22,49,874.28',
+            isPink: true,
+          ),
+          _buildBalanceSheetRow(
+            label: 'Loans / Credit',
+            amount: '₹0',
+            isPink: true,
+          ),
+          _buildBalanceSheetRow(
+            label: "Owner's Equity",
+            amount: '₹90,83,84,88,49,264.62',
+            isPink: true,
+          ),
+          _buildBalanceSheetRow(
+            label: 'Retained Earnings',
+            amount: '₹0',
+            isPink: true,
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFECACA)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: const [
+                Text(
+                  'Total Liab. & Equity',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF991B1B),
+                  ),
+                ),
+                Text(
+                  '₹90,87,71,39,35,431.9',
+                  style: TextStyle(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF991B1B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (screenWidth >= 950) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: assetsCard),
+          const SizedBox(width: 20),
+          Expanded(child: liabilitiesCard),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        assetsCard,
+        const SizedBox(height: 20),
+        liabilitiesCard,
+      ],
+    );
+  }
+
+  Widget _buildBalanceSheetRow({
+    required String label,
+    required String amount,
+    required bool isPink,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: isPink ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isPink ? const Color(0xFFFEE2E2) : const Color(0xFFF1F5F9),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color:
+                  isPink ? const Color(0xFF991B1B) : const Color(0xFF334155),
+            ),
+          ),
+          Text(
+            amount,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 2: RECEIVABLES & PAYABLES (IMAGES 4 & 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildReceivablesPayablesTab(bool isMobile, double screenWidth) {
+    // 1. Top Overdue Reminder Banner (Image 4)
+    final overdueBanner = Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            LucideIcons.bell,
+            color: Color(0xFFE11D48),
+            size: 18,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'You have $_overdueInvoicesCount invoice(s) overdue for a total amount of ₹${_formatIndianCurrency(_overdueAmount)}. Please send reminders.',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFBE123C),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    // 2. 5 Mini Summary Cards (Image 4)
+    final card1 = _buildRpMiniCard(
+      label: 'TOTAL RECEIVABLES',
+      value: '₹${_formatIndianCurrency(_totalReceivables)}',
+      subtitle: '25 Pending Invoices',
+      labelColor: const Color(0xFF7C3AED),
+      valueColor: const Color(0xFF5B21B6),
+      bgColor: const Color(0xFFF5F3FF),
+      borderColor: const Color(0xFFDDD6FE),
+    );
+
+    final card2 = _buildRpMiniCard(
+      label: 'OVERDUE AMOUNT',
+      value: '₹${_formatIndianCurrency(_overdueAmount)}',
+      subtitle: '25 Overdue Invoices',
+      labelColor: const Color(0xFFDC2626),
+      valueColor: const Color(0xFF991B1B),
+      bgColor: const Color(0xFFFEF2F2),
+      borderColor: const Color(0xFFFECACA),
+    );
+
+    final card3 = _buildRpMiniCard(
+      label: 'DUE TODAY',
+      value: '₹0',
+      subtitle: '0 Due Today',
+      labelColor: const Color(0xFFCA8A04),
+      valueColor: const Color(0xFF854D0E),
+      bgColor: const Color(0xFFFEFCE8),
+      borderColor: const Color(0xFFFEF08A),
+    );
+
+    final card4 = _buildRpMiniCard(
+      label: 'DUE THIS WEEK',
+      value: '₹0',
+      subtitle: '0 Due in 7 days',
+      labelColor: const Color(0xFF0284C7),
+      valueColor: const Color(0xFF0369A1),
+      bgColor: const Color(0xFFF0F9FF),
+      borderColor: const Color(0xFFBAE6FD),
+    );
+
+    final card5 = _buildRpMiniCard(
+      label: 'CUSTOMERS WITH DUES',
+      value: '2',
+      subtitle: 'Unique customer profiles',
+      labelColor: const Color(0xFF16A34A),
+      valueColor: const Color(0xFF15803D),
+      bgColor: const Color(0xFFF0FDF4),
+      borderColor: const Color(0xFFBBF7D0),
+    );
+
+    Widget miniCardsLayout;
+    if (screenWidth >= 1150) {
+      miniCardsLayout = Row(
+        children: [
+          Expanded(child: card1),
+          const SizedBox(width: 12),
+          Expanded(child: card2),
+          const SizedBox(width: 12),
+          Expanded(child: card3),
+          const SizedBox(width: 12),
+          Expanded(child: card4),
+          const SizedBox(width: 12),
+          Expanded(child: card5),
+        ],
+      );
+    } else if (screenWidth >= 650) {
+      miniCardsLayout = Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: card1),
+              const SizedBox(width: 12),
+              Expanded(child: card2),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: card3),
+              const SizedBox(width: 12),
+              Expanded(child: card4),
+              const SizedBox(width: 12),
+              Expanded(child: card5),
+            ],
+          ),
+        ],
+      );
+    } else {
+      miniCardsLayout = Column(
+        children: [
+          card1,
+          const SizedBox(height: 10),
+          card2,
+          const SizedBox(height: 10),
+          card3,
+          const SizedBox(height: 10),
+          card4,
+          const SizedBox(height: 10),
+          card5,
+        ],
+      );
+    }
+
+    // 3. Lower Section: Left Aging Report + Right Party-wise Outstanding Table
+    final agingReportCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Aging Report (Receivables)',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Progress bar (Amber/Orange segment)
+          Container(
+            height: 10,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B),
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+          const SizedBox(height: 18),
+          _buildAgingRow(
+            dotColor: const Color(0xFF10B981),
+            label: 'Current (Not Due)',
+            amount: '₹0',
+            invCount: '0 inv',
+          ),
+          _buildAgingRow(
+            dotColor: const Color(0xFFF59E0B),
+            label: '1-30 Days',
+            amount: '₹9,18,822',
+            invCount: '25 inv',
+          ),
+          _buildAgingRow(
+            dotColor: const Color(0xFFEF4444),
+            label: '31-60 Days',
+            amount: '₹0',
+            invCount: '0 inv',
+          ),
+          _buildAgingRow(
+            dotColor: const Color(0xFFDC2626),
+            label: '61-90 Days',
+            amount: '₹0',
+            invCount: '0 inv',
+          ),
+          _buildAgingRow(
+            dotColor: const Color(0xFF991B1B),
+            label: 'Above 90 Days',
+            amount: '₹0',
+            invCount: '0 inv',
+          ),
+          const SizedBox(height: 18),
+          // Total Receivables Purple Summary Box
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F3FF),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFEDE9FE)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'TOTAL RECEIVABLES',
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF7C3AED),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    '₹${_formatIndianCurrency(_totalReceivables)}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF5B21B6),
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: const [
+                    Text(
+                      '25 Pending Invoices',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF7C3AED),
+                      ),
+                    ),
+                    Text(
+                      'Updated: 15:14:18',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final partyTableCard = Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row: Title + 3 Action Buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            alignment: WrapAlignment.spaceBetween,
+            children: [
               const Text(
-                'Party Outstandings & Ageing',
+                'Party-wise Outstanding',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () {
-                  AppSnackbar.show(
-                    context,
-                    'Exported Outstandings Ledger PDF',
-                    type: SnackType.success,
-                  );
-                },
-                icon: const Icon(LucideIcons.download, size: 14),
-                label: const Text(
-                  'Export Statement',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF166534),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  shape: RoundedRectangleBorder(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        _rpSearchController.clear();
+                        _rpMinController.clear();
+                        _rpMaxController.clear();
+                        _rpSelectedStatus = 'All Statuses';
+                        _rpFromDate = null;
+                        _rpToDate = null;
+                      });
+                      AppSnackbar.show(
+                        context,
+                        'Showing all party records',
+                        type: SnackType.info,
+                      );
+                    },
                     borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFC7D2FE)),
+                      ),
+                      child: const Text(
+                        'VIEW ALL PARTY',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF4F46E5),
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {
+                      AppSnackbar.show(
+                        context,
+                        'Exporting Party Outstandings to Excel (.xlsx)...',
+                        type: SnackType.success,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            LucideIcons.fileSpreadsheet,
+                            size: 14,
+                            color: Color(0xFF16A34A),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Excel',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {
+                      AppSnackbar.show(
+                        context,
+                        'Exporting Party Outstandings to CSV (.csv)...',
+                        type: SnackType.success,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 7,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            LucideIcons.fileText,
+                            size: 14,
+                            color: Color(0xFF0284C7),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'CSV',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
           const SizedBox(height: 16),
-          ..._partyDataset.map((party) {
-            final isOverdue = party['status'] == 'Overdue';
-            final isPaid = party['status'] == 'Paid';
-            final statusColor = isOverdue
-                ? const Color(0xFFDC2626)
-                : (isPaid ? const Color(0xFF059669) : const Color(0xFFD97706));
-            final statusBg = isOverdue
-                ? const Color(0xFFFEE2E2)
-                : (isPaid ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7));
 
-            return Container(
-              margin: const EdgeInsets.only(bottom: 10),
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 18,
-                    backgroundColor: statusBg,
-                    child: Text(
-                      party['name'].toString().substring(0, 1),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: statusColor,
+          // Filter Controls Container (Image 4)
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    // Search client/invoice
+                    Expanded(
+                      flex: 3,
+                      child: Container(
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          children: [
+                            const Icon(
+                              LucideIcons.search,
+                              size: 15,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _rpSearchController,
+                                style: const TextStyle(fontSize: 12.5),
+                                decoration: const InputDecoration(
+                                  hintText: 'Search client/invoice...',
+                                  hintStyle: TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          party['name'],
+                    const SizedBox(width: 8),
+
+                    // Status Dropdown
+                    Container(
+                      height: 38,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _rpSelectedStatus,
+                          icon: const Icon(
+                            LucideIcons.chevronDown,
+                            size: 14,
+                            color: Color(0xFF64748B),
+                          ),
                           style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13.5,
-                            color: Color(0xFF0F172A),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF334155),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'All Statuses',
+                              child: Text('All Statuses'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Paid',
+                              child: Text('Paid'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Overdue',
+                              child: Text('Overdue'),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              setState(() => _rpSelectedStatus = val);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // Date range picker
+                    InkWell(
+                      onTap: () async {
+                        final picked = await showDateRangePicker(
+                          context: context,
+                          firstDate: DateTime(2020),
+                          lastDate: DateTime(2030),
+                          initialDateRange: _rpFromDate != null &&
+                                  _rpToDate != null
+                              ? DateTimeRange(
+                                  start: _rpFromDate!, end: _rpToDate!)
+                              : null,
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _rpFromDate = picked.start;
+                            _rpToDate = picked.end;
+                          });
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFCBD5E1)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _rpFromDate == null
+                                  ? 'dd/mm/yyyy'
+                                  : '${_rpFromDate!.day}/${_rpFromDate!.month}/${_rpFromDate!.year}',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              LucideIcons.calendar,
+                              size: 13,
+                              color: Color(0xFF64748B),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(horizontal: 6),
+                              child: Text(
+                                'to',
+                                style: TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              _rpToDate == null
+                                  ? 'dd/mm/yyyy'
+                                  : '${_rpToDate!.day}/${_rpToDate!.month}/${_rpToDate!.year}',
+                              style: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(
+                              LucideIcons.calendar,
+                              size: 13,
+                              color: Color(0xFF64748B),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      height: 36,
+                      child: TextField(
+                        controller: _rpMinController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: InputDecoration(
+                          hintText: 'Min ₹',
+                          hintStyle: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${party['inv']} • Due: ${party['dueDate']}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 120,
+                      height: 36,
+                      child: TextField(
+                        controller: _rpMaxController,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(fontSize: 12),
+                        decoration: InputDecoration(
+                          hintText: 'Max ₹',
+                          hintStyle: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 10,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFCBD5E1),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Invoices Table (Image 5) wrapped in horizontal SingleChildScrollView to avoid ANY overflow
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: isMobile ? 700 : 780,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Table Header
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(8),
+                      ),
+                    ),
+                    child: Row(
+                      children: const [
+                        SizedBox(
+                          width: 150,
+                          child: Text(
+                            'PARTY NAME',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 120,
+                          child: Text(
+                            'INV NUMBER',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 110,
+                          child: Text(
+                            'DUE DATE',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 130,
+                          child: Text(
+                            'PENDING AMOUNT',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 90,
+                          child: Text(
+                            'STATUS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 160,
+                          child: Text(
+                            'ACTIONS',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '₹${_formatNumber((party['amount'] as num).toDouble())}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 14,
-                          color: Color(0xFF0F172A),
-                        ),
+
+                  // Table Rows
+                  if (_filteredInvoices.isEmpty)
+                    Container(
+                      width: 760,
+                      padding: const EdgeInsets.symmetric(vertical: 40),
+                      alignment: Alignment.center,
+                      child: Column(
+                        children: const [
+                          Icon(
+                            LucideIcons.searchX,
+                            size: 32,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          SizedBox(height: 10),
+                          Text(
+                            'No matching invoices found.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 3),
-                      Container(
+                    )
+                  else
+                    ..._filteredInvoices.map((inv) {
+                      final isOverdue = inv['status'] == 'Overdue';
+                      final pendingAmt =
+                          (inv['pendingAmount'] as num).toDouble();
+
+                      return Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
+                          horizontal: 12,
+                          vertical: 12,
                         ),
-                        decoration: BoxDecoration(
-                          color: statusBg,
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          party['status'],
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor,
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(
+                              color: Color(0xFFF1F5F9),
+                              width: 1,
+                            ),
                           ),
                         ),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 150,
+                              child: Text(
+                                inv['partyName'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 120,
+                              child: Text(
+                                inv['invNumber'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 110,
+                              child: Text(
+                                inv['dueDate'] ?? '',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 130,
+                              child: Text(
+                                '₹${_formatIndianCurrency(pendingAmt)}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 90,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isOverdue
+                                        ? const Color(0xFFFEE2E2)
+                                        : const Color(0xFFDCFCE7),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    inv['status'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isOverdue
+                                          ? const Color(0xFF991B1B)
+                                          : const Color(0xFF166534),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            SizedBox(
+                              width: 160,
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () =>
+                                        _showInvoiceDetailsModal(context, inv),
+                                    icon: const Icon(
+                                      LucideIcons.eye,
+                                      size: 16,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    tooltip: 'View Invoice',
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                  ),
+                                  if (isOverdue) ...[
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: () =>
+                                          _showRecordPaymentModal(context, inv),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 4,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFEDE9FE),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: const Color(0xFFDDD6FE),
+                                          ),
+                                        ),
+                                        child: const Text(
+                                          'Record\nPayment',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF6D28D9),
+                                            height: 1.1,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    InkWell(
+                                      onTap: () {
+                                        AppSnackbar.show(
+                                          context,
+                                          'Payment reminder sent to ${inv['partyName']} (${inv['invNumber']}) via WhatsApp & SMS',
+                                          type: SnackType.success,
+                                        );
+                                      },
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.all(6),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE0F2FE),
+                                          borderRadius:
+                                              BorderRadius.circular(6),
+                                          border: Border.all(
+                                            color: const Color(0xFFBAE6FD),
+                                          ),
+                                        ),
+                                        child: const Icon(
+                                          LucideIcons.send,
+                                          size: 13,
+                                          color: Color(0xFF0284C7),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        overdueBanner,
+        const SizedBox(height: 16),
+        miniCardsLayout,
+        const SizedBox(height: 20),
+        if (screenWidth >= 950)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 3, child: agingReportCard),
+              const SizedBox(width: 20),
+              Expanded(flex: 6, child: partyTableCard),
+            ],
+          )
+        else
+          Column(
+            children: [
+              agingReportCard,
+              const SizedBox(height: 20),
+              partyTableCard,
+            ],
+          ),
+      ],
+    );
+  }
+
+  Widget _buildRpMiniCard({
+    required String label,
+    required String value,
+    required String subtitle,
+    required Color labelColor,
+    required Color valueColor,
+    required Color bgColor,
+    required Color borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: labelColor,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 6),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: valueColor,
+                letterSpacing: -0.4,
+              ),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            style: const TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAgingRow({
+    required Color dotColor,
+    required String label,
+    required String amount,
+    required String invCount,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: dotColor,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '($invCount)',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // DIALOGS & ACTION HANDLERS
+  // ══════════════════════════════════════════════════════════════════════════
+  void _openLedgerSettingsModal(BuildContext context, String section) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: 480,
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$section Ledger Setup',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      icon: const Icon(LucideIcons.x, size: 18),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Manage and customize account classification heads for $section.',
+                  style: const TextStyle(
+                    fontSize: 12.5,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Auto-reconcile balance with active ledger',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      Switch.adaptive(
+                        value: true,
+                        activeColor: const Color(0xFF2563EB),
+                        onChanged: (v) {},
                       ),
                     ],
                   ),
-                ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      AppSnackbar.show(
+                        context,
+                        '$section settings updated successfully',
+                        type: SnackType.success,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      'Save Changes',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showInvoiceDetailsModal(
+    BuildContext context,
+    Map<String, dynamic> inv,
+  ) {
+    final isPaid = inv['status'] == 'Paid';
+    final amt = (inv['pendingAmount'] as num).toDouble();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return Dialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            width: 480,
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          inv['invNumber'] ?? 'Invoice Details',
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Party: ${inv['partyName']}',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isPaid
+                            ? const Color(0xFFDCFCE7)
+                            : const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        inv['status'] ?? '',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: isPaid
+                              ? const Color(0xFF166534)
+                              : const Color(0xFF991B1B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Due Date',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          Text(
+                            inv['dueDate'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Pending Amount',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          Text(
+                            '₹${_formatIndianCurrency(amt)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          AppSnackbar.show(
+                            context,
+                            'Downloaded PDF for ${inv['invNumber']}',
+                            type: SnackType.info,
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text('Download PDF'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: const Text('Close'),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showRecordPaymentModal(
+    BuildContext context,
+    Map<String, dynamic> inv,
+  ) {
+    final amtCtrl = TextEditingController(
+      text: ((inv['pendingAmount'] as num).toDouble()).toStringAsFixed(0),
+    );
+    String paymentMode = 'UPI / Razorpay';
+    final refCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Record Payment - ${inv['invNumber']}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(LucideIcons.x, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Party: ${inv['partyName']}',
+                      style: const TextStyle(
+                        fontSize: 12.5,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Payment Amount (₹)',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: amtCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Payment Method',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<String>(
+                      value: paymentMode,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'UPI / Razorpay',
+                          child: Text('UPI / Razorpay'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Bank Transfer',
+                          child: Text('Bank Transfer'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Cash in Hand',
+                          child: Text('Cash in Hand'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setModalState(() => paymentMode = val);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Transaction Reference / Notes',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: refCtrl,
+                      decoration: InputDecoration(
+                        hintText: 'e.g. UPI Ref / Bank Txn ID',
+                        hintStyle: const TextStyle(fontSize: 12),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE2E8F0),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final paidAmount =
+                                  double.tryParse(amtCtrl.text.trim()) ?? 0.0;
+                              setState(() {
+                                final currentPending =
+                                    (inv['pendingAmount'] as num).toDouble();
+                                final newPending =
+                                    (currentPending - paidAmount).clamp(
+                                  0.0,
+                                  double.infinity,
+                                );
+                                inv['pendingAmount'] = newPending;
+                                if (newPending == 0.0) {
+                                  inv['status'] = 'Paid';
+                                  _overdueInvoicesCount =
+                                      (_overdueInvoicesCount - 1).clamp(0, 999);
+                                  _overdueAmount =
+                                      (_overdueAmount - paidAmount).clamp(
+                                    0.0,
+                                    double.infinity,
+                                  );
+                                }
+                              });
+                              Navigator.pop(ctx);
+                              AppSnackbar.show(
+                                context,
+                                'Payment of ₹${_formatIndianCurrency(paidAmount)} recorded for ${inv['partyName']}',
+                                type: SnackType.success,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF2563EB),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: const Text(
+                              'Confirm Payment',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
-          }),
-        ],
-      ),
+          },
+        );
+      },
     );
   }
 
@@ -2781,12 +4825,435 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
   }
 
-  // 2. ADD NEW BANK MODAL
+  // ══════════════════════════════════════════════════════════════════════════
+  // 2. ADD NEW BANK MODAL (EXACT MATCH TO SCREENSHOT)
+  // ══════════════════════════════════════════════════════════════════════════
   void _openAddBankModal(BuildContext context) {
-    final nameCtrl = TextEditingController();
-    final holderCtrl = TextEditingController();
-    final balanceCtrl = TextEditingController(text: '0');
+    final bankNameCtrl = TextEditingController();
+    final accountNameCtrl = TextEditingController();
+    final accountNumCtrl = TextEditingController();
+    final ifscCtrl = TextEditingController();
+    final branchCtrl = TextEditingController();
+    final openingBalCtrl = TextEditingController();
 
+    String selectedAccountType = 'Savings';
+    String selectedStatus = 'Active';
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            final mediaQuery = MediaQuery.of(context);
+            final dialogWidth = mediaQuery.size.width;
+            final isSmall = dialogWidth < 540;
+
+            Widget buildFieldLabel(String label) {
+              return Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              );
+            }
+
+            Widget buildTextInput({
+              required TextEditingController controller,
+              required String hint,
+              TextInputType keyboardType = TextInputType.text,
+            }) {
+              return SizedBox(
+                height: 42,
+                child: TextField(
+                  controller: controller,
+                  keyboardType: keyboardType,
+                  onChanged: (_) => setDialogState(() {}),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF0F172A),
+                    fontWeight: FontWeight.w500,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: hint,
+                    hintStyle: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF94A3B8),
+                      fontWeight: FontWeight.normal,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF2563EB),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            Widget buildDropdown<T>({
+              required T value,
+              required List<T> items,
+              required ValueChanged<T?> onChanged,
+            }) {
+              return Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<T>(
+                    value: value,
+                    isExpanded: true,
+                    icon: const Icon(
+                      LucideIcons.chevronDown,
+                      size: 16,
+                      color: Color(0xFF64748B),
+                    ),
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF0F172A),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    items: items.map((T item) {
+                      return DropdownMenuItem<T>(
+                        value: item,
+                        child: Text(item.toString()),
+                      );
+                    }).toList(),
+                    onChanged: onChanged,
+                  ),
+                ),
+              );
+            }
+
+            Widget buildRow(Widget left, Widget right) {
+              if (isSmall) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    left,
+                    const SizedBox(height: 14),
+                    right,
+                  ],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: left),
+                  const SizedBox(width: 16),
+                  Expanded(child: right),
+                ],
+              );
+            }
+
+            final hasValues = bankNameCtrl.text.trim().isNotEmpty &&
+                accountNumCtrl.text.trim().isNotEmpty;
+
+            return Dialog(
+              backgroundColor: Colors.white,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 24,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 540),
+                padding: const EdgeInsets.all(28),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            'Add New Bank Account',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => Navigator.pop(ctx),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              width: 32,
+                              height: 32,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  LucideIcons.x,
+                                  size: 16,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Row 1: Bank Name * | Account Name *
+                      buildRow(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Bank Name *'),
+                            const SizedBox(height: 6),
+                            buildTextInput(
+                              controller: bankNameCtrl,
+                              hint: 'e.g. HDFC Bank',
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Account Name *'),
+                            const SizedBox(height: 6),
+                            buildTextInput(
+                              controller: accountNameCtrl,
+                              hint: 'e.g. Main Business Savings',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Row 2: Account Number * | IFSC Code *
+                      buildRow(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Account Number *'),
+                            const SizedBox(height: 6),
+                            buildTextInput(
+                              controller: accountNumCtrl,
+                              hint: 'e.g. 501002938128',
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('IFSC Code *'),
+                            const SizedBox(height: 6),
+                            buildTextInput(
+                              controller: ifscCtrl,
+                              hint: 'E.G. HDFC0000001',
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Row 3: Branch Name (Optional) | Opening Balance (₹) *
+                      buildRow(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Branch Name (Optional)'),
+                            const SizedBox(height: 6),
+                            buildTextInput(
+                              controller: branchCtrl,
+                              hint: 'e.g. Bandra East',
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Opening Balance (₹) *'),
+                            const SizedBox(height: 6),
+                            buildTextInput(
+                              controller: openingBalCtrl,
+                              hint: '0.00',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Row 4: Account Type | Status
+                      buildRow(
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Account Type'),
+                            const SizedBox(height: 6),
+                            buildDropdown<String>(
+                              value: selectedAccountType,
+                              items: const [
+                                'Savings',
+                                'Current',
+                                'Overdraft',
+                                'Cash Credit',
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setDialogState(
+                                    () => selectedAccountType = val,
+                                  );
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            buildFieldLabel('Status'),
+                            const SizedBox(height: 6),
+                            buildDropdown<String>(
+                              value: selectedStatus,
+                              items: const ['Active', 'Inactive'],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setDialogState(() => selectedStatus = val);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Save Bank Account Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final bName = bankNameCtrl.text.trim();
+                            final accName = accountNameCtrl.text.trim();
+                            final accNum = accountNumCtrl.text.trim();
+                            final ifsc = ifscCtrl.text.trim();
+                            final branch = branchCtrl.text.trim();
+                            final bal =
+                                double.tryParse(openingBalCtrl.text.trim()) ??
+                                0.0;
+
+                            if (bName.isEmpty &&
+                                accNum.isEmpty &&
+                                accName.isEmpty) {
+                              AppSnackbar.show(
+                                context,
+                                'Please enter bank details before saving',
+                                type: SnackType.warning,
+                              );
+                              return;
+                            }
+
+                            final effectiveHolder =
+                                bName.isNotEmpty ? bName : 'Bank Account';
+                            final effectiveName =
+                                accName.isNotEmpty
+                                    ? accName
+                                    : (bName.isNotEmpty ? bName : 'Account');
+
+                            setState(() {
+                              _bankAccounts.add(
+                                _BankAccountData(
+                                  id:
+                                      'bank-${DateTime.now().millisecondsSinceEpoch}',
+                                  name: effectiveName,
+                                  holder: effectiveHolder,
+                                  balance: bal,
+                                  income: 0.0,
+                                  expenses: 0.0,
+                                  lastTxn: 'Opening Balance',
+                                  isHighlighted: false,
+                                  accountNumber: accNum,
+                                  ifsc: ifsc,
+                                  branch: branch,
+                                  accountType: selectedAccountType,
+                                  status: selectedStatus,
+                                ),
+                              );
+                            });
+
+                            Navigator.pop(ctx);
+                            AppSnackbar.show(
+                              context,
+                              'Bank account added successfully',
+                              type: SnackType.success,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                hasValues
+                                    ? const Color(0xFF2563EB)
+                                    : const Color(0xFFD6DFE8),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: const Text(
+                            'Save Bank Account',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 3. BANK HISTORY MODAL
+  // ══════════════════════════════════════════════════════════════════════════
+  void _openBankHistoryModal(BuildContext context, _BankAccountData bank) {
     showDialog(
       context: context,
       builder: (ctx) {
@@ -2796,7 +5263,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 480),
+            constraints: const BoxConstraints(maxWidth: 620),
             padding: const EdgeInsets.all(24),
             child: SingleChildScrollView(
               child: Column(
@@ -2822,226 +5289,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          const Text(
-                            'Add New Bank Account',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                        ],
-                      ),
-                      IconButton(
-                        icon: const Icon(
-                          LucideIcons.x,
-                          size: 20,
-                          color: Color(0xFF64748B),
-                        ),
-                        onPressed: () => Navigator.pop(ctx),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Divider(color: Color(0xFFF1F5F9)),
-                  const SizedBox(height: 14),
-
-                  TextField(
-                    controller: nameCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Account Nickname / Identifier *',
-                      hintText: 'e.g. Current Account, uybwaued',
-                      labelStyle: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: holderCtrl,
-                    decoration: InputDecoration(
-                      labelText: 'Bank Name / Account Holder *',
-                      hintText: 'e.g. HDFC Bank, Ravi',
-                      labelStyle: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  TextField(
-                    controller: balanceCtrl,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: 'Initial Opening Balance (₹)',
-                      labelStyle: const TextStyle(
-                        fontSize: 12,
-                        color: Color(0xFF64748B),
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Color(0xFF64748B)),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: () {
-                          final name = nameCtrl.text.trim();
-                          final holder = holderCtrl.text.trim();
-                          final bal =
-                              double.tryParse(balanceCtrl.text.trim()) ?? 0;
-
-                          if (name.isEmpty || holder.isEmpty) {
-                            AppSnackbar.show(
-                              context,
-                              'Please enter account details',
-                              type: SnackType.warning,
-                            );
-                            return;
-                          }
-
-                          setState(() {
-                            _bankAccounts.add(
-                              _BankAccountData(
-                                id: DateTime.now().millisecondsSinceEpoch
-                                    .toString(),
-                                name: name,
-                                holder: holder,
-                                balance: bal,
-                                income: 0,
-                                expenses: 0,
-                                lastTxn: 'No transactions yet',
-                                isHighlighted: false,
-                              ),
-                            );
-                          });
-
-                          Navigator.pop(ctx);
-                          AppSnackbar.show(
-                            context,
-                            'Bank account added successfully',
-                            type: SnackType.success,
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF2563EB),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
-                          ),
-                        ),
-                        child: const Text(
-                          'Add Account',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // 3. BANK HISTORY MODAL
-  void _openBankHistoryModal(BuildContext context, _BankAccountData bank) {
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 580),
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              LucideIcons.history,
-                              color: Color(0xFF2563EB),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 '${bank.name} - Statement',
                                 style: const TextStyle(
-                                  fontSize: 17,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xFF0F172A),
                                 ),
                               ),
                               Text(
-                                bank.holder,
+                                '${bank.holder}${bank.accountNumber != null && bank.accountNumber!.isNotEmpty ? ' • A/C: ${bank.accountNumber}' : ''}',
                                 style: const TextStyle(
                                   fontSize: 11.5,
                                   color: Color(0xFF64748B),
@@ -3101,7 +5361,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           onPressed: () {
                             AppSnackbar.show(
                               context,
-                              'Exported Bank Statement PDF',
+                              'Exported Bank Statement PDF for ${bank.name}',
                               type: SnackType.success,
                             );
                           },
@@ -3127,22 +5387,131 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       color: Color(0xFF0F172A),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
 
+                  // Aligned Table for bank entries
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFAFAFB),
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: const Center(
-                      child: Text(
-                        'No transactions recorded in this period.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF94A3B8),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: DataTable(
+                          headingRowHeight: 38,
+                          dataRowMinHeight: 40,
+                          dataRowMaxHeight: 44,
+                          headingRowColor: WidgetStateProperty.all(
+                            const Color(0xFFF8FAFC),
+                          ),
+                          columns: const [
+                            DataColumn(
+                              label: Text(
+                                'Date',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'Description',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'Type',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            DataColumn(
+                              numeric: true,
+                              label: Text(
+                                'Amount',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                            DataColumn(
+                              numeric: true,
+                              label: Text(
+                                'Balance',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ),
+                          ],
+                          rows: [
+                            DataRow(
+                              cells: [
+                                const DataCell(
+                                  Text(
+                                    '14 Oct 2026',
+                                    style: TextStyle(fontSize: 11.5),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                    bank.balance > 0
+                                        ? 'Opening Balance'
+                                        : 'Account Created',
+                                    style: const TextStyle(fontSize: 11.5),
+                                  ),
+                                ),
+                                const DataCell(
+                                  Text(
+                                    'CREDIT',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                    '₹${_formatNumber(bank.balance)}',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                ),
+                                DataCell(
+                                  Text(
+                                    '₹${_formatNumber(bank.balance)}',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -3366,21 +5735,42 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // HELPER FORMATTING
   // ══════════════════════════════════════════════════════════════════════════
   String _formatNumber(double amount) {
-    // Format double to Indian style commas if large or standard locale
-    if (amount == 0) return '0';
-    if (amount == 5000) return '5,000';
-    if (amount == 500000) return '5,00,000';
-    if (amount == 505000) return '5,05,000';
-    if (amount == 200) return '200';
-    if (amount == 10000) return '10,000';
-    if (amount == 201780) return '2,01,780';
-    if (amount == 1000) return '1,000';
-    if (amount == 240000) return '2,40,000';
-    if (amount == 25000) return '25,000';
-    if (amount == 200000) return '2,00,000';
-    if (amount == 39100) return '39,100';
+    return _formatIndianCurrency(amount);
+  }
 
-    final str = amount.toStringAsFixed(0);
-    return str;
+  String _formatIndianCurrency(double amount) {
+    if (amount == 0) return '0';
+    final isNegative = amount < 0;
+    final absAmount = amount.abs();
+
+    String fixedStr;
+    if (absAmount == absAmount.roundToDouble()) {
+      fixedStr = absAmount.toStringAsFixed(0);
+    } else {
+      fixedStr = absAmount.toStringAsFixed(2);
+      if (fixedStr.endsWith('.00')) {
+        fixedStr = fixedStr.substring(0, fixedStr.length - 3);
+      } else if (fixedStr.endsWith('0')) {
+        fixedStr = fixedStr.substring(0, fixedStr.length - 1);
+      }
+    }
+
+    final parts = fixedStr.split('.');
+    String intPart = parts[0];
+    final decPart = parts.length > 1 ? '.${parts[1]}' : '';
+
+    if (intPart.length > 3) {
+      final lastThree = intPart.substring(intPart.length - 3);
+      final remaining = intPart.substring(0, intPart.length - 3);
+      final buffer = StringBuffer();
+      for (int i = 0; i < remaining.length; i++) {
+        if (i > 0 && (remaining.length - i) % 2 == 0) {
+          buffer.write(',');
+        }
+        buffer.write(remaining[i]);
+      }
+      intPart = '${buffer.toString()},$lastThree';
+    }
+    return '${isNegative ? '-' : ''}$intPart$decPart';
   }
 }

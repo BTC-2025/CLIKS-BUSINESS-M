@@ -41,7 +41,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       return Container(
         height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: const BoxDecoration(color: AppColors.primaryGreen),
+        decoration: const BoxDecoration(color: AppColors.headerBackground),
         child: Row(
           children: [
             IconButton(
@@ -112,7 +112,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         left: isDesktop ? 16 : 8,
         right: isDesktop ? 0 : 4,
       ),
-      decoration: const BoxDecoration(color: AppColors.primaryGreen),
+      decoration: const BoxDecoration(color: AppColors.headerBackground),
       child: Row(
         children: [
           // Logo and Menu section
@@ -592,7 +592,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(color: Color(0xFF166534)),
+      decoration: const BoxDecoration(color: AppColors.headerBackground),
       child: Stack(
         alignment: Alignment.center,
         children: [

@@ -243,15 +243,17 @@ class WalletPage extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.tableBorder),
+        boxShadow: const [],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header row with Search bar
           Padding(
-            padding: const EdgeInsets.all(12.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Wrap(
               spacing: 12,
               runSpacing: 8,
@@ -259,17 +261,17 @@ class WalletPage extends StatelessWidget {
               children: [
                 const Text(
                   'Wallet History',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText),
                 ),
                 if (!isMobile) const Spacer(),
                 Container(
-                  width: isMobile ? double.infinity : 200,
-                  height: 32,
-                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  width: isMobile ? double.infinity : 220,
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: AppColors.border),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.tableBorder),
                   ),
                   child: const Row(
                     children: [
@@ -279,11 +281,11 @@ class WalletPage extends StatelessWidget {
                         child: TextField(
                           decoration: InputDecoration(
                             hintText: 'Search descriptions or IDs...',
-                            hintStyle: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+                            hintStyle: TextStyle(color: AppColors.secondaryText, fontSize: 13),
                             border: InputBorder.none,
                             isDense: true,
                           ),
-                          style: TextStyle(fontSize: 12),
+                          style: TextStyle(fontSize: 13),
                         ),
                       ),
                     ],
@@ -292,7 +294,7 @@ class WalletPage extends StatelessWidget {
               ],
             ),
           ),
-          const Divider(height: 1, color: AppColors.border),
+          const Divider(height: 1, color: AppColors.tableBorder),
 
           LayoutBuilder(
             builder: (context, constraints) {
@@ -314,15 +316,15 @@ class WalletPage extends StatelessWidget {
                     children: const [
                       TableRow(
                         decoration: BoxDecoration(
-                          color: AppColors.hoverBackground,
-                          border: Border(bottom: BorderSide(color: AppColors.border)),
+                          color: Color(0xFFF8FAFC),
+                          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                         ),
                         children: [
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('TRANSACTION ID', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('DATE & TIME', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('DESCRIPTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('DIRECTION', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10), child: Text('AMOUNT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: AppColors.secondaryText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('TRANSACTION ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DATE & TIME', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DESCRIPTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DIRECTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
                         ],
                       ),
                     ],
@@ -335,7 +337,7 @@ class WalletPage extends StatelessWidget {
           // No records indicator
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 24),
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: const Center(
               child: Text(
                 'No transaction matching records found.',

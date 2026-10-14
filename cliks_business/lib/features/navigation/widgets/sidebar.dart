@@ -1492,23 +1492,23 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
 
   @override
   Widget build(BuildContext context) {
-    final isHighlighted = widget.isSelected || _isHovered || _isPressed;
-
     final Color bgColor;
     if (widget.isSelected) {
       bgColor = const Color(0xFFDCF2E4);
-    } else if (_isHovered || _isPressed) {
-      bgColor = const Color(0xFFDCF2E4).withValues(alpha: 0.65);
+    } else if (_isPressed) {
+      bgColor = const Color(0xFF166534).withValues(alpha: 0.12);
+    } else if (_isHovered) {
+      bgColor = const Color(0xFF166534).withValues(alpha: 0.07);
     } else {
       bgColor = Colors.transparent;
     }
 
-    final Color contentColor = isHighlighted
+    final Color contentColor = widget.isSelected
         ? const Color(0xFF166534)
-        : const Color(0xFF111827);
-    final Color iconColor = isHighlighted
+        : (_isHovered ? const Color(0xFF166534) : const Color(0xFF111827));
+    final Color iconColor = widget.isSelected
         ? const Color(0xFF166534)
-        : const Color(0xFF374151);
+        : (_isHovered ? const Color(0xFF166534) : const Color(0xFF4B5563));
 
     return Padding(
       padding: widget.margin,
@@ -1523,8 +1523,8 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
           onTap: widget.onTap,
           behavior: HitTestBehavior.opaque,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 140),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               color: bgColor,
@@ -1532,22 +1532,17 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
             ),
             child: Stack(
               children: [
-                // Curved indicator bar on the left edge when touched or selected
-                if (isHighlighted)
+                // Subtle indicator bar on the left edge ONLY when selected
+                if (widget.isSelected)
                   Positioned(
                     left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: 5,
+                    top: 6,
+                    bottom: 6,
+                    width: 3.5,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: widget.isSelected
-                            ? const Color(0xFF166534)
-                            : const Color(0xFF166534).withValues(alpha: 0.8),
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(3),
-                          bottomRight: Radius.circular(3),
-                        ),
+                        color: const Color(0xFF166534),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
@@ -1564,7 +1559,7 @@ class _MacOSSidebarTileState extends State<_MacOSSidebarTile> {
                           widget.label,
                           style: TextStyle(
                             color: contentColor,
-                            fontWeight: isHighlighted
+                            fontWeight: widget.isSelected
                                 ? FontWeight.bold
                                 : FontWeight.w600,
                             fontSize: 13.5,
@@ -1622,14 +1617,15 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
               onTap: widget.onToggle,
               behavior: HitTestBehavior.opaque,
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 140),
+                duration: const Duration(milliseconds: 160),
+                curve: Curves.easeOutCubic,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 9,
                 ),
                 decoration: BoxDecoration(
                   color: _isHovered
-                      ? const Color(0xFFDCF2E4).withValues(alpha: 0.35)
+                      ? const Color(0xFF166534).withValues(alpha: 0.06)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -1650,21 +1646,24 @@ class _MacOSExpandableGroupState extends State<_MacOSExpandableGroup> {
                           color: isHighlighted
                               ? const Color(0xFF166534)
                               : const Color(0xFF111827),
-                          fontWeight: isHighlighted
+                          fontWeight: widget.isExpanded
                               ? FontWeight.bold
                               : FontWeight.w600,
                           fontSize: 13.5,
                         ),
                       ),
                     ),
-                    Icon(
-                      widget.isExpanded
-                          ? LucideIcons.chevronDown
-                          : LucideIcons.chevronRight,
-                      size: 16,
-                      color: isHighlighted
-                          ? const Color(0xFF166534)
-                          : const Color(0xFF9CA3AF),
+                    AnimatedRotation(
+                      turns: widget.isExpanded ? 0.25 : 0.0,
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOutCubic,
+                      child: Icon(
+                        LucideIcons.chevronRight,
+                        size: 16,
+                        color: isHighlighted
+                            ? const Color(0xFF166534)
+                            : const Color(0xFF9CA3AF),
+                      ),
                     ),
                   ],
                 ),
@@ -1726,14 +1725,14 @@ class _SidebarItemState extends State<_SidebarItem> {
           },
           borderRadius: BorderRadius.circular(10),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? const Color(0xFFDCF2E4)
                   : (_isHovered
-                        ? const Color(0xFFDCF2E4).withValues(alpha: 0.5)
+                        ? const Color(0xFF166534).withValues(alpha: 0.06)
                         : Colors.transparent),
               borderRadius: BorderRadius.circular(10),
             ),
@@ -1756,7 +1755,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                           : AppColors.darkText,
                       fontWeight: widget.isSelected
                           ? FontWeight.w700
-                          : (_isHovered ? FontWeight.w600 : FontWeight.w500),
+                          : FontWeight.w500,
                       fontSize: 13.5,
                     ),
                   ),
@@ -1803,10 +1802,15 @@ class _SidebarExpandable extends ConsumerWidget {
                 .read(sidebarExpandedProvider.notifier)
                 .update((state) => {...state, label: !isExpanded});
           },
-          trailing: Icon(
-            isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
-            size: 16,
-            color: AppColors.secondaryText,
+          trailing: AnimatedRotation(
+            turns: isExpanded ? 0.5 : 0.0,
+            duration: const Duration(milliseconds: 180),
+            curve: Curves.easeOutCubic,
+            child: const Icon(
+              LucideIcons.chevronDown,
+              size: 16,
+              color: AppColors.secondaryText,
+            ),
           ),
         ),
         if (isExpanded)
@@ -1858,14 +1862,14 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
           },
           borderRadius: BorderRadius.circular(9),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            curve: Curves.easeOut,
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             decoration: BoxDecoration(
               color: widget.isSelected
                   ? const Color(0xFFDCF2E4)
                   : (_isHovered
-                        ? const Color(0xFFDCF2E4).withValues(alpha: 0.5)
+                        ? const Color(0xFF166534).withValues(alpha: 0.06)
                         : Colors.transparent),
               borderRadius: BorderRadius.circular(9),
             ),
@@ -1891,7 +1895,7 @@ class _SidebarSubItemState extends State<_SidebarSubItem> {
                       fontSize: 13,
                       fontWeight: widget.isSelected
                           ? FontWeight.w700
-                          : (_isHovered ? FontWeight.w600 : FontWeight.w500),
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -2293,115 +2297,62 @@ class _MacOSReferAndEarnTile extends StatefulWidget {
   State<_MacOSReferAndEarnTile> createState() => _MacOSReferAndEarnTileState();
 }
 
-class _MacOSReferAndEarnTileState extends State<_MacOSReferAndEarnTile>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _colorController;
-  late final Animation<Color?> _textColorAnimation;
-  late final Animation<Color?> _iconColorAnimation;
+class _MacOSReferAndEarnTileState extends State<_MacOSReferAndEarnTile> {
   bool _isHovered = false;
 
   @override
-  void initState() {
-    super.initState();
-    _colorController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 550),
-    );
-
-    // Smoothly shifts between vibrant violet and emerald green on hover
-    _textColorAnimation = ColorTween(
-      begin: const Color(0xFF7C3AED), // Vibrant Violet
-      end: const Color(0xFF166534),   // Signature Emerald Green
-    ).animate(
-      CurvedAnimation(
-        parent: _colorController,
-        curve: Curves.easeInOut,
-      ),
-    );
-
-    _iconColorAnimation = ColorTween(
-      begin: const Color(0xFF8B5CF6), // Bright Violet
-      end: const Color(0xFF15803D),   // Vibrant Green
-    ).animate(
-      CurvedAnimation(
-        parent: _colorController,
-        curve: Curves.easeInOut,
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _colorController.dispose();
-    super.dispose();
-  }
-
-  void _onEnter() {
-    setState(() {
-      _isHovered = true;
-    });
-    _colorController.repeat(reverse: true);
-  }
-
-  void _onExit() {
-    setState(() {
-      _isHovered = false;
-    });
-    _colorController.stop();
-    _colorController.reset();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isHighlighted = widget.isSelected || _isHovered;
+
     return Padding(
-      padding: const EdgeInsets.only(left: 14, right: 14, top: 18, bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
-        onEnter: (_) => _onEnter(),
-        onExit: (_) => _onExit(),
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
         child: GestureDetector(
           onTap: widget.onTap,
           behavior: HitTestBehavior.opaque,
-          child: AnimatedBuilder(
-            animation: _colorController,
-            builder: (context, child) {
-              final Color activeTextColor = _isHovered
-                  ? (_textColorAnimation.value ?? const Color(0xFF7C3AED))
-                  : (widget.isSelected
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              color: widget.isSelected
+                  ? const Color(0xFFF3E8FF)
+                  : (_isHovered
+                      ? const Color(0xFF7C3AED).withValues(alpha: 0.08)
+                      : Colors.transparent),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.gift,
+                  size: 18,
+                  color: isHighlighted
                       ? const Color(0xFF7C3AED)
-                      : const Color(0xFF475569));
-
-              final Color activeIconColor = _isHovered
-                  ? (_iconColorAnimation.value ?? const Color(0xFF8B5CF6))
-                  : const Color(0xFF8B5CF6);
-
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    LucideIcons.gift,
-                    size: _isHovered ? 19.5 : 18.0,
-                    color: activeIconColor,
+                      : const Color(0xFF6B7280),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Refer & Earn',
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13.5,
+                    fontWeight: widget.isSelected
+                        ? FontWeight.w800
+                        : (isHighlighted ? FontWeight.w700 : FontWeight.w600),
+                    color: isHighlighted
+                        ? const Color(0xFF7C3AED)
+                        : const Color(0xFF4B5563),
+                    letterSpacing: -0.2,
                   ),
-                  const SizedBox(width: 8),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: _isHovered ? 14.0 : 13.5,
-                      fontWeight: _isHovered
-                          ? FontWeight.w900
-                          : (widget.isSelected ? FontWeight.w800 : FontWeight.w700),
-                      color: activeTextColor,
-                      letterSpacing: _isHovered ? 0.2 : -0.2,
-                    ),
-                    child: const Text('Refer & Earn'),
-                  ),
-                ],
-              );
-            },
+                ),
+              ],
+            ),
           ),
         ),
       ),
