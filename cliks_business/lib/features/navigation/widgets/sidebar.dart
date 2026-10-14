@@ -418,7 +418,6 @@ class Sidebar extends ConsumerWidget {
                     label: 'HR',
                     isInitiallyExpanded:
                         navigation.currentRoute == AppRoute.staff ||
-                        navigation.currentRoute == AppRoute.attendance ||
                         navigation.currentRoute == AppRoute.payroll ||
                         navigation.currentRoute == AppRoute.hr,
                     children: [
@@ -435,20 +434,6 @@ class Sidebar extends ConsumerWidget {
                           ref
                               .read(navigationProvider.notifier)
                               .setRoute(AppRoute.staff);
-                        },
-                      ),
-                      _SidebarSubItem(
-                        label: 'Attendance',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.attendance,
-                        onTap: () {
-                          final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) {
-                            Navigator.pop(context);
-                          }
-                          ref
-                              .read(navigationProvider.notifier)
-                              .setRoute(AppRoute.attendance);
                         },
                       ),
                       _SidebarSubItem(
@@ -938,7 +923,6 @@ class Sidebar extends ConsumerWidget {
                     label: 'HR',
                     isInitiallyExpanded: [
                       AppRoute.staff,
-                      AppRoute.attendance,
                       AppRoute.payroll,
                       AppRoute.hr,
                       AppRoute.allocateEmployeeLoan,
@@ -954,15 +938,6 @@ class Sidebar extends ConsumerWidget {
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.staff),
-                      ),
-                      _buildMacOSSubItem(
-                        icon: LucideIcons.calendarCheck,
-                        label: 'Attendance',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.attendance,
-                        onTap: () => ref
-                            .read(navigationProvider.notifier)
-                            .setRoute(AppRoute.attendance),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.fileText,

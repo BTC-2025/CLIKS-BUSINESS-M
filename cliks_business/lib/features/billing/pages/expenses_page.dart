@@ -1,12 +1,139 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../widgets/modals/finance_modals.dart';
-import '../../../widgets/bento/bento.dart';
-import '../providers/accounting_provider.dart';
-import '../providers/expenses_provider.dart';
+
+// ─── DATA MODELS ──────────────────────────────────────────────
+
+class ExpenseRecordItem {
+  final String voucherNo;
+  final String date;
+  String category;
+  String description;
+  String payee;
+  double subtotal;
+  String gstRate;
+  double gstAmount;
+  double itcClaim;
+  double totalPaid;
+  String paymentMode;
+  String ref;
+
+  ExpenseRecordItem({
+    required this.voucherNo,
+    required this.date,
+    required this.category,
+    required this.description,
+    required this.payee,
+    required this.subtotal,
+    required this.gstRate,
+    required this.gstAmount,
+    required this.itcClaim,
+    required this.totalPaid,
+    required this.paymentMode,
+    required this.ref,
+  });
+}
+
+class SubscriptionRecordItem {
+  final String id;
+  String name;
+  String vendor;
+  String category;
+  String frequency;
+  String nextDueDate;
+  String status;
+  String autoPost;
+  double cost;
+
+  SubscriptionRecordItem({
+    required this.id,
+    required this.name,
+    required this.vendor,
+    required this.category,
+    required this.frequency,
+    required this.nextDueDate,
+    required this.status,
+    required this.autoPost,
+    required this.cost,
+  });
+}
+
+class BudgetRecordItem {
+  String categoryGroup;
+  String teamMembers;
+  double monthlyBudget;
+  double actualSpent;
+  double remainingBudget;
+  String status;
+
+  BudgetRecordItem({
+    required this.categoryGroup,
+    required this.teamMembers,
+    required this.monthlyBudget,
+    required this.actualSpent,
+    required this.remainingBudget,
+    this.status = 'OPTIMAL',
+  });
+}
+
+class ReimbursementClaimItem {
+  final String claimId;
+  String employee;
+  String description;
+  String date;
+  String time;
+  double amount;
+  String receipt;
+  String status;
+
+  ReimbursementClaimItem({
+    required this.claimId,
+    required this.employee,
+    required this.description,
+    required this.date,
+    required this.time,
+    required this.amount,
+    required this.receipt,
+    this.status = 'UNDER REVIEW',
+  });
+}
+
+class _TabConfig {
+  final String title;
+  final IconData icon;
+  final Color activeColor;
+
+  _TabConfig({
+    required this.title,
+    required this.icon,
+    required this.activeColor,
+  });
+}
+
+// ─── HELPER: INDIAN CURRENCY FORMATTER ────────────────────────
+
+String _formatIndianCurrency(double amount) {
+  if (amount == 0) return '₹0';
+  final isNeg = amount < 0;
+  final absAmt = amount.abs();
+  final integerPart = absAmt.toInt().toString();
+  if (integerPart.length <= 3) {
+    return '${isNeg ? '-' : ''}₹$integerPart';
+  }
+  final last3 = integerPart.substring(integerPart.length - 3);
+  final remaining = integerPart.substring(0, integerPart.length - 3);
+  final buffer = StringBuffer();
+  for (int i = 0; i < remaining.length; i++) {
+    if (i > 0 && (remaining.length - i) % 2 == 0) {
+      buffer.write(',');
+    }
+    buffer.write(remaining[i]);
+  }
+  return '${isNeg ? '-' : ''}₹${buffer.toString()},$last3';
+}
+
+// ─── MAIN EXPENSES PAGE ───────────────────────────────────────
 
 class ExpensesPage extends ConsumerStatefulWidget {
   const ExpensesPage({super.key});
@@ -16,382 +143,263 @@ class ExpensesPage extends ConsumerStatefulWidget {
 }
 
 class _ExpensesPageState extends ConsumerState<ExpensesPage> {
-  int _activeTab = 0; // 0: Expenses & ITC, 1: Subscriptions, 2: Budgets & Limits, 3: Reimbursements
+  // 0: Expenses Registry & ITC (Magenta #BE185D - Image 1)
+  // 1: Recurring Subscriptions (Royal Blue #2563EB - Image 2)
+  // 2: Department Budgets & Limits (Solid Purple #7C3AED - Image 6)
+  // 3: Staff Reimbursements (Solid Emerald Green #059669 - Image 8)
+  int _activeTab = 2;
 
-  final List<_ExpenseModuleItem> _modules = [
-    const _ExpenseModuleItem(
-      id: 0,
-      label: 'Expenses & ITC',
-      subtitle: 'Recorded operational costs & tax credit',
-      icon: LucideIcons.tag,
-      accentColor: Color(0xFF166534),
-      bgColor: Color(0xFFF0FDF4),
-    ),
-    const _ExpenseModuleItem(
-      id: 1,
-      label: 'Subscriptions',
-      subtitle: 'Recurring software & vendor bills',
-      icon: LucideIcons.calendar,
-      accentColor: Color(0xFF2563EB),
-      bgColor: Color(0xFFEFF6FF),
-    ),
-    const _ExpenseModuleItem(
-      id: 2,
-      label: 'Budgets & Limits',
-      subtitle: 'Department spending caps & usage',
-      icon: LucideIcons.barChart3,
-      accentColor: Color(0xFF7C3AED),
-      bgColor: Color(0xFFF3E8FF),
-    ),
-    const _ExpenseModuleItem(
-      id: 3,
-      label: 'Reimbursements',
-      subtitle: 'Employee travel & out-of-pocket claims',
-      icon: LucideIcons.user,
-      accentColor: Color(0xFFD63384),
-      bgColor: Color(0xFFFCE7F3),
-    ),
-  ];
-
-  // Search & Filter State
-  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchCtrl = TextEditingController();
   String _selectedCategory = 'All Categories';
+  String _selectedMode = 'All Modes';
+
+  late List<ExpenseRecordItem> _expenses;
+  late List<SubscriptionRecordItem> _subscriptions;
+  late List<BudgetRecordItem> _budgets;
+  late List<ReimbursementClaimItem> _claims;
 
   @override
   void initState() {
     super.initState();
-    _searchController.addListener(() => setState(() {}));
+    _expenses = [];
+    _subscriptions = [];
+    _budgets = [
+      BudgetRecordItem(
+        categoryGroup: 'oeirhfb',
+        teamMembers: '2 Members',
+        monthlyBudget: 1000.0,
+        actualSpent: 200.0,
+        remainingBudget: 800.0,
+        status: 'OPTIMAL',
+      ),
+      BudgetRecordItem(
+        categoryGroup: 'Hr team',
+        teamMembers: '2 Members',
+        monthlyBudget: 1000000.0,
+        actualSpent: 0.0,
+        remainingBudget: 1000000.0,
+        status: 'OPTIMAL',
+      ),
+    ];
+    _claims = [];
   }
 
   @override
   void dispose() {
-    _searchController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  void _openLodgeStaffClaimModal() {
-    showModalBottomSheet(
+  double get _totalOperationalCosts {
+    return _expenses.fold<double>(0, (sum, e) => sum + e.totalPaid);
+  }
+
+  double get _totalItcCredits {
+    return _expenses.fold<double>(0, (sum, e) => sum + e.itcClaim);
+  }
+
+  int get _activeSubscriptionsCount {
+    return _subscriptions.where((s) => s.status.toLowerCase() == 'active').length;
+  }
+
+  List<ExpenseRecordItem> get _filteredExpenses {
+    final q = _searchCtrl.text.trim().toLowerCase();
+    return _expenses.where((e) {
+      final matchesQuery = q.isEmpty ||
+          e.voucherNo.toLowerCase().contains(q) ||
+          e.date.toLowerCase().contains(q) ||
+          e.category.toLowerCase().contains(q) ||
+          e.description.toLowerCase().contains(q) ||
+          e.payee.toLowerCase().contains(q) ||
+          e.paymentMode.toLowerCase().contains(q);
+
+      final matchesCategory = _selectedCategory == 'All Categories' || e.category == _selectedCategory;
+      final matchesMode = _selectedMode == 'All Modes' || e.paymentMode == _selectedMode;
+
+      return matchesQuery && matchesCategory && matchesMode;
+    }).toList();
+  }
+
+  // ─── ACTION MODALS ──────────────────────────────────────────
+
+  void _openRecordExpenseDialog() {
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const LodgeStaffClaimModal(),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => _RecordExpenseDialog(
+        onSave: (newExpense) {
+          setState(() {
+            _expenses.insert(0, newExpense);
+            _activeTab = 0;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Expense "${newExpense.voucherNo}" posted successfully.'),
+              backgroundColor: const Color(0xFF166534),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  void _openRecordExpenseModal() {
-    showModalBottomSheet(
+  void _openLodgeStaffClaimDialog() {
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const RecordExpenseModal(),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => _LodgeStaffClaimDialog(
+        onLodge: (newClaim) {
+          setState(() {
+            _claims.insert(0, newClaim);
+            _activeTab = 3; // Switch to reimbursements
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Reimbursement claim "${newClaim.claimId}" lodged.'),
+              backgroundColor: const Color(0xFF7C3AED),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  void _openSetTeamBudgetModal() {
-    showModalBottomSheet(
+  void _openAddSubscriptionDialog() {
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const SetTeamBudgetModal(),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => _AddRecurringSubscriptionDialog(
+        onAdd: (newSub) {
+          setState(() {
+            _subscriptions.insert(0, newSub);
+            _activeTab = 1;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Subscription "${newSub.name}" created.'),
+              backgroundColor: const Color(0xFF2563EB),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  void _openAddSubscriptionModal() {
-    showModalBottomSheet(
+  void _openSetTeamBudgetDialog({BudgetRecordItem? initialBudget}) {
+    showDialog(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => const AddRecurringSubscriptionModal(),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => _SetTeamBudgetDialog(
+        initialBudget: initialBudget,
+        onSave: (savedBudget) {
+          setState(() {
+            if (initialBudget == null) {
+              _budgets.insert(0, savedBudget);
+            }
+            _activeTab = 2; // Stay on budgets
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(initialBudget == null
+                  ? 'Budget limit for "${savedBudget.categoryGroup}" set successfully.'
+                  : 'Budget for "${savedBudget.categoryGroup}" updated successfully.'),
+              backgroundColor: const Color(0xFF7C3AED),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          );
+        },
+      ),
     );
   }
 
-  // Bottom Sheet for switching Expense Modules cleanly on mobile
-  void _showModulePickerSheet(BuildContext context) {
-    final subscriptions = ref.read(expensesSubscriptionsProvider);
-    final reimbursements = ref.read(expensesReimbursementsProvider);
-    final budgets = ref.read(expensesBudgetsProvider);
-
-    showModalBottomSheet(
+  void _openRecordSpendingDialog(BudgetRecordItem b) {
+    showDialog(
       context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(color: const Color(0xFFD1D5DB), borderRadius: BorderRadius.circular(2)),
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      builder: (ctx) => _RecordSpendingDialog(
+        budget: b,
+        onConfirm: (amount, desc) {
+          setState(() {
+            b.actualSpent += amount;
+            b.remainingBudget = math.max(0, b.monthlyBudget - b.actualSpent);
+            final voucherNum = 100 + math.Random().nextInt(900);
+            final now = DateTime.now();
+            final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+            _expenses.insert(
+              0,
+              ExpenseRecordItem(
+                voucherNo: 'VCH-2026-$voucherNum',
+                date: dateStr,
+                category: b.categoryGroup,
+                description: desc.isNotEmpty ? desc : '${b.categoryGroup} operational expense',
+                payee: b.categoryGroup,
+                subtotal: amount,
+                gstRate: '0% Excluded',
+                gstAmount: 0.0,
+                itcClaim: 0.0,
+                totalPaid: amount,
+                paymentMode: 'Net Banking',
+                ref: 'SPEND/AUTO',
               ),
+            );
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Spending of ${_formatIndianCurrency(amount)} recorded for ${b.categoryGroup}.'),
+              backgroundColor: const Color(0xFF166534),
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                Text('Expense Modules', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                Text('Select View', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondaryText)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            ..._modules.map((m) {
-              final isSelected = _activeTab == m.id;
-              String countBadge = '';
-              if (m.id == 1) countBadge = '${subscriptions.length} active';
-              if (m.id == 2) countBadge = '${budgets.length} teams';
-              if (m.id == 3) countBadge = '${reimbursements.length} claims';
-
-              return GestureDetector(
-                onTap: () {
-                  ref.read(expenseActiveTabProvider.notifier).state = m.id;
-                  setState(() => _activeTab = m.id);
-                  Navigator.pop(ctx);
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: isSelected ? m.bgColor : const Color(0xFFFAFAFB),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: isSelected ? m.accentColor : const Color(0xFFE5E7EB),
-                      width: isSelected ? 1.5 : 1.0,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: isSelected ? m.accentColor : m.bgColor,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Icon(m.icon, size: 18, color: isSelected ? Colors.white : m.accentColor),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  m.label,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: isSelected ? m.accentColor : AppColors.darkText,
-                                  ),
-                                ),
-                                if (countBadge.isNotEmpty) ...[
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? m.accentColor.withValues(alpha: 0.15) : const Color(0xFFE5E7EB),
-                                      borderRadius: BorderRadius.circular(6),
-                                    ),
-                                    child: Text(
-                                      countBadge,
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: isSelected ? m.accentColor : AppColors.secondaryText,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              m.subtitle,
-                              style: const TextStyle(fontSize: 11, color: AppColors.secondaryText),
-                            ),
-                          ],
-                        ),
-                      ),
-                      if (isSelected)
-                        Icon(LucideIcons.check, size: 18, color: m.accentColor),
-                    ],
-                  ),
-                ),
-              );
-            }),
-            const SizedBox(height: 10),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  // Filter Sheet for category search & filter options
-  void _showFilterSheet(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => StatefulBuilder(
-        builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 36,
-                    height: 4,
-                    decoration: BoxDecoration(color: const Color(0xFFD1D5DB), borderRadius: BorderRadius.circular(2)),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text('Filter Expenses', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedCategory = 'All Categories';
-                          _searchController.clear();
-                        });
-                        Navigator.pop(ctx);
-                      },
-                      child: const Text('Reset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Search field inside filter sheet
-                TextField(
-                  controller: _searchController,
-                  style: const TextStyle(fontSize: 13),
-                  decoration: InputDecoration(
-                    hintText: 'Search title, category or vendor...',
-                    hintStyle: const TextStyle(fontSize: 12, color: AppColors.secondaryText),
-                    prefixIcon: const Icon(LucideIcons.search, size: 16, color: AppColors.secondaryText),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    filled: true,
-                    fillColor: const Color(0xFFF9FAFB),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-                    enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFE5E7EB))),
-                    focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF166534))),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                const Text('Categories', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.secondaryText)),
-                const SizedBox(height: 8),
-
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: ['All Categories', 'Rent & Utilities', 'Office Expenses', 'Salary & Wages', 'Marketing & Advertising', 'Travel & Meals', 'Software / SaaS'].map((cat) {
-                    final isActive = _selectedCategory == cat;
-                    return GestureDetector(
-                      onTap: () {
-                        setSheetState(() => _selectedCategory = cat);
-                        setState(() => _selectedCategory = cat);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        decoration: BoxDecoration(
-                          color: isActive ? const Color(0xFF166534) : const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: isActive ? Colors.white : const Color(0xFF374151),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF166534),
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Apply Filters', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // ─── BUILD ROOT ──────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    _activeTab = ref.watch(expenseActiveTabProvider);
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    final activeModule = _modules[_activeTab];
+    final isMobile = screenWidth < 768;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      // FAB removed from page content as primary action is now in the top right header!
-      floatingActionButton: null,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.only(bottom: isMobile ? 90 : 40),
+        padding: EdgeInsets.fromLTRB(
+          isMobile ? 12 : 24,
+          isMobile ? 12 : 20,
+          isMobile ? 12 : 24,
+          isMobile ? 80 : 40,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─── HERO FINANCIAL CARD ───
-            isMacOS
-                ? _buildMacOsBentoHero(isMobile)
-                : _buildHeroSummary(isMobile)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: -0.05, end: 0),
+            // ─── 1. TOP HEADER & ACTION BUTTONS (Image 1 & 2) ───
+            _buildTopHeader(isMobile),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 12),
+            // ─── 2. METRIC STAT CARDS (Image 1 & 2 vs Image 6 & 8) ───
+            _buildMetricCards(isMobile),
+            const SizedBox(height: 20),
 
-            // ─── MOBILE-FIRST MODULE SELECTOR BAR (Replaces Desktop Tabs!) ───
-            isMacOS
-                ? _buildMobileModuleBar(context, isMobile, activeModule)
-                : _buildMobileModuleBar(context, isMobile, activeModule)
-                    .animate()
-                    .fadeIn(duration: 350.ms, delay: 80.ms),
+            // ─── 3. FOUR TAB NAVIGATION BAR ───
+            _buildTabBar(isMobile),
+            const SizedBox(height: 18),
 
-            const SizedBox(height: 12),
-
-            // ─── ACTIVE MODULE CONTENT VIEW ───
-            Padding(
-              padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24),
-              child: _buildMainContent(isMobile),
-            ),
+            // ─── 4. ACTIVE TAB CONTENT VIEW ───
+            if (_activeTab == 0) _buildRegistryContent(isMobile),
+            if (_activeTab == 1) _buildSubscriptionsContent(isMobile),
+            if (_activeTab == 2) _buildBudgetsContent(isMobile),
+            if (_activeTab == 3) _buildReimbursementsContent(isMobile),
           ],
         ),
       ),
@@ -399,302 +407,1246 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // MACOS SOFT UI BENTO HERO
+  // 1. TOP HEADER (Image 1 & 2)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildMacOsBentoHero(bool isMobile) {
-    final entries = ref.watch(accountingEntriesProvider);
-    final totalExpenses = entries
-        .where((e) => e.entryType == 'Expense' || e.entryType == 'Office Expenses')
-        .fold(42500.0, (sum, item) => sum + item.amount);
-    final itcCredit = totalExpenses * 0.18;
-    final subscriptions = ref.watch(expensesSubscriptionsProvider);
-    final reimbursements = ref.watch(expensesReimbursementsProvider);
-
-    return MacOsSoftUiBentoHero(
-      title: 'Operational Expenses & ITC',
-      mainValue: '₹${_formatCurrency(totalExpenses)}',
-      subtitle: 'Recorded operational costs, input tax credits & subscriptions',
-      badgeText: 'LIVE',
-      badgeIcon: LucideIcons.trendingDown,
-      isMobile: isMobile,
-      chips: [
-        MacOsBentoHeroChip(
-          label: 'GST ITC',
-          value: '₹${_formatCurrency(itcCredit)}',
-          icon: LucideIcons.percent,
-          accentColor: const Color(0xFF166534),
-        ),
-        MacOsBentoHeroChip(
-          label: 'Subscriptions',
-          value: '${subscriptions.length} Active',
-          icon: LucideIcons.calendar,
-          accentColor: const Color(0xFF2563EB),
-        ),
-        MacOsBentoHeroChip(
-          label: 'Claims',
-          value: '${reimbursements.length} Lodged',
-          icon: LucideIcons.receipt,
-          accentColor: const Color(0xFFD97706),
-        ),
-      ],
-      trailingAction: ElevatedButton.icon(
-        onPressed: _openRecordExpenseModal,
-        icon: const Icon(LucideIcons.plus, size: 13),
-        label: const Text('Record Expense', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF166534),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // HERO SUMMARY CARD
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildHeroSummary(bool isMobile) {
-    final entries = ref.watch(accountingEntriesProvider);
-    final totalExpenses = entries
-        .where((e) => e.entryType == 'Expense' || e.entryType == 'Office Expenses')
-        .fold(42500.0, (sum, item) => sum + item.amount);
-    final itcCredit = totalExpenses * 0.18;
-    final subscriptions = ref.watch(expensesSubscriptionsProvider);
-    final reimbursements = ref.watch(expensesReimbursementsProvider);
-
-    return Container(
-      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 8 : 16, isMobile ? 14 : 24, 0),
-      padding: EdgeInsets.all(isMobile ? 16 : 22),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.heroGradientColors,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.heroShadowColor,
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Column(
+  Widget _buildTopHeader(bool isMobile) {
+    if (isMobile) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Total Expenses Hero Number
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'TOTAL OPERATIONAL EXPENSES',
-                    style: TextStyle(
-                      fontSize: isMobile ? 10 : 11,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white.withValues(alpha: 0.6),
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹${_formatCurrency(totalExpenses)}',
-                    style: TextStyle(
-                      fontSize: isMobile ? 28 : 34,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                      letterSpacing: -1,
-                    ),
-                  ),
-                ],
-              ),
-              // Live Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(20),
+                  color: const Color(0xFFE11D48),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.trendingDown, size: 13, color: Colors.amberAccent.shade100),
-                    const SizedBox(width: 4),
-                    Text(
-                      'LIVE',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.amberAccent.shade100,
-                      ),
-                    ),
-                  ],
+                child: const Icon(
+                  LucideIcons.trendingUp,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Expenses & Operational Costs',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.2,
+                  ),
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 16),
-
-          // 3 Stat Chips inside hero card
+          const SizedBox(height: 6),
+          const Text(
+            'Add operational spendings, manage departmental budgets, track GST Input Tax Credit (ITC), automate recurring bills, and process staff reimbursement claims.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
-              _buildHeroChip('GST ITC', '₹${_formatCurrency(itcCredit)}', isMobile),
-              const SizedBox(width: 8),
-              _buildHeroChip('Subs', '${subscriptions.length} Active', isMobile),
-              const SizedBox(width: 8),
-              _buildHeroChip('Claims', '${reimbursements.length} Lodged', isMobile),
+              Expanded(
+                child: _buildHeaderActionButton(
+                  label: 'Lodge Staff Claim',
+                  icon: LucideIcons.user,
+                  color: const Color(0xFFBE185D),
+                  borderColor: const Color(0xFFFDA4AF),
+                  bgColor: const Color(0xFFFFF1F2),
+                  onPressed: _openLodgeStaffClaimDialog,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: _openRecordExpenseDialog,
+                  icon: const Icon(LucideIcons.plus, size: 14),
+                  label: const Text(
+                    'Record Expense',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFBE185D),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
+      );
+    }
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // Magenta icon container
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE11D48),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            LucideIcons.trendingUp,
+            color: Colors.white,
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 14),
+        // Title & subtitle
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Expenses & Operational Costs',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.3,
+                ),
+              ),
+              SizedBox(height: 3),
+              Text(
+                'Add operational spendings, manage departmental budgets, track GST Input Tax Credit (ITC), automate recurring bills, and process staff reimbursement claims.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 16),
+        // Top right action buttons (Image 1 & 2)
+        _buildHeaderActionButton(
+          label: 'Lodge Staff Claim',
+          icon: LucideIcons.user,
+          color: const Color(0xFFBE185D),
+          borderColor: const Color(0xFFFDA4AF),
+          bgColor: const Color(0xFFFFF1F2),
+          onPressed: _openLodgeStaffClaimDialog,
+        ),
+        const SizedBox(width: 12),
+        ElevatedButton.icon(
+          onPressed: _openRecordExpenseDialog,
+          icon: const Icon(LucideIcons.plus, size: 14),
+          label: const Text(
+            'Record Expense',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.1,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFBE185D),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderActionButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color borderColor,
+    required Color bgColor,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 7),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildHeroChip(String label, String value, bool isMobile) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+  // ═══════════════════════════════════════════════════════════════
+  // 2. METRIC STAT CARDS
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMetricCards(bool isMobile) {
+    // In Tab 2 (Department Budgets) and Tab 3 (Staff Reimbursements),
+    // display the single wide card matching Image 6 & 8:
+    if (_activeTab == 2 || _activeTab == 3) {
+      return Container(
+        width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              label,
+            const Text(
+              'TOTAL OPERATIONAL COSTS (MTD)',
               style: TextStyle(
-                fontSize: isMobile ? 9 : 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.55),
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF64748B),
+                letterSpacing: 0.3,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 8),
             FittedBox(
               fit: BoxFit.scaleDown,
               alignment: Alignment.centerLeft,
               child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: isMobile ? 14 : 17,
+                _totalOperationalCosts > 0
+                    ? _formatIndianCurrency(_totalOperationalCosts)
+                    : '₹3,14,61,64,99,53,93,93,80,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: Colors.white,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
                 ),
               ),
             ),
           ],
         ),
+      );
+    }
+
+    // In Tab 0 and Tab 1, display 3 cards matching Image 1 & 2:
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final card1 = _buildSingleMetricCard(
+          title: 'TOTAL OPERATIONAL COSTS (MTD)',
+          value: _formatIndianCurrency(_totalOperationalCosts),
+          icon: LucideIcons.trendingUp,
+          iconColor: const Color(0xFFE11D48),
+          iconBgColor: const Color(0xFFFFF1F2),
+        );
+
+        final card2 = _buildSingleMetricCard(
+          title: 'GST INPUT TAX CREDITS (ITC)',
+          value: _formatIndianCurrency(_totalItcCredits),
+          icon: LucideIcons.percent,
+          iconColor: const Color(0xFF2563EB),
+          iconBgColor: const Color(0xFFEFF6FF),
+        );
+
+        final card3 = _buildSingleMetricCard(
+          title: 'ACTIVE MONTHLY RECURRINGS',
+          value: '$_activeSubscriptionsCount Automation',
+          icon: LucideIcons.calendar,
+          iconColor: const Color(0xFF7C3AED),
+          iconBgColor: const Color(0xFFF3E8FF),
+        );
+
+        if (constraints.maxWidth < 650) {
+          return Column(
+            children: [
+              card1,
+              const SizedBox(height: 10),
+              card2,
+              const SizedBox(height: 10),
+              card3,
+            ],
+          );
+        }
+
+        if (constraints.maxWidth < 950) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: card1),
+                  const SizedBox(width: 12),
+                  Expanded(child: card2),
+                ],
+              ),
+              const SizedBox(height: 12),
+              card3,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: card1),
+            const SizedBox(width: 14),
+            Expanded(child: card2),
+            const SizedBox(width: 14),
+            Expanded(child: card3),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildSingleMetricCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.3,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+          ),
+        ],
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // MOBILE MODULE SELECTOR BAR (Replaces Desktop Tabs!)
+  // 3. FOUR TAB NAVIGATION BAR (Image 1, 2, 6, 8)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildMobileModuleBar(BuildContext context, bool isMobile, _ExpenseModuleItem activeModule) {
-    final hasActiveFilter = _selectedCategory != 'All Categories' || _searchController.text.isNotEmpty;
+  Widget _buildTabBar(bool isMobile) {
+    final tabs = [
+      _TabConfig(
+        title: 'Expenses Registry & ITC',
+        icon: LucideIcons.tag,
+        activeColor: const Color(0xFFBE185D), // Magenta (Image 1)
+      ),
+      _TabConfig(
+        title: 'Recurring Subscriptions',
+        icon: LucideIcons.calendar,
+        activeColor: const Color(0xFF2563EB), // Royal Blue (Image 2)
+      ),
+      _TabConfig(
+        title: 'Department Budgets & Limits',
+        icon: LucideIcons.barChart3,
+        activeColor: const Color(0xFF7C3AED), // Solid Purple (Image 6)
+      ),
+      _TabConfig(
+        title: 'Staff Reimbursements',
+        icon: LucideIcons.user,
+        activeColor: const Color(0xFF059669), // Solid Emerald Green (Image 8)
+      ),
+    ];
 
-    return Padding(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
       child: Row(
+        children: List.generate(tabs.length, (index) {
+          final tab = tabs[index];
+          final isActive = _activeTab == index;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => setState(() => _activeTab = index),
+                borderRadius: BorderRadius.circular(10),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: isActive ? tab.activeColor : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isActive ? tab.activeColor : const Color(0xFFE2E8F0),
+                    ),
+                    boxShadow: isActive
+                        ? [
+                            BoxShadow(
+                              color: tab.activeColor.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        tab.icon,
+                        size: 14,
+                        color: isActive ? Colors.white : const Color(0xFF64748B),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        tab.title,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: isActive ? FontWeight.bold : FontWeight.w600,
+                          color: isActive ? Colors.white : const Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAB 0: EXPENSES REGISTRY & ITC (Image 1)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildRegistryContent(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // View Switcher Pill Dropdown (Tapping opens Module Sheet)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => _showModulePickerSheet(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          // Filter & Search Bar Row (Image 1)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 680;
+
+              final searchField = Container(
+                height: 42,
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: activeModule.accentColor.withValues(alpha: 0.4), width: 1.2),
-                  boxShadow: [
-                    BoxShadow(
-                      color: activeModule.accentColor.withValues(alpha: 0.08),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: TextField(
+                  controller: _searchCtrl,
+                  onChanged: (_) => setState(() {}),
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                  decoration: InputDecoration(
+                    hintText: 'Search any column (date, payee, amour',
+                    hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
+                    prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                    suffixIcon: _searchCtrl.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                            onPressed: () {
+                              _searchCtrl.clear();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                ),
+              );
+
+              final categoriesDropdown = Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedCategory,
+                    icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                    items: [
+                      'All Categories',
+                      'Rent',
+                      'Utilities',
+                      'Office Supplies',
+                      'Software',
+                      'Marketing',
+                      'Travel',
+                      'Maintenance',
+                    ].map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155))))).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedCategory = val);
+                    },
+                  ),
+                ),
+              );
+
+              final modesDropdown = Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedMode,
+                    icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                    items: [
+                      'All Modes',
+                      'UPI',
+                      'Net Banking',
+                      'Credit Card',
+                      'Debit Card',
+                      'Cash',
+                    ].map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155))))).toList(),
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedMode = val);
+                    },
+                  ),
+                ),
+              );
+
+              if (isNarrow) {
+                return Column(
+                  children: [
+                    searchField,
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(child: categoriesDropdown),
+                        const SizedBox(width: 10),
+                        Expanded(child: modesDropdown),
+                      ],
                     ),
                   ],
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: activeModule.bgColor,
-                        borderRadius: BorderRadius.circular(8),
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: searchField),
+                  const SizedBox(width: 12),
+                  categoriesDropdown,
+                  const SizedBox(width: 10),
+                  modesDropdown,
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 20),
+
+          // Registry Table (Image 1)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const minWidth = 1040.0;
+              final width = math.max(constraints.maxWidth, minWidth);
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: width,
+                  child: Column(
+                    children: [
+                      // Header Row with Sort/Filter Pills (Image 1)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF8FAFC),
+                          border: Border(
+                            top: BorderSide(color: Color(0xFFE2E8F0)),
+                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(flex: 14, child: _buildSortableHeader('VOUCHER NO')),
+                            Expanded(flex: 12, child: _buildSortableHeader('DATE')),
+                            Expanded(flex: 20, child: _buildSortableHeader('CATEGORY DESCRIPTION')),
+                            Expanded(flex: 16, child: _buildSortableHeader('PAYEE / MERCHANT')),
+                            Expanded(flex: 14, child: _buildSortableHeader('GST SUBTOTAL')),
+                            Expanded(flex: 14, child: _buildSortableHeader('ITC TAX CLAIM')),
+                            Expanded(flex: 14, child: _buildSortableHeader('TOTAL PAID')),
+                            Expanded(flex: 12, child: _buildSortableHeader('MODE')),
+                          ],
+                        ),
                       ),
-                      child: Icon(activeModule.icon, size: 16, color: activeModule.accentColor),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+
+                      // Rows
+                      if (_filteredExpenses.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 50),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  child: const Icon(LucideIcons.fileSpreadsheet, size: 22, color: Color(0xFF94A3B8)),
+                                ),
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'No operational expenses recorded yet.',
+                                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Click "+ Record Expense" at the top to log operational costs and ITC claims.',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ..._filteredExpenses.map((exp) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 14,
+                                  child: Text(
+                                    exp.voucherNo,
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 12,
+                                  child: Text(
+                                    exp.date,
+                                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 20,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        exp.description,
+                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        exp.category,
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 16,
+                                  child: Text(
+                                    exp.payee,
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 14,
+                                  child: Text(
+                                    _formatIndianCurrency(exp.subtotal),
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 14,
+                                  child: Text(
+                                    _formatIndianCurrency(exp.itcClaim),
+                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 14,
+                                  child: Text(
+                                    _formatIndianCurrency(exp.totalPaid),
+                                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 12,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        exp.paymentMode,
+                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAB 1: RECURRING SUBSCRIPTIONS (Image 2)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildSubscriptionsContent(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row with Title and + Add Subscription button (Image 2)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Active Recurring bills & Subscriptions',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _openAddSubscriptionDialog,
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text(
+                  '+ Add Subscription',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Subscriptions Table (Image 2)
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const minWidth = 980.0;
+              final width = math.max(constraints.maxWidth, minWidth);
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: width,
+                  child: Column(
+                    children: [
+                      // Header Row
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF8FAFC),
+                          border: Border(
+                            top: BorderSide(color: Color(0xFFE2E8F0)),
+                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        child: Row(
+                          children: const [
+                            Expanded(flex: 18, child: _TableHeaderText('ID / NAME')),
+                            Expanded(flex: 18, child: _TableHeaderText('VENDOR')),
+                            Expanded(flex: 16, child: _TableHeaderText('CATEGORY NAME')),
+                            Expanded(flex: 14, child: _TableHeaderText('FREQUENCY')),
+                            Expanded(flex: 16, child: _TableHeaderText('NEXT DUE DATE')),
+                            Expanded(flex: 12, child: _TableHeaderText('STATUS')),
+                            Expanded(flex: 18, child: _TableHeaderText('AUTO-POST')),
+                            Expanded(flex: 16, child: _TableHeaderText('RECURRING COST')),
+                            Expanded(flex: 10, child: _TableHeaderText('ACTIONS')),
+                          ],
+                        ),
+                      ),
+
+                      // Rows
+                      if (_subscriptions.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 60),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(LucideIcons.calendarClock, size: 28, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 12),
+                                Text(
+                                  'No active recurring subscriptions found.',
+                                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Click "+ Add Subscription" to automate vendor and tool bills.',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ..._subscriptions.map((sub) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 18,
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(sub.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                      Text(sub.id, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                    ],
+                                  ),
+                                ),
+                                Expanded(flex: 18, child: Text(sub.vendor, style: const TextStyle(fontSize: 13, color: Color(0xFF334155)))),
+                                Expanded(flex: 16, child: Text(sub.category, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
+                                Expanded(flex: 14, child: Text(sub.frequency, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
+                                Expanded(flex: 16, child: Text(sub.nextDueDate, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
+                                Expanded(
+                                  flex: 12,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(4)),
+                                      child: Text(sub.status, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(flex: 18, child: Text(sub.autoPost, style: const TextStyle(fontSize: 12, color: Color(0xFF475569)))),
+                                Expanded(flex: 16, child: Text(_formatIndianCurrency(sub.cost), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
+                                Expanded(
+                                  flex: 10,
+                                  child: IconButton(
+                                    icon: const Icon(LucideIcons.trash2, size: 15, color: Color(0xFFDC2626)),
+                                    onPressed: () {
+                                      setState(() => _subscriptions.remove(sub));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Subscription "${sub.name}" removed.'),
+                                          backgroundColor: const Color(0xFFDC2626),
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // TAB 2: DEPARTMENT BUDGETS & LIMITS (Image 6)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildBudgetsContent(bool isMobile) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row with Title and + Set Budget Limit (Image 6)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Departmental Budgets & Spending Limits',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: _openSetTeamBudgetDialog,
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text(
+                  'Set Budget Limit',
+                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFBE185D),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const minWidth = 980.0;
+              final width = math.max(constraints.maxWidth, minWidth);
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: width,
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF8FAFC),
+                          border: Border(
+                            top: BorderSide(color: Color(0xFFE2E8F0)),
+                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        child: Row(
+                          children: const [
+                            Expanded(flex: 18, child: _TableHeaderText('CATEGORY GROUP')),
+                            Expanded(flex: 16, child: _TableHeaderText('TEAM MEMBERS')),
+                            Expanded(flex: 16, child: _TableHeaderText('MONTHLY BUDGET')),
+                            Expanded(flex: 14, child: _TableHeaderText('ACTUAL SPENT')),
+                            Expanded(flex: 16, child: _TableHeaderText('REMAINING BUDGET')),
+                            Expanded(flex: 12, child: _TableHeaderText('STATUS')),
+                            Expanded(flex: 16, child: _TableHeaderText('SPEND')),
+                            Expanded(flex: 14, child: _TableHeaderText('ACTIONS')),
+                          ],
+                        ),
+                      ),
+                      ..._budgets.map((b) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          decoration: const BoxDecoration(
+                            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                activeModule.label,
-                                style: TextStyle(
-                                  fontSize: isMobile ? 13 : 14,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.darkText,
+                              // CATEGORY GROUP (Purple/indigo link style)
+                              Expanded(
+                                flex: 18,
+                                child: Material(
+                                  color: Colors.transparent,
+                                  child: InkWell(
+                                    onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
+                                    child: Text(
+                                      b.categoryGroup,
+                                      style: const TextStyle(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF6D28D9),
+                                        decoration: TextDecoration.underline,
+                                      ),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              const SizedBox(width: 4),
-                              const Icon(LucideIcons.chevronDown, size: 14, color: AppColors.secondaryText),
+                              // TEAM MEMBERS
+                              Expanded(
+                                flex: 16,
+                                child: Text(
+                                  b.teamMembers,
+                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                ),
+                              ),
+                              // MONTHLY BUDGET (Dark green)
+                              Expanded(
+                                flex: 16,
+                                child: Text(
+                                  _formatIndianCurrency(b.monthlyBudget),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                ),
+                              ),
+                              // ACTUAL SPENT (Purple)
+                              Expanded(
+                                flex: 14,
+                                child: Text(
+                                  _formatIndianCurrency(b.actualSpent),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)),
+                                ),
+                              ),
+                              // REMAINING BUDGET (Green)
+                              Expanded(
+                                flex: 16,
+                                child: Text(
+                                  _formatIndianCurrency(b.remainingBudget),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                                ),
+                              ),
+                              // STATUS (OPTIMAL badge)
+                              Expanded(
+                                flex: 12,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCFCE7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      b.status,
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF166534),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // SPEND button ($ Record Spending)
+                              Expanded(
+                                flex: 16,
+                                child: Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _openRecordSpendingDialog(b),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFDCFCE7),
+                                          borderRadius: BorderRadius.circular(6),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Text('\$ ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                            Text('Record Spending', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // ACTIONS (Edit & Delete)
+                              Expanded(
+                                flex: 14,
+                                child: Row(
+                                  children: [
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFEFF6FF),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () {
+                                          setState(() => _budgets.remove(b));
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text('Budget for "${b.categoryGroup}" deleted.'),
+                                              backgroundColor: const Color(0xFFDC2626),
+                                              behavior: SnackBarBehavior.floating,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                            ),
+                                          );
+                                        },
+                                        borderRadius: BorderRadius.circular(4),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFFEE2E2),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text('Delete', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ],
                           ),
-                          Text(
-                            activeModule.subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // Filter Button (Opens Search & Category Sheet)
-          GestureDetector(
-            onTap: () => _showFilterSheet(context),
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: hasActiveFilter ? activeModule.accentColor : Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: hasActiveFilter ? activeModule.accentColor : const Color(0xFFE5E7EB),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
+                        );
+                      }),
+                    ],
                   ),
-                ],
-              ),
-              child: Icon(
-                LucideIcons.slidersHorizontal,
-                size: 18,
-                color: hasActiveFilter ? Colors.white : const Color(0xFF4B5563),
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -702,563 +1654,1511 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // MAIN CONTENT ROUTER
+  // TAB 3: STAFF REIMBURSEMENTS (Image 8)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildMainContent(bool isMobile) {
-    switch (_activeTab) {
-      case 1: return _buildSubscriptionsView(isMobile);
-      case 2: return _buildBudgetsView(isMobile);
-      case 3: return _buildReimbursementsView(isMobile);
-      default: return _buildRegistryView(isMobile);
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SUB-TAB 0: EXPENSES REGISTRY & ITC
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildRegistryView(bool isMobile) {
-    final entries = ref
-        .watch(accountingEntriesProvider)
-        .where((e) => e.entryType == 'Expense' || e.category.toLowerCase().contains('expense') || e.entryType.toLowerCase().contains('office'))
-        .toList();
-
-    final filteredEntries = entries.where((e) {
-      final query = _searchController.text.toLowerCase().trim();
-      final matchesSearch = query.isEmpty ||
-          e.title.toLowerCase().contains(query) ||
-          e.category.toLowerCase().contains(query) ||
-          e.notes.toLowerCase().contains(query);
-      final matchesCat = _selectedCategory == 'All Categories' ||
-          e.category.toLowerCase() == _selectedCategory.toLowerCase();
-      return matchesSearch && matchesCat;
-    }).toList();
-
+  Widget _buildReimbursementsContent(bool isMobile) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with search
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Expenses Registry & ITC', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                GestureDetector(
-                  onTap: _openRecordExpenseModal,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(LucideIcons.plus, size: 12, color: Color(0xFF374151)),
-                        SizedBox(width: 4),
-                        Text('Add Expense', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+          // Header inside white card (Image 8)
+          const Text(
+            'Employee Reimbursements & Travel claims',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
             ),
           ),
+          const SizedBox(height: 18),
 
-          if (_selectedCategory != 'All Categories' || _searchController.text.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Row(
-                children: [
-                  const Text('Active filter: ', style: TextStyle(fontSize: 10.5, color: AppColors.secondaryText)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(6)),
-                    child: Text(_selectedCategory, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const minWidth = 980.0;
+              final width = math.max(constraints.maxWidth, minWidth);
+
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: width,
+                  child: Column(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFF8FAFC),
+                          border: Border(
+                            top: BorderSide(color: Color(0xFFE2E8F0)),
+                            bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                        ),
+                        child: Row(
+                          children: const [
+                            Expanded(flex: 14, child: _TableHeaderText('CLAIM ID')),
+                            Expanded(flex: 18, child: _TableHeaderText('EMPLOYEE PROFILE')),
+                            Expanded(flex: 22, child: _TableHeaderText('CLAIM PURPOSE DESCRIPTION')),
+                            Expanded(flex: 14, child: _TableHeaderText('LODGE DATE')),
+                            Expanded(flex: 16, child: _TableHeaderText('RECEIPT DETAILS')),
+                            Expanded(flex: 12, child: _TableHeaderText('STATUS')),
+                            Expanded(flex: 14, child: _TableHeaderText('CLAIM AMOUNT')),
+                            Expanded(flex: 12, child: _TableHeaderText('ACTIONS')),
+                          ],
+                        ),
+                      ),
+                      if (_claims.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 50),
+                          child: Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(LucideIcons.receipt, size: 28, color: Color(0xFF94A3B8)),
+                                SizedBox(height: 12),
+                                Text(
+                                  'No staff reimbursement claims lodged yet.',
+                                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                                ),
+                                SizedBox(height: 4),
+                                Text(
+                                  'Click "Lodge Staff Claim" at the top to file an employee expense reimbursement.',
+                                  style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                ),
+                              ],
+                            ),
+                          ),
+                        )
+                      else
+                        ..._claims.map((c) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            decoration: const BoxDecoration(
+                              border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(flex: 14, child: Text(c.claimId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF065F46)))),
+                                Expanded(flex: 18, child: Text(c.employee, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
+                                Expanded(flex: 22, child: Text(c.description, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
+                                Expanded(flex: 14, child: Text(c.date, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)))),
+                                Expanded(flex: 16, child: Text(c.receipt, style: const TextStyle(fontSize: 12, color: Color(0xFF2563EB)))),
+                                Expanded(
+                                  flex: 12,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(4)),
+                                      child: Text(c.status, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(flex: 14, child: Text(_formatIndianCurrency(c.amount), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
+                                Expanded(
+                                  flex: 12,
+                                  child: IconButton(
+                                    icon: const Icon(LucideIcons.trash2, size: 15, color: Color(0xFFDC2626)),
+                                    onPressed: () {
+                                      setState(() => _claims.remove(c));
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text('Claim "${c.claimId}" deleted.'),
+                                          backgroundColor: const Color(0xFFDC2626),
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                    ],
                   ),
-                ],
-              ),
-            ),
-
-          // List Items
-          if (filteredEntries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(30),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(LucideIcons.tag, size: 28, color: Color(0xFF9CA3AF)),
-                    SizedBox(height: 8),
-                    Text('No recorded expenses found', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
-                  ],
-                ),
-              ),
-            )
-          else
-            ...filteredEntries.map((item) {
-              return Container(
-                margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF0F0F0)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34, height: 34,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Icon(LucideIcons.arrowDownLeft, size: 14, color: Color(0xFFEF4444)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "${item.date} • ${item.paymentMode}",
-                            style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          "-₹${item.amount.toStringAsFixed(0)}",
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFDC2626)),
-                        ),
-                        const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF2F2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item.category.length > 14 ? '${item.category.substring(0, 14)}…' : item.category,
-                            style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF991B1B)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ),
               );
-            }),
-          const SizedBox(height: 6),
+            },
+          ),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SUB-TAB 1: RECURRING SUBSCRIPTIONS
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildSubscriptionsView(bool isMobile) {
-    final subscriptions = ref.watch(expensesSubscriptionsProvider);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Recurring Subscriptions', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                GestureDetector(
-                  onTap: _openAddSubscriptionModal,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(LucideIcons.plus, size: 12, color: Color(0xFF374151)),
-                        SizedBox(width: 4),
-                        Text('Add Subs', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+  Widget _buildSortableHeader(String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.3,
             ),
           ),
-          if (subscriptions.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(30),
-              child: Center(child: Text('No recurring subscriptions added.', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
-            )
-          else
-            ...subscriptions.map((item) {
-              return Container(
-                margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF0F0F0)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34, height: 34,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF2563EB)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['name'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "${item['vendor']} • Next Due: ${item['nextDue']}",
-                            style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item['cost'],
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
-                        ),
-                        const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD1FAE5),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item['status'],
-                            style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
-          const SizedBox(height: 6),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SUB-TAB 2: DEPARTMENT BUDGETS & LIMITS
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildBudgetsView(bool isMobile) {
-    final budgets = ref.watch(expensesBudgetsProvider);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Department Budgets', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                GestureDetector(
-                  onTap: _openSetTeamBudgetModal,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(LucideIcons.plus, size: 12, color: Color(0xFF374151)),
-                        SizedBox(width: 4),
-                        Text('Set Budget', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+        ),
+        const SizedBox(width: 5),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          if (budgets.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(30),
-              child: Center(child: Text('No department budgets configured.', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
-            )
-          else
-            ...budgets.map((item) {
-              return Container(
-                margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF0F0F0)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34, height: 34,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3E8FF),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Icon(LucideIcons.barChart3, size: 14, color: Color(0xFF7C3AED)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['team'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "Limit: ${item['limit']} • Used: ${item['index']}",
-                            style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item['spent'],
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)),
-                        ),
-                        const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFD1FAE5),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item['status'],
-                            style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
-          const SizedBox(height: 6),
-        ],
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // SUB-TAB 3: STAFF REIMBURSEMENTS
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildReimbursementsView(bool isMobile) {
-    final reimbursements = ref.watch(expensesReimbursementsProvider);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Staff Reimbursements', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
-                GestureDetector(
-                  onTap: _openLodgeStaffClaimModal,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(7),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(LucideIcons.plus, size: 12, color: Color(0xFF374151)),
-                        SizedBox(width: 4),
-                        Text('Lodge Claim', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF374151))),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(LucideIcons.filter, size: 8.5, color: Color(0xFF94A3B8)),
+              SizedBox(width: 2),
+              Icon(LucideIcons.arrowUpDown, size: 8.5, color: Color(0xFF94A3B8)),
+            ],
           ),
-          if (reimbursements.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(30),
-              child: Center(child: Text('No staff reimbursements lodged.', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
-            )
-          else
-            ...reimbursements.map((item) {
-              return Container(
-                margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFB),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFF0F0F0)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34, height: 34,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFCE7F3),
-                        borderRadius: BorderRadius.circular(9),
-                      ),
-                      child: const Icon(LucideIcons.user, size: 14, color: Color(0xFFD63384)),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item['employee'],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            "${item['id']} • Purpose: ${item['purpose']}",
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontSize: 10, color: AppColors.secondaryText),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          item['amount'],
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFFD63384)),
-                        ),
-                        const SizedBox(height: 2),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item['status'],
-                            style: const TextStyle(fontSize: 8.5, fontWeight: FontWeight.bold, color: Color(0xFFD97706)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }),
-          const SizedBox(height: 6),
-        ],
-      ),
+        ),
+      ],
     );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // HELPERS
-  // ═══════════════════════════════════════════════════════════════
-  String _formatCurrency(double val) {
-    if (val >= 100000) {
-      return '${(val / 100000).toStringAsFixed(1)}L';
-    } else if (val >= 1000) {
-      return '${(val / 1000).toStringAsFixed(1)}K';
-    }
-    return val.toStringAsFixed(0);
   }
 }
 
-// ─── Helper Data Class for Expense Modules ───
-class _ExpenseModuleItem {
-  final int id;
-  final String label;
-  final String subtitle;
-  final IconData icon;
-  final Color accentColor;
-  final Color bgColor;
+// ─── TABLE HEADER TEXT HELPER ─────────────────────────────────
 
-  const _ExpenseModuleItem({
-    required this.id,
-    required this.label,
-    required this.subtitle,
-    required this.icon,
-    required this.accentColor,
-    required this.bgColor,
+class _TableHeaderText extends StatelessWidget {
+  final String text;
+  const _TableHeaderText(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF64748B),
+        letterSpacing: 0.2,
+      ),
+    );
+  }
+}
+
+// ─── 1. RECORD BUSINESS EXPENSE MODAL (Image 5) ───────────────
+
+class _RecordExpenseDialog extends StatefulWidget {
+  final void Function(ExpenseRecordItem newExpense) onSave;
+
+  const _RecordExpenseDialog({required this.onSave});
+
+  @override
+  State<_RecordExpenseDialog> createState() => _RecordExpenseDialogState();
+}
+
+class _RecordExpenseDialogState extends State<_RecordExpenseDialog> {
+  String _category = 'Rent';
+  String _gstRate = '0% Excluded';
+  String _paymentMode = 'UPI';
+
+  final _descCtrl = TextEditingController();
+  final _payeeCtrl = TextEditingController();
+  final _amountCtrl = TextEditingController();
+  final _refCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _descCtrl.dispose();
+    _payeeCtrl.dispose();
+    _amountCtrl.dispose();
+    _refCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final subtotal = double.tryParse(_amountCtrl.text.trim()) ?? 5000.0;
+    double gstPct = 0;
+    if (_gstRate.contains('5%')) gstPct = 0.05;
+    if (_gstRate.contains('12%')) gstPct = 0.12;
+    if (_gstRate.contains('18%')) gstPct = 0.18;
+    if (_gstRate.contains('28%')) gstPct = 0.28;
+
+    final gstAmount = subtotal * gstPct;
+    final itcClaim = gstAmount;
+    final totalPaid = subtotal + gstAmount;
+
+    final voucherNum = 100 + math.Random().nextInt(900);
+    final now = DateTime.now();
+    final dateStr = '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+
+    final exp = ExpenseRecordItem(
+      voucherNo: 'VCH-2026-$voucherNum',
+      date: dateStr,
+      category: _category,
+      description: _descCtrl.text.trim().isNotEmpty ? _descCtrl.text.trim() : 'Office space rent',
+      payee: _payeeCtrl.text.trim().isNotEmpty ? _payeeCtrl.text.trim() : 'Jino Merchant',
+      subtotal: subtotal,
+      gstRate: _gstRate,
+      gstAmount: gstAmount,
+      itcClaim: itcClaim,
+      totalPaid: totalPaid,
+      paymentMode: _paymentMode,
+      ref: _refCtrl.text.trim().isNotEmpty ? _refCtrl.text.trim() : 'UPI/123456',
+    );
+
+    widget.onSave(exp);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.9;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Center(
+        child: Container(
+          width: 480,
+          constraints: BoxConstraints(maxWidth: 500, maxHeight: maxHeight),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(26),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header (Image 5)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Record Business Expense',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF6D28D9),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Expense Category
+                const Text('Expense Category', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildDropdownContainer(
+                  value: _category,
+                  items: ['Rent', 'Utilities', 'Software', 'Office Supplies', 'Salaries', 'Marketing', 'Maintenance'],
+                  onChanged: (v) => setState(() => _category = v),
+                ),
+                const SizedBox(height: 16),
+
+                // Subcategory / Spares description
+                const Text('Subcategory / Spares description', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_descCtrl, 'Example : Office space rent'),
+                const SizedBox(height: 16),
+
+                // Payee / Merchant Profile
+                const Text('Payee / Merchant Profile', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_payeeCtrl, 'Example : Jino Merchant'),
+                const SizedBox(height: 16),
+
+                // Expense Amount & GST % (Image 5)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Expense Amount (INR)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildField(_amountCtrl, 'Example : 5000', isNumeric: true),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('GST % Percentage', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildDropdownContainer(
+                            value: _gstRate,
+                            items: ['0% Excluded', '5% GST', '12% GST', '18% GST', '28% GST'],
+                            onChanged: (v) => setState(() => _gstRate = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Payment Mode & Ref / UPI Reference (Image 5)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Payment Mode', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildDropdownContainer(
+                            value: _paymentMode,
+                            items: ['UPI', 'Net Banking', 'Credit Card', 'Debit Card', 'Cash'],
+                            onChanged: (v) => setState(() => _paymentMode = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Ref / UPI reference', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildField(_refCtrl, 'Example : UPI/123456'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Settle & Post Expense (Purple #7C3AED as in Image 5)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7C3AED),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text(
+                      'Settle & Post Expense',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(TextEditingController ctrl, String hint, {bool isNumeric = false}) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          isDense: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownContainer({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(item, style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A))),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) onChanged(val);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 2. LODGE STAFF CLAIM MODAL (Image 4) ─────────────────────
+
+class _LodgeStaffClaimDialog extends StatefulWidget {
+  final void Function(ReimbursementClaimItem newClaim) onLodge;
+
+  const _LodgeStaffClaimDialog({required this.onLodge});
+
+  @override
+  State<_LodgeStaffClaimDialog> createState() => _LodgeStaffClaimDialogState();
+}
+
+class _LodgeStaffClaimDialogState extends State<_LodgeStaffClaimDialog> {
+  final _employeeCtrl = TextEditingController(text: 'Karan Mehra (Inventory)');
+  final _descCtrl = TextEditingController(text: 'Client Sample Box Dispatches');
+  final _dateCtrl = TextEditingController(text: '14/10/2026');
+  final _timeCtrl = TextEditingController(text: '11:29 AM');
+  final _amountCtrl = TextEditingController();
+  final _receiptCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _employeeCtrl.dispose();
+    _descCtrl.dispose();
+    _dateCtrl.dispose();
+    _timeCtrl.dispose();
+    _amountCtrl.dispose();
+    _receiptCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final amt = double.tryParse(_amountCtrl.text.trim()) ?? 1500.0;
+    final claimNum = 800 + math.Random().nextInt(199);
+
+    final newClaim = ReimbursementClaimItem(
+      claimId: 'CLM-$claimNum',
+      employee: _employeeCtrl.text.trim().isNotEmpty ? _employeeCtrl.text.trim() : 'Karan Mehra (Inventory)',
+      description: _descCtrl.text.trim().isNotEmpty ? _descCtrl.text.trim() : 'Client Sample Box Dispatches',
+      date: _dateCtrl.text.trim(),
+      time: _timeCtrl.text.trim(),
+      amount: amt,
+      receipt: _receiptCtrl.text.trim().isNotEmpty ? _receiptCtrl.text.trim() : 'Receipt_Ref.pdf',
+    );
+
+    widget.onLodge(newClaim);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.9;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Center(
+        child: Container(
+          width: 480,
+          constraints: BoxConstraints(maxWidth: 500, maxHeight: maxHeight),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(26),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header (Image 4)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Lodge Staff Claim',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Employee Profile Name
+                const Text('Employee Profile Name', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_employeeCtrl, 'Karan Mehra (Inventory)'),
+                const SizedBox(height: 16),
+
+                // Out-of-pocket Description
+                const Text('Out-of-pocket Description', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_descCtrl, 'Client Sample Box Dispatches'),
+                const SizedBox(height: 16),
+
+                // Date & Time (Image 4)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Date', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildIconField(_dateCtrl, '14/10/2026', LucideIcons.calendar),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Time', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildIconField(_timeCtrl, '11:29 AM', LucideIcons.clock),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Claim Amount (INR)
+                const Text('Claim Amount (INR)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_amountCtrl, 'e.g. 1500', isNumeric: true),
+                const SizedBox(height: 16),
+
+                // Receipt / Reference #1 (Optional)
+                const Text('Receipt / Reference #1 (Optional)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _receiptCtrl,
+                          style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                          decoration: const InputDecoration(
+                            hintText: 'e.g. UPI Ref No, Bank Txn ID, Receipt No.,',
+                            hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            border: InputBorder.none,
+                            isDense: true,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        width: 36,
+                        height: 36,
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Icon(LucideIcons.plus, size: 16, color: Color(0xFF475569)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
+
+                // + Add Another Receipt / Proof (Dashed button)
+                Container(
+                  width: double.infinity,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFC084FC), style: BorderStyle.solid),
+                  ),
+                  child: const Center(
+                    child: Text(
+                      '+ Add Another Receipt / Proof',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF7C3AED),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Lodge Reimbursement Claim (Purple #7C3AED as in Image 4)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7C3AED),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text(
+                      'Lodge Reimbursement Claim',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(TextEditingController ctrl, String hint, {bool isNumeric = false}) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          isDense: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildIconField(TextEditingController ctrl, String hint, IconData icon) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: TextField(
+        controller: ctrl,
+        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+          suffixIcon: Icon(icon, size: 15, color: const Color(0xFF64748B)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          isDense: true,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 3. ADD RECURRING SUBSCRIPTION MODAL (Image 3) ────────────
+
+class _AddRecurringSubscriptionDialog extends StatefulWidget {
+  final void Function(SubscriptionRecordItem newSub) onAdd;
+
+  const _AddRecurringSubscriptionDialog({required this.onAdd});
+
+  @override
+  State<_AddRecurringSubscriptionDialog> createState() => _AddRecurringSubscriptionDialogState();
+}
+
+class _AddRecurringSubscriptionDialogState extends State<_AddRecurringSubscriptionDialog> {
+  final _nameCtrl = TextEditingController();
+  final _vendorCtrl = TextEditingController();
+  final _amountCtrl = TextEditingController();
+  final _dateCtrl = TextEditingController(text: '14/10/2026');
+
+  String _category = 'Rent';
+  String _frequency = 'Monthly';
+  String _autoPost = 'Active (Auto-Create)';
+  String _status = 'Active';
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _vendorCtrl.dispose();
+    _amountCtrl.dispose();
+    _dateCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameCtrl.text.trim().isNotEmpty ? _nameCtrl.text.trim() : 'AWS Cloud Server';
+    final vendor = _vendorCtrl.text.trim().isNotEmpty ? _vendorCtrl.text.trim() : 'Amazon Web Services';
+    final amt = double.tryParse(_amountCtrl.text.trim()) ?? 5000.0;
+    final subId = 101 + math.Random().nextInt(899);
+
+    final sub = SubscriptionRecordItem(
+      id: 'SUB-$subId',
+      name: name,
+      vendor: vendor,
+      category: _category,
+      frequency: _frequency,
+      nextDueDate: _dateCtrl.text.trim(),
+      status: _status,
+      autoPost: _autoPost,
+      cost: amt,
+    );
+
+    widget.onAdd(sub);
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.9;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Center(
+        child: Container(
+          width: 480,
+          constraints: BoxConstraints(maxWidth: 500, maxHeight: maxHeight),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(26),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header (Image 3)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Add Recurring Subscription',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Subscription Name
+                const Text('Subscription Name', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_nameCtrl, 'e.g. AWS Cloud Server'),
+                const SizedBox(height: 16),
+
+                // Vendor Name
+                const Text('Vendor Name', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_vendorCtrl, 'e.g. Amazon Web Services'),
+                const SizedBox(height: 16),
+
+                // Category & Amount (INR) *
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Category', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildDropdownContainer(
+                            value: _category,
+                            items: ['Rent', 'Utilities', 'Software / SaaS', 'Office Expenses', 'Marketing', 'Travel', 'Maintenance'],
+                            onChanged: (v) => setState(() => _category = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Amount (INR) *', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildField(_amountCtrl, 'e.g. 5000', isNumeric: true),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Frequency & Next Due Date
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Frequency', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildDropdownContainer(
+                            value: _frequency,
+                            items: ['Monthly', 'Quarterly', 'Yearly', 'Weekly'],
+                            onChanged: (v) => setState(() => _frequency = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Next Due Date', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          Container(
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                            ),
+                            child: TextField(
+                              controller: _dateCtrl,
+                              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                              decoration: const InputDecoration(
+                                suffixIcon: Icon(LucideIcons.calendar, size: 15, color: Color(0xFF64748B)),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Auto-Post & Status
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Auto-Post', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildDropdownContainer(
+                            value: _autoPost,
+                            items: ['Active (Auto-Create)', 'Manual Review'],
+                            onChanged: (v) => setState(() => _autoPost = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Status', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                          const SizedBox(height: 6),
+                          _buildDropdownContainer(
+                            value: _status,
+                            items: ['Active', 'Paused', 'Cancelled'],
+                            onChanged: (v) => setState(() => _status = v),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Create Subscription button (Slate-blue style as in Image 3)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF64748B),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text(
+                      'Create Subscription',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(TextEditingController ctrl, String hint, {bool isNumeric = false}) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          isDense: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdownContainer({
+    required String value,
+    required List<String> items,
+    required ValueChanged<String> onChanged,
+  }) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+          items: items.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(item, style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A))),
+            );
+          }).toList(),
+          onChanged: (val) {
+            if (val != null) onChanged(val);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 4. SET TEAM BUDGET MODAL (Image 7) ───────────────────────
+
+class _SetTeamBudgetDialog extends StatefulWidget {
+  final BudgetRecordItem? initialBudget;
+  final void Function(BudgetRecordItem newBudget) onSave;
+
+  const _SetTeamBudgetDialog({this.initialBudget, required this.onSave});
+
+  @override
+  State<_SetTeamBudgetDialog> createState() => _SetTeamBudgetDialogState();
+}
+
+class _SetTeamBudgetDialogState extends State<_SetTeamBudgetDialog> {
+  late final TextEditingController _teamNameCtrl;
+  late final TextEditingController _budgetCtrl;
+  int _memberCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _teamNameCtrl = TextEditingController(text: widget.initialBudget?.categoryGroup ?? '');
+    _budgetCtrl = TextEditingController(
+      text: widget.initialBudget != null ? widget.initialBudget!.monthlyBudget.toInt().toString() : '',
+    );
+    if (widget.initialBudget != null) {
+      final match = RegExp(r'(\d+)').firstMatch(widget.initialBudget!.teamMembers);
+      _memberCount = match != null ? int.tryParse(match.group(1)!) ?? 2 : 2;
+    }
+  }
+
+  @override
+  void dispose() {
+    _teamNameCtrl.dispose();
+    _budgetCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final teamName = _teamNameCtrl.text.trim().isNotEmpty ? _teamNameCtrl.text.trim() : 'HR Team';
+    final budget = double.tryParse(_budgetCtrl.text.trim()) ?? 50000.0;
+    final membersText = _memberCount > 0 ? '$_memberCount Members' : '2 Members';
+
+    if (widget.initialBudget != null) {
+      widget.initialBudget!.categoryGroup = teamName;
+      widget.initialBudget!.monthlyBudget = budget;
+      widget.initialBudget!.teamMembers = membersText;
+      widget.initialBudget!.remainingBudget = math.max(0, budget - widget.initialBudget!.actualSpent);
+      widget.onSave(widget.initialBudget!);
+    } else {
+      final b = BudgetRecordItem(
+        categoryGroup: teamName,
+        teamMembers: membersText,
+        monthlyBudget: budget,
+        actualSpent: 0.0,
+        remainingBudget: budget,
+        status: 'OPTIMAL',
+      );
+      widget.onSave(b);
+    }
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.of(context).size.height * 0.9;
+
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Center(
+        child: Container(
+          width: 460,
+          constraints: BoxConstraints(maxWidth: 480, maxHeight: maxHeight),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(26),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header (Image 7)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      widget.initialBudget != null ? 'Edit Team Budget' : 'Set Team Budget',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Team / Department Name
+                const Text('Team / Department Name', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_teamNameCtrl, 'e.g. HR Team'),
+                const SizedBox(height: 16),
+
+                // Monthly Budget (INR) *
+                const Text('Monthly Budget (INR) *', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                _buildField(_budgetCtrl, 'e.g. 50000', isNumeric: true),
+                const SizedBox(height: 16),
+
+                // Team Members (0) & + Add Member (Image 7)
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Team Members ($_memberCount)', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                    InkWell(
+                      onTap: () => setState(() => _memberCount++),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3E8FF),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(LucideIcons.plus, size: 12, color: Color(0xFF7C3AED)),
+                            SizedBox(width: 4),
+                            Text('Add Member', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED))),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  _memberCount == 0 ? 'No team members assigned yet.' : '$_memberCount members assigned to this department budget.',
+                  style: const TextStyle(fontSize: 11.5, fontStyle: FontStyle.italic, color: Color(0xFF64748B)),
+                ),
+                const SizedBox(height: 24),
+
+                // Settle Budget Target (Image 7)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8B9CB2),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text(
+                      widget.initialBudget != null ? 'Update Budget Target' : 'Settle Budget Target',
+                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildField(TextEditingController ctrl, String hint, {bool isNumeric = false}) {
+    return Container(
+      height: 44,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: TextField(
+        controller: ctrl,
+        keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          border: InputBorder.none,
+          isDense: true,
+        ),
+      ),
+    );
+  }
+}
+
+// ─── 5. RECORD SPENDING DIALOG ────────────────────────────────
+
+class _RecordSpendingDialog extends StatefulWidget {
+  final BudgetRecordItem budget;
+  final void Function(double amount, String description) onConfirm;
+
+  const _RecordSpendingDialog({
+    required this.budget,
+    required this.onConfirm,
   });
+
+  @override
+  State<_RecordSpendingDialog> createState() => _RecordSpendingDialogState();
+}
+
+class _RecordSpendingDialogState extends State<_RecordSpendingDialog> {
+  final _amountCtrl = TextEditingController(text: '200');
+  final _descCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _amountCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final amt = double.tryParse(_amountCtrl.text.trim()) ?? 200.0;
+    widget.onConfirm(amt, _descCtrl.text.trim());
+    Navigator.of(context).pop();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      child: Center(
+        child: Container(
+          width: 440,
+          constraints: BoxConstraints(maxWidth: 460, maxHeight: MediaQuery.of(context).size.height * 0.9),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.12),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.all(26),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Record Spending',
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('Department', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text(widget.budget.categoryGroup, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF6D28D9))),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text('Remaining Budget', style: TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text(_formatIndianCurrency(widget.budget.remainingBudget), style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Spending Amount (INR) *', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: TextField(
+                    controller: _amountCtrl,
+                    keyboardType: TextInputType.number,
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. 500',
+                      hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text('Expense Description (Optional)', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                const SizedBox(height: 6),
+                Container(
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: TextField(
+                    controller: _descCtrl,
+                    style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                    decoration: const InputDecoration(
+                      hintText: 'e.g. Team lunch / hardware purchase',
+                      hintStyle: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF059669),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: const Text('Record & Settle Spending', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
