@@ -409,14 +409,37 @@ class WarehouseTransferModal extends ConsumerStatefulWidget {
 }
 
 class _WarehouseTransferModalState extends ConsumerState<WarehouseTransferModal> {
-  String selectedProduct = 'Select Product';
-  String fromWarehouse = 'From Warehouse';
-  String toWarehouse = 'To Warehouse';
+  String selectedProduct = '-- Select Product --';
+  String fromWarehouse = 'Damaged products';
+  String toWarehouse = '787';
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 500;
+
+    final productItems = [
+      '-- Select Product --',
+      'a new digit product',
+      'apple',
+      'carrot',
+      'Tshirt',
+      's1 book',
+      'laptop',
+    ];
+    final fromItems = [
+      'Damaged products',
+      'Main Godown (Rack A-1)',
+      'Chennai godown',
+      'Tiruvallur godown',
+    ];
+    final toItems = [
+      '787',
+      'Damaged products godown',
+      'Main Godown (Rack A-1)',
+      'Chennai godown',
+      'Tiruvallur godown',
+    ];
 
     return _SmallModalWrapper(
       title: 'Warehouse Stock Transfer',
@@ -425,18 +448,18 @@ class _WarehouseTransferModalState extends ConsumerState<WarehouseTransferModal>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildDropdownField('Select Product', selectedProduct, ['Select Product', 'iPhone 15', 'MacBook Pro'], (val) => setState(() => selectedProduct = val!)),
+            _buildDropdownField('Select Product', selectedProduct, productItems, (val) => setState(() => selectedProduct = val!)),
             const SizedBox(height: 20),
             if (isMobile) ...[
-              _buildDropdownField('From Warehouse', fromWarehouse, ['From Warehouse', 'Main Godown', 'Shop Front'], (val) => setState(() => fromWarehouse = val!)),
+              _buildDropdownField('From Warehouse', fromWarehouse, fromItems, (val) => setState(() => fromWarehouse = val!)),
               const SizedBox(height: 20),
-              _buildDropdownField('To Warehouse', toWarehouse, ['To Warehouse', 'Main Godown', 'Shop Front'], (val) => setState(() => toWarehouse = val!)),
+              _buildDropdownField('To Warehouse', toWarehouse, toItems, (val) => setState(() => toWarehouse = val!)),
             ] else
               Row(
                 children: [
-                  Expanded(child: _buildDropdownField('From Warehouse', fromWarehouse, ['From Warehouse', 'Main Godown', 'Shop Front'], (val) => setState(() => fromWarehouse = val!))),
+                  Expanded(child: _buildDropdownField('From Warehouse', fromWarehouse, fromItems, (val) => setState(() => fromWarehouse = val!))),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildDropdownField('To Warehouse', toWarehouse, ['To Warehouse', 'Main Godown', 'Shop Front'], (val) => setState(() => toWarehouse = val!))),
+                  Expanded(child: _buildDropdownField('To Warehouse', toWarehouse, toItems, (val) => setState(() => toWarehouse = val!))),
                 ],
               ),
             const SizedBox(height: 20),
@@ -450,7 +473,7 @@ class _WarehouseTransferModalState extends ConsumerState<WarehouseTransferModal>
               child: ElevatedButton(
                 onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.stock),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7B61FF),
+                  backgroundColor: const Color(0xFF7C3AED),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
@@ -578,7 +601,7 @@ class _RegisterWarehouseModalState extends ConsumerState<RegisterWarehouseModal>
               child: ElevatedButton(
                 onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.warehouse),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF7B61FF),
+                  backgroundColor: const Color(0xFF059669),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   elevation: 0,
