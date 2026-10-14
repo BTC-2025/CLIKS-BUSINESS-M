@@ -289,6 +289,7 @@ class Sidebar extends ConsumerWidget {
                     label: 'Sales',
                     isInitiallyExpanded:
                         navigation.currentRoute == AppRoute.billing ||
+                        navigation.currentRoute == AppRoute.newInvoice ||
                         navigation.currentRoute == AppRoute.customers ||
                         navigation.currentRoute == AppRoute.invoiceTemplates ||
                         navigation.currentRoute == AppRoute.addCustomer,
@@ -297,6 +298,7 @@ class Sidebar extends ConsumerWidget {
                         label: 'Sales Invoice',
                         isSelected:
                             navigation.currentRoute == AppRoute.billing ||
+                            navigation.currentRoute == AppRoute.newInvoice ||
                             navigation.currentRoute ==
                                 AppRoute.invoiceTemplates,
                         onTap: () {
@@ -801,6 +803,7 @@ class Sidebar extends ConsumerWidget {
                     label: 'Sales',
                     isInitiallyExpanded: [
                       AppRoute.billing,
+                      AppRoute.newInvoice,
                       AppRoute.customers,
                       AppRoute.addCustomer,
                       AppRoute.invoiceTemplates,
@@ -811,6 +814,7 @@ class Sidebar extends ConsumerWidget {
                         label: 'Sales Invoices',
                         isSelected:
                             navigation.currentRoute == AppRoute.billing ||
+                            navigation.currentRoute == AppRoute.newInvoice ||
                             navigation.currentRoute ==
                                 AppRoute.invoiceTemplates,
                         onTap: () => ref

@@ -103,8 +103,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       _lastModule = navigation.currentModule;
     }
 
-    final isOverlay = navigation.currentRoute == AppRoute.newInvoice ||
-        navigation.currentRoute == AppRoute.recordExpense ||
+    final isOverlay = navigation.currentRoute == AppRoute.recordExpense ||
         navigation.currentRoute == AppRoute.lodgeStaffClaim ||
         navigation.currentRoute == AppRoute.generateEWayBill ||
         navigation.currentRoute == AppRoute.generateEInvoice ||
@@ -218,6 +217,11 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
               return AppRoute.profile;
           }
         }();
+
+        if (navigation.currentRoute == AppRoute.newInvoice) {
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.billing);
+          return;
+        }
 
         if (navigation.currentRoute != mainRoute) {
           ref.read(navigationProvider.notifier).setModuleAndRoute(navigation.currentModule, mainRoute);
