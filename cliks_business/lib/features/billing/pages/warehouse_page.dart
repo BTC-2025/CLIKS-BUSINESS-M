@@ -530,34 +530,31 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _buildHeaderActionButton(
-                  label: 'Goods Inward Receiving',
-                  icon: LucideIcons.truck,
-                  color: const Color(0xFFE11D48),
-                  borderColor: const Color(0xFFFDA4AF),
-                  bgColor: const Color(0xFFFFF1F2),
-                  onPressed: _openGoodsInwardReceiptDialog,
-                ),
+              _buildHeaderActionButton(
+                label: 'Goods Inward Receiving',
+                icon: LucideIcons.truck,
+                color: const Color(0xFFE11D48),
+                borderColor: const Color(0xFFFDA4AF),
+                bgColor: const Color(0xFFFFF1F2),
+                onPressed: _openGoodsInwardReceiptDialog,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _openRegisterWarehouseDialog,
-                  icon: const Icon(LucideIcons.plus, size: 14),
-                  label: const Text(
-                    'Register Warehouse',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE11D48),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: _openRegisterWarehouseDialog,
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text(
+                  'Register Warehouse',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE11D48),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
@@ -845,6 +842,7 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
     required Color watermarkColor,
   }) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -1854,20 +1852,27 @@ class _StockMovementHistoryDialog extends StatelessWidget {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: const [
-                              Icon(LucideIcons.history, size: 14, color: Color(0xFF64748B)),
-                              SizedBox(width: 6),
-                              Text(
-                                'Stock Movement History (Recent)',
-                                style: TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF0F172A),
+                          Expanded(
+                            child: Row(
+                              children: const [
+                                Icon(LucideIcons.history, size: 14, color: Color(0xFF64748B)),
+                                SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Stock Movement History (Recent)',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                          const SizedBox(width: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
@@ -1960,22 +1965,28 @@ class _StockMovementHistoryDialog extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: textColor,
-              letterSpacing: 0.3,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: textColor,
+                letterSpacing: 0.3,
+              ),
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              color: textColor,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.w800,
+                color: textColor,
+              ),
             ),
           ),
         ],
@@ -2114,12 +2125,17 @@ class _StockMovementHistoryDialog extends StatelessWidget {
                         date,
                         style: const TextStyle(fontSize: 10.5, color: Color(0xFF94A3B8)),
                       ),
-                      Text(
-                        docRef,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontStyle: FontStyle.italic,
-                          color: Color(0xFF64748B),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          docRef,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontStyle: FontStyle.italic,
+                            color: Color(0xFF64748B),
+                          ),
                         ),
                       ),
                     ],
@@ -2231,18 +2247,23 @@ class _RegisterWarehouseFacilityDialogState extends State<_RegisterWarehouseFaci
             children: [
               // Header without divider (Matching Image 3)
               Padding(
-                padding: const EdgeInsets.fromLTRB(28, 22, 20, 16),
+                padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Register New Warehouse Facility',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const Expanded(
+                      child: Text(
+                        'Register New Warehouse Facility',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
@@ -2526,7 +2547,7 @@ class _GoodsInwardReceiptDialogState extends State<_GoodsInwardReceiptDialog> {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(28),
+            padding: const EdgeInsets.all(22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2535,14 +2556,19 @@ class _GoodsInwardReceiptDialogState extends State<_GoodsInwardReceiptDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Goods Inward Receipt',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const Expanded(
+                      child: Text(
+                        'Goods Inward Receipt',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
@@ -3128,18 +3154,23 @@ class _EditWarehouseProfileDialogState extends State<_EditWarehouseProfileDialog
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(28, 22, 20, 16),
+                padding: const EdgeInsets.fromLTRB(20, 20, 16, 16),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      '✏️ Edit Warehouse Profile',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const Expanded(
+                      child: Text(
+                        '✏️ Edit Warehouse Profile',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),

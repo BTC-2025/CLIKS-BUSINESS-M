@@ -918,6 +918,17 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
           iconSize: 16,
           icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
           style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+          selectedItemBuilder: (context) {
+            return items.map((it) {
+              return ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 150),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(it, overflow: TextOverflow.ellipsis, maxLines: 1),
+                ),
+              );
+            }).toList();
+          },
           items: items.map((it) => DropdownMenuItem(value: it, child: Text(it, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onChanged,
         ),
@@ -1348,7 +1359,9 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
                                     children: [
                                       const Icon(LucideIcons.messageSquare, color: Colors.white, size: 16),
                                       const SizedBox(width: 8),
-                                      Text('WhatsApp statement reminder sent to ${_selectedLedgerSupplier!.phone}!'),
+                                      Expanded(
+                                        child: Text('WhatsApp statement reminder sent to ${_selectedLedgerSupplier!.phone}!'),
+                                      ),
                                     ],
                                   ),
                                   backgroundColor: const Color(0xFF166534),
@@ -1379,7 +1392,9 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
                                     children: [
                                       const Icon(LucideIcons.download, color: Colors.white, size: 16),
                                       const SizedBox(width: 8),
-                                      Text('Exporting statement ledger for ${_selectedLedgerSupplier!.name} as PDF...'),
+                                      Expanded(
+                                        child: Text('Exporting statement ledger for ${_selectedLedgerSupplier!.name} as PDF...'),
+                                      ),
                                     ],
                                   ),
                                   backgroundColor: const Color(0xFF2563EB),
@@ -1879,7 +1894,9 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
           children: [
             const Icon(LucideIcons.messageSquare, color: Colors.white, size: 16),
             const SizedBox(width: 8),
-            Text('Instant WhatsApp payment reminder sent for $supplierName ($balance)!'),
+            Expanded(
+              child: Text('Instant WhatsApp payment reminder sent for $supplierName ($balance)!'),
+            ),
           ],
         ),
         backgroundColor: const Color(0xFF166534),

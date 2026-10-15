@@ -20,6 +20,7 @@ import 'package:clicks_business_frontend/features/dashboard/dashboard_page.dart'
 import 'package:clicks_business_frontend/widgets/modals/sales_modals.dart';
 import 'package:clicks_business_frontend/features/purchases/pages/purchase_invoice_page.dart';
 import 'package:clicks_business_frontend/features/purchases/pages/suppliers_page.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void main() {
   group('Books Section Mobile Pages & Tabs Overflow Checks', () {
@@ -178,7 +179,7 @@ void main() {
       expect(find.byType(ProductsPage), findsOneWidget);
     });
 
-    testWidgets('StockPage renders on 360px without overflow', (tester) async {
+    testWidgets('StockPage renders on 360px without overflow across all tabs', (tester) async {
       tester.view.physicalSize = const Size(360, 780);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -197,9 +198,27 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(StockPage), findsOneWidget);
+
+      // Verify Tab 1: Warehouse Branch Transfers
+      final tab1 = find.text('Warehouse Branch Transfers');
+      if (tab1.evaluate().isNotEmpty) {
+        await tester.tap(tab1, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('Warehouse Branch transfers'), findsOneWidget);
+        expect(find.text('Transfer Stock'), findsOneWidget);
+      }
+
+      // Verify Tab 3: Historical Product Stock Ledger
+      final tab3 = find.text('Historical Product Stock Ledger');
+      if (tab3.evaluate().isNotEmpty) {
+        await tester.tap(tab3, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.textContaining('Interval:'), findsOneWidget);
+        expect(find.text('Customize View'), findsOneWidget);
+      }
     });
 
-    testWidgets('WarehousePage renders on 360px without overflow', (tester) async {
+    testWidgets('WarehousePage renders on 360px without overflow across all tabs and opens dialogs', (tester) async {
       tester.view.physicalSize = const Size(360, 780);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -218,6 +237,38 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.byType(WarehousePage), findsOneWidget);
+
+      // Open Register Warehouse Facility dialog
+      final regWhBtn = find.text('Register Warehouse');
+      if (regWhBtn.evaluate().isNotEmpty) {
+        await tester.tap(regWhBtn.first, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('Register New Warehouse Facility'), findsOneWidget);
+        // Close dialog
+        await tester.tap(find.byIcon(LucideIcons.x));
+        await tester.pumpAndSettle();
+      }
+
+      // Open Goods Inward Receiving dialog
+      final inwardBtn = find.text('Goods Inward Receiving');
+      if (inwardBtn.evaluate().isNotEmpty) {
+        await tester.tap(inwardBtn.first, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('Goods Inward Receipt'), findsOneWidget);
+        // Close dialog
+        await tester.tap(find.byIcon(LucideIcons.x));
+        await tester.pumpAndSettle();
+      }
+
+      // Switch to Goods Inward Historical logs tab
+      final auditTab = find.text('Goods Inward Historical logs');
+      if (auditTab.evaluate().isNotEmpty) {
+        await tester.ensureVisible(auditTab);
+        await tester.pumpAndSettle();
+        await tester.tap(auditTab);
+        await tester.pumpAndSettle();
+        expect(find.text('Goods Inwards Audit Trail'), findsOneWidget);
+      }
     });
 
     testWidgets('ReportsPage renders on 360px without overflow', (tester) async {
@@ -496,6 +547,67 @@ void main() {
         await tester.tap(find.text('Physical Product'), warnIfMissed: false);
         await tester.pumpAndSettle();
       }
+    });
+
+    testWidgets('Books pages (Stock, Warehouse, Purchases, Suppliers) render on ultra-compact 320px without overflow', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      // 1. StockPage on 320px
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: StockPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(StockPage), findsOneWidget);
+
+      // 2. WarehousePage on 320px
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: WarehousePage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(WarehousePage), findsOneWidget);
+
+      // 3. PurchaseInvoicePage on 320px
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: PurchaseInvoicePage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(PurchaseInvoicePage), findsOneWidget);
+
+      // 4. SuppliersPage on 320px
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: SuppliersPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(SuppliersPage), findsOneWidget);
     });
   });
 }

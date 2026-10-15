@@ -482,28 +482,25 @@ class _StockPageState extends ConsumerState<StockPage> {
             ),
           ),
           const SizedBox(height: 12),
-          Row(
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: _buildHeaderActionButton(
-                  label: 'Adjust Stock Counts',
-                  icon: LucideIcons.slidersHorizontal,
-                  color: const Color(0xFFE11D48),
-                  borderColor: const Color(0xFFFDA4AF),
-                  bgColor: const Color(0xFFFFF1F2),
-                  onPressed: _openAdjustStockDialog,
-                ),
+              _buildHeaderActionButton(
+                label: 'Adjust Stock Counts',
+                icon: LucideIcons.slidersHorizontal,
+                color: const Color(0xFFE11D48),
+                borderColor: const Color(0xFFFDA4AF),
+                bgColor: const Color(0xFFFFF1F2),
+                onPressed: _openAdjustStockDialog,
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildHeaderActionButton(
-                  label: 'Warehouse Transfer',
-                  icon: LucideIcons.arrowLeftRight,
-                  color: const Color(0xFF2563EB),
-                  borderColor: const Color(0xFF93C5FD),
-                  bgColor: const Color(0xFFEFF6FF),
-                  onPressed: _openWarehouseTransferDialog,
-                ),
+              const SizedBox(height: 8),
+              _buildHeaderActionButton(
+                label: 'Warehouse Transfer',
+                icon: LucideIcons.arrowLeftRight,
+                color: const Color(0xFF2563EB),
+                borderColor: const Color(0xFF93C5FD),
+                bgColor: const Color(0xFFEFF6FF),
+                onPressed: _openWarehouseTransferDialog,
               ),
             ],
           ),
@@ -652,7 +649,7 @@ class _StockPageState extends ConsumerState<StockPage> {
               ),
             ),
           ),
-          mainValue: '₹80,87,81,38,03,773.',
+          mainValue: '₹80,87,81,38,03,773',
           subLabel: 'TOTAL INVENTORY VALUATION (COST BASIS)',
           watermarkText: r'$',
         );
@@ -775,6 +772,7 @@ class _StockPageState extends ConsumerState<StockPage> {
     String? watermarkText,
   }) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1291,18 +1289,18 @@ class _StockPageState extends ConsumerState<StockPage> {
         // Header Row inside Card: Title + "+ Transfer Stock" Button
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 460;
+              const title = Text(
                 'Warehouse Branch transfers',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
                 ),
-              ),
-              ElevatedButton.icon(
+              );
+              final btn = ElevatedButton.icon(
                 onPressed: _openWarehouseTransferDialog,
                 icon: const Icon(LucideIcons.plus, size: 14),
                 label: const Text(
@@ -1316,8 +1314,27 @@ class _StockPageState extends ConsumerState<StockPage> {
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              ),
-            ],
+              );
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    title,
+                    const SizedBox(height: 12),
+                    btn,
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  title,
+                  btn,
+                ],
+              );
+            },
           ),
         ),
 
@@ -2252,15 +2269,20 @@ class _StockPageState extends ConsumerState<StockPage> {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(LucideIcons.calendarDays, size: 14, color: Color(0xFF64748B)),
             const SizedBox(width: 6),
-            Text(
-              'Interval: $_selectedInterval',
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF334155),
+            Flexible(
+              child: Text(
+                'Interval: $_selectedInterval',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF334155),
+                ),
               ),
             ),
             const SizedBox(width: 4),
@@ -2291,12 +2313,16 @@ class _StockPageState extends ConsumerState<StockPage> {
             children: const [
               Icon(LucideIcons.settings, size: 14, color: Color(0xFF64748B)),
               SizedBox(width: 6),
-              Text(
-                'Customize View',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF334155),
+              Flexible(
+                child: Text(
+                  'Customize View',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF334155),
+                  ),
                 ),
               ),
             ],
