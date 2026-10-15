@@ -2278,6 +2278,8 @@ class _ProcessMonthlyPayrollDialogState extends State<_ProcessMonthlyPayrollDial
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 500;
     final maxHeight = MediaQuery.of(context).size.height * 0.9;
 
     return Dialog(
@@ -2301,7 +2303,7 @@ class _ProcessMonthlyPayrollDialogState extends State<_ProcessMonthlyPayrollDial
           ),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(26),
+            padding: EdgeInsets.all(isMobile ? 18 : 26),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2310,14 +2312,18 @@ class _ProcessMonthlyPayrollDialogState extends State<_ProcessMonthlyPayrollDial
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Process Monthly Payroll',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const Expanded(
+                      child: Text(
+                        'Process Monthly Payroll',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
@@ -2422,59 +2428,109 @@ class _ProcessMonthlyPayrollDialogState extends State<_ProcessMonthlyPayrollDial
                 const SizedBox(height: 16),
 
                 // Row: Deduct 12% PF (with Est: ₹0), ESI Deduction, Estimated TDS (Image 4)
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 12,
-                      child: InkWell(
-                        onTap: () => setState(() => _deductPf = !_deductPf),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.center,
+                if (isMobile) ...[
+                  InkWell(
+                    onTap: () => setState(() => _deductPf = !_deductPf),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Checkbox(
+                          value: _deductPf,
+                          onChanged: (v) => setState(() => _deductPf = v ?? true),
+                          activeColor: const Color(0xFF7C3AED),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Checkbox(
-                              value: _deductPf,
-                              onChanged: (v) => setState(() => _deductPf = v ?? true),
-                              activeColor: const Color(0xFF7C3AED),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Deduct 12% PF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                                Text('Est: ₹${_computedPf.toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
-                              ],
-                            ),
+                            const Text('Deduct 12% PF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                            Text('Est: ₹${_computedPf.toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('ESI Deduction', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                            const SizedBox(height: 6),
+                            _buildField(_esiCtrl, 'e.g. 325', isNumeric: true),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 10,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('ESI Deduction', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
-                          const SizedBox(height: 6),
-                          _buildField(_esiCtrl, 'e.g. 325', isNumeric: true),
-                        ],
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Estimated TDS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                            const SizedBox(height: 6),
+                            _buildField(_tdsCtrl, 'e.g. 100', isNumeric: true),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      flex: 10,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Estimated TDS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
-                          const SizedBox(height: 6),
-                          _buildField(_tdsCtrl, 'e.g. 100', isNumeric: true),
-                        ],
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 12,
+                        child: InkWell(
+                          onTap: () => setState(() => _deductPf = !_deductPf),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Checkbox(
+                                value: _deductPf,
+                                onChanged: (v) => setState(() => _deductPf = v ?? true),
+                                activeColor: const Color(0xFF7C3AED),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Deduct 12% PF', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                  Text('Est: ₹${_computedPf.toStringAsFixed(0)}', style: const TextStyle(fontSize: 10, color: Color(0xFF64748B))),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('ESI Deduction', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                            const SizedBox(height: 6),
+                            _buildField(_esiCtrl, 'e.g. 325', isNumeric: true),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 10,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text('Estimated TDS', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                            const SizedBox(height: 6),
+                            _buildField(_tdsCtrl, 'e.g. 100', isNumeric: true),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 24),
 
                 // Settle Monthly Take-Home Salary (Purple #7C3AED as in Image 4)

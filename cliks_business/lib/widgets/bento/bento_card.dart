@@ -155,71 +155,153 @@ class _BentoCardState extends State<BentoCard> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        if (widget.icon != null) ...[
-          Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: widget.iconBackgroundColor ??
-                  AppColors.primaryGreen.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              widget.icon,
-              size: 18,
-              color: widget.iconColor ?? AppColors.primaryGreen,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-        ],
-        if (widget.title != null)
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 460;
+
+        if (isNarrow && widget.trailing != null) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (widget.icon != null) ...[
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: widget.iconBackgroundColor ??
+                            AppColors.primaryGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(
+                        widget.icon,
+                        size: 18,
+                        color: widget.iconColor ?? AppColors.primaryGreen,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                  ],
+                  if (widget.title != null)
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                widget.title!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.darkText,
+                                  letterSpacing: -0.2,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (widget.badge != null) widget.badge!,
+                            ],
+                          ),
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.subtitle!,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.secondaryText,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: widget.trailing!,
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (widget.icon != null) ...[
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: widget.iconBackgroundColor ??
+                      AppColors.primaryGreen.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  widget.icon,
+                  size: 18,
+                  color: widget.iconColor ?? AppColors.primaryGreen,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+            ],
+            if (widget.title != null)
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(
-                      child: Text(
-                        widget.title!,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            widget.title!,
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.darkText,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (widget.badge != null) ...[
+                          const SizedBox(width: 8),
+                          widget.badge!,
+                        ],
+                      ],
+                    ),
+                    if (widget.subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        widget.subtitle!,
                         style: GoogleFonts.inter(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.darkText,
-                          letterSpacing: -0.2,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: AppColors.secondaryText,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                    if (widget.badge != null) ...[
-                      const SizedBox(width: 8),
-                      widget.badge!,
                     ],
                   ],
                 ),
-                if (widget.subtitle != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    widget.subtitle!,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: AppColors.secondaryText,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        if (widget.trailing != null) widget.trailing!,
-      ],
+              ),
+            if (widget.trailing != null) widget.trailing!,
+          ],
+        );
+      },
     );
   }
 }

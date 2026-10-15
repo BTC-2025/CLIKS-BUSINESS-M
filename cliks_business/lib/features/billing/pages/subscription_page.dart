@@ -227,7 +227,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    final paddingVal = isMobile ? 18.0 : 32.0;
+    final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -240,7 +240,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           children: [
             // ─── 1. TOP HEADER (Subscription & Billing with Credit Card Icon & Cycle Pill) ───
             Container(key: _topHeaderKey, child: _buildTopHeader(isMobile)),
-            const SizedBox(height: 18),
+            SizedBox(height: isMobile ? 14 : 18),
 
             // ─── 2. ACTIVE PLAN HERO BANNER (Dark green color long tab) ───
             Container(
@@ -249,19 +249,22 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ? _buildMacOsBentoHero(isMobile)
                   : _buildActivePlanBanner(isMobile),
             ),
-            const SizedBox(height: 20),
+            SizedBox(height: isMobile ? 16 : 20),
 
             // ─── 3. 3-SECTION PILL SELECTOR (Directly below "Active plan" dark green long tab) ───
-            _buildMainTabSelector(),
-            const SizedBox(height: 28),
+            _buildMainTabSelector(isMobile),
+            SizedBox(height: isMobile ? 20 : 28),
 
             if (_selectedMainTab == 0) ...[
               // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
-              Container(key: _upgradeTiersKey, child: _buildUpgradeSectionHeader()),
+              Container(
+                key: _upgradeTiersKey,
+                child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
+              ),
               const SizedBox(height: 18),
 
               // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
-              _buildFourTierCards(),
+              _buildFourTierCards(isMobile),
             ] else if (_selectedMainTab == 1) ...[
               // ─── FIN-PRO SECTION ───
               _buildFinProSection(isMobile),
@@ -287,17 +290,21 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Container(
-          width: 40,
-          height: 40,
+          width: isMobile ? 36 : 40,
+          height: isMobile ? 36 : 40,
           decoration: BoxDecoration(
             color: _darkForestGreen,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Center(
-            child: Icon(LucideIcons.creditCard, color: Colors.white, size: 21),
+          child: Center(
+            child: Icon(
+              LucideIcons.creditCard,
+              color: Colors.white,
+              size: isMobile ? 18 : 21,
+            ),
           ),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: isMobile ? 10 : 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,7 +313,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               Text(
                 'Subscription & Billing',
                 style: GoogleFonts.inter(
-                  fontSize: 26,
+                  fontSize: isMobile ? 21 : 26,
                   fontWeight: FontWeight.w800,
                   color: _darkForestGreen,
                   letterSpacing: -0.5,
@@ -316,7 +323,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               Text(
                 'Manage your active workspace tier, features access, and transaction statements.',
                 style: GoogleFonts.inter(
-                  fontSize: 13,
+                  fontSize: isMobile ? 12 : 13,
                   color: const Color(0xFF64748B),
                   fontWeight: FontWeight.w500,
                 ),
@@ -767,7 +774,107 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // ═══════════════════════════════════════════════════════════════
   // 3. UPGRADE WORKSPACE TIER SECTION TITLE
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildUpgradeSectionHeader([String title = 'Upgrade Workspace Tier']) {
+  Widget _buildUpgradeSectionHeader([
+    String title = 'Upgrade Workspace Tier',
+    bool isMobile = false,
+  ]) {
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: _darkForestGreen,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.4,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              // Quick Jump to Active Plan
+              InkWell(
+                onTap: () => _scrollToSection(_activePlanKey),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.arrowUp, size: 10.5, color: Color(0xFF475569)),
+                      const SizedBox(width: 3.5),
+                      Text(
+                        'Active Plan',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              // Quick Jump to Billing History
+              InkWell(
+                onTap: () => _scrollToSection(_billingHistoryKey),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.arrowDown, size: 10.5, color: Color(0xFF475569)),
+                      const SizedBox(width: 3.5),
+                      Text(
+                        'Billing History',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -867,27 +974,41 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // ═══════════════════════════════════════════════════════════════
   // 2. FOUR SUBSCRIPTION CARDS (Strict Identical Height & Layout Uniformity)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildFourTierCards() {
+  Widget _buildFourTierCards([bool isMobile = false]) {
     final days = _remainingTime.inDays;
     final hours = _remainingTime.inHours % 24;
     final mins = _remainingTime.inMinutes % 60;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cards = _tiers
+    final cards = _tiers
+        .map(
+          (tier) => _buildSingleSubscriptionCard(
+            tier: tier,
+            activeTierNumber: _currentBusinessTier,
+            onUpgrade: (newTier) {
+              setState(() => _currentBusinessTier = newTier);
+            },
+            days: days,
+            hours: hours,
+            mins: mins,
+          ),
+        )
+        .toList();
+
+    if (isMobile) {
+      return Column(
+        children: cards
             .map(
-              (tier) => _buildSingleSubscriptionCard(
-                tier: tier,
-                activeTierNumber: _currentBusinessTier,
-                onUpgrade: (newTier) {
-                  setState(() => _currentBusinessTier = newTier);
-                },
-                days: days,
-                hours: hours,
-                mins: mins,
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 18.0),
+                child: c,
               ),
             )
-            .toList();
+            .toList(),
+      );
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
 
         // Responsive horizontal scroll guard on smaller window sizes to avoid overflow
         if (constraints.maxWidth < 1180) {
@@ -1655,31 +1776,35 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           const SizedBox(height: 2),
 
           // Large bold monthly offer price
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                tier.offerMonthlyPrice,
-                style: GoogleFonts.inter(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                  color: isGold
-                      ? const Color(0xFF78350F)
-                      : const Color(0xFF0F172A),
-                  letterSpacing: -0.8,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  tier.offerMonthlyPrice,
+                  style: GoogleFonts.inter(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: isGold
+                        ? const Color(0xFF78350F)
+                        : const Color(0xFF0F172A),
+                    letterSpacing: -0.8,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                '/ mo',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF64748B),
+                const SizedBox(width: 4),
+                Text(
+                  '/ mo',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           const SizedBox(height: 3),
 
@@ -2014,13 +2139,13 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // ═══════════════════════════════════════════════════════════════
   // TOP 3-SECTION PILL SELECTOR (BUSINESS | FIN-PRO | PARTNER LAUNCH DESK)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildMainTabSelector() {
+  Widget _buildMainTabSelector([bool isMobile = false]) {
     return Center(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
         child: Container(
-          padding: const EdgeInsets.all(5),
+          padding: EdgeInsets.all(isMobile ? 4 : 5),
           decoration: BoxDecoration(
             color: const Color(0xFFEAFAE3), // Soft mint green background
             borderRadius: BorderRadius.circular(32),
@@ -2034,6 +2159,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 label: 'BUSINESS',
                 icon: LucideIcons.shieldCheck,
                 activeColor: _darkForestGreen,
+                isMobile: isMobile,
               ),
               const SizedBox(width: 4),
               _buildMainTabItem(
@@ -2041,6 +2167,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 label: 'FIN-PRO',
                 icon: LucideIcons.award,
                 activeColor: _darkForestGreen,
+                isMobile: isMobile,
               ),
               const SizedBox(width: 4),
               _buildMainTabItem(
@@ -2048,6 +2175,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 label: 'PARTNER LAUNCH DESK',
                 icon: LucideIcons.crown,
                 activeColor: const Color(0xFF312E81),
+                isMobile: isMobile,
               ),
             ],
           ),
@@ -2061,6 +2189,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     required String label,
     required IconData icon,
     required Color activeColor,
+    bool isMobile = false,
   }) {
     final bool isSelected = _selectedMainTab == index;
 
@@ -2073,7 +2202,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       borderRadius: BorderRadius.circular(26),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 14 : 20,
+          vertical: isMobile ? 8 : 10,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? activeColor : Colors.transparent,
           borderRadius: BorderRadius.circular(26),
@@ -2092,14 +2224,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           children: [
             Icon(
               icon,
-              size: 15,
+              size: isMobile ? 14 : 15,
               color: isSelected ? Colors.white : const Color(0xFF1E3A2B),
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: isMobile ? 6 : 8),
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 12.5,
+                fontSize: isMobile ? 11.5 : 12.5,
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                 color: isSelected ? Colors.white : const Color(0xFF1E3A2B),
                 letterSpacing: 0.5,
@@ -2145,15 +2277,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             children: [
               const Icon(LucideIcons.user, size: 14, color: Color(0xFF64748B)),
               const SizedBox(width: 8),
-              Text(
-                'Solo Practitioner License',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF475569),
+              Expanded(
+                child: Text(
+                  'Solo Practitioner License',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF475569),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 '1 Seat',
                 style: GoogleFonts.inter(
@@ -2198,15 +2333,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           ),
           child: Row(
             children: [
-              Text(
-                'Total Team Members:',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF1E293B),
+              Expanded(
+                child: Text(
+                  'Total Team Members:',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1E293B),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               InkWell(
                 onTap: () {
                   if (_finProTeamMembers > 1) {
@@ -2288,7 +2426,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildUpgradeSectionHeader('Upgrade Fin-Pro Practice Tier'),
+        _buildUpgradeSectionHeader('Upgrade Fin-Pro Practice Tier', isMobile),
         const SizedBox(height: 18),
         if (isMobile)
           Column(
@@ -2327,24 +2465,30 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       children: [
         // Sub-selector tabs: [ Investor Club ] [ Products & Ideas ]
         Center(
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildPartnerSubTab(
-                index: 0,
-                label: 'Investor Club',
-                icon: LucideIcons.crown,
-              ),
-              const SizedBox(width: 14),
-              _buildPartnerSubTab(
-                index: 1,
-                label: 'Products & Ideas',
-                icon: LucideIcons.zap,
-              ),
-            ],
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildPartnerSubTab(
+                  index: 0,
+                  label: 'Investor Club',
+                  icon: LucideIcons.crown,
+                  isMobile: isMobile,
+                ),
+                SizedBox(width: isMobile ? 8 : 14),
+                _buildPartnerSubTab(
+                  index: 1,
+                  label: 'Products & Ideas',
+                  icon: LucideIcons.zap,
+                  isMobile: isMobile,
+                ),
+              ],
+            ),
           ),
         ),
-        const SizedBox(height: 24),
+        SizedBox(height: isMobile ? 18 : 24),
 
         if (_selectedPartnerTab == 0)
           _buildInvestorClubTab(isMobile)
@@ -2358,6 +2502,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     required int index,
     required String label,
     required IconData icon,
+    bool isMobile = false,
   }) {
     final bool isSelected = _selectedPartnerTab == index;
     final Color activeColor =
@@ -2372,8 +2517,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       borderRadius: BorderRadius.circular(25),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 48,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        height: isMobile ? 42 : 48,
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 14 : 24,
+          vertical: isMobile ? 6 : 0,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? activeColor : Colors.white,
           borderRadius: BorderRadius.circular(25),
@@ -2401,14 +2549,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           children: [
             Icon(
               icon,
-              size: 16,
+              size: isMobile ? 14 : 16,
               color: isSelected ? Colors.white : const Color(0xFF1E293B),
             ),
-            const SizedBox(width: 9),
+            SizedBox(width: isMobile ? 6 : 9),
             Text(
               label,
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: isMobile ? 12.5 : 14,
                 fontWeight: FontWeight.w700,
                 color: isSelected ? Colors.white : const Color(0xFF1E293B),
               ),
@@ -2490,7 +2638,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildUpgradeSectionHeader('Upgrade Investor Club Tier'),
+        _buildUpgradeSectionHeader('Upgrade Investor Club Tier', isMobile),
         const SizedBox(height: 18),
         if (isMobile)
           Column(
@@ -2592,7 +2740,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildUpgradeSectionHeader('Upgrade Workspace Tier'),
+        _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
         const SizedBox(height: 18),
         if (isMobile)
           Column(

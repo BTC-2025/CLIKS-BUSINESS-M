@@ -57,55 +57,106 @@ class _BentoChartCardState extends State<BentoChartCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Stat Highlight Row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                widget.metricValue,
-                style: GoogleFonts.inter(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.darkText,
-                  letterSpacing: -0.5,
-                ),
-              ),
-              const SizedBox(width: 8),
-              if (widget.changePercentage != null)
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCF2E4),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.trendingUp,
-                          size: 11, color: AppColors.primaryGreen),
-                      const SizedBox(width: 3),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 460;
+              final badge = widget.changePercentage != null
+                  ? Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCF2E4),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.trendingUp,
+                              size: 11, color: AppColors.primaryGreen),
+                          const SizedBox(width: 3),
+                          Text(
+                            widget.changePercentage!,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.primaryGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : null;
+
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (widget.metricLabel.isNotEmpty) ...[
                       Text(
-                        widget.changePercentage!,
+                        widget.metricLabel,
                         style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.primaryGreen,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.secondaryText,
                         ),
                       ),
+                      const SizedBox(height: 4),
                     ],
+                    Row(
+                      children: [
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              widget.metricValue,
+                              style: GoogleFonts.inter(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.darkText,
+                                letterSpacing: -0.5,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          badge,
+                        ],
+                      ],
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  Text(
+                    widget.metricValue,
+                    style: GoogleFonts.inter(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.darkText,
+                      letterSpacing: -0.5,
+                    ),
                   ),
-                ),
-              const Spacer(),
-              Text(
-                widget.metricLabel,
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.secondaryText,
-                ),
-              ),
-            ],
+                  if (badge != null) ...[
+                    const SizedBox(width: 8),
+                    badge,
+                  ],
+                  const Spacer(),
+                  Text(
+                    widget.metricLabel,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.secondaryText,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 20),
 

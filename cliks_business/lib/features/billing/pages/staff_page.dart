@@ -116,7 +116,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
   // 1: Leaves & Shifts Rosters (Teal/Dark Green #047857 - Default matching Image 1)
   // 2: Performance Appraisals (Amber/Orange #D97706 - Image 3)
   // 3: Staff Reimbursements (Green #047857 - Image 4)
-  int _activeTab = 1;
+  int _activeTab = 0;
   final TextEditingController _searchCtrl = TextEditingController();
   final TextEditingController _reimbursementSearchCtrl = TextEditingController();
   String _selectedClaimStatusFilter = 'All Claims';
@@ -361,7 +361,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
           isMobile ? 12 : 24,
           isMobile ? 12 : 20,
           isMobile ? 12 : 24,
-          isMobile ? 80 : 40,
+          isMobile ? 120 : 40,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -441,39 +441,76 @@ class _StaffPageState extends ConsumerState<StaffPage> {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _buildHeaderActionButton(
-                  label: 'File Appraisal Review',
-                  icon: LucideIcons.award,
-                  color: const Color(0xFFBE185D),
-                  borderColor: const Color(0xFFFDA4AF),
-                  bgColor: const Color(0xFFFFF1F2),
-                  onPressed: _openFileAppraisalDialog,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: _openOnboardStaffDialog,
-                  icon: const Icon(LucideIcons.userPlus, size: 14),
-                  label: const Text(
-                    'Onboard Staff Employee',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeaderActionButton(
+                      label: 'File Appraisal Review',
+                      icon: LucideIcons.award,
+                      color: const Color(0xFFBE185D),
+                      borderColor: const Color(0xFFFDA4AF),
+                      bgColor: const Color(0xFFFFF1F2),
+                      onPressed: _openFileAppraisalDialog,
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      onPressed: _openOnboardStaffDialog,
+                      icon: const Icon(LucideIcons.userPlus, size: 14),
+                      label: const Text(
+                        'Onboard Staff Employee',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFBE185D),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(
+                    child: _buildHeaderActionButton(
+                      label: 'File Appraisal Review',
+                      icon: LucideIcons.award,
+                      color: const Color(0xFFBE185D),
+                      borderColor: const Color(0xFFFDA4AF),
+                      bgColor: const Color(0xFFFFF1F2),
+                      onPressed: _openFileAppraisalDialog,
+                    ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFBE185D),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _openOnboardStaffDialog,
+                      icon: const Icon(LucideIcons.userPlus, size: 14),
+                      label: const Text(
+                        'Onboard Staff Employee',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFBE185D),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       );
@@ -962,7 +999,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          const minWidth = 1040.0;
+          final minWidth = isMobile ? 1160.0 : 1040.0;
           final width = math.max(constraints.maxWidth, minWidth);
 
           return SingleChildScrollView(
@@ -990,7 +1027,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                         Expanded(flex: 12, child: _buildSortableHeader('ID / CODE')),
                         Expanded(flex: 18, child: _buildSortableHeader('CONTACT INFO')),
                         Expanded(flex: 16, child: _buildSortableHeader('EMERGENCY PERSON')),
-                        Expanded(flex: 20, child: _buildSortableHeader('PERSONAL INFO')),
+                        Expanded(flex: 22, child: _buildSortableHeader('PERSONAL INFO')),
                         Expanded(flex: 18, child: _buildSortableHeader('RESIDENTIAL ADDRESS')),
                         const SizedBox(
                           width: 60,
@@ -1149,11 +1186,14 @@ class _StaffPageState extends ConsumerState<StaffPage> {
 
                             // PERSONAL INFO
                             Expanded(
-                              flex: 20,
+                              flex: 22,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Row(
+                                  Wrap(
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    spacing: 6,
+                                    runSpacing: 3,
                                     children: [
                                       Text(
                                         '${emp.dob} (${emp.gender})',
@@ -1163,7 +1203,6 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                                           color: Color(0xFF065F46),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
                                       Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                                         decoration: BoxDecoration(
@@ -1184,6 +1223,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                                   const SizedBox(height: 4),
                                   Text(
                                     emp.bloodGroup,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 11,
                                       fontWeight: FontWeight.bold,
@@ -1202,6 +1242,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                                 children: [
                                   Text(
                                     emp.addressLine1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
@@ -1211,6 +1252,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                                   const SizedBox(height: 2),
                                   Text(
                                     emp.cityState,
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 11.5,
                                       color: Color(0xFF64748B),
@@ -1218,6 +1260,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                                   ),
                                   Text(
                                     '(${emp.pincode})',
+                                    overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontSize: 11.5,
                                       color: Color(0xFF64748B),
@@ -1229,7 +1272,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
 
                             // ACTION
                             SizedBox(
-                              width: 50,
+                              width: 60,
                               child: Center(
                                 child: InkWell(
                                   onTap: () => _openEditEmployeeDialog(emp),
@@ -1368,7 +1411,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
               // Roster Table (Image 1 & 2)
               LayoutBuilder(
                 builder: (context, constraints) {
-                  const minWidth = 980.0;
+                  final minWidth = isMobile ? 1060.0 : 980.0;
                   final width = math.max(constraints.maxWidth, minWidth);
 
                   return SingleChildScrollView(
@@ -1572,50 +1615,59 @@ class _StaffPageState extends ConsumerState<StaffPage> {
               const SizedBox(height: 18),
 
               // Wrap of Public Holiday Cards (Image 1 & 2)
-              Wrap(
-                spacing: 14,
-                runSpacing: 14,
-                children: _publicHolidays.map((holiday) {
-                  return Container(
-                    width: 176,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          holiday.date,
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF065F46),
-                          ),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final cardWidth = constraints.maxWidth < 420
+                      ? double.infinity
+                      : (constraints.maxWidth < 600
+                          ? (constraints.maxWidth - 14) / 2
+                          : 176.0);
+                  return Wrap(
+                    spacing: 14,
+                    runSpacing: 14,
+                    children: _publicHolidays.map((holiday) {
+                      return Container(
+                        width: cardWidth,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          holiday.name,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0F172A),
-                          ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              holiday.date,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF065F46),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              holiday.name,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              holiday.type,
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 3),
-                        Text(
-                          holiday.type,
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    }).toList(),
                   );
-                }).toList(),
+                },
               ),
             ],
           ),
@@ -1659,7 +1711,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
           // Scorecard Table (Image 3)
           LayoutBuilder(
             builder: (context, constraints) {
-              const minWidth = 840.0;
+              final minWidth = isMobile ? 900.0 : 840.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
@@ -1694,7 +1746,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                         final progressRatio = (emp.kpiScore / 100.0).clamp(0.0, 1.0);
 
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                           decoration: const BoxDecoration(
                             border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                           ),
@@ -1736,25 +1788,26 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                                 flex: 30,
                                 child: Row(
                                   children: [
-                                    Container(
-                                      width: 140,
-                                      height: 7,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFE2E8F0),
-                                        borderRadius: BorderRadius.circular(4),
-                                      ),
-                                      child: FractionallySizedBox(
-                                        alignment: Alignment.centerLeft,
-                                        widthFactor: progressRatio,
-                                        child: Container(
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFF047857), // Solid green bar
-                                            borderRadius: BorderRadius.circular(4),
+                                    Expanded(
+                                      child: Container(
+                                        height: 7,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFE2E8F0),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: FractionallySizedBox(
+                                          alignment: Alignment.centerLeft,
+                                          widthFactor: progressRatio,
+                                          child: Container(
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFF047857), // Solid green bar
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 12),
+                                    const SizedBox(width: 10),
                                     Text(
                                       '${emp.kpiScore}% Achieve',
                                       style: const TextStyle(
@@ -1812,23 +1865,22 @@ class _StaffPageState extends ConsumerState<StaffPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with "+ Lodge Staff Claim" Button (Image 4)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
+          if (isMobile)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
                     Text(
                       'Employee Reimbursements & Travel claims',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF064E3B),
                       ),
@@ -1840,25 +1892,67 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 14),
-              ElevatedButton.icon(
-                onPressed: _openLodgeStaffClaimDialog,
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text(
-                  'Lodge Staff Claim',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                const SizedBox(height: 14),
+                ElevatedButton.icon(
+                  onPressed: _openLodgeStaffClaimDialog,
+                  icon: const Icon(LucideIcons.plus, size: 14),
+                  label: const Text(
+                    'Lodge Staff Claim',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF047857), // Solid green (Image 4)
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF047857), // Solid green (Image 4)
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Employee Reimbursements & Travel claims',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF064E3B),
+                        ),
+                      ),
+                      SizedBox(height: 3),
+                      Text(
+                        'Manage, approve, reject and settle workforce expense reimbursement claims.',
+                        style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const SizedBox(width: 14),
+                ElevatedButton.icon(
+                  onPressed: _openLodgeStaffClaimDialog,
+                  icon: const Icon(LucideIcons.plus, size: 14),
+                  label: const Text(
+                    'Lodge Staff Claim',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF047857), // Solid green (Image 4)
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 20),
 
           // Search & Filter Status Row (Image 4)
@@ -1888,37 +1982,64 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                 ),
               );
 
-              final filterDropdown = Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text('Filter Status:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
-                  const SizedBox(width: 8),
-                  Container(
-                    height: 40,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedClaimStatusFilter,
-                        icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-                        items: const [
-                          DropdownMenuItem(value: 'All Claims', child: Text('All Claims', style: TextStyle(fontSize: 12.5))),
-                          DropdownMenuItem(value: 'Pending Approval', child: Text('Pending Approval', style: TextStyle(fontSize: 12.5))),
-                          DropdownMenuItem(value: 'Approved', child: Text('Approved', style: TextStyle(fontSize: 12.5))),
-                          DropdownMenuItem(value: 'Rejected', child: Text('Rejected', style: TextStyle(fontSize: 12.5))),
-                        ],
-                        onChanged: (val) {
-                          if (val != null) setState(() => _selectedClaimStatusFilter = val);
-                        },
+              final filterDropdown = isCompact
+                  ? Container(
+                      height: 40,
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                    ),
-                  ),
-                ],
-              );
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _selectedClaimStatusFilter,
+                          isExpanded: true,
+                          icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                          items: const [
+                            DropdownMenuItem(value: 'All Claims', child: Text('Filter: All Claims', style: TextStyle(fontSize: 12.5))),
+                            DropdownMenuItem(value: 'Pending Approval', child: Text('Filter: Pending Approval', style: TextStyle(fontSize: 12.5))),
+                            DropdownMenuItem(value: 'Approved', child: Text('Filter: Approved', style: TextStyle(fontSize: 12.5))),
+                            DropdownMenuItem(value: 'Rejected', child: Text('Filter: Rejected', style: TextStyle(fontSize: 12.5))),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) setState(() => _selectedClaimStatusFilter = val);
+                          },
+                        ),
+                      ),
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('Filter Status:', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+                        const SizedBox(width: 8),
+                        Container(
+                          height: 40,
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _selectedClaimStatusFilter,
+                              icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                              items: const [
+                                DropdownMenuItem(value: 'All Claims', child: Text('All Claims', style: TextStyle(fontSize: 12.5))),
+                                DropdownMenuItem(value: 'Pending Approval', child: Text('Pending Approval', style: TextStyle(fontSize: 12.5))),
+                                DropdownMenuItem(value: 'Approved', child: Text('Approved', style: TextStyle(fontSize: 12.5))),
+                                DropdownMenuItem(value: 'Rejected', child: Text('Rejected', style: TextStyle(fontSize: 12.5))),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) setState(() => _selectedClaimStatusFilter = val);
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
 
               if (isCompact) {
                 return Column(
@@ -1945,7 +2066,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
           // Table Header & Rows (Image 4)
           LayoutBuilder(
             builder: (context, constraints) {
-              const minWidth = 960.0;
+              final minWidth = isMobile ? 1060.0 : 960.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
@@ -1957,7 +2078,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                     children: [
                       // Header Row (Image 4)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -2244,14 +2365,18 @@ class _LodgeStaffClaimDialogState extends State<_LodgeStaffClaimDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Lodge Staff Claim',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const Expanded(
+                      child: Text(
+                        'Lodge Staff Claim',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
@@ -2555,14 +2680,18 @@ class _FilePerformanceReviewDialogState extends State<_FilePerformanceReviewDial
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'File Performance Review',
-                      style: TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    const Expanded(
+                      child: Text(
+                        'File Performance Review',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
@@ -2626,6 +2755,7 @@ class _FilePerformanceReviewDialogState extends State<_FilePerformanceReviewDial
                         children: [
                           const Text(
                             'Appraisal Rating (1.0 - 5.0)',
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
                           ),
                           const SizedBox(height: 6),
@@ -2640,6 +2770,7 @@ class _FilePerformanceReviewDialogState extends State<_FilePerformanceReviewDial
                         children: [
                           const Text(
                             'KPI Target Score %',
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
                           ),
                           const SizedBox(height: 6),
@@ -2812,6 +2943,9 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 700;
+
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -2836,7 +2970,7 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
             children: [
               // Top Header with UserPlus Icon
               Padding(
-                padding: const EdgeInsets.fromLTRB(28, 20, 20, 16),
+                padding: EdgeInsets.fromLTRB(isMobile ? 16 : 28, isMobile ? 16 : 20, isMobile ? 16 : 20, isMobile ? 12 : 16),
                 child: Row(
                   children: [
                     Container(
@@ -2880,7 +3014,7 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
               // Scrollable Form Cards
               Flexible(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(isMobile ? 14 : 24),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final isDesktop = constraints.maxWidth > 720;
@@ -2892,48 +3026,77 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
                             Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Expanded(child: _buildPersonalDetailsCard()),
+                                Expanded(child: _buildPersonalDetailsCard(false)),
                                 const SizedBox(width: 16),
-                                Expanded(child: _buildJobDesignationCard()),
+                                Expanded(child: _buildJobDesignationCard(false)),
                               ],
                             )
                           else ...[
-                            _buildPersonalDetailsCard(),
+                            _buildPersonalDetailsCard(constraints.maxWidth < 500),
                             const SizedBox(height: 16),
-                            _buildJobDesignationCard(),
+                            _buildJobDesignationCard(constraints.maxWidth < 500),
                           ],
                           const SizedBox(height: 16),
-                          _buildPayrollCard(),
+                          _buildPayrollCard(!isDesktop && constraints.maxWidth < 500),
                           const SizedBox(height: 16),
-                          _buildAddressCard(),
+                          _buildAddressCard(!isDesktop && constraints.maxWidth < 500),
                           const SizedBox(height: 24),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
-                            children: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                style: TextButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF1F5F9),
-                                  foregroundColor: const Color(0xFF334155),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          if (constraints.maxWidth < 460)
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ElevatedButton(
+                                  onPressed: _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF065F46),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: const Text('Onboard Staff Employee', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ),
-                                child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                              const SizedBox(width: 12),
-                              ElevatedButton(
-                                onPressed: _submit,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF065F46),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                const SizedBox(height: 10),
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: const Color(0xFFF1F5F9),
+                                    foregroundColor: const Color(0xFF334155),
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
                                 ),
-                                child: const Text('Onboard Staff Employee', style: TextStyle(fontWeight: FontWeight.bold)),
-                              ),
-                            ],
-                          ),
+                              ],
+                            )
+                          else
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                TextButton(
+                                  onPressed: () => Navigator.of(context).pop(),
+                                  style: TextButton.styleFrom(
+                                    backgroundColor: const Color(0xFFF1F5F9),
+                                    foregroundColor: const Color(0xFF334155),
+                                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ),
+                                const SizedBox(width: 12),
+                                ElevatedButton(
+                                  onPressed: _submit,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF065F46),
+                                    foregroundColor: Colors.white,
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  child: const Text('Onboard Staff Employee', style: TextStyle(fontWeight: FontWeight.bold)),
+                                ),
+                              ],
+                            ),
                         ],
                       );
                     },
@@ -2947,9 +3110,9 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
     );
   }
 
-  Widget _buildSectionCard({required Widget header, required List<Widget> children}) {
+  Widget _buildSectionCard({required Widget header, required List<Widget> children, bool isMobile = false}) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(isMobile ? 14 : 18),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(14),
@@ -2966,13 +3129,20 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
     );
   }
 
-  Widget _buildPersonalDetailsCard() {
+  Widget _buildPersonalDetailsCard([bool isMobile = false]) {
     return _buildSectionCard(
+      isMobile: isMobile,
       header: Row(
         children: const [
           Icon(LucideIcons.user, size: 15, color: Color(0xFF0F172A)),
           SizedBox(width: 8),
-          Text('Personal Details', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Expanded(
+            child: Text(
+              'Personal Details',
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       children: [
@@ -3013,13 +3183,20 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
     );
   }
 
-  Widget _buildJobDesignationCard() {
+  Widget _buildJobDesignationCard([bool isMobile = false]) {
     return _buildSectionCard(
+      isMobile: isMobile,
       header: Row(
         children: const [
           Icon(LucideIcons.briefcase, size: 15, color: Color(0xFF0F172A)),
           SizedBox(width: 8),
-          Text('Job & Designation', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Expanded(
+            child: Text(
+              'Job & Designation',
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       children: [
@@ -3062,60 +3239,108 @@ class _OnboardStaffEmployeeDialogState extends State<_OnboardStaffEmployeeDialog
     );
   }
 
-  Widget _buildPayrollCard() {
+  Widget _buildPayrollCard([bool isMobile = false]) {
     return _buildSectionCard(
+      isMobile: isMobile,
       header: Row(
         children: const [
           Icon(LucideIcons.creditCard, size: 15, color: Color(0xFF0F172A)),
           SizedBox(width: 8),
-          Text('Payroll & Financial Structure', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Expanded(
+            child: Text(
+              'Payroll & Financial Structure',
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       children: [
-        Row(
-          children: [
-            Expanded(child: _buildFormField('Basic Monthly Salary (INR)', _salaryCtrl)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFormField('PAN Number', _panCtrl)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFormField('PF Number', _pfCtrl)),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _buildFormField('Bank Name', _bankNameCtrl)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFormField('Bank Account Number', _accountCtrl)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFormField('IFSC Code', _ifscCtrl)),
-          ],
-        ),
+        if (isMobile) ...[
+          _buildFormField('Basic Monthly Salary (INR)', _salaryCtrl),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildFormField('PAN Number', _panCtrl)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildFormField('PF Number', _pfCtrl)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildFormField('Bank Name', _bankNameCtrl),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(flex: 3, child: _buildFormField('Bank Account Number', _accountCtrl)),
+              const SizedBox(width: 10),
+              Expanded(flex: 2, child: _buildFormField('IFSC Code', _ifscCtrl)),
+            ],
+          ),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(child: _buildFormField('Basic Monthly Salary (INR)', _salaryCtrl)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFormField('PAN Number', _panCtrl)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFormField('PF Number', _pfCtrl)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildFormField('Bank Name', _bankNameCtrl)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFormField('Bank Account Number', _accountCtrl)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFormField('IFSC Code', _ifscCtrl)),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildAddressCard() {
+  Widget _buildAddressCard([bool isMobile = false]) {
     return _buildSectionCard(
+      isMobile: isMobile,
       header: Row(
         children: const [
           Icon(LucideIcons.mapPin, size: 15, color: Color(0xFF0F172A)),
           SizedBox(width: 8),
-          Text('Address & Emergency Details', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+          Expanded(
+            child: Text(
+              'Address & Emergency Details',
+              style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ],
       ),
       children: [
         _buildFormField('Residential Address Line 1', _addressCtrl),
         const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(child: _buildFormField('City', _cityCtrl)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFormField('State', _stateCtrl)),
-            const SizedBox(width: 12),
-            Expanded(child: _buildFormField('Pincode', _pincodeCtrl, isNumeric: true)),
-          ],
-        ),
+        if (isMobile) ...[
+          Row(
+            children: [
+              Expanded(child: _buildFormField('City', _cityCtrl)),
+              const SizedBox(width: 10),
+              Expanded(child: _buildFormField('State', _stateCtrl)),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildFormField('Pincode', _pincodeCtrl, isNumeric: true),
+        ] else ...[
+          Row(
+            children: [
+              Expanded(child: _buildFormField('City', _cityCtrl)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFormField('State', _stateCtrl)),
+              const SizedBox(width: 12),
+              Expanded(child: _buildFormField('Pincode', _pincodeCtrl, isNumeric: true)),
+            ],
+          ),
+        ],
         const SizedBox(height: 12),
         Row(
           children: [
@@ -3302,10 +3527,14 @@ class _EditStaffEmployeeDialogState extends State<_EditStaffEmployeeDialog> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '✏️ Edit Employee (${widget.employee.id})',
-                      style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    Expanded(
+                      child: Text(
+                        '✏️ Edit Employee (${widget.employee.id})',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
