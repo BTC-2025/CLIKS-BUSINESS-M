@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../features/billing/widgets/customer_registration_dialog.dart';
 
 class InvoiceTemplatesModal extends ConsumerStatefulWidget {
   const InvoiceTemplatesModal({super.key});
@@ -189,185 +190,8 @@ class AddCustomerModal extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return _LargeModalWrapper(
-      title: 'New Customer Registration',
-      subtitle: 'Code: CUST-8245',
+    return CustomerRegistrationDialog(
       onClose: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.customers),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildResponsiveRow(
-            context,
-            [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('CUSTOMER NAME'),
-                  _buildTextField(hintText: 'Rajesh Gupta'),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('SHOP / BUSINESS NAME'),
-                  _buildTextField(hintText: 'Gupta Groceries Wholesale'),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildResponsiveFourRow(
-            context,
-            [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('PHONE NUMBER'),
-                  _buildTextField(hintText: '9876543210', keyboardType: TextInputType.phone),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('ALTERNATE PHONE'),
-                  _buildTextField(hintText: 'Alternate Phone', keyboardType: TextInputType.phone),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('EMAIL ADDRESS'),
-                  _buildTextField(hintText: 'name@domain.com', keyboardType: TextInputType.emailAddress),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('WEBSITE'),
-                  _buildTextField(hintText: 'www.website.com'),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildResponsiveFourRow(
-            context,
-            [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('GSTIN'),
-                  _buildTextField(hintText: '07AAAAA1111A1Z1'),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('PAN NUMBER'),
-                  _buildTextField(hintText: 'ABCDE1234F'),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('TAX TYPE'),
-                  _buildDropdown(
-                    value: 'Registered Business',
-                    items: ['Registered Business', 'Unregistered Business', 'Consumer'],
-                    onChanged: (val) {},
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('PLACE OF SUPPLY'),
-                  _buildDropdown(
-                    value: 'Delhi',
-                    items: ['Delhi', 'Maharashtra', 'Karnataka', 'Tamil Nadu', 'Uttar Pradesh'],
-                    onChanged: (val) {},
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildResponsiveRow(
-            context,
-            [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('BILLING ADDRESS'),
-                  _buildTextField(hintText: 'Enter billing address...'),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('SHIPPING ADDRESS'),
-                  _buildTextField(hintText: 'Enter shipping address...'),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildResponsiveFourRow(
-            context,
-            [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('Opening Balance (₹)'),
-                  _buildTextField(hintText: '0', keyboardType: TextInputType.number),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('Credit Limit (₹)'),
-                  _buildTextField(hintText: '50000', keyboardType: TextInputType.number),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('Due Days (Terms)'),
-                  _buildTextField(hintText: '30', keyboardType: TextInputType.number),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildLabel('Preferred Reminder'),
-                  _buildDropdown(
-                    value: 'WhatsApp',
-                    items: ['WhatsApp', 'SMS', 'Email', 'Call'],
-                    onChanged: (val) {},
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildLabel('Opening Loyalty Points'),
-          _buildTextField(hintText: '0', keyboardType: TextInputType.number),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.customers),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF7C3AED),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: const Text('Register Customer', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
@@ -917,7 +741,14 @@ class _NewCustomerReturnModalState extends ConsumerState<NewCustomerReturnModal>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: const [
-                          Text('Grand Total Refund / Credit:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF065F46))),
+                          Expanded(
+                            child: Text(
+                              'Grand Total Refund / Credit:',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF065F46)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8),
                           Text('₹ 0.00', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFF059669))),
                         ],
                       ),
@@ -1331,7 +1162,14 @@ class _NewSupplierReturnModalState extends ConsumerState<NewSupplierReturnModal>
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: const [
-                          Text('Grand Total Debit Note:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E))),
+                          Expanded(
+                            child: Text(
+                              'Grand Total Debit Note:',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF92400E)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(width: 8),
                           Text('₹ 0.00', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: Color(0xFFD97706))),
                         ],
                       ),

@@ -915,13 +915,16 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                _orderNumber,
-                style: const TextStyle(
-                  color: Color(0xFF166534),
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                  letterSpacing: 0.5,
+              Expanded(
+                child: Text(
+                  _orderNumber,
+                  style: const TextStyle(
+                    color: Color(0xFF166534),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                    letterSpacing: 0.5,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
@@ -955,8 +958,8 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
     final customerField = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Row(
-          children: [
+        Row(
+          children: const [
             Icon(LucideIcons.user, size: 14, color: Color(0xFF64748B)),
             SizedBox(width: 6),
             Text(
@@ -969,12 +972,15 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
               ),
             ),
             SizedBox(width: 6),
-            Text(
-              '(Optional)',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.normal,
-                color: Color(0xFF94A3B8),
+            Flexible(
+              child: Text(
+                '(Optional)',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.normal,
+                  color: Color(0xFF94A3B8),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -1088,13 +1094,16 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
                 child: const Icon(LucideIcons.package, size: 16, color: Color(0xFF166534)),
               ),
               const SizedBox(width: 10),
-              const Text(
-                'Product Items',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.2,
+              const Flexible(
+                child: Text(
+                  'Product Items',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                    letterSpacing: -0.2,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 10),
@@ -1124,7 +1133,6 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
               const double minTableWidth = 750.0;
               if (constraints.maxWidth < minTableWidth) {
                 return Scrollbar(
-                  thumbVisibility: true,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     physics: const BouncingScrollPhysics(),
@@ -1619,8 +1627,11 @@ class _SimpleBillingPageState extends ConsumerState<SimpleBillingPage> {
         ),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 qtySection,
                 grandTotalSection,

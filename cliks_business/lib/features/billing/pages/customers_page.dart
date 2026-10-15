@@ -4,6 +4,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../widgets/customer_registration_dialog.dart';
 
 // ═══════════════════════════════════════════════════════════════════
 // CUSTOMER DATA MODEL
@@ -175,196 +176,52 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   // MODALS & ACTIONS
   // ═══════════════════════════════════════════════════════════════════
   void _openAddCustomerModal() {
-    final nameCtrl = TextEditingController();
-    final businessCtrl = TextEditingController();
-    final emailCtrl = TextEditingController();
-    final phoneCtrl = TextEditingController();
-    final gstinCtrl = TextEditingController();
-    final creditLimitCtrl = TextEditingController(text: '0');
-
     showDialog(
       context: context,
+      barrierDismissible: true,
       builder: (ctx) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 520),
-            padding: const EdgeInsets.all(24),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(LucideIcons.userPlus, color: Color(0xFF166534), size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Add New Customer',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                        ),
-                      ],
-                    ),
-                    IconButton(
-                      icon: const Icon(LucideIcons.x, size: 20, color: Color(0xFF64748B)),
-                      onPressed: () => Navigator.pop(ctx),
-                    ),
-                  ],
+        return CustomerRegistrationDialog(
+          onClose: () => Navigator.pop(ctx),
+          onCustomerRegistered: (formData) {
+            setState(() {
+              final name = formData.name.trim();
+              final letter = name.isNotEmpty ? name[0].toUpperCase() : 'C';
+              _customers.insert(
+                0,
+                _CustomerRecord(
+                  id: DateTime.now().millisecondsSinceEpoch.toString(),
+                  name: name,
+                  code: 'CUST-2406',
+                  statusText: formData.accountStatus == 'Active'
+                      ? 'Connected'
+                      : formData.accountStatus,
+                  statusBg: const Color(0xFFDCFCE7),
+                  statusFg: const Color(0xFF15803D),
+                  business: formData.shopName.isNotEmpty
+                      ? formData.shopName
+                      : 'Wholesale',
+                  email: formData.email.isNotEmpty
+                      ? formData.email
+                      : '$name@bnxmail.com',
+                  phone: formData.phone.isNotEmpty ? formData.phone : null,
+                  connectionRequest: null,
+                  gstin: formData.gstin.isNotEmpty
+                      ? formData.gstin
+                      : 'Unregistered',
+                  creditLimit: formData.creditLimit,
+                  outstanding: formData.openingBalance,
+                  loyaltyPts: 0,
+                  avatarBg: const Color(0xFFF3E8FF),
+                  avatarFg: const Color(0xFF7C3AED),
+                  avatarLetter: letter,
                 ),
-                const SizedBox(height: 16),
-                const Divider(color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: nameCtrl,
-                  decoration: InputDecoration(
-                    labelText: 'Customer Full Name *',
-                    labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: phoneCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Mobile Phone *',
-                          labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: emailCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Email Address',
-                          labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: businessCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'Business Name / Category',
-                          labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: TextField(
-                        controller: gstinCtrl,
-                        decoration: InputDecoration(
-                          labelText: 'GSTIN (Optional)',
-                          labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  controller: creditLimitCtrl,
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Credit Limit (₹)',
-                    labelStyle: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    OutlinedButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFFE2E8F0)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
-                      child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (nameCtrl.text.trim().isEmpty) {
-                          AppSnackbar.show(context, 'Please enter customer name', type: SnackType.warning);
-                          return;
-                        }
-                        setState(() {
-                          _customers.insert(
-                            0,
-                            _CustomerRecord(
-                              id: DateTime.now().millisecondsSinceEpoch.toString(),
-                              name: nameCtrl.text.trim(),
-                              code: 'CUST-${math.Random().nextInt(9000) + 1000}',
-                              statusText: 'Connected',
-                              statusBg: const Color(0xFFDCFCE7),
-                              statusFg: const Color(0xFF15803D),
-                              business: businessCtrl.text.trim().isEmpty ? 'Personal' : businessCtrl.text.trim(),
-                              email: emailCtrl.text.trim().isEmpty ? 'client@company.com' : emailCtrl.text.trim(),
-                              phone: phoneCtrl.text.trim().isEmpty ? null : phoneCtrl.text.trim(),
-                              connectionRequest: null,
-                              gstin: gstinCtrl.text.trim().isEmpty ? 'Unregistered' : gstinCtrl.text.trim(),
-                              creditLimit: double.tryParse(creditLimitCtrl.text.trim()) ?? 0,
-                              outstanding: 0,
-                              loyaltyPts: 0,
-                              avatarBg: const Color(0xFFDCFCE7),
-                              avatarFg: const Color(0xFF15803D),
-                              avatarLetter: nameCtrl.text.trim().isNotEmpty ? nameCtrl.text.trim()[0].toUpperCase() : 'C',
-                            ),
-                          );
-                        });
-                        Navigator.pop(ctx);
-                        AppSnackbar.show(context, 'Customer added successfully', type: SnackType.success);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF166534),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      ),
-                      child: const Text('Save Customer', style: TextStyle(fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    },
+              );
+            });
+            AppSnackbar.show(context, 'Customer registered successfully',
+                type: SnackType.success);
+          },
+        );
+      },
     );
   }
 
@@ -385,24 +242,29 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(10),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: const Icon(LucideIcons.fileSpreadsheet, color: Color(0xFF334155), size: 18),
                           ),
-                          child: const Icon(LucideIcons.fileSpreadsheet, color: Color(0xFF334155), size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text(
-                          'Bulk Import Customers',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                        ),
-                      ],
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Text(
+                              'Bulk Import Customers',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(LucideIcons.x, size: 20, color: Color(0xFF64748B)),
                       onPressed: () => Navigator.pop(ctx),
@@ -452,8 +314,11 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     TextButton.icon(
                       onPressed: () {
@@ -508,41 +373,46 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 40,
-                              height: 40,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
-                                borderRadius: BorderRadius.circular(10),
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(LucideIcons.calculator, color: Color(0xFF166534), size: 20),
                               ),
-                              child: const Icon(LucideIcons.calculator, color: Color(0xFF166534), size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  'Points Calculation & Distribution Rules',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
-                                  ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Points Calculation & Distribution Rules',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    SizedBox(height: 3),
+                                    Text(
+                                      'Understand your points-to-money ratio & cashback conversion',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                                SizedBox(height: 3),
-                                Text(
-                                  'Understand your points-to-money ratio & cashback conversion',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                              ),
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         GestureDetector(
                           onTap: () => Navigator.pop(ctx),
                           child: Container(
@@ -559,97 +429,110 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Ratio Cards Side-by-Side (Image 4)
-                    Row(
-                      children: [
-                        // Card 1: Earning Ratio
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  'EARNING RATIO',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF64748B),
-                                    letterSpacing: 0.5,
-                                  ),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  '₹100 = 1 Point',
-                                  style: TextStyle(
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF166534),
-                                  ),
-                                ),
-                                SizedBox(height: 6),
-                                Text(
-                                  'Earn 1% reward points on every purchase total.',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF64748B),
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
+                    // Ratio Cards (Responsive on Mobile)
+                    LayoutBuilder(
+                      builder: (context, cardConstraints) {
+                        final isMobileCard = cardConstraints.maxWidth < 450;
+                        final card1 = Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
-                        ),
-                        const SizedBox(width: 14),
-                        // Card 2: Money Value Ratio
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(14),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  'MONEY VALUE RATIO',
-                                  style: TextStyle(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF64748B),
-                                    letterSpacing: 0.5,
-                                  ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'EARNING RATIO',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF64748B),
+                                  letterSpacing: 0.5,
                                 ),
-                                SizedBox(height: 8),
-                                Text(
-                                  '10 Pts = ₹1.00',
-                                  style: TextStyle(
-                                    fontSize: 19,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF7C3AED),
-                                  ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '₹100 = 1 Point',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF166534),
                                 ),
-                                SizedBox(height: 6),
-                                Text(
-                                  '1 Point is equivalent to ₹0.10 in cash value.',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF64748B),
-                                    height: 1.3,
-                                  ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'Earn 1% reward points on every purchase total.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  height: 1.3,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ],
+                        );
+
+                        final card2 = Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'MONEY VALUE RATIO',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF64748B),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                '10 Pts = ₹1.00',
+                                style: TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF7C3AED),
+                                ),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                '1 Point is equivalent to ₹0.10 in cash value.',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                  height: 1.3,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (isMobileCard) {
+                          return Column(
+                            children: [
+                              card1,
+                              const SizedBox(height: 12),
+                              card2,
+                            ],
+                          );
+                        }
+
+                        return Row(
+                          children: [
+                            Expanded(child: card1),
+                            const SizedBox(width: 14),
+                            Expanded(child: card2),
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 18),
 
@@ -668,86 +551,83 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                             children: const [
                               Icon(LucideIcons.percent, size: 15, color: Color(0xFF166534)),
                               SizedBox(width: 6),
-                              Text(
-                                'Interactive Points-to-Money Converter',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF166534),
+                              Expanded(
+                                child: Text(
+                                  'Interactive Points-to-Money Converter',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF166534),
+                                  ),
                                 ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 14),
-                          Row(
-                            children: [
-                              // Left: Purchase Amount
-                              Expanded(
-                                flex: 4,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Purchase Amount (₹)',
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
+                          LayoutBuilder(
+                            builder: (context, convConstraints) {
+                              final isMobileConv = convConstraints.maxWidth < 420;
+
+                              final purchaseInput = Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Purchase Amount (₹)',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    height: 38,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFF86EFAC)),
+                                    ),
+                                    child: TextField(
+                                      controller: amountController,
+                                      keyboardType: TextInputType.number,
+                                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                                      onChanged: (val) {
+                                        setModalState(() {
+                                          calcAmount = int.tryParse(val.trim()) ?? 0;
+                                        });
+                                      },
+                                      decoration: const InputDecoration(
+                                        border: InputBorder.none,
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                                       ),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      height: 38,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFF86EFAC)),
-                                      ),
-                                      child: TextField(
-                                        controller: amountController,
-                                        keyboardType: TextInputType.number,
-                                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
-                                        onChanged: (val) {
-                                          setModalState(() {
-                                            calcAmount = int.tryParse(val.trim()) ?? 0;
-                                          });
-                                        },
-                                        decoration: const InputDecoration(
-                                          border: InputBorder.none,
-                                          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                        ),
-                                      ),
+                                  ),
+                                ],
+                              );
+
+                              final pointsDisplay = Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Points Earned & Cashback',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
                                     ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 10),
-                              const Icon(LucideIcons.arrowRight, size: 16, color: Color(0xFF166534)),
-                              const SizedBox(width: 10),
-                              // Right: Points Earned & Cashback
-                              Expanded(
-                                flex: 5,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Points Earned & Cashback',
-                                      style: TextStyle(
-                                        fontSize: 10.5,
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(0xFF0F172A),
-                                      ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Container(
+                                    height: 38,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                                    alignment: Alignment.centerLeft,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFF86EFAC)),
                                     ),
-                                    const SizedBox(height: 6),
-                                    Container(
-                                      height: 38,
-                                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      alignment: Alignment.centerLeft,
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(8),
-                                        border: Border.all(color: const Color(0xFF86EFAC)),
-                                      ),
+                                    child: FittedBox(
+                                      fit: BoxFit.scaleDown,
                                       child: Text(
                                         '+$points pts (₹$cashback)',
                                         style: const TextStyle(
@@ -757,10 +637,32 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                         ),
                                       ),
                                     ),
+                                  ),
+                                ],
+                              );
+
+                              if (isMobileConv) {
+                                return Column(
+                                  children: [
+                                    purchaseInput,
+                                    const SizedBox(height: 8),
+                                    const Icon(LucideIcons.arrowDown, size: 16, color: Color(0xFF166534)),
+                                    const SizedBox(height: 8),
+                                    pointsDisplay,
                                   ],
-                                ),
-                              ),
-                            ],
+                                );
+                              }
+
+                              return Row(
+                                children: [
+                                  Expanded(flex: 4, child: purchaseInput),
+                                  const SizedBox(width: 10),
+                                  const Icon(LucideIcons.arrowRight, size: 16, color: Color(0xFF166534)),
+                                  const SizedBox(width: 10),
+                                  Expanded(flex: 5, child: pointsDisplay),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -811,32 +713,37 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 18,
-                          backgroundColor: customer.avatarBg,
-                          child: Text(
-                            customer.avatarLetter,
-                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: customer.avatarFg),
+                    Expanded(
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: customer.avatarBg,
+                            child: Text(
+                              customer.avatarLetter,
+                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: customer.avatarFg),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${customer.name} - Ledger Statement',
-                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${customer.name} - Ledger Statement',
+                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                ),
+                                Text(
+                                  'GSTIN: ${customer.gstin} • Credit Limit: ₹${customer.creditLimit.toStringAsFixed(0)}',
+                                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                              ],
                             ),
-                            Text(
-                              'GSTIN: ${customer.gstin} • Credit Limit: ₹${customer.creditLimit.toStringAsFixed(0)}',
-                              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       icon: const Icon(LucideIcons.x, size: 20, color: Color(0xFF64748B)),
                       onPressed: () => Navigator.pop(ctx),
@@ -895,40 +802,51 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     border: Border.all(color: const Color(0xFFE2E8F0)),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Table(
-                    columnWidths: const {
-                      0: FlexColumnWidth(1.4),
-                      1: FlexColumnWidth(2.0),
-                      2: FlexColumnWidth(1.2),
-                      3: FlexColumnWidth(1.2),
-                      4: FlexColumnWidth(1.2),
-                    },
-                    children: const [
-                      TableRow(
-                        decoration: BoxDecoration(color: Color(0xFFF8FAFC)),
-                        children: [
-                          Padding(padding: EdgeInsets.all(8), child: Text('DATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('VOUCHER / REF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('DEBIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('CREDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('BALANCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minWidth: MediaQuery.of(ctx).size.width < 550 ? 460 : 0,
+                      ),
+                      child: Table(
+                        columnWidths: const {
+                          0: FlexColumnWidth(1.4),
+                          1: FlexColumnWidth(2.0),
+                          2: FlexColumnWidth(1.2),
+                          3: FlexColumnWidth(1.2),
+                          4: FlexColumnWidth(1.2),
+                        },
+                        children: const [
+                          TableRow(
+                            decoration: BoxDecoration(color: Color(0xFFF8FAFC)),
+                            children: [
+                              Padding(padding: EdgeInsets.all(8), child: Text('DATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('VOUCHER / REF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('DEBIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('CREDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('BALANCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                            ],
+                          ),
+                          TableRow(
+                            children: [
+                              Padding(padding: EdgeInsets.all(8), child: Text('2026-08-20', style: TextStyle(fontSize: 11))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('Opening Balance', style: TextStyle(fontSize: 11))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
+                              Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                            ],
+                          ),
                         ],
                       ),
-                      TableRow(
-                        children: [
-                          Padding(padding: EdgeInsets.all(8), child: Text('2026-08-20', style: TextStyle(fontSize: 11))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('Opening Balance', style: TextStyle(fontSize: 11))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
-                          Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     OutlinedButton.icon(
                       onPressed: () {
@@ -1067,8 +985,9 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       ],
     );
 
-    final actionButtons = Row(
-      mainAxisSize: MainAxisSize.min,
+    final actionButtons = Wrap(
+      spacing: 10,
+      runSpacing: 8,
       children: [
         OutlinedButton.icon(
           onPressed: _openBulkImportModal,
@@ -1089,7 +1008,6 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             elevation: 0,
           ),
         ),
-        const SizedBox(width: 10),
         ElevatedButton.icon(
           onPressed: _openAddCustomerModal,
           icon: const Icon(LucideIcons.plus, size: 15, color: Colors.white),
@@ -1405,61 +1323,111 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       ),
     );
 
-    final dropdownAndFilter = Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Balance filter dropdown
-        Container(
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedBalanceFilter,
-              icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-              style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
-              items: const [
-                DropdownMenuItem(value: 'All Balances', child: Text('All Balances')),
-                DropdownMenuItem(value: 'Receivables Only', child: Text('Receivables (Udhaar)')),
-                DropdownMenuItem(value: 'Settled (₹0)', child: Text('Settled (₹0)')),
-                DropdownMenuItem(value: 'High Credit Limit', child: Text('High Credit Limit')),
-              ],
-              onChanged: (val) {
-                if (val != null) setState(() => _selectedBalanceFilter = val);
-              },
-            ),
-          ),
-        ),
-        const SizedBox(width: 8),
-        // Filter button (Image 2)
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: IconButton(
-            icon: const Icon(LucideIcons.filter, size: 16, color: Color(0xFF64748B)),
-            onPressed: () {
-              AppSnackbar.show(context, 'Advanced customer filters applied.', type: SnackType.info);
-            },
-          ),
-        ),
-      ],
-    );
+    final dropdownAndFilter = isMobile
+        ? Row(
+            children: [
+              Expanded(
+                child: Container(
+                  height: 42,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedBalanceFilter,
+                      isExpanded: true,
+                      icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                      items: const [
+                        DropdownMenuItem(value: 'All Balances', child: Text('All Balances')),
+                        DropdownMenuItem(value: 'Receivables Only', child: Text('Receivables (Udhaar)')),
+                        DropdownMenuItem(value: 'Settled (₹0)', child: Text('Settled (₹0)')),
+                        DropdownMenuItem(value: 'High Credit Limit', child: Text('High Credit Limit')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) setState(() => _selectedBalanceFilter = val);
+                      },
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: IconButton(
+                  icon: const Icon(LucideIcons.filter, size: 16, color: Color(0xFF64748B)),
+                  onPressed: () {
+                    AppSnackbar.show(context, 'Advanced customer filters applied.', type: SnackType.info);
+                  },
+                ),
+              ),
+            ],
+          )
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Balance filter dropdown
+              Container(
+                height: 42,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _selectedBalanceFilter,
+                    icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                    items: const [
+                      DropdownMenuItem(value: 'All Balances', child: Text('All Balances')),
+                      DropdownMenuItem(value: 'Receivables Only', child: Text('Receivables (Udhaar)')),
+                      DropdownMenuItem(value: 'Settled (₹0)', child: Text('Settled (₹0)')),
+                      DropdownMenuItem(value: 'High Credit Limit', child: Text('High Credit Limit')),
+                    ],
+                    onChanged: (val) {
+                      if (val != null) setState(() => _selectedBalanceFilter = val);
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Filter button (Image 2)
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: IconButton(
+                  icon: const Icon(LucideIcons.filter, size: 16, color: Color(0xFF64748B)),
+                  onPressed: () {
+                    AppSnackbar.show(context, 'Advanced customer filters applied.', type: SnackType.info);
+                  },
+                ),
+              ),
+            ],
+          );
 
     if (isMobile) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           searchBox,
           const SizedBox(height: 10),
-          Align(alignment: Alignment.centerRight, child: dropdownAndFilter),
+          dropdownAndFilter,
         ],
       );
     }
@@ -1586,33 +1554,24 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                         maxLines: 1,
                                       ),
                                       const SizedBox(height: 2),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.min,
+                                      Wrap(
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        spacing: 5,
+                                        runSpacing: 2,
                                         children: [
-                                          if (cust.code != null) ...[
-                                            Text(
-                                              'Code: ${cust.code}',
-                                              style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                                          Text(
+                                            cust.code != null ? 'Code: ${cust.code}' : 'Code:',
+                                            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                                          ),
+                                          Text(
+                                            cust.statusText,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.bold,
+                                              color: cust.statusFg,
                                             ),
-                                            const SizedBox(width: 5),
-                                          ] else ...[
-                                            const Text(
-                                              'Code:',
-                                              style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
-                                            ),
-                                            const SizedBox(width: 5),
-                                          ],
-                                          Flexible(
-                                            child: Text(
-                                              cust.statusText,
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                color: cust.statusFg,
-                                              ),
-                                              overflow: TextOverflow.ellipsis,
-                                              maxLines: 1,
-                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                            maxLines: 1,
                                           ),
                                         ],
                                       ),
@@ -1907,37 +1866,63 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 ],
               ),
               const SizedBox(height: 18),
-              // 3 Aging stat boxes (Image 3)
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildAgingPill(
+              // 3 Aging stat boxes (Responsive on mobile)
+              if (isMobile)
+                Column(
+                  children: [
+                    _buildAgingPill(
                       label: '0 - 15 Days',
                       value: '₹0',
                       textColor: const Color(0xFF0284C7),
                       bgColor: const Color(0xFFE0F2FE),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildAgingPill(
+                    const SizedBox(height: 8),
+                    _buildAgingPill(
                       label: '16 – 30 Days Overdue',
                       value: '₹0',
                       textColor: const Color(0xFFD97706),
                       bgColor: const Color(0xFFFEF3C7),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _buildAgingPill(
+                    const SizedBox(height: 8),
+                    _buildAgingPill(
                       label: '31+ Days Critical',
                       value: '₹0',
                       textColor: const Color(0xFFDC2626),
                       bgColor: const Color(0xFFFEE2E2),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildAgingPill(
+                        label: '0 - 15 Days',
+                        value: '₹0',
+                        textColor: const Color(0xFF0284C7),
+                        bgColor: const Color(0xFFE0F2FE),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildAgingPill(
+                        label: '16 – 30 Days Overdue',
+                        value: '₹0',
+                        textColor: const Color(0xFFD97706),
+                        bgColor: const Color(0xFFFEF3C7),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _buildAgingPill(
+                        label: '31+ Days Critical',
+                        value: '₹0',
+                        textColor: const Color(0xFFDC2626),
+                        bgColor: const Color(0xFFFEE2E2),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),

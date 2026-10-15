@@ -570,26 +570,30 @@ class _GstPageState extends ConsumerState<GstPage> {
                 ),
               ),
               const SizedBox(width: 14),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text(
-                    'Government GSTIN Registered',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Government GSTIN Registered',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  SizedBox(height: 3),
-                  Text(
-                    'Legal Name: Welton Consignor | Type: Private Limited',
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF64748B),
+                    SizedBox(height: 3),
+                    Text(
+                      'Legal Name: Welton Consignor | Type: Private Limited',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        color: Color(0xFF64748B),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           );
@@ -634,7 +638,8 @@ class _GstPageState extends ConsumerState<GstPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              leftContent,
+              Flexible(child: leftContent),
+              const SizedBox(width: 16),
               rightContent,
             ],
           );
@@ -1068,7 +1073,7 @@ class _GstPageState extends ConsumerState<GstPage> {
         boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1342,45 +1347,79 @@ class _GstPageState extends ConsumerState<GstPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(22),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row with Title and + Verify Vendor Invoice button (Image 3 & 4)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'GSTR-2B Purchase ITC Reconciliations',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+          if (isMobile)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'GSTR-2B Purchase ITC Reconciliations',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
-              ),
-              ElevatedButton.icon(
-                onPressed: () => _openVerifyVendorInvoiceModal(),
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text(
-                  'Verify Vendor Invoice',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _openVerifyVendorInvoiceModal(),
+                    icon: const Icon(LucideIcons.plus, size: 14),
+                    label: const Text(
+                      'Verify Vendor Invoice',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'GSTR-2B Purchase ITC Reconciliations',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                ElevatedButton.icon(
+                  onPressed: () => _openVerifyVendorInvoiceModal(),
+                  icon: const Icon(LucideIcons.plus, size: 14),
+                  label: const Text(
+                    'Verify Vendor Invoice',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 18),
 
           // Reconciliations Table (Image 3 & 4)
           LayoutBuilder(
             builder: (context, constraints) {
-              const minWidth = 980.0;
+              const minWidth = 1150.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
@@ -1533,8 +1572,12 @@ class _GstPageState extends ConsumerState<GstPage> {
                                 // Actions (Verify button + Delete trash button)
                                 Expanded(
                                   flex: 14,
-                                  child: Row(
-                                    children: [
+                                  child: FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                       Material(
                                         color: Colors.transparent,
                                         child: InkWell(
@@ -1580,6 +1623,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                         ),
                                       ),
                                     ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -2061,71 +2105,136 @@ class _GstPageState extends ConsumerState<GstPage> {
                 ],
               );
 
-              final actionsSection = Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // FY Dropdown menu button (Image 3 & 4)
-                  PopupMenuButton<String>(
-                    initialValue: _selectedGstr9Fy,
-                    tooltip: 'Select Financial Year',
-                    onSelected: (val) {
-                      setState(() {
-                        _selectedGstr9Fy = val;
-                      });
-                    },
-                    offset: const Offset(0, 42),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                    ),
-                    itemBuilder: (context) => [
-                      _buildFyMenuItem('FY 2023–24'),
-                      _buildFyMenuItem('FY 2024–25'),
-                      _buildFyMenuItem('FY 2025–26'),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            _selectedGstr9Fy,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF0F172A),
+              final actionsSection = isMobile
+                  ? Wrap(
+                      spacing: 10,
+                      runSpacing: 10,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        PopupMenuButton<String>(
+                          initialValue: _selectedGstr9Fy,
+                          tooltip: 'Select Financial Year',
+                          onSelected: (val) {
+                            setState(() {
+                              _selectedGstr9Fy = val;
+                            });
+                          },
+                          offset: const Offset(0, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          itemBuilder: (context) => [
+                            _buildFyMenuItem('FY 2023–24'),
+                            _buildFyMenuItem('FY 2024–25'),
+                            _buildFyMenuItem('FY 2025–26'),
+                          ],
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _selectedGstr9Fy,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  // Export Annual PDF button
-                  ElevatedButton.icon(
-                    onPressed: _exportGstr9Pdf,
-                    icon: const Icon(LucideIcons.download, size: 14),
-                    label: const Text(
-                      'Export Annual PDF',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0F172A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
-                  ),
-                ],
-              );
+                        ),
+                        ElevatedButton.icon(
+                          onPressed: _exportGstr9Pdf,
+                          icon: const Icon(LucideIcons.download, size: 14),
+                          label: const Text(
+                            'Export Annual PDF',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F172A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // FY Dropdown menu button (Image 3 & 4)
+                        PopupMenuButton<String>(
+                          initialValue: _selectedGstr9Fy,
+                          tooltip: 'Select Financial Year',
+                          onSelected: (val) {
+                            setState(() {
+                              _selectedGstr9Fy = val;
+                            });
+                          },
+                          offset: const Offset(0, 42),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            side: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          itemBuilder: (context) => [
+                            _buildFyMenuItem('FY 2023–24'),
+                            _buildFyMenuItem('FY 2024–25'),
+                            _buildFyMenuItem('FY 2025–26'),
+                          ],
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  _selectedGstr9Fy,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        // Export Annual PDF button
+                        ElevatedButton.icon(
+                          onPressed: _exportGstr9Pdf,
+                          icon: const Icon(LucideIcons.download, size: 14),
+                          label: const Text(
+                            'Export Annual PDF',
+                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF0F172A),
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ],
+                    );
 
               if (isNarrow) {
                 return Column(

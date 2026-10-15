@@ -243,7 +243,13 @@ class _GenerateEWayBillModalState extends State<GenerateEWayBillModal> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Create Government e-Way Bill', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                    const Expanded(
+                      child: Text(
+                        'Create Government e-Way Bill',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(LucideIcons.x, size: 16, color: AppColors.secondaryText),
@@ -561,7 +567,13 @@ class _GenerateEInvoiceModalState extends State<GenerateEInvoiceModal> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Generate GST e-Invoice', style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                    const Expanded(
+                      child: Text(
+                        'Generate GST e-Invoice',
+                        style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(LucideIcons.x, size: 16, color: AppColors.secondaryText),
@@ -603,10 +615,12 @@ class _GenerateEInvoiceModalState extends State<GenerateEInvoiceModal> {
                       const Text('RECEIVER (TO)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: AppColors.darkText)),
                       const SizedBox(height: 6),
 
-                      Row(
+                      Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 10,
+                        runSpacing: 6,
                         children: [
                           const Text('Customer Source: ', style: TextStyle(fontSize: 10.5, color: AppColors.secondaryText)),
-                          const SizedBox(width: 4),
                           InkWell(
                             onTap: () => setState(() => customerSource = 0),
                             child: Row(
@@ -716,8 +730,10 @@ class _GenerateEInvoiceModalState extends State<GenerateEInvoiceModal> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            Wrap(
+                              alignment: WrapAlignment.spaceBetween,
+                              spacing: 8,
+                              runSpacing: 4,
                               children: [
                                 Text('TAX TYPE DETERMINED:', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED))),
                                 Text('INTRA-STATE (CGST + SGST)', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED))),
@@ -1173,7 +1189,13 @@ class _SecureAuditExportModalState extends ConsumerState<SecureAuditExportModal>
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(title, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
                 if (isSelected) Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF10B981), shape: BoxShape.circle)),
               ],
             ),
@@ -1279,9 +1301,12 @@ class _RecordAccountingEntryModalState extends ConsumerState<RecordAccountingEnt
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'New Financial Entry',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                    const Expanded(
+                      child: Text(
+                        'New Financial Entry',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                     IconButton(
                       onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.accounting),
@@ -1521,8 +1546,9 @@ class _RecordAccountingEntryModalState extends ConsumerState<RecordAccountingEnt
         SizedBox(
           height: 42,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 13)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.secondaryText),
             decoration: InputDecoration(
@@ -1941,7 +1967,13 @@ class _LodgeStaffClaimModalState extends ConsumerState<LodgeStaffClaimModal> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Lodge Staff Claim', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                    const Expanded(
+                      child: Text(
+                        'Lodge Staff Claim',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
                       icon: const Icon(LucideIcons.x, size: 16, color: AppColors.secondaryText),

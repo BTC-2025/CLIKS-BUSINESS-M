@@ -27,8 +27,6 @@ import '../payments/pages/planner_page.dart';
 import '../payments/pages/referral_page.dart';
 import '../profile/pages/profile_page.dart';
 import '../settings/pages/settings_page.dart';
-import 'pages/macos_storage_page.dart';
-import 'pages/mobile_storage_page.dart';
 import '../billing/pages/new_invoice_page.dart';
 import '../billing/pages/accounting_page.dart';
 import '../billing/pages/expenses_page.dart';
@@ -86,6 +84,13 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
       }
     });
+
+    if (navigation.currentRoute == AppRoute.storage ||
+        navigation.currentRoute == AppRoute.manageAccount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(navigationProvider.notifier).setRoute(AppRoute.dashboard);
+      });
+    }
 
     // Track directional animations
     if (_lastModule != navigation.currentModule) {
@@ -772,13 +777,11 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return ReferralPage(key: ValueKey(route));
       case AppRoute.profile:
         return ProfilePage(key: ValueKey(route));
+      case AppRoute.manageAccount:
+      case AppRoute.storage:
+        return DashboardPage(key: ValueKey(AppRoute.dashboard));
       case AppRoute.settings:
         return SettingsPage(key: ValueKey(route));
-      case AppRoute.storage:
-        final isMacOSStorage = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
-        return isMacOSStorage
-            ? const MacOsStoragePage(key: ValueKey(AppRoute.storage))
-            : const MobileStoragePage(key: ValueKey(AppRoute.storage));
       case AppRoute.newInvoice:
         return NewInvoicePage(key: ValueKey(route));
       case AppRoute.accounting:

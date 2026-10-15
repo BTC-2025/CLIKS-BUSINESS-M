@@ -994,6 +994,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       );
     } else {
       subCardsLayout = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           cashCard,
           const SizedBox(height: 10),
@@ -1044,6 +1045,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required Color borderColor,
   }) {
     return Container(
+      width: double.infinity,
       height: 84,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -1183,16 +1185,27 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total Income:',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              const Expanded(
+                child: Text(
+                  'Total Income:',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
               ),
-              Text(
-                '₹${_formatNumber(bank.income)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF16A34A),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '₹${_formatNumber(bank.income)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1203,16 +1216,27 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total Expenses:',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              const Expanded(
+                child: Text(
+                  'Total Expenses:',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
               ),
-              Text(
-                '₹${_formatNumber(bank.expenses)}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFFDC2626),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    '₹${_formatNumber(bank.expenses)}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1223,13 +1247,26 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Last Transaction:',
-                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              const Expanded(
+                child: Text(
+                  'Last Transaction:',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                ),
               ),
-              Text(
-                bank.lastTxn,
-                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    bank.lastTxn,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                  ),
+                ),
               ),
             ],
           ),
@@ -1240,30 +1277,37 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'BALANCE',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF64748B),
-                      letterSpacing: 0.5,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'BALANCE',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF64748B),
+                        letterSpacing: 0.5,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '₹${_formatNumber(bank.balance)}',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF2563EB),
-                      letterSpacing: -0.4,
+                    const SizedBox(height: 2),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '₹${_formatNumber(bank.balance)}',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF2563EB),
+                          letterSpacing: -0.4,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               if (isPrimaryCard)
                 ElevatedButton(
                   onPressed: () => _openBankHistoryModal(context, bank),
@@ -1772,12 +1816,16 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 size: 20,
               ),
               SizedBox(width: 8),
-              Text(
-                'Revenue Breakdown',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Revenue Breakdown',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
             ],
@@ -1827,12 +1875,16 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 size: 20,
               ),
               SizedBox(width: 8),
-              Text(
-                'Expense Breakdown',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Expense Breakdown',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
             ],
@@ -1943,35 +1995,45 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF334155),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    amount,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '($pct)',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF10B981),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text(
-                '($pct)',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF10B981),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -1994,35 +2056,45 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF991B1B),
+          Expanded(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF991B1B),
+              ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    amount,
+                    style: const TextStyle(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '($pct)',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFEF4444),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text(
-                '($pct)',
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFFEF4444),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -2053,24 +2125,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
-                  Icon(
-                    LucideIcons.briefcase,
-                    color: Color(0xFF2563EB),
-                    size: 19,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Assets',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+              Expanded(
+                child: Row(
+                  children: const [
+                    Icon(
+                      LucideIcons.briefcase,
+                      color: Color(0xFF2563EB),
+                      size: 19,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Assets',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: () => _openLedgerSettingsModal(context, 'Assets'),
                 icon: const Icon(
@@ -2121,20 +2200,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
-                Text(
-                  'Total Assets',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF166534),
+                Expanded(
+                  child: Text(
+                    'Total Assets',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF166534),
+                    ),
                   ),
                 ),
-                Text(
-                  '₹80,87,81,51,07,595.3',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF15803D),
+                SizedBox(width: 8),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '₹80,87,81,51,07,595.3',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF15803D),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -2164,24 +2254,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
-                  Icon(
-                    LucideIcons.scale,
-                    color: Color(0xFFEF4444),
-                    size: 19,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Liabilities & Equity',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+              Expanded(
+                child: Row(
+                  children: const [
+                    Icon(
+                      LucideIcons.scale,
+                      color: Color(0xFFEF4444),
+                      size: 19,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Liabilities & Equity',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               IconButton(
                 onPressed: () =>
                     _openLedgerSettingsModal(context, 'Liabilities & Equity'),
@@ -2233,20 +2330,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: const [
-                Text(
-                  'Total Liab. & Equity',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF991B1B),
+                Expanded(
+                  child: Text(
+                    'Total Liab. & Equity',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF991B1B),
+                    ),
                   ),
                 ),
-                Text(
-                  '₹90,87,71,39,35,431.9',
-                  style: TextStyle(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF991B1B),
+                SizedBox(width: 8),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '₹90,87,71,39,35,431.9',
+                      style: TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF991B1B),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -2294,21 +2402,32 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w600,
-              color:
-                  isPink ? const Color(0xFF991B1B) : const Color(0xFF334155),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color:
+                    isPink ? const Color(0xFF991B1B) : const Color(0xFF334155),
+              ),
             ),
           ),
-          Text(
-            amount,
-            style: const TextStyle(
-              fontSize: 13.5,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
             ),
           ),
         ],
@@ -2561,14 +2680,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    Text(
-                      '25 Pending Invoices',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF7C3AED),
+                    Expanded(
+                      child: Text(
+                        '25 Pending Invoices',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF7C3AED),
+                        ),
                       ),
                     ),
+                    SizedBox(width: 8),
                     Text(
                       'Updated: 15:14:18',
                       style: TextStyle(
@@ -2617,8 +2741,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   color: Color(0xFF0F172A),
                 ),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   InkWell(
                     onTap: () {
@@ -2658,7 +2784,6 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () {
                       AppSnackbar.show(
@@ -2699,7 +2824,6 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () {
                       AppSnackbar.show(
@@ -2756,117 +2880,303 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             ),
             child: Column(
               children: [
-                Row(
-                  children: [
-                    // Search client/invoice
-                    Expanded(
-                      flex: 3,
-                      child: Container(
-                        height: 38,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              LucideIcons.search,
-                              size: 15,
-                              color: Color(0xFF94A3B8),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _rpSearchController,
-                                style: const TextStyle(fontSize: 12.5),
-                                decoration: const InputDecoration(
-                                  hintText: 'Search client/invoice...',
-                                  hintStyle: TextStyle(
-                                    fontSize: 12,
-                                    color: Color(0xFF94A3B8),
-                                  ),
-                                  border: InputBorder.none,
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.zero,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+                if (isMobile) ...[
+                  // Mobile Row 1: Search field (full width)
+                  Container(
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFCBD5E1)),
                     ),
-                    const SizedBox(width: 8),
-
-                    // Status Dropdown
-                    Container(
-                      height: 38,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          LucideIcons.search,
+                          size: 15,
+                          color: Color(0xFF94A3B8),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: TextField(
+                            controller: _rpSearchController,
+                            style: const TextStyle(fontSize: 12.5),
+                            decoration: const InputDecoration(
+                              hintText: 'Search client/invoice...',
+                              hintStyle: TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Mobile Row 2: Status dropdown + Date range picker
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          height: 38,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: _rpSelectedStatus,
+                              isExpanded: true,
+                              icon: const Icon(
+                                LucideIcons.chevronDown,
+                                size: 14,
+                                color: Color(0xFF64748B),
+                              ),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF334155),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'All Statuses',
+                                  child: Text('All Statuses', overflow: TextOverflow.ellipsis),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Paid',
+                                  child: Text('Paid'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'Overdue',
+                                  child: Text('Overdue'),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _rpSelectedStatus = val);
+                                }
+                              },
+                            ),
+                          ),
+                        ),
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _rpSelectedStatus,
-                          icon: const Icon(
-                            LucideIcons.chevronDown,
-                            size: 14,
-                            color: Color(0xFF64748B),
-                          ),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
-                          ),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'All Statuses',
-                              child: Text('All Statuses'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Paid',
-                              child: Text('Paid'),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Overdue',
-                              child: Text('Overdue'),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              setState(() => _rpSelectedStatus = val);
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () async {
+                            final picked = await showDateRangePicker(
+                              context: context,
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2030),
+                              initialDateRange: _rpFromDate != null &&
+                                      _rpToDate != null
+                                  ? DateTimeRange(
+                                      start: _rpFromDate!, end: _rpToDate!)
+                                  : null,
+                            );
+                            if (picked != null) {
+                              setState(() {
+                                _rpFromDate = picked.start;
+                                _rpToDate = picked.end;
+                              });
                             }
                           },
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            height: 38,
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.center,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    _rpFromDate == null
+                                        ? 'dd/mm/yyyy'
+                                        : '${_rpFromDate!.day}/${_rpFromDate!.month}/${_rpFromDate!.year}',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    LucideIcons.calendar,
+                                    size: 13,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                  const Padding(
+                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    child: Text(
+                                      'to',
+                                      style: TextStyle(
+                                        fontSize: 11.5,
+                                        color: Color(0xFF94A3B8),
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    _rpToDate == null
+                                        ? 'dd/mm/yyyy'
+                                        : '${_rpToDate!.day}/${_rpToDate!.month}/${_rpToDate!.year}',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(
+                                    LucideIcons.calendar,
+                                    size: 13,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Mobile Row 3: Min ₹ & Max ₹
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 36,
+                          child: TextField(
+                            controller: _rpMinController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(fontSize: 12),
+                            decoration: InputDecoration(
+                              hintText: 'Min ₹',
+                              hintStyle: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFCBD5E1),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFCBD5E1),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SizedBox(
+                          height: 36,
+                          child: TextField(
+                            controller: _rpMaxController,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(fontSize: 12),
+                            decoration: InputDecoration(
+                              hintText: 'Max ₹',
+                              hintStyle: const TextStyle(
+                                fontSize: 11.5,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              isDense: true,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 10,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFCBD5E1),
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFCBD5E1),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  // Desktop Rows (Preserved completely)
+                  Row(
+                    children: [
+                      // Search client/invoice
+                      Expanded(
+                        flex: 3,
+                        child: Container(
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.search,
+                                size: 15,
+                                color: Color(0xFF94A3B8),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _rpSearchController,
+                                  style: const TextStyle(fontSize: 12.5),
+                                  decoration: const InputDecoration(
+                                    hintText: 'Search client/invoice...',
+                                    hintStyle: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
 
-                    // Date range picker
-                    InkWell(
-                      onTap: () async {
-                        final picked = await showDateRangePicker(
-                          context: context,
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                          initialDateRange: _rpFromDate != null &&
-                                  _rpToDate != null
-                              ? DateTimeRange(
-                                  start: _rpFromDate!, end: _rpToDate!)
-                              : null,
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _rpFromDate = picked.start;
-                            _rpToDate = picked.end;
-                          });
-                        }
-                      },
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
+                      // Status Dropdown
+                      Container(
                         height: 38,
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         decoration: BoxDecoration(
@@ -2874,131 +3184,198 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: const Color(0xFFCBD5E1)),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _rpFromDate == null
-                                  ? 'dd/mm/yyyy'
-                                  : '${_rpFromDate!.day}/${_rpFromDate!.month}/${_rpFromDate!.year}',
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              LucideIcons.calendar,
-                              size: 13,
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: _rpSelectedStatus,
+                            icon: const Icon(
+                              LucideIcons.chevronDown,
+                              size: 14,
                               color: Color(0xFF64748B),
                             ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 6),
-                              child: Text(
-                                'to',
-                                style: TextStyle(
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
+                            ),
+                            items: const [
+                              DropdownMenuItem(
+                                value: 'All Statuses',
+                                child: Text('All Statuses'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Paid',
+                                child: Text('Paid'),
+                              ),
+                              DropdownMenuItem(
+                                value: 'Overdue',
+                                child: Text('Overdue'),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() => _rpSelectedStatus = val);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // Date range picker
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showDateRangePicker(
+                            context: context,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime(2030),
+                            initialDateRange: _rpFromDate != null &&
+                                    _rpToDate != null
+                                ? DateTimeRange(
+                                    start: _rpFromDate!, end: _rpToDate!)
+                                : null,
+                          );
+                          if (picked != null) {
+                            setState(() {
+                              _rpFromDate = picked.start;
+                              _rpToDate = picked.end;
+                            });
+                          }
+                        },
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          height: 38,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFCBD5E1)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _rpFromDate == null
+                                    ? 'dd/mm/yyyy'
+                                    : '${_rpFromDate!.day}/${_rpFromDate!.month}/${_rpFromDate!.year}',
+                                style: const TextStyle(
                                   fontSize: 11.5,
-                                  color: Color(0xFF94A3B8),
+                                  color: Color(0xFF64748B),
                                 ),
                               ),
-                            ),
-                            Text(
-                              _rpToDate == null
-                                  ? 'dd/mm/yyyy'
-                                  : '${_rpToDate!.day}/${_rpToDate!.month}/${_rpToDate!.year}',
-                              style: const TextStyle(
-                                fontSize: 11.5,
+                              const SizedBox(width: 4),
+                              const Icon(
+                                LucideIcons.calendar,
+                                size: 13,
                                 color: Color(0xFF64748B),
                               ),
-                            ),
-                            const SizedBox(width: 4),
-                            const Icon(
-                              LucideIcons.calendar,
-                              size: 13,
-                              color: Color(0xFF64748B),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 120,
-                      height: 36,
-                      child: TextField(
-                        controller: _rpMinController,
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 12),
-                        decoration: InputDecoration(
-                          hintText: 'Min ₹',
-                          hintStyle: const TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1),
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1),
-                            ),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 6),
+                                child: Text(
+                                  'to',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                _rpToDate == null
+                                    ? 'dd/mm/yyyy'
+                                    : '${_rpToDate!.day}/${_rpToDate!.month}/${_rpToDate!.year}',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              const Icon(
+                                LucideIcons.calendar,
+                                size: 13,
+                                color: Color(0xFF64748B),
+                              ),
+                            ],
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 120,
-                      height: 36,
-                      child: TextField(
-                        controller: _rpMaxController,
-                        keyboardType: TextInputType.number,
-                        style: const TextStyle(fontSize: 12),
-                        decoration: InputDecoration(
-                          hintText: 'Max ₹',
-                          hintStyle: const TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          filled: true,
-                          fillColor: Colors.white,
-                          isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 10,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        height: 36,
+                        child: TextField(
+                          controller: _rpMinController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 12),
+                          decoration: InputDecoration(
+                            hintText: 'Min ₹',
+                            hintStyle: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF94A3B8),
                             ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(
-                              color: Color(0xFFCBD5E1),
+                            filled: true,
+                            fillColor: Colors.white,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
+                      const SizedBox(width: 8),
+                      SizedBox(
+                        width: 120,
+                        height: 36,
+                        child: TextField(
+                          controller: _rpMaxController,
+                          keyboardType: TextInputType.number,
+                          style: const TextStyle(fontSize: 12),
+                          decoration: InputDecoration(
+                            hintText: 'Max ₹',
+                            hintStyle: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            isDense: true,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 10,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(8),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFCBD5E1),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -3090,7 +3467,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           ),
                         ),
                         SizedBox(
-                          width: 160,
+                          width: 200,
                           child: Text(
                             'ACTIONS',
                             style: TextStyle(
@@ -3224,7 +3601,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                               ),
                             ),
                             SizedBox(
-                              width: 160,
+                              width: 200,
                               child: Row(
                                 children: [
                                   IconButton(
@@ -3426,26 +3803,33 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ),
           ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    amount,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '($invCount)',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 4),
-              Text(
-                '($invCount)',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),
@@ -3465,7 +3849,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Container(
-            width: 480,
+            constraints: const BoxConstraints(maxWidth: 480),
             padding: const EdgeInsets.all(22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -3474,14 +3858,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      '$section Ledger Setup',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                    Expanded(
+                      child: Text(
+                        '$section Ledger Setup',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     IconButton(
                       onPressed: () => Navigator.pop(ctx),
                       icon: const Icon(LucideIcons.x, size: 18),
@@ -3509,14 +3898,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Auto-reconcile balance with active ledger',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF334155),
+                      const Expanded(
+                        child: Text(
+                          'Auto-reconcile balance with active ledger',
+                          style: TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF334155),
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Switch.adaptive(
                         value: true,
                         activeColor: const Color(0xFF2563EB),
@@ -3575,7 +3967,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             borderRadius: BorderRadius.circular(16),
           ),
           child: Container(
-            width: 480,
+            constraints: const BoxConstraints(maxWidth: 480),
             padding: const EdgeInsets.all(22),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -3584,27 +3976,34 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          inv['invNumber'] ?? 'Invoice Details',
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            inv['invNumber'] ?? 'Invoice Details',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Party: ${inv['partyName']}',
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            color: Color(0xFF64748B),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Party: ${inv['partyName']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
@@ -3663,19 +4062,28 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Pending Amount',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: Color(0xFF64748B),
+                          const Expanded(
+                            child: Text(
+                              'Pending Amount',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF64748B),
+                              ),
                             ),
                           ),
-                          Text(
-                            '₹${_formatIndianCurrency(amt)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '₹${_formatIndianCurrency(amt)}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -3751,7 +4159,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Container(
-                width: 480,
+                constraints: const BoxConstraints(maxWidth: 480),
                 padding: const EdgeInsets.all(22),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -3760,14 +4168,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          'Record Payment - ${inv['invNumber']}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                        Expanded(
+                          child: Text(
+                            'Record Payment - ${inv['invNumber']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         IconButton(
                           onPressed: () => Navigator.pop(ctx),
                           icon: const Icon(LucideIcons.x, size: 18),
@@ -3779,6 +4192,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     const SizedBox(height: 6),
                     Text(
                       'Party: ${inv['partyName']}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         fontSize: 12.5,
                         color: Color(0xFF64748B),
@@ -4016,20 +4431,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
-              Text(
-                total,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                  color: accentColor,
+              const SizedBox(width: 8),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    total,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                      color: accentColor,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -4046,20 +4472,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        item['label'],
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF334155),
+                      Expanded(
+                        child: Text(
+                          item['label'],
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF334155),
+                          ),
                         ),
                       ),
-                      Text(
-                        item['value'],
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            item['value'],
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -4993,14 +5430,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          const Text(
-                            'Add New Bank Account',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                          const Expanded(
+                            child: Text(
+                              'Add New Bank Account',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                              ),
                             ),
                           ),
+                          const SizedBox(width: 8),
                           InkWell(
                             onTap: () => Navigator.pop(ctx),
                             borderRadius: BorderRadius.circular(20),
@@ -5264,7 +5706,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           ),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 620),
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(MediaQuery.of(ctx).size.width < 500 ? 16 : 24),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -5273,43 +5715,51 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              LucideIcons.landmark,
-                              color: Color(0xFF2563EB),
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '${bank.name} - Statement',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
-                                ),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              Text(
-                                '${bank.holder}${bank.accountNumber != null && bank.accountNumber!.isNotEmpty ? ' • A/C: ${bank.accountNumber}' : ''}',
-                                style: const TextStyle(
-                                  fontSize: 11.5,
-                                  color: Color(0xFF64748B),
-                                ),
+                              child: const Icon(
+                                LucideIcons.landmark,
+                                color: Color(0xFF2563EB),
+                                size: 18,
                               ),
-                            ],
-                          ),
-                        ],
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${bank.name} - Statement',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  Text(
+                                    '${bank.holder}${bank.accountNumber != null && bank.accountNumber!.isNotEmpty ? ' • A/C: ${bank.accountNumber}' : ''}',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(
@@ -5332,49 +5782,115 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFE2E8F0)),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isNarrow = constraints.maxWidth < 280;
+                        if (isNarrow) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'CURRENT BALANCE',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      '₹${_formatNumber(bank.balance)}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    AppSnackbar.show(
+                                      context,
+                                      'Exported Bank Statement PDF for ${bank.name}',
+                                      type: SnackType.success,
+                                    );
+                                  },
+                                  icon: const Icon(LucideIcons.fileDown, size: 14),
+                                  label: const Text(
+                                    'Export Statement',
+                                    style: TextStyle(fontSize: 11),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'CURRENT BALANCE',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF64748B),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'CURRENT BALANCE',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  FittedBox(
+                                    fit: BoxFit.scaleDown,
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      '₹${_formatNumber(bank.balance)}',
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w900,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '₹${_formatNumber(bank.balance)}',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xFF2563EB),
+                            const SizedBox(width: 8),
+                            OutlinedButton.icon(
+                              onPressed: () {
+                                AppSnackbar.show(
+                                  context,
+                                  'Exported Bank Statement PDF for ${bank.name}',
+                                  type: SnackType.success,
+                                );
+                              },
+                              icon: const Icon(LucideIcons.fileDown, size: 14),
+                              label: const Text(
+                                'Export Statement',
+                                style: TextStyle(fontSize: 11),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFE2E8F0)),
                               ),
                             ),
                           ],
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () {
-                            AppSnackbar.show(
-                              context,
-                              'Exported Bank Statement PDF for ${bank.name}',
-                              type: SnackType.success,
-                            );
-                          },
-                          icon: const Icon(LucideIcons.fileDown, size: 14),
-                          label: const Text(
-                            'Export Statement',
-                            style: TextStyle(fontSize: 11),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -5565,32 +6081,39 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(8),
+                      Expanded(
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                LucideIcons.fileCheck,
+                                color: Color(0xFF2563EB),
+                                size: 18,
+                              ),
                             ),
-                            child: const Icon(
-                              LucideIcons.fileCheck,
-                              color: Color(0xFF2563EB),
-                              size: 18,
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       IconButton(
                         icon: const Icon(
                           LucideIcons.x,
@@ -5623,12 +6146,16 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          amount,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xFF2563EB),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            amount,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF2563EB),
+                            ),
                           ),
                         ),
                       ],
@@ -5652,8 +6179,11 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   ),
 
                   const SizedBox(height: 22),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: [
                       OutlinedButton.icon(
                         onPressed: () {
@@ -5714,16 +6244,27 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+          Expanded(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+            ),
           ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+          const SizedBox(width: 8),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerRight,
+              child: Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
             ),
           ),
         ],

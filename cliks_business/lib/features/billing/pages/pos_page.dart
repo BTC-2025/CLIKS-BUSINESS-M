@@ -736,12 +736,20 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
-                children: [
-                  Icon(LucideIcons.shoppingCart, size: 16, color: Color(0xFF166534)),
-                  SizedBox(width: 8),
-                  Text('Current Checkout Cart', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                ],
+              const Expanded(
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.shoppingCart, size: 16, color: Color(0xFF166534)),
+                    SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'Current Checkout Cart',
+                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               if (_cart.isNotEmpty)
                 TextButton(
@@ -835,7 +843,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Subtotal', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
+              const Expanded(child: Text('Subtotal', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
               Text('₹${_cartSubtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
@@ -843,7 +851,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('GST Tax (18%)', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
+              const Expanded(child: Text('GST Tax (18%)', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
               Text('₹${_cartGst.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
             ],
           ),
@@ -851,7 +859,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Payable Amount', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+              const Expanded(child: Text('Payable Amount', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText))),
               Text('₹${_cartTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
             ],
           ),
@@ -1169,33 +1177,40 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
-                      shape: BoxShape.circle,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.shoppingBag, color: Colors.white, size: 16),
                     ),
-                    child: const Icon(LucideIcons.shoppingBag, color: Colors.white, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$itemCount ${itemCount == 1 ? "Item" : "Items"} • Tax Incl.',
-                        style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontWeight: FontWeight.w600),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '$itemCount ${itemCount == 1 ? "Item" : "Items"} • Tax Incl.',
+                            style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontWeight: FontWeight.w600),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '₹${_cartTotal.toStringAsFixed(2)}',
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
-                      Text(
-                        '₹${_cartTotal.toStringAsFixed(2)}',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
-                      ),
-                    ],
-                  ),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(

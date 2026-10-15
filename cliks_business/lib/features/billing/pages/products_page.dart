@@ -324,55 +324,45 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       ],
     );
 
-    final actionButtons = Wrap(
-      spacing: 12,
-      runSpacing: 8,
-      alignment: WrapAlignment.end,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        // Bulk Import (CSV)
-        OutlinedButton.icon(
-          onPressed: _showBulkImportDialog,
-          icon: const Icon(LucideIcons.uploadCloud, size: 16, color: Color(0xFFE11D48)),
-          label: const Text(
-            'Bulk Import (CSV)',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFFE11D48),
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.white,
-            side: const BorderSide(color: Color(0xFFFDA4AF), width: 1.2),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 0,
-          ),
+    final bulkImportBtn = OutlinedButton.icon(
+      onPressed: _showBulkImportDialog,
+      icon: const Icon(LucideIcons.uploadCloud, size: 16, color: Color(0xFFE11D48)),
+      label: const Text(
+        'Bulk Import (CSV)',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFE11D48),
         ),
+      ),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        side: const BorderSide(color: Color(0xFFFDA4AF), width: 1.2),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 0,
+      ),
+    );
 
-        // + Add Product / Service
-        ElevatedButton.icon(
-          onPressed: _showAddProductDialog,
-          icon: const Icon(LucideIcons.plus, size: 16, color: Colors.white),
-          label: const Text(
-            'Add Product / Service',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFFE11D48),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            elevation: 2,
-            shadowColor: const Color(0xFFE11D48).withValues(alpha: 0.35),
-          ),
+    final addProductBtn = ElevatedButton.icon(
+      onPressed: _showAddProductDialog,
+      icon: const Icon(LucideIcons.plus, size: 16, color: Colors.white),
+      label: const Text(
+        'Add Product / Service',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Colors.white,
         ),
-      ],
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFFE11D48),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        elevation: 2,
+        shadowColor: const Color(0xFFE11D48).withValues(alpha: 0.35),
+      ),
     );
 
     if (isMobile) {
@@ -381,7 +371,14 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
         children: [
           titleSection,
           const SizedBox(height: 16),
-          actionButtons,
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              addProductBtn,
+              const SizedBox(height: 8),
+              bulkImportBtn,
+            ],
+          ),
         ],
       );
     }
@@ -391,7 +388,16 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       children: [
         Expanded(child: titleSection),
         const SizedBox(width: 16),
-        actionButtons,
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          alignment: WrapAlignment.end,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            bulkImportBtn,
+            addProductBtn,
+          ],
+        ),
       ],
     );
   }
@@ -466,6 +472,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       );
     } else {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (int i = 0; i < cards.length; i++) ...[
             if (i > 0) const SizedBox(height: 12),
@@ -485,6 +492,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
     required Color watermarkColor,
   }) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -590,6 +598,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          isExpanded: true,
           value: _selectedStatus,
           icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
@@ -618,6 +627,7 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
+          isExpanded: true,
           value: _selectedCategory,
           icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
           style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
@@ -1068,46 +1078,52 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
   Widget _buildStatusBadge(ProductItem product) {
     if (product.isUnlimited) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: const Color(0xFFEFF6FF),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFBFDBFE)),
         ),
-        child: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('∞', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
-            SizedBox(width: 5),
-            Text(
-              'UNLIMITED',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF2563EB),
-                letterSpacing: 0.5,
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text('∞', style: TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.bold)),
+              SizedBox(width: 5),
+              Text(
+                'UNLIMITED',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF2563EB),
+                  letterSpacing: 0.5,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
     if (product.stockStatus == 'OUT OF STOCK') {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: const Color(0xFFFEF2F2),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFFECDD3)),
         ),
-        child: const Text(
-          'OUT OF STOCK',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFFDC2626),
-            letterSpacing: 0.5,
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'OUT OF STOCK',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFDC2626),
+              letterSpacing: 0.5,
+            ),
           ),
         ),
       );
@@ -1115,19 +1131,22 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
 
     if (product.stockStatus == 'LOW STOCK') {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
           color: const Color(0xFFFFFBEB),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFFDE68A)),
         ),
-        child: const Text(
-          'LOW STOCK',
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFFD97706),
-            letterSpacing: 0.5,
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'LOW STOCK',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFFD97706),
+              letterSpacing: 0.5,
+            ),
           ),
         ),
       );
@@ -1135,27 +1154,30 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
 
     // Default: IN STOCK
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
       decoration: BoxDecoration(
         color: const Color(0xFFDCFCE7),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFBBF7D0)),
       ),
-      child: const Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.circle, size: 7, color: Color(0xFF16A34A)),
-          SizedBox(width: 5),
-          Text(
-            'IN STOCK',
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF166534),
-              letterSpacing: 0.5,
+      child: const FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.circle, size: 7, color: Color(0xFF16A34A)),
+            SizedBox(width: 5),
+            Text(
+              'IN STOCK',
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF166534),
+                letterSpacing: 0.5,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1703,16 +1725,16 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
             return Dialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 780),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(26),
-                  child: LayoutBuilder(
-                    builder: (context, boxConstraints) {
-                      final isNarrow = boxConstraints.maxWidth < 620;
+                child: LayoutBuilder(
+                  builder: (context, boxConstraints) {
+                    final isNarrow = boxConstraints.maxWidth < 620;
 
-                      return Column(
+                    return SingleChildScrollView(
+                      padding: EdgeInsets.all(isNarrow ? 16 : 26),
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
@@ -1721,28 +1743,31 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'New Product Registration',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0F172A),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'New Product Registration',
+                                      style: TextStyle(
+                                        fontSize: isNarrow ? 17 : 20,
+                                        fontWeight: FontWeight.w800,
+                                        color: const Color(0xFF0F172A),
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    'Code: $code',
-                                    style: const TextStyle(
-                                      fontSize: 12.5,
-                                      color: Color(0xFF64748B),
-                                      fontWeight: FontWeight.w500,
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      'Code: $code',
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        color: Color(0xFF64748B),
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               InkWell(
                                 onTap: () => Navigator.of(dialogCtx).pop(),
                                 borderRadius: BorderRadius.circular(20),
@@ -1761,56 +1786,104 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                           const SizedBox(height: 18),
 
                           // Toggle Tabs: Physical Product / Service Offering
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () => setModalState(() => isPhysicalProduct = true),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: isPhysicalProduct ? const Color(0xFF064E3B) : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        'Physical Product',
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: isPhysicalProduct ? Colors.white : const Color(0xFF475569),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  GestureDetector(
-                                    onTap: () => setModalState(() => isPhysicalProduct = false),
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
-                                      decoration: BoxDecoration(
-                                        color: !isPhysicalProduct ? const Color(0xFF064E3B) : Colors.transparent,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        'Service Offering',
-                                        style: TextStyle(
-                                          fontSize: 12.5,
-                                          fontWeight: FontWeight.bold,
-                                          color: !isPhysicalProduct ? Colors.white : const Color(0xFF475569),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          Container(
+                            width: isNarrow ? double.infinity : null,
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(10),
                             ),
+                            child: isNarrow
+                                ? Row(
+                                    children: [
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () => setModalState(() => isPhysicalProduct = true),
+                                          child: Container(
+                                            alignment: Alignment.center,
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: isPhysicalProduct ? const Color(0xFF064E3B) : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              'Physical Product',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: isPhysicalProduct ? Colors.white : const Color(0xFF475569),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: GestureDetector(
+                                          onTap: () => setModalState(() => isPhysicalProduct = false),
+                                          child: Container(
+                                            alignment: Alignment.center,
+                                            padding: const EdgeInsets.symmetric(vertical: 8),
+                                            decoration: BoxDecoration(
+                                              color: !isPhysicalProduct ? const Color(0xFF064E3B) : Colors.transparent,
+                                              borderRadius: BorderRadius.circular(8),
+                                            ),
+                                            child: Text(
+                                              'Service Offering',
+                                              textAlign: TextAlign.center,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                                color: !isPhysicalProduct ? Colors.white : const Color(0xFF475569),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      GestureDetector(
+                                        onTap: () => setModalState(() => isPhysicalProduct = true),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: isPhysicalProduct ? const Color(0xFF064E3B) : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Physical Product',
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: isPhysicalProduct ? Colors.white : const Color(0xFF475569),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: () => setModalState(() => isPhysicalProduct = false),
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                                          decoration: BoxDecoration(
+                                            color: !isPhysicalProduct ? const Color(0xFF064E3B) : Colors.transparent,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            'Service Offering',
+                                            style: TextStyle(
+                                              fontSize: 12.5,
+                                              fontWeight: FontWeight.bold,
+                                              color: !isPhysicalProduct ? Colors.white : const Color(0xFF475569),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                           ),
                           const SizedBox(height: 16),
 
@@ -2018,19 +2091,9 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
                                 children: [
                                   // Section Header with Unlimited Toggle
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      const Text(
-                                        'INVENTORY & STOCK CONTROLS',
-                                        style: TextStyle(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF166534),
-                                          letterSpacing: 0.6,
-                                        ),
-                                      ),
-                                      InkWell(
+                                  Builder(
+                                    builder: (context) {
+                                      final unlimitedToggle = InkWell(
                                         onTap: () => setModalState(() => isUnlimitedProduct = !isUnlimitedProduct),
                                         borderRadius: BorderRadius.circular(20),
                                         child: Container(
@@ -2039,38 +2102,77 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                                             borderRadius: BorderRadius.circular(20),
                                             border: Border.all(color: const Color(0xFFCBD5E1)),
                                           ),
-                                          child: Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              const Text(
-                                                '∞ Unlimited Product',
-                                                style: TextStyle(
-                                                  fontSize: 11.5,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF475569),
-                                                ),
-                                              ),
-                                              const SizedBox(width: 6),
-                                              Container(
-                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                                decoration: BoxDecoration(
-                                                  color: isUnlimitedProduct ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
-                                                  borderRadius: BorderRadius.circular(10),
-                                                ),
-                                                child: Text(
-                                                  isUnlimitedProduct ? 'ON' : 'OFF',
+                                          child: FittedBox(
+                                            fit: BoxFit.scaleDown,
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                const Text(
+                                                  '∞ Unlimited Product',
                                                   style: TextStyle(
-                                                    fontSize: 10,
-                                                    fontWeight: FontWeight.bold,
-                                                    color: isUnlimitedProduct ? const Color(0xFF166534) : const Color(0xFF64748B),
+                                                    fontSize: 11.5,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Color(0xFF475569),
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                                const SizedBox(width: 6),
+                                                Container(
+                                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: isUnlimitedProduct ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Text(
+                                                    isUnlimitedProduct ? 'ON' : 'OFF',
+                                                    style: TextStyle(
+                                                      fontSize: 10,
+                                                      fontWeight: FontWeight.bold,
+                                                      color: isUnlimitedProduct ? const Color(0xFF166534) : const Color(0xFF64748B),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      );
+
+                                      if (isNarrow) {
+                                        return Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            const Text(
+                                              'INVENTORY & STOCK CONTROLS',
+                                              style: TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF166534),
+                                                letterSpacing: 0.6,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            unlimitedToggle,
+                                          ],
+                                        );
+                                      }
+
+                                      return Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          const Text(
+                                            'INVENTORY & STOCK CONTROLS',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF166534),
+                                              letterSpacing: 0.6,
+                                            ),
+                                          ),
+                                          unlimitedToggle,
+                                        ],
+                                      );
+                                    },
                                   ),
 
                                   if (!isUnlimitedProduct) ...[
@@ -2127,45 +2229,79 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                                     const SizedBox(height: 14),
 
                                     // Stock Row 2: Expired, Primary Unit
-                                    Row(
-                                      children: [
-                                        Expanded(
-                                          child: _buildTextField(
+                                    if (isNarrow)
+                                      Column(
+                                        children: [
+                                          _buildTextField(
                                             label: 'Expired Qty',
                                             controller: expiredQtyCtrl,
                                             hint: '0',
                                             isNumeric: true,
                                             labelColor: const Color(0xFFDC2626),
                                           ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: _buildDropdownField(
+                                          const SizedBox(height: 12),
+                                          _buildDropdownField(
                                             label: 'Primary Unit',
                                             value: primaryUnit,
                                             items: const ['Pcs (Pieces)', 'Boxes', 'Kg', 'Units', 'Liters', 'Pairs'],
                                             onChanged: (val) => setModalState(() => primaryUnit = val!),
                                           ),
-                                        ),
-                                      ],
-                                    ),
+                                        ],
+                                      )
+                                    else
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildTextField(
+                                              label: 'Expired Qty',
+                                              controller: expiredQtyCtrl,
+                                              hint: '0',
+                                              isNumeric: true,
+                                              labelColor: const Color(0xFFDC2626),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: _buildDropdownField(
+                                              label: 'Primary Unit',
+                                              value: primaryUnit,
+                                              items: const ['Pcs (Pieces)', 'Boxes', 'Kg', 'Units', 'Liters', 'Pairs'],
+                                              onChanged: (val) => setModalState(() => primaryUnit = val!),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     const SizedBox(height: 14),
 
                                     // Stock Row 3: Batch Identifier, Warehouse Facility
-                                    Row(
-                                      children: [
-                                        Expanded(child: _buildTextField(label: 'Batch Identifier', controller: batchIdCtrl, hint: 'B-8902')),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: _buildDropdownField(
+                                    if (isNarrow)
+                                      Column(
+                                        children: [
+                                          _buildTextField(label: 'Batch Identifier', controller: batchIdCtrl, hint: 'B-8902'),
+                                          const SizedBox(height: 12),
+                                          _buildDropdownField(
                                             label: 'Warehouse Storage Facility',
                                             value: warehouseFacility,
                                             items: const ['Select your warehouse', 'Main Central Warehouse', 'Godown A', 'Hub 2'],
                                             onChanged: (val) => setModalState(() => warehouseFacility = val!),
                                           ),
-                                        ),
-                                      ],
-                                    ),
+                                        ],
+                                      )
+                                    else
+                                      Row(
+                                        children: [
+                                          Expanded(child: _buildTextField(label: 'Batch Identifier', controller: batchIdCtrl, hint: 'B-8902')),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: _buildDropdownField(
+                                              label: 'Warehouse Storage Facility',
+                                              value: warehouseFacility,
+                                              items: const ['Select your warehouse', 'Main Central Warehouse', 'Godown A', 'Hub 2'],
+                                              onChanged: (val) => setModalState(() => warehouseFacility = val!),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     const SizedBox(height: 16),
 
                                     // Subsection: Storage Zone & Coordinates
@@ -2382,9 +2518,9 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
                             ),
                           ),
                         ],
-                      );
-                    },
-                  ),
+                      ),
+                    );
+                  },
                 ),
               ),
             );

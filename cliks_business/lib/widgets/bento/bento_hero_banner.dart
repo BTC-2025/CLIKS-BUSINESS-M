@@ -59,7 +59,10 @@ class BentoHeroBanner extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Text(
                           title,
@@ -70,7 +73,6 @@ class BentoHeroBanner extends StatelessWidget {
                             letterSpacing: 1.2,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 3),
@@ -225,12 +227,16 @@ class BentoHeroBanner extends StatelessWidget {
                     size: 13, color: Colors.white.withValues(alpha: 0.8)),
                 const SizedBox(width: 5),
               ],
-              Text(
-                chip.label,
-                style: GoogleFonts.inter(
-                  fontSize: isMobile ? 10 : 11,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.7),
+              Flexible(
+                child: Text(
+                  chip.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: isMobile ? 10 : 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white.withValues(alpha: 0.7),
+                  ),
                 ),
               ),
             ],

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../profile/presentation/manage_account_screen.dart';
 import '../widgets/macos_right_utility_rail.dart';
 
 enum _StorageTab {
@@ -35,11 +36,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   int _recycleCurrentPage = 1;
   static const int _recycleItemsPerPage = 3;
   late List<_RecycleBinItem> _recycleItems;
-  final TextEditingController _recycleSearchController = TextEditingController();
+  final TextEditingController _recycleSearchController =
+      TextEditingController();
   String _recycleSearchQuery = '';
 
   // Manage Apps state
-  final TextEditingController _poolSizeController = TextEditingController(text: '5');
+  final TextEditingController _poolSizeController = TextEditingController(
+    text: '5',
+  );
   String _manageAppsStatusText = 'Preferences saved successfully';
 
   // Settings state
@@ -115,7 +119,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             ? _buildSettingsView()
                             : SingleChildScrollView(
                                 physics: const BouncingScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 28),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 36,
+                                  vertical: 28,
+                                ),
                                 child: _buildActiveTabView(),
                               ),
                       ),
@@ -137,11 +144,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 height: double.infinity,
               ),
             ),
-            Positioned(
-              top: 58,
-              right: 28,
-              child: _buildAccountDropdownCard(),
-            ),
+            Positioned(top: 58, right: 28, child: _buildAccountDropdownCard()),
           ],
         ],
       ),
@@ -171,7 +174,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 if (Navigator.of(context).canPop()) {
                   Navigator.of(context).pop();
                 } else {
-                  ref.read(navigationProvider.notifier).setRoute(AppRoute.dashboard);
+                  ref
+                      .read(navigationProvider.notifier)
+                      .setRoute(AppRoute.dashboard);
                 }
               },
               borderRadius: BorderRadius.circular(8),
@@ -182,7 +187,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: const Icon(LucideIcons.arrowLeft, size: 16, color: Color(0xFF334155)),
+                child: const Icon(
+                  LucideIcons.arrowLeft,
+                  size: 16,
+                  color: Color(0xFF334155),
+                ),
               ),
             ),
           ),
@@ -195,7 +204,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
           // Account Button (Blue Pill Button)
           InkWell(
-            onTap: () => setState(() => _isAccountMenuOpen = !_isAccountMenuOpen),
+            onTap: () =>
+                setState(() => _isAccountMenuOpen = !_isAccountMenuOpen),
             borderRadius: BorderRadius.circular(22),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -295,7 +305,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                       ],
                     ),
-                    child: const Icon(LucideIcons.camera, size: 12, color: Color(0xFF64748B)),
+                    child: const Icon(
+                      LucideIcons.camera,
+                      size: 12,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                 ],
               ),
@@ -324,25 +338,31 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               OutlinedButton.icon(
                 onPressed: () {
                   setState(() => _isAccountMenuOpen = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Opening account profile management...', style: GoogleFonts.inter()),
-                      backgroundColor: const Color(0xFF2563EB),
-                      behavior: SnackBarBehavior.floating,
-                      width: 380,
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageAccountScreen(),
                     ),
                   );
                 },
                 icon: const Icon(LucideIcons.user, size: 14),
                 label: Text(
                   'Manage your account',
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1E293B),
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                 ),
               ),
 
@@ -359,7 +379,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Add account dialog initiated.', style: GoogleFonts.inter()),
+                      content: Text(
+                        'Add account dialog initiated.',
+                        style: GoogleFonts.inter(),
+                      ),
                       backgroundColor: const Color(0xFF334155),
                       behavior: SnackBarBehavior.floating,
                       width: 340,
@@ -375,7 +398,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Signed out of ravinew2004.', style: GoogleFonts.inter()),
+                      content: Text(
+                        'Signed out of ravinew2004.',
+                        style: GoogleFonts.inter(),
+                      ),
                       backgroundColor: const Color(0xFF334155),
                       behavior: SnackBarBehavior.floating,
                       width: 340,
@@ -391,7 +417,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   setState(() => _isAccountMenuOpen = false);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('All accounts signed out.', style: GoogleFonts.inter()),
+                      content: Text(
+                        'All accounts signed out.',
+                        style: GoogleFonts.inter(),
+                      ),
                       backgroundColor: const Color(0xFFDC2626),
                       behavior: SnackBarBehavior.floating,
                       width: 340,
@@ -443,9 +472,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       width: 220,
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(
-          right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-        ),
+        border: Border(right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
       ),
       child: ListView(
         physics: const BouncingScrollPhysics(),
@@ -458,12 +485,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: _activeTab == _StorageTab.home ? const Color(0xFF2563EB) : Colors.transparent,
+                color: _activeTab == _StorageTab.home
+                    ? const Color(0xFF2563EB)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
                 boxShadow: _activeTab == _StorageTab.home
                     ? [
                         BoxShadow(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.25),
+                          color: const Color(
+                            0xFF2563EB,
+                          ).withValues(alpha: 0.25),
                           blurRadius: 6,
                           offset: const Offset(0, 2),
                         ),
@@ -479,7 +510,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       child: Icon(
                         LucideIcons.home,
                         size: 16,
-                        color: _activeTab == _StorageTab.home ? Colors.white : const Color(0xFF374151),
+                        color: _activeTab == _StorageTab.home
+                            ? Colors.white
+                            : const Color(0xFF374151),
                       ),
                     ),
                   ),
@@ -488,8 +521,12 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     'Home',
                     style: GoogleFonts.inter(
                       fontSize: 13,
-                      fontWeight: _activeTab == _StorageTab.home ? FontWeight.w600 : FontWeight.w500,
-                      color: _activeTab == _StorageTab.home ? Colors.white : const Color(0xFF111827),
+                      fontWeight: _activeTab == _StorageTab.home
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: _activeTab == _StorageTab.home
+                          ? Colors.white
+                          : const Color(0xFF111827),
                     ),
                   ),
                 ],
@@ -592,12 +629,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 width: 20,
                 height: 20,
                 child: Center(
-                  child: customIconWidget ??
+                  child:
+                      customIconWidget ??
                       (icon != null
                           ? Icon(
                               icon,
                               size: 16,
-                              color: isSelected ? Colors.white : (customIconColor ?? const Color(0xFF374151)),
+                              color: isSelected
+                                  ? Colors.white
+                                  : (customIconColor ??
+                                        const Color(0xFF374151)),
                             )
                           : const SizedBox.shrink()),
                 ),
@@ -660,15 +701,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 Row(
                   children: [
                     InkWell(
-                      onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                      onTap: () =>
+                          setState(() => _activeTab = _StorageTab.storageUsage),
                       child: Text(
                         'Storage Management',
-                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
                       ),
                     ),
                     Text(
                       '  ›  ',
-                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF94A3B8),
+                      ),
                     ),
                     Text(
                       'Cliks Business',
@@ -712,7 +760,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onTap: _triggerRefresh,
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -732,7 +783,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     AnimatedRotation(
                       turns: _isRefreshing ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 600),
-                      child: const Icon(LucideIcons.refreshCw, size: 12, color: Color(0xFF64748B)),
+                      child: const Icon(
+                        LucideIcons.refreshCw,
+                        size: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
@@ -768,7 +823,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     width: 90,
                     height: 90,
                     child: CustomPaint(
-                      painter: _DonutRingPainter(progress: 0.90, color: const Color(0xFF6366F1)),
+                      painter: _DonutRingPainter(
+                        progress: 0.90,
+                        color: const Color(0xFF6366F1),
+                      ),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -972,7 +1030,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               // Header Row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -1154,7 +1215,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: badgeBg,
                     borderRadius: BorderRadius.circular(6),
@@ -1202,15 +1266,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         Row(
           children: [
             InkWell(
-              onTap: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
+              onTap: () =>
+                  setState(() => _activeTab = _StorageTab.cliksBusiness),
               child: Text(
                 'Storage Management',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF64748B),
+                ),
               ),
             ),
             Text(
               '  ›  ',
-              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF94A3B8),
+              ),
             ),
             Text(
               'Storage Usage',
@@ -1259,7 +1330,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.barChart2, size: 16, color: Color(0xFF2563EB)),
+                      const Icon(
+                        LucideIcons.barChart2,
+                        size: 16,
+                        color: Color(0xFF2563EB),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Breakdown Chart',
@@ -1587,10 +1662,20 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       children: [
         Text(
           'Beta Cloud Storage Portal',
-          style: GoogleFonts.inter(fontSize: 24, fontWeight: FontWeight.w800, color: const Color(0xFF0F172A)),
+          style: GoogleFonts.inter(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0F172A),
+          ),
         ),
         const SizedBox(height: 4),
-        Text('Centralized workspace storage control across all connected Beta services.', style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF64748B))),
+        Text(
+          'Centralized workspace storage control across all connected Beta services.',
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            color: const Color(0xFF64748B),
+          ),
+        ),
         const SizedBox(height: 24),
         Row(
           children: [
@@ -1609,7 +1694,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               used: '921.00 MB',
               total: '1.00 GB Dedicated',
               color: const Color(0xFF7C3AED),
-              onTap: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
+              onTap: () =>
+                  setState(() => _activeTab = _StorageTab.cliksBusiness),
             ),
             const SizedBox(width: 16),
             _buildAppShortcutCard(
@@ -1651,15 +1737,40 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               Container(
                 padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
-                child: iconWidget ?? Icon(icon ?? LucideIcons.send, size: 20, color: color),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child:
+                    iconWidget ??
+                    Icon(icon ?? LucideIcons.send, size: 20, color: color),
               ),
               const SizedBox(height: 14),
-              Text(title, style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
               const SizedBox(height: 4),
-              Text(used, style: GoogleFonts.inter(fontSize: 18, fontWeight: FontWeight.w900, color: color)),
+              Text(
+                used,
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                  color: color,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text(total, style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF64748B))),
+              Text(
+                total,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
             ],
           ),
         ),
@@ -1682,15 +1793,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 Row(
                   children: [
                     InkWell(
-                      onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                      onTap: () =>
+                          setState(() => _activeTab = _StorageTab.storageUsage),
                       child: Text(
                         'Storage Management',
-                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
                       ),
                     ),
                     Text(
                       '  ›  ',
-                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF94A3B8),
+                      ),
                     ),
                     Text(
                       'BNX Mail',
@@ -1734,7 +1852,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onTap: _triggerRefresh,
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -1754,7 +1875,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     AnimatedRotation(
                       turns: _isRefreshing ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 600),
-                      child: const Icon(LucideIcons.refreshCw, size: 12, color: Color(0xFF64748B)),
+                      child: const Icon(
+                        LucideIcons.refreshCw,
+                        size: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
@@ -1998,7 +2123,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               // Header Row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -2163,9 +2291,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     color: iconBg,
                     shape: BoxShape.circle,
                   ),
-                  child: Center(
-                    child: Icon(icon, size: 16, color: iconColor),
-                  ),
+                  child: Center(child: Icon(icon, size: 16, color: iconColor)),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -2239,15 +2365,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 Row(
                   children: [
                     InkWell(
-                      onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                      onTap: () =>
+                          setState(() => _activeTab = _StorageTab.storageUsage),
                       child: Text(
                         'Storage Management',
-                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
                       ),
                     ),
                     Text(
                       '  ›  ',
-                      style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: const Color(0xFF94A3B8),
+                      ),
                     ),
                     Text(
                       'Cliks',
@@ -2291,7 +2424,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onTap: _triggerRefresh,
               borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -2311,7 +2447,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     AnimatedRotation(
                       turns: _isRefreshing ? 1.0 : 0.0,
                       duration: const Duration(milliseconds: 600),
-                      child: const Icon(LucideIcons.refreshCw, size: 12, color: Color(0xFF64748B)),
+                      child: const Icon(
+                        LucideIcons.refreshCw,
+                        size: 12,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                   ],
                 ),
@@ -2555,7 +2695,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             children: [
               // Header Row
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Row(
                   children: [
                     Expanded(
@@ -2730,7 +2873,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: badgeBg,
                   borderRadius: BorderRadius.circular(10),
@@ -2766,13 +2912,21 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
   Widget _buildRecycleBinView() {
     final bnxCount = _recycleItems.where((i) => i.app == 'BNX Mail').length;
-    final bnxSize = _recycleItems.where((i) => i.app == 'BNX Mail').fold<double>(0.0, (s, i) => s + i.sizeMb);
+    final bnxSize = _recycleItems
+        .where((i) => i.app == 'BNX Mail')
+        .fold<double>(0.0, (s, i) => s + i.sizeMb);
 
-    final cliksBizCount = _recycleItems.where((i) => i.app == 'Cliks Business').length;
-    final cliksBizSize = _recycleItems.where((i) => i.app == 'Cliks Business').fold<double>(0.0, (s, i) => s + i.sizeMb);
+    final cliksBizCount = _recycleItems
+        .where((i) => i.app == 'Cliks Business')
+        .length;
+    final cliksBizSize = _recycleItems
+        .where((i) => i.app == 'Cliks Business')
+        .fold<double>(0.0, (s, i) => s + i.sizeMb);
 
     final cliksCount = _recycleItems.where((i) => i.app == 'Cliks').length;
-    final cliksSize = _recycleItems.where((i) => i.app == 'Cliks').fold<double>(0.0, (s, i) => s + i.sizeMb);
+    final cliksSize = _recycleItems
+        .where((i) => i.app == 'Cliks')
+        .fold<double>(0.0, (s, i) => s + i.sizeMb);
 
     List<_RecycleBinItem> filtered;
     switch (_selectedRecycleFilter) {
@@ -2780,7 +2934,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         filtered = _recycleItems.where((i) => i.app == 'BNX Mail').toList();
         break;
       case 'CLIKS BUSINESS':
-        filtered = _recycleItems.where((i) => i.app == 'Cliks Business').toList();
+        filtered = _recycleItems
+            .where((i) => i.app == 'Cliks Business')
+            .toList();
         break;
       case 'CLIKS':
         filtered = _recycleItems.where((i) => i.app == 'Cliks').toList();
@@ -2796,18 +2952,29 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
     if (_recycleSearchQuery.trim().isNotEmpty) {
       final q = _recycleSearchQuery.trim().toLowerCase();
-      filtered = filtered.where((i) =>
-        i.name.toLowerCase().contains(q) ||
-        i.app.toLowerCase().contains(q) ||
-        i.type.toLowerCase().contains(q)
-      ).toList();
+      filtered = filtered
+          .where(
+            (i) =>
+                i.name.toLowerCase().contains(q) ||
+                i.app.toLowerCase().contains(q) ||
+                i.type.toLowerCase().contains(q),
+          )
+          .toList();
     }
 
-    final totalPages = (filtered.length / _recycleItemsPerPage).ceil().clamp(1, 999);
+    final totalPages = (filtered.length / _recycleItemsPerPage).ceil().clamp(
+      1,
+      999,
+    );
     final currentPage = _recycleCurrentPage.clamp(1, totalPages);
     final startIndex = (currentPage - 1) * _recycleItemsPerPage;
-    final endIndex = math.min(startIndex + _recycleItemsPerPage, filtered.length);
-    final pageItems = startIndex < filtered.length ? filtered.sublist(startIndex, endIndex) : <_RecycleBinItem>[];
+    final endIndex = math.min(
+      startIndex + _recycleItemsPerPage,
+      filtered.length,
+    );
+    final pageItems = startIndex < filtered.length
+        ? filtered.sublist(startIndex, endIndex)
+        : <_RecycleBinItem>[];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2816,15 +2983,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         Row(
           children: [
             InkWell(
-              onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+              onTap: () =>
+                  setState(() => _activeTab = _StorageTab.storageUsage),
               child: Text(
                 'Storage Management',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF64748B),
+                ),
               ),
             ),
             Text(
               '  ›  ',
-              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                color: const Color(0xFF94A3B8),
+              ),
             ),
             Text(
               'Recycle Bin',
@@ -2851,7 +3025,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 border: Border.all(color: const Color(0xFFFECACA)),
               ),
               alignment: Alignment.center,
-              child: const Icon(LucideIcons.trash2, size: 20, color: Color(0xFFEF4444)),
+              child: const Icon(
+                LucideIcons.trash2,
+                size: 20,
+                color: Color(0xFFEF4444),
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -2891,7 +3069,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               ),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                  const Icon(
+                    LucideIcons.search,
+                    size: 16,
+                    color: Color(0xFF94A3B8),
+                  ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
@@ -2902,10 +3084,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           _recycleCurrentPage = 1;
                         });
                       },
-                      style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF0F172A)),
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: const Color(0xFF0F172A),
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search deleted files...',
-                        hintStyle: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF94A3B8)),
+                        hintStyle: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          color: const Color(0xFF94A3B8),
+                        ),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -2921,7 +3109,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           _recycleCurrentPage = 1;
                         });
                       },
-                      child: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                      child: const Icon(
+                        LucideIcons.x,
+                        size: 14,
+                        color: Color(0xFF94A3B8),
+                      ),
                     ),
                 ],
               ),
@@ -2991,7 +3183,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   child: LinearProgressIndicator(
                     value: 0.05,
                     backgroundColor: Color(0xFFF1F5F9),
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFEF4444)),
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFEF4444),
+                    ),
                   ),
                 ),
               ),
@@ -3149,7 +3343,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             ),
             child: Column(
               children: [
-                const Icon(LucideIcons.trash2, size: 36, color: Color(0xFF94A3B8)),
+                const Icon(
+                  LucideIcons.trash2,
+                  size: 36,
+                  color: Color(0xFF94A3B8),
+                ),
                 const SizedBox(height: 12),
                 Text(
                   'No deleted items found.',
@@ -3201,13 +3399,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Container(
-                width: 4,
-                color: accentColor,
-              ),
+              Container(width: 4, color: accentColor),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -3217,7 +3415,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           color: iconBgColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        child: iconWidget ??
+                        child:
+                            iconWidget ??
                             Icon(
                               icon ?? LucideIcons.circleCheck,
                               size: 16,
@@ -3257,7 +3456,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             onTap: onTapViewDetails,
                             borderRadius: BorderRadius.circular(6),
                             child: Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 2,
+                              ),
                               child: Text(
                                 'View Details →',
                                 style: GoogleFonts.inter(
@@ -3282,11 +3484,19 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   }
 
   Widget _buildRecycleFilterTabs() {
-    final tabs = ['ALL', 'BNX MAIL', 'CLIKS BUSINESS', 'CLIKS', 'EXPIRING SOON'];
+    final tabs = [
+      'ALL',
+      'BNX MAIL',
+      'CLIKS BUSINESS',
+      'CLIKS',
+      'EXPIRING SOON',
+    ];
 
     return Container(
       decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0)),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+        ),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -3302,11 +3512,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: isSelected ? const Color(0xFF0F172A) : Colors.transparent,
+                      color: isSelected
+                          ? const Color(0xFF0F172A)
+                          : Colors.transparent,
                       width: 2.0,
                     ),
                   ),
@@ -3316,7 +3531,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                    color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                    color: isSelected
+                        ? const Color(0xFF0F172A)
+                        : const Color(0xFF64748B),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -3333,8 +3550,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     final Color appColor = item.app == 'BNX Mail'
         ? const Color(0xFF2563EB)
         : item.app == 'Cliks Business'
-            ? const Color(0xFF7C3AED)
-            : const Color(0xFF0D9488);
+        ? const Color(0xFF7C3AED)
+        : const Color(0xFF0D9488);
 
     IconData fileIcon;
     Color iconColor = const Color(0xFF64748B);
@@ -3426,7 +3643,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                         Text(
                           '  •  ',
-                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8)),
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF94A3B8),
+                          ),
                         ),
                         Text(
                           item.type,
@@ -3437,7 +3657,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                         Text(
                           '  •  ',
-                          style: GoogleFonts.inter(fontSize: 11, color: const Color(0xFF94A3B8)),
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF94A3B8),
+                          ),
                         ),
                         Text(
                           item.deletedDate,
@@ -3481,7 +3704,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 style: GoogleFonts.inter(
                   fontSize: 11.5,
                   fontWeight: FontWeight.w600,
-                  color: isExpiringSoon ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                  color: isExpiringSoon
+                      ? const Color(0xFFDC2626)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -3497,7 +3722,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 value: progress,
                 backgroundColor: const Color(0xFFF1F5F9),
                 valueColor: AlwaysStoppedAnimation<Color>(
-                  isExpiringSoon ? const Color(0xFFEF4444) : const Color(0xFF2563EB),
+                  isExpiringSoon
+                      ? const Color(0xFFEF4444)
+                      : const Color(0xFF2563EB),
                 ),
               ),
             ),
@@ -3516,7 +3743,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Restored "${item.name}" to ${item.app}.', style: GoogleFonts.inter()),
+                      content: Text(
+                        'Restored "${item.name}" to ${item.app}.',
+                        style: GoogleFonts.inter(),
+                      ),
                       backgroundColor: const Color(0xFF10B981),
                       behavior: SnackBarBehavior.floating,
                       width: 360,
@@ -3525,7 +3755,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 },
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 7,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
@@ -3543,8 +3776,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               ),
               const SizedBox(width: 8),
               PopupMenuButton<String>(
-                icon: const Icon(LucideIcons.moreVertical, size: 16, color: Color(0xFF94A3B8)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                icon: const Icon(
+                  LucideIcons.moreVertical,
+                  size: 16,
+                  color: Color(0xFF94A3B8),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 onSelected: (val) {
                   if (val == 'delete') {
                     setState(() {
@@ -3552,7 +3791,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Permanently deleted "${item.name}".', style: GoogleFonts.inter()),
+                        content: Text(
+                          'Permanently deleted "${item.name}".',
+                          style: GoogleFonts.inter(),
+                        ),
                         backgroundColor: const Color(0xFFEF4444),
                         behavior: SnackBarBehavior.floating,
                         width: 360,
@@ -3564,7 +3806,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     });
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Restored "${item.name}".', style: GoogleFonts.inter()),
+                        content: Text(
+                          'Restored "${item.name}".',
+                          style: GoogleFonts.inter(),
+                        ),
                         backgroundColor: const Color(0xFF10B981),
                         behavior: SnackBarBehavior.floating,
                         width: 360,
@@ -3573,7 +3818,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('Downloading "${item.name}"...', style: GoogleFonts.inter()),
+                        content: Text(
+                          'Downloading "${item.name}"...',
+                          style: GoogleFonts.inter(),
+                        ),
                         backgroundColor: const Color(0xFF2563EB),
                         behavior: SnackBarBehavior.floating,
                         width: 360,
@@ -3584,15 +3832,27 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 itemBuilder: (context) => [
                   PopupMenuItem(
                     value: 'restore',
-                    child: Text('Restore file', style: GoogleFonts.inter(fontSize: 12.5)),
+                    child: Text(
+                      'Restore file',
+                      style: GoogleFonts.inter(fontSize: 12.5),
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'download',
-                    child: Text('Download file', style: GoogleFonts.inter(fontSize: 12.5)),
+                    child: Text(
+                      'Download file',
+                      style: GoogleFonts.inter(fontSize: 12.5),
+                    ),
                   ),
                   PopupMenuItem(
                     value: 'delete',
-                    child: Text('Permanently delete', style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFFEF4444))),
+                    child: Text(
+                      'Permanently delete',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        color: const Color(0xFFEF4444),
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -3607,7 +3867,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     if (totalFilteredItems == 0) return const SizedBox.shrink();
 
     final int startItem = (_recycleCurrentPage - 1) * _recycleItemsPerPage + 1;
-    final int endItem = math.min(_recycleCurrentPage * _recycleItemsPerPage, totalFilteredItems);
+    final int endItem = math.min(
+      _recycleCurrentPage * _recycleItemsPerPage,
+      totalFilteredItems,
+    );
 
     return Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 20),
@@ -3639,14 +3902,18 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: _recycleCurrentPage > 1 ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
+                        color: _recycleCurrentPage > 1
+                            ? const Color(0xFFE2E8F0)
+                            : const Color(0xFFF1F5F9),
                       ),
                     ),
                     alignment: Alignment.center,
                     child: Icon(
                       LucideIcons.chevronLeft,
                       size: 14,
-                      color: _recycleCurrentPage > 1 ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                      color: _recycleCurrentPage > 1
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFCBD5E1),
                     ),
                   ),
                 ),
@@ -3661,10 +3928,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: p == _recycleCurrentPage ? const Color(0xFF0F172A) : Colors.white,
+                        color: p == _recycleCurrentPage
+                            ? const Color(0xFF0F172A)
+                            : Colors.white,
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: p == _recycleCurrentPage ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                          color: p == _recycleCurrentPage
+                              ? const Color(0xFF0F172A)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       alignment: Alignment.center,
@@ -3673,7 +3944,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: p == _recycleCurrentPage ? Colors.white : const Color(0xFF334155),
+                          color: p == _recycleCurrentPage
+                              ? Colors.white
+                              : const Color(0xFF334155),
                         ),
                       ),
                     ),
@@ -3694,14 +3967,18 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: _recycleCurrentPage < totalPages ? const Color(0xFFE2E8F0) : const Color(0xFFF1F5F9),
+                        color: _recycleCurrentPage < totalPages
+                            ? const Color(0xFFE2E8F0)
+                            : const Color(0xFFF1F5F9),
                       ),
                     ),
                     alignment: Alignment.center,
                     child: Icon(
                       LucideIcons.chevronRight,
                       size: 14,
-                      color: _recycleCurrentPage < totalPages ? const Color(0xFF334155) : const Color(0xFFCBD5E1),
+                      color: _recycleCurrentPage < totalPages
+                          ? const Color(0xFF334155)
+                          : const Color(0xFFCBD5E1),
                     ),
                   ),
                 ),
@@ -4077,15 +4354,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           Row(
             children: [
               InkWell(
-                onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                onTap: () =>
+                    setState(() => _activeTab = _StorageTab.storageUsage),
                 child: Text(
                   'Storage Management',
-                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF64748B),
+                  ),
                 ),
               ),
               Text(
                 '  ›  ',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF94A3B8),
+                ),
               ),
               Text(
                 'Manage Apps',
@@ -4169,7 +4453,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   border: Border.all(color: const Color(0xFFBFDBFE)),
                 ),
                 alignment: Alignment.center,
-                child: const Icon(LucideIcons.server, size: 22, color: Color(0xFF2563EB)),
+                child: const Icon(
+                  LucideIcons.server,
+                  size: 22,
+                  color: Color(0xFF2563EB),
+                ),
               ),
               const SizedBox(width: 16),
               Column(
@@ -4270,7 +4558,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               title: 'Cliks Business',
               iconWidget: _buildCliksBusinessLogo(size: 20),
               iconBgColor: const Color(0xFFF0FDF4),
-              onTap: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
+              onTap: () =>
+                  setState(() => _activeTab = _StorageTab.cliksBusiness),
             );
 
             if (isNarrow) {
@@ -4322,7 +4611,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               },
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(10),
@@ -4390,7 +4682,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 color: iconBgColor,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: iconWidget ?? Icon(icon ?? LucideIcons.circleCheck, size: 18, color: iconColor ?? const Color(0xFF16A34A)),
+              child:
+                  iconWidget ??
+                  Icon(
+                    icon ?? LucideIcons.circleCheck,
+                    size: 18,
+                    color: iconColor ?? const Color(0xFF16A34A),
+                  ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -4403,7 +4701,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
               ),
             ),
-            const Icon(LucideIcons.externalLink, size: 16, color: Color(0xFF94A3B8)),
+            const Icon(
+              LucideIcons.externalLink,
+              size: 16,
+              color: Color(0xFF94A3B8),
+            ),
           ],
         ),
       ),
@@ -4423,15 +4725,22 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           Row(
             children: [
               InkWell(
-                onTap: () => setState(() => _activeTab = _StorageTab.storageUsage),
+                onTap: () =>
+                    setState(() => _activeTab = _StorageTab.storageUsage),
                 child: Text(
                   'Storage Management',
-                  style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B)),
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: const Color(0xFF64748B),
+                  ),
                 ),
               ),
               Text(
                 '  ›  ',
-                style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF94A3B8)),
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  color: const Color(0xFF94A3B8),
+                ),
               ),
               Text(
                 'Settings',
@@ -4492,14 +4801,16 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             id: 'privacy',
                             icon: LucideIcons.shield,
                             title: 'Privacy & Data Control',
-                            subtitle: 'Manage privacy and access to your stored data',
+                            subtitle:
+                                'Manage privacy and access to your stored data',
                           ),
                           const SizedBox(height: 8),
                           _buildSettingsNavTile(
                             id: 'apps',
                             icon: LucideIcons.layoutGrid,
                             title: 'Manage Apps',
-                            subtitle: 'Manage storage boundaries and partition sizing limits',
+                            subtitle:
+                                'Manage storage boundaries and partition sizing limits',
                           ),
                         ],
                       ),
@@ -4585,7 +4896,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     style: GoogleFonts.inter(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF0F172A),
                     ),
                   ),
                 ),
@@ -4598,7 +4911,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 subtitle,
                 style: GoogleFonts.inter(
                   fontSize: 11,
-                  color: isSelected ? Colors.white.withValues(alpha: 0.85) : const Color(0xFF64748B),
+                  color: isSelected
+                      ? Colors.white.withValues(alpha: 0.85)
+                      : const Color(0xFF64748B),
                 ),
               ),
             ),
@@ -4673,12 +4988,26 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 PopupMenuButton<String>(
                   initialValue: _selectedLanguage,
                   onSelected: (val) => setState(() => _selectedLanguage = val),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  itemBuilder: (context) => ['English', 'Spanish', 'French', 'German', 'Japanese'].map((l) =>
-                    PopupMenuItem(value: l, child: Text(l, style: GoogleFonts.inter(fontSize: 12.5)))
-                  ).toList(),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  itemBuilder: (context) =>
+                      ['English', 'Spanish', 'French', 'German', 'Japanese']
+                          .map(
+                            (l) => PopupMenuItem(
+                              value: l,
+                              child: Text(
+                                l,
+                                style: GoogleFonts.inter(fontSize: 12.5),
+                              ),
+                            ),
+                          )
+                          .toList(),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -4696,7 +5025,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                        const Icon(
+                          LucideIcons.chevronDown,
+                          size: 14,
+                          color: Color(0xFF64748B),
+                        ),
                       ],
                     ),
                   ),
@@ -4754,13 +5087,28 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 PopupMenuButton<String>(
                   initialValue: _selectedDecimalPrecision,
-                  onSelected: (val) => setState(() => _selectedDecimalPrecision = val),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  itemBuilder: (context) => ['0 digits', '1 digit', '2 digits', '3 digits'].map((d) =>
-                    PopupMenuItem(value: d, child: Text(d, style: GoogleFonts.inter(fontSize: 12.5)))
-                  ).toList(),
+                  onSelected: (val) =>
+                      setState(() => _selectedDecimalPrecision = val),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  itemBuilder: (context) =>
+                      ['0 digits', '1 digit', '2 digits', '3 digits']
+                          .map(
+                            (d) => PopupMenuItem(
+                              value: d,
+                              child: Text(
+                                d,
+                                style: GoogleFonts.inter(fontSize: 12.5),
+                              ),
+                            ),
+                          )
+                          .toList(),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -4778,7 +5126,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                        const Icon(
+                          LucideIcons.chevronDown,
+                          size: 14,
+                          color: Color(0xFF64748B),
+                        ),
                       ],
                     ),
                   ),
@@ -4799,7 +5151,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 _buildToggleIndicator(
                   isOn: _showUsagePercentage,
-                  onTap: () => setState(() => _showUsagePercentage = !_showUsagePercentage),
+                  onTap: () => setState(
+                    () => _showUsagePercentage = !_showUsagePercentage,
+                  ),
                 ),
               ],
             ),
@@ -4817,7 +5171,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 _buildToggleIndicator(
                   isOn: _showAvailableStorage,
-                  onTap: () => setState(() => _showAvailableStorage = !_showAvailableStorage),
+                  onTap: () => setState(
+                    () => _showAvailableStorage = !_showAvailableStorage,
+                  ),
                 ),
               ],
             ),
@@ -4843,13 +5199,28 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 PopupMenuButton<String>(
                   initialValue: _selectedDefaultView,
-                  onSelected: (val) => setState(() => _selectedDefaultView = val),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  itemBuilder: (context) => ['Storage Overview', 'App Breakdown', 'Activity Stream'].map((v) =>
-                    PopupMenuItem(value: v, child: Text(v, style: GoogleFonts.inter(fontSize: 12.5)))
-                  ).toList(),
+                  onSelected: (val) =>
+                      setState(() => _selectedDefaultView = val),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  itemBuilder: (context) =>
+                      ['Storage Overview', 'App Breakdown', 'Activity Stream']
+                          .map(
+                            (v) => PopupMenuItem(
+                              value: v,
+                              child: Text(
+                                v,
+                                style: GoogleFonts.inter(fontSize: 12.5),
+                              ),
+                            ),
+                          )
+                          .toList(),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 7,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -4867,7 +5238,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                        const Icon(
+                          LucideIcons.chevronDown,
+                          size: 14,
+                          color: Color(0xFF64748B),
+                        ),
                       ],
                     ),
                   ),
@@ -4906,7 +5281,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 _buildToggleIndicator(
                   isOn: _showRecentActivity,
-                  onTap: () => setState(() => _showRecentActivity = !_showRecentActivity),
+                  onTap: () => setState(
+                    () => _showRecentActivity = !_showRecentActivity,
+                  ),
                 ),
               ],
             ),
@@ -4924,7 +5301,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 _buildToggleIndicator(
                   isOn: _showStorageAlerts,
-                  onTap: () => setState(() => _showStorageAlerts = !_showStorageAlerts),
+                  onTap: () =>
+                      setState(() => _showStorageAlerts = !_showStorageAlerts),
                 ),
               ],
             ),
@@ -4997,7 +5375,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Preferences reset to default values.', style: GoogleFonts.inter()),
+                    content: Text(
+                      'Preferences reset to default values.',
+                      style: GoogleFonts.inter(),
+                    ),
                     backgroundColor: const Color(0xFF334155),
                     behavior: SnackBarBehavior.floating,
                     width: 320,
@@ -5006,7 +5387,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               },
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -5014,7 +5398,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.rotateCcw, size: 14, color: Color(0xFF334155)),
+                    const Icon(
+                      LucideIcons.rotateCcw,
+                      size: 14,
+                      color: Color(0xFF334155),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       'Reset',
@@ -5036,7 +5424,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('General preferences saved successfully.', style: GoogleFonts.inter()),
+                    content: Text(
+                      'General preferences saved successfully.',
+                      style: GoogleFonts.inter(),
+                    ),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
                     width: 350,
@@ -5045,7 +5436,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               },
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(10),
@@ -5152,7 +5546,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Icon(LucideIcons.shieldCheck, size: 14, color: Color(0xFF059669)),
+                  const Icon(
+                    LucideIcons.shieldCheck,
+                    size: 14,
+                    color: Color(0xFF059669),
+                  ),
                   const SizedBox(width: 6),
                   Text(
                     'Protected',
@@ -5205,7 +5603,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                       border: Border.all(color: const Color(0xFFA7F3D0)),
                     ),
                     alignment: Alignment.center,
-                    child: const Icon(LucideIcons.shield, size: 24, color: Color(0xFF059669)),
+                    child: const Icon(
+                      LucideIcons.shield,
+                      size: 24,
+                      color: Color(0xFF059669),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -5241,7 +5643,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.lock, size: 16, color: Color(0xFF2563EB)),
+                      const Icon(
+                        LucideIcons.lock,
+                        size: 16,
+                        color: Color(0xFF2563EB),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         'Storage Privacy',
@@ -5269,7 +5675,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   const SizedBox(height: 14),
                   Row(
                     children: [
-                      const Icon(LucideIcons.clock, size: 13, color: Color(0xFF94A3B8)),
+                      const Icon(
+                        LucideIcons.clock,
+                        size: 13,
+                        color: Color(0xFF94A3B8),
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         'Last checked: Today',
@@ -5286,11 +5696,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
             if (isNarrow) {
               return Column(
-                children: [
-                  card1,
-                  const SizedBox(height: 14),
-                  card2,
-                ],
+                children: [card1, const SizedBox(height: 14), card2],
               );
             }
 
@@ -5394,7 +5800,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 subtitle: 'Emails & attachments',
                 iconWidget: _buildBnxMailLogo(size: 22),
                 iconBgColor: const Color(0xFFEFF6FF),
-                onManage: () => setState(() => _activeTab = _StorageTab.bnxMail),
+                onManage: () =>
+                    setState(() => _activeTab = _StorageTab.bnxMail),
               ),
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               _buildAppAccessRow(
@@ -5410,7 +5817,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 subtitle: 'Business files',
                 iconWidget: _buildCliksBusinessLogo(size: 20),
                 iconBgColor: const Color(0xFFF0FDF4),
-                onManage: () => setState(() => _activeTab = _StorageTab.cliksBusiness),
+                onManage: () =>
+                    setState(() => _activeTab = _StorageTab.cliksBusiness),
               ),
             ],
           ),
@@ -5440,7 +5848,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               title: 'Retention',
               subtitle: 'Retention limit: 30 days',
               actionText: 'Manage',
-              onAction: () => setState(() => _activeTab = _StorageTab.recycleBin),
+              onAction: () =>
+                  setState(() => _activeTab = _StorageTab.recycleBin),
             );
             final cardExport = _buildDataControlCard(
               icon: LucideIcons.download,
@@ -5452,7 +5861,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onAction: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Exporting complete workspace storage archive...', style: GoogleFonts.inter()),
+                    content: Text(
+                      'Exporting complete workspace storage archive...',
+                      style: GoogleFonts.inter(),
+                    ),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
                     width: 360,
@@ -5470,7 +5882,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               onAction: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Displaying recent storage audit logs.', style: GoogleFonts.inter()),
+                    content: Text(
+                      'Displaying recent storage audit logs.',
+                      style: GoogleFonts.inter(),
+                    ),
                     backgroundColor: const Color(0xFF334155),
                     behavior: SnackBarBehavior.floating,
                     width: 340,
@@ -5516,7 +5931,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Privacy and access preferences saved successfully.', style: GoogleFonts.inter()),
+                    content: Text(
+                      'Privacy and access preferences saved successfully.',
+                      style: GoogleFonts.inter(),
+                    ),
                     backgroundColor: const Color(0xFF2563EB),
                     behavior: SnackBarBehavior.floating,
                     width: 380,
@@ -5525,7 +5943,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               },
               borderRadius: BorderRadius.circular(10),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 10,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF2563EB),
                   borderRadius: BorderRadius.circular(10),
@@ -5581,7 +6002,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               borderRadius: BorderRadius.circular(10),
             ),
             alignment: Alignment.center,
-            child: iconWidget ?? Icon(icon ?? LucideIcons.circleCheck, size: 20, color: iconColor ?? const Color(0xFF16A34A)),
+            child:
+                iconWidget ??
+                Icon(
+                  icon ?? LucideIcons.circleCheck,
+                  size: 20,
+                  color: iconColor ?? const Color(0xFF16A34A),
+                ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -5670,7 +6097,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF2563EB)),
+                  const Icon(
+                    LucideIcons.chevronRight,
+                    size: 14,
+                    color: Color(0xFF2563EB),
+                  ),
                 ],
               ),
             ),
@@ -5753,7 +6184,11 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   ),
                 ),
                 const SizedBox(width: 4),
-                const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF2563EB)),
+                const Icon(
+                  LucideIcons.chevronRight,
+                  size: 14,
+                  color: Color(0xFF2563EB),
+                ),
               ],
             ),
           ),
@@ -5775,7 +6210,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
         setState(() => _storageAccessOption = id);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Storage access set to "$title".', style: GoogleFonts.inter()),
+            content: Text(
+              'Storage access set to "$title".',
+              style: GoogleFonts.inter(),
+            ),
             backgroundColor: const Color(0xFF2563EB),
             behavior: SnackBarBehavior.floating,
             width: 320,
@@ -5789,7 +6227,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           color: isSelected ? const Color(0xFFF8FAFF) : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? const Color(0xFF2563EB)
+                : const Color(0xFFE2E8F0),
             width: isSelected ? 1.5 : 1.0,
           ),
         ),
@@ -5799,14 +6239,18 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                color: isSelected
+                    ? const Color(0xFFEFF6FF)
+                    : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(8),
               ),
               alignment: Alignment.center,
               child: Icon(
                 icon,
                 size: 16,
-                color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF64748B),
+                color: isSelected
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF64748B),
               ),
             ),
             const SizedBox(width: 14),
@@ -5843,7 +6287,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF2563EB) : const Color(0xFFCBD5E1),
+                  color: isSelected
+                      ? const Color(0xFF2563EB)
+                      : const Color(0xFFCBD5E1),
                   width: isSelected ? 2 : 1.5,
                 ),
               ),
@@ -5909,7 +6355,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             Icon(
               isSelected ? LucideIcons.circleDot : LucideIcons.circle,
               size: 15,
-              color: isSelected ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+              color: isSelected
+                  ? const Color(0xFF2563EB)
+                  : const Color(0xFF94A3B8),
             ),
             const SizedBox(width: 6),
             Text(
@@ -5917,7 +6365,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               style: GoogleFonts.inter(
                 fontSize: 12.5,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                color: isSelected
+                    ? const Color(0xFF0F172A)
+                    : const Color(0xFF64748B),
               ),
             ),
           ],
@@ -5987,7 +6437,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           fit: fit,
           color: color,
           colorBlendMode: color != null ? BlendMode.srcIn : null,
-          errorBuilder: (ctx, err, stack) => _buildFallbackAsset(fileName, width, height, fit, color),
+          errorBuilder: (ctx, err, stack) =>
+              _buildFallbackAsset(fileName, width, height, fit, color),
         );
       }
     }
@@ -5995,7 +6446,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     return _buildFallbackAsset(fileName, width, height, fit, color);
   }
 
-  Widget _buildFallbackAsset(String fileName, double? width, double? height, BoxFit fit, Color? color) {
+  Widget _buildFallbackAsset(
+    String fileName,
+    double? width,
+    double? height,
+    BoxFit fit,
+    Color? color,
+  ) {
     return Image.asset(
       'assets/icons_images_reference /$fileName',
       width: width,
@@ -6047,10 +6504,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: Image.file(
-                  File('/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/media_1790664964179.png'),
+                  File(
+                    '/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/media_1790664964179.png',
+                  ),
                   fit: BoxFit.contain,
                   filterQuality: FilterQuality.high,
-                  errorBuilder: (c, e, s) => _buildLogoImage('beta_logo .jpg', fit: BoxFit.contain),
+                  errorBuilder: (c, e, s) =>
+                      _buildLogoImage('beta_logo .jpg', fit: BoxFit.contain),
                 ),
               ),
             ),
@@ -6076,11 +6536,10 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       height: size,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(size > 24 ? 7 : (size > 18 ? 5 : 4)),
-        border: Border.all(
-          color: const Color(0xFFCBD5E1),
-          width: 0.8,
+        borderRadius: BorderRadius.circular(
+          size > 24 ? 7 : (size > 18 ? 5 : 4),
         ),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -6092,10 +6551,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
       clipBehavior: Clip.antiAlias,
       alignment: Alignment.center,
       padding: EdgeInsets.all(size * 0.08),
-      child: _buildLogoImage(
-        'bnx_mail_logo.png',
-        fit: BoxFit.contain,
-      ),
+      child: _buildLogoImage('bnx_mail_logo.png', fit: BoxFit.contain),
     );
   }
 
@@ -6310,7 +6766,8 @@ class _BnxMailIconPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _BnxMailIconPainter oldDelegate) => oldDelegate.color != color;
+  bool shouldRepaint(covariant _BnxMailIconPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 class _DottedLinePainter extends CustomPainter {
@@ -6335,4 +6792,3 @@ class _DottedLinePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

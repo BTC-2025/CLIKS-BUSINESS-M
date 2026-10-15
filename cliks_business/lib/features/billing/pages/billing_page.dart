@@ -842,16 +842,20 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 ),
                               ),
                               _buildTableCell(
-                                Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF94A3B8)),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      inv['dueDate'] ?? '',
-                                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), fontWeight: FontWeight.w600),
-                                    ),
-                                  ],
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF94A3B8)),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        inv['dueDate'] ?? '',
+                                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), fontWeight: FontWeight.w600),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
                               _buildTableCell(
@@ -902,24 +906,28 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                             color: isEInv ? const Color(0xFF16A34A) : const Color(0xFFA7F3D0),
                                           ),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Icon(
-                                              isEInv ? LucideIcons.check : LucideIcons.sparkles,
-                                              size: 11,
-                                              color: const Color(0xFF059669),
-                                            ),
-                                            const SizedBox(width: 4),
-                                            Text(
-                                              isEInv ? 'IRN Verified' : '+ Generate E-Invoice',
-                                              style: const TextStyle(
-                                                fontSize: 9.5,
-                                                fontWeight: FontWeight.bold,
-                                                color: Color(0xFF059669),
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                isEInv ? LucideIcons.check : LucideIcons.sparkles,
+                                                size: 11,
+                                                color: const Color(0xFF059669),
                                               ),
-                                            ),
-                                          ],
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                isEInv ? 'IRN Verified' : '+ Generate E-Invoice',
+                                                style: const TextStyle(
+                                                  fontSize: 9.5,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Color(0xFF059669),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -1472,8 +1480,9 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       label: 'DELIVERY SUCCESS RATE',
       value: '25%',
       icon: LucideIcons.award,
-      iconColor: const Color(0xFF16A34A),
+      iconColor: const Color(0xFF166534),
       iconBg: const Color(0xFFDCFCE7),
+      isMobile: isMobile,
     );
 
     final c2 = _buildDeliveryStatCard(
@@ -1482,6 +1491,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       icon: LucideIcons.clock,
       iconColor: const Color(0xFF0D9488),
       iconBg: const Color(0xFFCCFBF1),
+      isMobile: isMobile,
     );
 
     final c3 = _buildDeliveryStatCard(
@@ -1490,6 +1500,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       icon: LucideIcons.alertCircle,
       iconColor: const Color(0xFFDC2626),
       iconBg: const Color(0xFFFEE2E2),
+      isMobile: isMobile,
     );
 
     final c4 = _buildDeliveryStatCard(
@@ -1498,6 +1509,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       icon: LucideIcons.activity,
       iconColor: const Color(0xFF2563EB),
       iconBg: const Color(0xFFDBEAFE),
+      isMobile: isMobile,
     );
 
     return LayoutBuilder(
@@ -1537,13 +1549,21 @@ class _BillingPageState extends ConsumerState<BillingPage> {
         } else {
           return Column(
             children: [
-              c1,
+              Row(
+                children: [
+                  Expanded(child: c1),
+                  const SizedBox(width: 10),
+                  Expanded(child: c2),
+                ],
+              ),
               const SizedBox(height: 10),
-              c2,
-              const SizedBox(height: 10),
-              c3,
-              const SizedBox(height: 10),
-              c4,
+              Row(
+                children: [
+                  Expanded(child: c3),
+                  const SizedBox(width: 10),
+                  Expanded(child: c4),
+                ],
+              ),
             ],
           );
         }
@@ -1557,12 +1577,14 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     required IconData icon,
     required Color iconColor,
     required Color iconBg,
+    bool isMobile = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 12 : 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -1576,35 +1598,41 @@ class _BillingPageState extends ConsumerState<BillingPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 34,
-            height: 34,
+            width: isMobile ? 30 : 34,
+            height: isMobile ? 30 : 34,
             decoration: BoxDecoration(
               color: iconBg,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
             ),
             child: Center(
-              child: Icon(icon, color: iconColor, size: 18),
+              child: Icon(icon, color: iconColor, size: isMobile ? 16 : 18),
             ),
           ),
-          const SizedBox(height: 14),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF0F172A),
-              letterSpacing: -0.5,
+          SizedBox(height: isMobile ? 10 : 14),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: isMobile ? 20 : 24,
+                fontWeight: FontWeight.w900,
+                color: const Color(0xFF0F172A),
+                letterSpacing: -0.5,
+              ),
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 10,
+            style: TextStyle(
+              fontSize: isMobile ? 9 : 10,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
+              color: const Color(0xFF64748B),
               letterSpacing: 0.5,
             ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1627,17 +1655,28 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           final isSel = _activeDeliverySubTab == idx;
           final item = subTabs[idx];
           return Padding(
-            padding: const EdgeInsets.only(right: 14),
+            padding: const EdgeInsets.only(right: 10),
             child: InkWell(
               onTap: () => setState(() => _activeDeliverySubTab = idx),
-              borderRadius: BorderRadius.circular(6),
+              borderRadius: BorderRadius.circular(8),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 12 : 10,
+                  vertical: isMobile ? 8 : 6,
+                ),
                 decoration: BoxDecoration(
-                  border: isSel
-                      ? Border.all(color: const Color(0xFF0284C7), width: 1.5)
-                      : Border.all(color: Colors.transparent, width: 1.5),
-                  borderRadius: BorderRadius.circular(6),
+                  color: isMobile
+                      ? (isSel ? const Color(0xFFF0FDF4) : Colors.white)
+                      : Colors.transparent,
+                  border: isMobile
+                      ? Border.all(
+                          color: isSel ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
+                          width: isSel ? 1.5 : 1.0,
+                        )
+                      : (isSel
+                          ? Border.all(color: const Color(0xFF0284C7), width: 1.5)
+                          : Border.all(color: Colors.transparent, width: 1.5)),
+                  borderRadius: BorderRadius.circular(isMobile ? 8 : 6),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -1647,7 +1686,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     Text(
                       item['title']!,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: isMobile ? 12.5 : 13,
                         fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
                         color: isSel ? const Color(0xFF166534) : const Color(0xFF64748B),
                       ),
@@ -1664,39 +1703,72 @@ class _BillingPageState extends ConsumerState<BillingPage> {
 
   // ─── Sub-Tab 1: Delivery Challans Table (Image 5) ───
   Widget _buildDeliveryChallansTable(bool isMobile) {
+    final titleWidget = Row(
+      children: const [
+        Text('📄', style: TextStyle(fontSize: 16)),
+        SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            'Generated Delivery Challans (Product Dispatches)',
+            style: TextStyle(
+              fontSize: 15.5,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+            ),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      ],
+    );
+
+    final newChallanBtn = ElevatedButton.icon(
+      onPressed: () => _openDispatchShipmentModal(),
+      icon: const Icon(LucideIcons.plus, size: 13),
+      label: const Text('New Challan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF166534),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: const [
-                Text('📄', style: TextStyle(fontSize: 16)),
-                SizedBox(width: 8),
-                Text(
-                  'Generated Delivery Challans (Product Dispatches)',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-            ElevatedButton.icon(
-              onPressed: () => _openDispatchShipmentModal(),
-              icon: const Icon(LucideIcons.plus, size: 13),
-              label: const Text('New Challan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF166534),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        if (isMobile)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              titleWidget,
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: newChallanBtn,
               ),
-            ),
-          ],
-        ),
+            ],
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Text('📄', style: TextStyle(fontSize: 16)),
+                  SizedBox(width: 8),
+                  Text(
+                    'Generated Delivery Challans (Product Dispatches)',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              newChallanBtn,
+            ],
+          ),
         const SizedBox(height: 14),
 
         Container(
@@ -1884,6 +1956,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       mobile: '+91 98234 56789',
       speed: '48 mins',
       rate: 96,
+      isMobile: isMobile,
     );
 
     final card2 = _buildDriverCard(
@@ -1896,6 +1969,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       mobile: '+91 91234 56711',
       speed: '42 mins',
       rate: 98,
+      isMobile: isMobile,
     );
 
     return Container(
@@ -1920,12 +1994,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
             children: const [
               Text('👨‍💼', style: TextStyle(fontSize: 16)),
               SizedBox(width: 8),
-              Text(
-                'Delivery Staff Performance & Fleet Assignments',
-                style: TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF166534),
+              Expanded(
+                child: Text(
+                  'Delivery Staff Performance & Fleet Assignments',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF166534),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -1967,9 +2044,10 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     required String mobile,
     required String speed,
     required int rate,
+    bool isMobile = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: EdgeInsets.all(isMobile ? 14 : 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -1981,23 +2059,26 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    name,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    id,
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
-                  ),
-                ],
+                    const SizedBox(height: 2),
+                    Text(
+                      id,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -2022,10 +2103,18 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Delivery Success Rate',
-                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF166534)),
+              Expanded(
+                child: Text(
+                  'Delivery Success Rate',
+                  style: TextStyle(
+                    fontSize: isMobile ? 11 : 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF166534),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '$rate%',
                 style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Color(0xFF166534)),
@@ -2086,12 +2175,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
             children: const [
               Text('🔄', style: TextStyle(fontSize: 16)),
               SizedBox(width: 8),
-              Text(
-                'Reverse Logistics (Return pick-ups & Failures)',
-                style: TextStyle(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF166534),
+              Expanded(
+                child: Text(
+                  'Reverse Logistics (Return pick-ups & Failures)',
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF166534),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -2111,7 +2203,10 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                 final leftInfo = Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 10,
+                      runSpacing: 6,
                       children: [
                         const Text(
                           'Rahul Varma',
@@ -2121,7 +2216,6 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                             color: Color(0xFF0F172A),
                           ),
                         ),
-                        const SizedBox(width: 10),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
@@ -2194,7 +2288,10 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     children: [
                       leftInfo,
                       const SizedBox(height: 14),
-                      actionBtn,
+                      SizedBox(
+                        width: double.infinity,
+                        child: actionBtn,
+                      ),
                     ],
                   );
                 }
@@ -2244,32 +2341,35 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       ),
     );
 
-    final statusDropdown = Container(
-      height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedStatus == 'All Status' ? 'All Statuses' : _selectedStatus,
-          icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
-          items: const [
-            DropdownMenuItem(value: 'All Statuses', child: Text('Status: All Statuses')),
-            DropdownMenuItem(value: 'Out For Delivery', child: Text('Status: Out For Delivery')),
-            DropdownMenuItem(value: 'Delivered', child: Text('Status: Delivered')),
-          ],
-          onChanged: (v) {
-            setState(() {
-              _selectedStatus = v == 'All Statuses' ? 'All Status' : (v ?? 'All Status');
-            });
-          },
+    Widget buildStatusDropdown({bool expanded = false}) {
+      return Container(
+        height: 42,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-      ),
-    );
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            isExpanded: expanded,
+            value: _selectedStatus == 'All Status' ? 'All Statuses' : _selectedStatus,
+            icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+            items: const [
+              DropdownMenuItem(value: 'All Statuses', child: Text('Status: All Statuses')),
+              DropdownMenuItem(value: 'Out For Delivery', child: Text('Status: Out For Delivery')),
+              DropdownMenuItem(value: 'Delivered', child: Text('Status: Delivered')),
+            ],
+            onChanged: (v) {
+              setState(() {
+                _selectedStatus = v == 'All Statuses' ? 'All Status' : (v ?? 'All Status');
+              });
+            },
+          ),
+        ),
+      );
+    }
 
     final dispatchBtn = ElevatedButton.icon(
       onPressed: () => _openDispatchShipmentModal(),
@@ -2289,15 +2389,15 @@ class _BillingPageState extends ConsumerState<BillingPage> {
 
     if (isMobile) {
       return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           searchField,
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(child: statusDropdown),
-              const SizedBox(width: 8),
-              dispatchBtn,
-            ],
+          const SizedBox(height: 8),
+          buildStatusDropdown(expanded: true),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: dispatchBtn,
           ),
         ],
       );
@@ -2307,7 +2407,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       children: [
         Expanded(child: searchField),
         const SizedBox(width: 12),
-        statusDropdown,
+        buildStatusDropdown(expanded: false),
         const SizedBox(width: 12),
         dispatchBtn,
       ],
@@ -2456,8 +2556,11 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                 const SizedBox(height: 12),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
                 const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  spacing: 10,
+                  runSpacing: 8,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3550,7 +3653,10 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   AppSnackbar.show(context, 'Delivery challan $newRef issued & dispatched successfully!', type: SnackType.success);
                                 },
                                 icon: const Icon(LucideIcons.truck, size: 16),
-                                label: const Text('Generate Challan & Dispatch Shipment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                                label: const FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text('Generate Challan & Dispatch Shipment', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13.5)),
+                                ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFF166534),
                                   foregroundColor: Colors.white,
@@ -3590,8 +3696,11 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 4,
             children: [
               Text(
                 title,
@@ -3684,7 +3793,12 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           children: [
             const Icon(LucideIcons.truck, color: Color(0xFF166534), size: 20),
             const SizedBox(width: 10),
-            Text('Challan: ${del['ref']}'),
+            Expanded(
+              child: Text(
+                'Challan: ${del['ref']}',
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: Column(

@@ -28,10 +28,11 @@ class _RegisterProductModalState extends ConsumerState<RegisterProductModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Toggle Physical/Service
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildToggleButton('Physical Product', isPhysicalProduct, () => setState(() => isPhysicalProduct = true)),
-              const SizedBox(width: 8),
               _buildToggleButton('Service Offering', !isPhysicalProduct, () => setState(() => isPhysicalProduct = false)),
             ],
           ),
@@ -199,8 +200,9 @@ class _RegisterProductModalState extends ConsumerState<RegisterProductModal> {
         SizedBox(
           height: 40,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -384,8 +386,9 @@ class _AdjustStockModalState extends ConsumerState<AdjustStockModal> {
         SizedBox(
           height: 40,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -529,8 +532,9 @@ class _WarehouseTransferModalState extends ConsumerState<WarehouseTransferModal>
         SizedBox(
           height: 40,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -654,8 +658,9 @@ class _RegisterWarehouseModalState extends ConsumerState<RegisterWarehouseModal>
         SizedBox(
           height: 38,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 11)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 11), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -758,8 +763,9 @@ class _GoodsInwardReceiptModalState extends ConsumerState<GoodsInwardReceiptModa
         SizedBox(
           height: 40,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -881,8 +887,9 @@ class _InterWarehouseTransferModalState extends ConsumerState<InterWarehouseTran
         SizedBox(
           height: 40,
           child: DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
-            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12)))).toList(),
+            items: items.map((item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis))).toList(),
             onChanged: onChanged,
             decoration: InputDecoration(
               contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

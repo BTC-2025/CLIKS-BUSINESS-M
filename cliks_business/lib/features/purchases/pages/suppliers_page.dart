@@ -905,7 +905,7 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
   }) {
     return Container(
       height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE2E8F0)),
@@ -914,9 +914,11 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: value,
+          isDense: true,
+          iconSize: 16,
           icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-          style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-          items: items.map((it) => DropdownMenuItem(value: it, child: Text(it))).toList(),
+          style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+          items: items.map((it) => DropdownMenuItem(value: it, child: Text(it, overflow: TextOverflow.ellipsis))).toList(),
           onChanged: onChanged,
         ),
       ),
@@ -2065,7 +2067,12 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
           children: [
             Icon(LucideIcons.fileSpreadsheet, size: 20, color: Color(0xFF2563EB)),
             SizedBox(width: 8),
-            Text('Bulk Import Suppliers (CSV)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Expanded(
+              child: Text(
+                'Bulk Import Suppliers (CSV)',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ),
           ],
         ),
         content: Column(
@@ -2249,58 +2256,38 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
             children: [
               // 1. TOP HEADER (Screenshots 1 & 2)
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 18, 18, 14),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                child: LayoutBuilder(
+                  builder: (context, headerConstraints) {
+                    final isNarrow = headerConstraints.maxWidth < 450;
+
+                    final iconBox = Container(
+                      width: 38,
+                      height: 38,
                       decoration: BoxDecoration(
                         color: const Color(0xFFF0FDF4),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFFDCFCE7)),
                       ),
                       child: const Center(
-                        child: Icon(LucideIcons.building2, size: 20, color: Color(0xFF16A34A)),
+                        child: Icon(LucideIcons.building2, size: 18, color: Color(0xFF16A34A)),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Register Vendor Master Profile',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0F172A),
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Provide your business and contact details to get started.',
-                            style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    );
+
+                    final codeBadge = Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: Text(
                         'Code: $_vendorCode',
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    InkWell(
+                    );
+
+                    final closeBtn = InkWell(
                       onTap: () => Navigator.pop(context),
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
@@ -2311,8 +2298,92 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
                         ),
                         child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF475569)),
                       ),
-                    ),
-                  ],
+                    );
+
+                    if (isNarrow) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          iconBox,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Expanded(
+                                      child: Text(
+                                        'Register Vendor Profile',
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF0F172A),
+                                          letterSpacing: -0.3,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    codeBadge,
+                                  ],
+                                ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'Provide business and contact details.',
+                                  style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          closeBtn,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        iconBox,
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Register Vendor Master Profile',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Provide your business and contact details to get started.',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Text(
+                            'Code: $_vendorCode',
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        closeBtn,
+                      ],
+                    );
+                  },
                 ),
               ),
 
@@ -2353,11 +2424,10 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
 
               // 3. BOTTOM ACTIONS (Cancel & Initialize buttons)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    OutlinedButton(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: LayoutBuilder(
+                  builder: (context, actionConstraints) {
+                    final cancelBtn = OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
                         backgroundColor: Colors.white,
@@ -2366,8 +2436,9 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       child: const Text('Cancel', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
-                    ),
-                    ElevatedButton.icon(
+                    );
+
+                    final submitBtn = ElevatedButton.icon(
                       onPressed: _saveVendorProfile,
                       icon: const Icon(LucideIcons.check, size: 16, color: Colors.white),
                       label: const Text(
@@ -2381,8 +2452,27 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
-                    ),
-                  ],
+                    );
+
+                    if (actionConstraints.maxWidth < 450) {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          submitBtn,
+                          const SizedBox(height: 8),
+                          cancelBtn,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        cancelBtn,
+                        submitBtn,
+                      ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -2764,36 +2854,47 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Icon(icon, size: 14, color: const Color(0xFF166534)),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        Text(
-                          subtitle,
-                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                        child: Center(
+                          child: Icon(icon, size: 14, color: const Color(0xFF166534)),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                trailing ?? const SizedBox.shrink(),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing,
+                ],
               ],
             ),
           ),

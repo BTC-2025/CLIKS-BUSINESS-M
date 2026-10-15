@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/bento/bento.dart';
+import '../presentation/manage_account_screen.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -526,6 +527,25 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageAccountScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(LucideIcons.userCog, size: 13),
+                label: const Text('Manage Account', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF166534),
+                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
                 onPressed: () => setState(() => _isExpanded = !_isExpanded),
                 icon: Icon(_isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 13),
                 label: Text(_isExpanded ? 'Hide Profiles' : 'Switch Profile', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
@@ -803,6 +823,52 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                     ),
                   );
                 }),
+                // Manage Account button
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const ManageAccountScreen(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 4, bottom: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.25)),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.5)),
+                          ),
+                          child: const Icon(
+                            LucideIcons.userCog,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          'Manage Account',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 // Add another account button
                 GestureDetector(
                   onTap: () {

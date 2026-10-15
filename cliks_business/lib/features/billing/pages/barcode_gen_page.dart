@@ -388,47 +388,66 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
                 child: const Icon(LucideIcons.scan, color: Color(0xFF15803D), size: 16),
               ),
               const SizedBox(width: 10),
-              const Text('Data Input Parameters', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+              const Expanded(
+                child: Text(
+                  'Data Input Parameters',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Generation Format', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey)),
-                    const SizedBox(height: 6),
-                    Container(
-                      height: 38,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: AppColors.tableBorder),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _generationFormat,
-                          isExpanded: true,
-                          items: ['Code 128 (Standard)', 'EAN-13', 'QR Code']
-                              .map((f) => DropdownMenuItem(value: f, child: Text(f, style: const TextStyle(fontSize: 12))))
-                              .toList(),
-                          onChanged: (val) {
-                            if (val != null) setState(() => _generationFormat = val);
-                          },
-                        ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 360;
+              final child1 = Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Generation Format', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  Container(
+                    height: 38,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppColors.tableBorder),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _generationFormat,
+                        isExpanded: true,
+                        items: ['Code 128 (Standard)', 'EAN-13', 'QR Code']
+                            .map((f) => DropdownMenuItem(value: f, child: Text(f, style: const TextStyle(fontSize: 12))))
+                            .toList(),
+                        onChanged: (val) {
+                          if (val != null) setState(() => _generationFormat = val);
+                        },
                       ),
                     ),
+                  ),
+                ],
+              );
+              final child2 = _buildInputField('Code Value (SKU/ID)', _codeValueController);
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    child1,
+                    const SizedBox(height: 12),
+                    child2,
                   ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildInputField('Code Value (SKU/ID)', _codeValueController),
-              ),
-            ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: child1),
+                  const SizedBox(width: 16),
+                  Expanded(child: child2),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -454,22 +473,41 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
                 child: const Icon(LucideIcons.type, color: Color(0xFF1D4ED8), size: 16),
               ),
               const SizedBox(width: 10),
-              const Text('Label Print Metadata', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+              const Expanded(
+                child: Text(
+                  'Label Print Metadata',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
           _buildInputField('Product Title / Name', _productTitleController),
           const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _buildInputField('Description / Variation', _descriptionController),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: _buildInputField('Price Tag', _priceController, prefix: '₹'),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 360;
+              final child1 = _buildInputField('Description / Variation', _descriptionController);
+              final child2 = _buildInputField('Price Tag', _priceController, prefix: '₹');
+              if (isNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    child1,
+                    const SizedBox(height: 12),
+                    child2,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: child1),
+                  const SizedBox(width: 14),
+                  Expanded(child: child2),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           Row(
@@ -576,7 +614,13 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
                 child: const Icon(LucideIcons.sliders, color: Colors.purple, size: 16),
               ),
               const SizedBox(width: 10),
-              const Text('Dimensions & Styling', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+              const Expanded(
+                child: Text(
+                  'Dimensions & Styling',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),

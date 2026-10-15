@@ -1,0 +1,132 @@
+import 'dart:async';
+
+class TokenService {
+  static String? cachedAccessToken = 'mock_cliks_business_session_token_12345';
+  static String _activeEmail = 'ravinew2004@bnxmail.com';
+  static String _activeName = 'Ravi Kumar C';
+
+  static final Map<String, String> _avatars = {};
+  static final Map<String, Map<String, dynamic>> _userSettings = {
+    'ravinew2004@bnxmail.com': {
+      'name': 'Ravi Kumar C',
+      'email': 'ravinew2004@bnxmail.com',
+      'firstName': 'Ravi Kumar',
+      'lastName': 'C',
+      'username': 'ravinew2004',
+      'jobTitle': 'Executive Director',
+      'location': 'Bengaluru, India',
+      'phoneNumber': '+91 98765 43210',
+      'recoveryEmail': 'ravi.backup@gmail.com',
+      'backupPhone': '+91 98765 01234',
+      'storageLimit': 16106127360, // 15 GB
+      'storageUsed': 2362232012,  // 2.2 GB
+      'language': 'English (US)',
+      'spellingCheckEnabled': true,
+      'grammarCheckEnabled': true,
+      'autoCorrectEnabled': true,
+      'smartComposeEnabled': true,
+      'twoFactorEnabled': false,
+    },
+    'sales.ravinew2004@bnxmail.com': {
+      'name': 'Sales Desk',
+      'email': 'sales.ravinew2004@bnxmail.com',
+      'username': 'sales.ravinew2004',
+      'jobTitle': 'Sales Operations',
+      'location': 'Bengaluru, India',
+      'phoneNumber': '+91 98765 43210',
+      'storageLimit': 16106127360,
+      'storageUsed': 1048576000,
+    },
+    'admin@cliks.business': {
+      'name': 'Cliks Admin',
+      'email': 'admin@cliks.business',
+      'username': 'cliks_admin',
+      'jobTitle': 'Enterprise Administrator',
+      'location': 'Bengaluru, India',
+      'storageLimit': 53687091200, // 50 GB
+      'storageUsed': 8589934592,
+    },
+  };
+
+  static final List<Map<String, dynamic>> _registry = [
+    {
+      'id': 'ravinew2004@bnxmail.com',
+      'name': 'Ravi Kumar C',
+      'email': 'ravinew2004@bnxmail.com',
+      'isPrimary': true,
+      'accountType': 'BUSINESS',
+      'role': 'Owner / Executive',
+    },
+    {
+      'id': 'sales.ravinew2004@bnxmail.com',
+      'name': 'Sales Desk',
+      'email': 'sales.ravinew2004@bnxmail.com',
+      'isPrimary': false,
+      'accountType': 'BUSINESS',
+      'role': 'Sub-Account',
+    },
+    {
+      'id': 'admin@cliks.business',
+      'name': 'Cliks Admin',
+      'email': 'admin@cliks.business',
+      'isPrimary': false,
+      'accountType': 'ENTERPRISE',
+      'role': 'Administrator',
+    },
+  ];
+
+  static Future<String?> getUserEmail() async {
+    return _activeEmail;
+  }
+
+  static Future<String?> getUserName() async {
+    return _activeName;
+  }
+
+  static Future<void> saveUserInfo({String? email, String? name}) async {
+    if (email != null && email.isNotEmpty) _activeEmail = email;
+    if (name != null && name.isNotEmpty) _activeName = name;
+  }
+
+  static Future<String?> getUserAvatar(String email) async {
+    final key = email.trim().toLowerCase();
+    return _avatars[key];
+  }
+
+  static Future<void> saveUserAvatar(String email, String avatar) async {
+    final key = email.trim().toLowerCase();
+    if (avatar.isEmpty) {
+      _avatars.remove(key);
+    } else {
+      _avatars[key] = avatar;
+    }
+  }
+
+  static Future<Map<String, dynamic>?> getUserSettings(String email) async {
+    final key = email.trim().toLowerCase();
+    return _userSettings[key] != null ? Map<String, dynamic>.from(_userSettings[key]!) : null;
+  }
+
+  static Future<void> saveUserSettings(String email, Map<String, dynamic> data) async {
+    final key = email.trim().toLowerCase();
+    final current = _userSettings[key] ?? {};
+    _userSettings[key] = {...current, ...data};
+  }
+
+  static Future<List<Map<String, dynamic>>> getSavedAccountsFromRegistry() async {
+    return List<Map<String, dynamic>>.from(_registry);
+  }
+
+  static Future<void> switchActiveAccountSession(String id) async {
+    final clean = id.trim().toLowerCase();
+    _activeEmail = clean;
+    final found = _registry.firstWhere(
+      (acc) => (acc['email']?.toString() ?? '').toLowerCase() == clean,
+      orElse: () => {'name': clean.split('@').first},
+    );
+    _activeName = found['name']?.toString() ?? clean.split('@').first;
+    for (var reg in _registry) {
+      reg['isPrimary'] = (reg['email']?.toString() ?? '').toLowerCase() == clean;
+    }
+  }
+}

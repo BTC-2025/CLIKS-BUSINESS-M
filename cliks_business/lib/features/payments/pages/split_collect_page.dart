@@ -361,32 +361,34 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
             const Text('Custom Pay', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF0F172A))),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Enter amount to settle from $debtor to $creditor (Max ₹${_formatAmount(maxAmount)})',
-              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
-                LengthLimitingTextInputFormatter(15),
-              ],
-              decoration: InputDecoration(
-                prefixText: '₹ ',
-                prefixStyle: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                labelText: 'Payment Amount',
-                filled: true,
-                fillColor: const Color(0xFFF8FAFC),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Enter amount to settle from $debtor to $creditor (Max ₹${_formatAmount(maxAmount)})',
+                style: const TextStyle(fontSize: 13, color: Color(0xFF64748B)),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: controller,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                  LengthLimitingTextInputFormatter(15),
+                ],
+                decoration: InputDecoration(
+                  prefixText: '₹ ',
+                  prefixStyle: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  labelText: 'Payment Amount',
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -1191,6 +1193,72 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
 
   // TOP HEADER: Splitwise & Collect with icon and + New Split Ticket
   Widget _buildTopHeader(BuildContext context, bool isMobile) {
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0E4D34),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(LucideIcons.creditCard, color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Splitwise & Collect',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Divide collaborative bills, track expenses, and balance debts.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (_selectedTicket == null) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _createNewTicket,
+                icon: const Icon(LucideIcons.plus, size: 16),
+                label: const Text('New Split Ticket', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0E4D34),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 0,
+                ),
+              ),
+            ),
+          ],
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -1504,34 +1572,41 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            InkWell(
-              onTap: () => setState(() => _selectedTicketId = null),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  children: [
-                    Icon(LucideIcons.chevronLeft, size: 16, color: Color(0xFF0E4D34)),
-                    SizedBox(width: 4),
-                    Text(
-                      'Back to all tickets',
-                      style: TextStyle(
-                        color: Color(0xFF0E4D34),
-                        fontWeight: FontWeight.w700,
-                        fontSize: 13,
+            Flexible(
+              child: InkWell(
+                onTap: () => setState(() => _selectedTicketId = null),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 4.0),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.chevronLeft, size: 16, color: Color(0xFF0E4D34)),
+                      SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          'Back to all tickets',
+                          style: TextStyle(
+                            color: Color(0xFF0E4D34),
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
+            const SizedBox(width: 8),
             ElevatedButton.icon(
               onPressed: () => _showRecordExpenseDialog(ticket),
-              icon: const Icon(LucideIcons.plus, size: 16),
-              label: const Text('Add Expense', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+              icon: const Icon(LucideIcons.plus, size: 15),
+              label: const Text('Add Expense', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 12.5)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0E4D34),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 elevation: 0,
               ),
@@ -1543,79 +1618,162 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
         // Group Banner Outlay Card (Image 2)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(22),
+          padding: EdgeInsets.all(isMobile ? 16 : 22),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE5E7EB)),
             boxShadow: const [],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(20),
+          child: isMobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${ticket['currency'] ?? 'INR'} GROUP',
+                            style: const TextStyle(
+                              color: Color(0xFF059669),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text(
+                                'TOTAL GROUP OUTLAY',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF64748B),
+                                  letterSpacing: 0.5,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 2),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  '₹$totalOutlayStr',
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      '${ticket['currency'] ?? 'INR'} GROUP',
+                    const SizedBox(height: 10),
+                    Text(
+                      ticket['title'] as String,
                       style: const TextStyle(
-                        color: Color(0xFF059669),
-                        fontSize: 10,
+                        fontSize: 20,
                         fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    ticket['title'] as String,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                    if ((ticket['description'] as String? ?? '').isNotEmpty) ...[
+                      const SizedBox(height: 3),
+                      Text(
+                        ticket['description'] as String,
+                        style: const TextStyle(
+                          fontSize: 12.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFECFDF5),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${ticket['currency'] ?? 'INR'} GROUP',
+                              style: const TextStyle(
+                                color: Color(0xFF059669),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            ticket['title'] as String,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            ticket['description'] as String? ?? '',
+                            style: const TextStyle(
+                              fontSize: 12.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    ticket['description'] as String? ?? '',
-                    style: const TextStyle(
-                      fontSize: 12.5,
-                      color: Color(0xFF64748B),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'TOTAL GROUP OUTLAY',
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '₹$totalOutlayStr',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  const Text(
-                    'TOTAL GROUP OUTLAY',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF64748B),
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '₹$totalOutlayStr',
-                    style: const TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
         ),
         const SizedBox(height: 24),
 
@@ -1623,9 +1781,9 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
         isMobile
             ? Column(
                 children: [
-                  _buildLoggedExpensesColumn(context, ticket, filteredExpenses),
+                  _buildLoggedExpensesColumn(context, isMobile, ticket, filteredExpenses),
                   const SizedBox(height: 24),
-                  _buildRightDetailColumn(context, ticket, balances, debts, settlements, totalSettledStr),
+                  _buildRightDetailColumn(context, isMobile, ticket, balances, debts, settlements, totalSettledStr),
                 ],
               )
             : Row(
@@ -1633,12 +1791,12 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                 children: [
                   Expanded(
                     flex: 6,
-                    child: _buildLoggedExpensesColumn(context, ticket, filteredExpenses),
+                    child: _buildLoggedExpensesColumn(context, isMobile, ticket, filteredExpenses),
                   ),
                   const SizedBox(width: 24),
                   Expanded(
                     flex: 5,
-                    child: _buildRightDetailColumn(context, ticket, balances, debts, settlements, totalSettledStr),
+                    child: _buildRightDetailColumn(context, isMobile, ticket, balances, debts, settlements, totalSettledStr),
                   ),
                 ],
               ),
@@ -1649,6 +1807,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
   // LEFT COLUMN: LOGGED EXPENSES
   Widget _buildLoggedExpensesColumn(
     BuildContext context,
+    bool isMobile,
     Map<String, dynamic> ticket,
     List<Map<String, dynamic>> expenses,
   ) {
@@ -1658,56 +1817,71 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
         // Header Row: LOGGED EXPENSES, Sessions chip, search, share, download
         Row(
           children: [
-            const Text(
-              'LOGGED EXPENSES',
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-                letterSpacing: 0.5,
+            Flexible(
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Flexible(
+                    child: Text(
+                      'LOGGED EXPENSES',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: 0.5,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      '${expenses.length} Sessions',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${expenses.length} Sessions',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
+            const SizedBox(width: 4),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF64748B)),
+                  padding: const EdgeInsets.all(5),
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    setState(() {
+                      _isExpenseSearchVisible = !_isExpenseSearchVisible;
+                      if (!_isExpenseSearchVisible) _expenseSearchQuery = '';
+                    });
+                  },
                 ),
-              ),
-            ),
-            const Spacer(),
-            IconButton(
-              icon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF64748B)),
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              onPressed: () {
-                setState(() {
-                  _isExpenseSearchVisible = !_isExpenseSearchVisible;
-                  if (!_isExpenseSearchVisible) _expenseSearchQuery = '';
-                });
-              },
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: const Icon(LucideIcons.share2, size: 16, color: Color(0xFF64748B)),
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              onPressed: () => AppSnackbar.show(context, "Exporting expense breakdown...", type: SnackType.info),
-            ),
-            const SizedBox(width: 6),
-            IconButton(
-              icon: const Icon(LucideIcons.download, size: 16, color: Color(0xFF64748B)),
-              padding: const EdgeInsets.all(6),
-              constraints: const BoxConstraints(),
-              onPressed: () => AppSnackbar.show(context, "Downloading PDF report...", type: SnackType.info),
+                const SizedBox(width: 2),
+                IconButton(
+                  icon: const Icon(LucideIcons.share2, size: 16, color: Color(0xFF64748B)),
+                  padding: const EdgeInsets.all(5),
+                  constraints: const BoxConstraints(),
+                  onPressed: () => AppSnackbar.show(context, "Exporting expense breakdown...", type: SnackType.info),
+                ),
+                const SizedBox(width: 2),
+                IconButton(
+                  icon: const Icon(LucideIcons.download, size: 16, color: Color(0xFF64748B)),
+                  padding: const EdgeInsets.all(5),
+                  constraints: const BoxConstraints(),
+                  onPressed: () => AppSnackbar.show(context, "Downloading PDF report...", type: SnackType.info),
+                ),
+              ],
             ),
           ],
         ),
@@ -1757,6 +1931,120 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
             children: expenses.map((exp) {
               final amt = (exp['amount'] as num).toDouble();
               final amtFormatted = amt.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+              if (isMobile) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: const Icon(LucideIcons.receipt, size: 18, color: Color(0xFF0E4D34)),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              exp['description'] as String,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 3),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    exp['splitMode'] as String? ?? 'Equal Split',
+                                    style: const TextStyle(
+                                      color: Color(0xFF2563EB),
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    'Paid by ${exp['paidBy']}',
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '₹$amtFormatted',
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              InkWell(
+                                onTap: () => _showRecordExpenseDialog(ticket, exp),
+                                borderRadius: BorderRadius.circular(6),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(LucideIcons.pencil, size: 14, color: Color(0xFF64748B)),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              InkWell(
+                                onTap: () => _deleteExpense(ticket, exp['id'] as String),
+                                borderRadius: BorderRadius.circular(6),
+                                child: const Padding(
+                                  padding: EdgeInsets.all(4),
+                                  child: Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }
 
               return Container(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -1863,6 +2151,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
   // RIGHT COLUMN: SUMMARY, SIMPLIFIED DEBTS, SETTLEMENTS
   Widget _buildRightDetailColumn(
     BuildContext context,
+    bool isMobile,
     Map<String, dynamic> ticket,
     Map<String, double> balances,
     List<Map<String, dynamic>> debts,
@@ -1966,27 +2255,34 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p,
-                              style: const TextStyle(
-                                fontSize: 13.5,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                p,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Charged ₹$chargedStr, Paid ₹$paidStr',
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                color: Color(0xFF64748B),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Charged ₹$chargedStr, Paid ₹$paidStr',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  color: Color(0xFF64748B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           '${isPositive ? '+' : '-'}₹$netStr',
                           style: TextStyle(
@@ -2055,6 +2351,86 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                     final creditor = d['to'] as String;
                     final amt = (d['amount'] as num).toDouble();
                     final amtFormatted = _formatAmount(amt);
+
+                    if (isMobile) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E293B),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: RichText(
+                                    text: TextSpan(
+                                      style: const TextStyle(fontSize: 13, color: Colors.white),
+                                      children: [
+                                        TextSpan(text: debtor, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                        const TextSpan(text: ' owes '),
+                                        TextSpan(text: creditor, style: const TextStyle(fontWeight: FontWeight.w700)),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  '₹$amtFormatted',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF38BDF8),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () => _showCustomPayDialog(ticket, d),
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1E293B),
+                                      side: const BorderSide(color: Color(0xFF475569)),
+                                      padding: const EdgeInsets.symmetric(vertical: 9),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    child: const Text(
+                                      'Custom Pay',
+                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Colors.white),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () => _settleDebt(ticket, debtor, creditor, amt),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF10B981),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 9),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                      elevation: 0,
+                                    ),
+                                    child: const Text(
+                                      'Settle',
+                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
 
                     return Container(
                       margin: const EdgeInsets.only(bottom: 10),

@@ -336,35 +336,39 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: _mintBorder, width: 1.0),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            'Annual Billing Cycle',
-            style: GoogleFonts.inter(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: _darkForestGreen,
-            ),
-          ),
-          const SizedBox(width: 9),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
-            decoration: BoxDecoration(
-              color: _darkForestGreen,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              'ACTIVE',
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Annual Billing Cycle',
               style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.5,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+                color: _darkForestGreen,
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 9),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+              decoration: BoxDecoration(
+                color: _darkForestGreen,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                'ACTIVE',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
 
@@ -562,9 +566,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.baseline,
-                textBaseline: TextBaseline.alphabetic,
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     'ACTIVE PLAN: ',
@@ -616,60 +619,118 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
         mainAxisAlignment: isMobile ? MainAxisAlignment.spaceAround : MainAxisAlignment.start,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'NEXT RENEWAL',
-                style: GoogleFonts.inter(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white60,
-                  letterSpacing: 0.5,
+          isMobile
+              ? Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'NEXT RENEWAL',
+                        style: GoogleFonts.inter(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white60,
+                          letterSpacing: 0.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '12 Jul 2027',
+                        style: GoogleFonts.inter(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'NEXT RENEWAL',
+                      style: GoogleFonts.inter(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white60,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '12 Jul 2027',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                '12 Jul 2027',
-                style: GoogleFonts.inter(
-                  fontSize: isMobile ? 14.5 : 16,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
           Container(
             width: 1,
             height: 28,
             color: Colors.white24,
             margin: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 18),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'RENEWAL AMOUNT',
-                style: GoogleFonts.inter(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white60,
-                  letterSpacing: 0.5,
+          isMobile
+              ? Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'RENEWAL AMOUNT',
+                        style: GoogleFonts.inter(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white60,
+                          letterSpacing: 0.5,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        activeRenewalAmount,
+                        style: GoogleFonts.inter(
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'RENEWAL AMOUNT',
+                      style: GoogleFonts.inter(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white60,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      activeRenewalAmount,
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                activeRenewalAmount,
-                style: GoogleFonts.inter(
-                  fontSize: isMobile ? 14.5 : 16,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -727,13 +788,16 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ),
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.4,
+                Flexible(
+                  child: Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                      letterSpacing: -0.4,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],
@@ -1322,13 +1386,16 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           children: [
             const Icon(LucideIcons.checkCheck, size: 12, color: Colors.white),
             const SizedBox(width: 5),
-            Text(
-              'CURRENTLY ACTIVE PLAN',
-              style: GoogleFonts.inter(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.6,
+            Flexible(
+              child: Text(
+                'CURRENTLY ACTIVE PLAN',
+                style: GoogleFonts.inter(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.6,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -1717,12 +1784,15 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               color: Color(0xFF065F46),
             ),
             const SizedBox(width: 7),
-            Text(
-              'Currently Active Plan',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF065F46),
+            Flexible(
+              child: Text(
+                'Currently Active Plan',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF065F46),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
@@ -1946,37 +2016,41 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // ═══════════════════════════════════════════════════════════════
   Widget _buildMainTabSelector() {
     return Center(
-      child: Container(
-        padding: const EdgeInsets.all(5),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEAFAE3), // Soft mint green background
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: const Color(0xFFD1F2C2), width: 1.2),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildMainTabItem(
-              index: 0,
-              label: 'BUSINESS',
-              icon: LucideIcons.shieldCheck,
-              activeColor: _darkForestGreen,
-            ),
-            const SizedBox(width: 4),
-            _buildMainTabItem(
-              index: 1,
-              label: 'FIN-PRO',
-              icon: LucideIcons.award,
-              activeColor: _darkForestGreen,
-            ),
-            const SizedBox(width: 4),
-            _buildMainTabItem(
-              index: 2,
-              label: 'PARTNER LAUNCH DESK',
-              icon: LucideIcons.crown,
-              activeColor: const Color(0xFF312E81),
-            ),
-          ],
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAFAE3), // Soft mint green background
+            borderRadius: BorderRadius.circular(32),
+            border: Border.all(color: const Color(0xFFD1F2C2), width: 1.2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildMainTabItem(
+                index: 0,
+                label: 'BUSINESS',
+                icon: LucideIcons.shieldCheck,
+                activeColor: _darkForestGreen,
+              ),
+              const SizedBox(width: 4),
+              _buildMainTabItem(
+                index: 1,
+                label: 'FIN-PRO',
+                icon: LucideIcons.award,
+                activeColor: _darkForestGreen,
+              ),
+              const SizedBox(width: 4),
+              _buildMainTabItem(
+                index: 2,
+                label: 'PARTNER LAUNCH DESK',
+                icon: LucideIcons.crown,
+                activeColor: const Color(0xFF312E81),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -2564,13 +2638,16 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               size: 19,
             ),
             const SizedBox(width: 9),
-            Text(
-              'Billing & Statement History',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: _darkForestGreen,
-                letterSpacing: -0.3,
+            Expanded(
+              child: Text(
+                'Billing & Statement History',
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: _darkForestGreen,
+                  letterSpacing: -0.3,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

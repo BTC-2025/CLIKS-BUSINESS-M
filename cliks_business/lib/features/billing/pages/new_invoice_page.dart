@@ -230,7 +230,10 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 10,
+            runSpacing: 6,
             children: [
               const Text(
                 'New Invoice',
@@ -240,15 +243,15 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
                   color: Color(0xFF0F172A),
                 ),
               ),
-              const SizedBox(width: 10),
               _buildInvoiceBadge(),
             ],
           ),
           const SizedBox(height: 12),
-          Row(
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _buildSettingsButton(),
-              const SizedBox(width: 8),
               _buildLivePreviewButton(),
             ],
           ),
@@ -610,50 +613,58 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 12,
+          runSpacing: 10,
           children: [
-            const Text(
-              'Invoice Items',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            const SizedBox(width: 16),
-            // Quick Scan / Barcode field
-            Container(
-              width: screenWidth < 700 ? 160 : 220,
-              height: 36,
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Row(
-                children: [
-                  Icon(LucideIcons.search, size: 14, color: Color(0xFF94A3B8)),
-                  SizedBox(width: 6),
-                  Expanded(
-                    child: TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Quick Scan / Barcode',
-                        hintStyle: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF94A3B8),
-                        ),
-                        border: InputBorder.none,
-                        isDense: true,
-                        contentPadding: EdgeInsets.zero,
-                      ),
-                      style: TextStyle(fontSize: 12),
-                    ),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                const Text(
+                  'Invoice Items',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF0F172A),
                   ),
-                ],
-              ),
+                ),
+                Container(
+                  width: screenWidth < 450 ? 150 : 200,
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(LucideIcons.search, size: 14, color: Color(0xFF94A3B8)),
+                      SizedBox(width: 6),
+                      Expanded(
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Quick Scan / Barcode',
+                            hintStyle: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          style: TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const Spacer(),
             // + Add Item Button (Pink outline as in screenshot)
             InkWell(
               onTap: _addItem,
@@ -980,12 +991,15 @@ class _NewInvoicePageState extends ConsumerState<NewInvoicePage> {
           ),
           child: const Row(
             children: [
-              Text(
-                '🎉 Points to earn this bill: 0 pts',
-                style: TextStyle(
-                  color: Color(0xFF15803D),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+              Expanded(
+                child: Text(
+                  '🎉 Points to earn this bill: 0 pts',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Color(0xFF15803D),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],

@@ -6,8 +6,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../payments/widgets/add_money_dialog.dart';
-import 'sidebar_utility_rail.dart';
 import '../pages/macos_storage_page.dart';
+import '../pages/mobile_storage_page.dart';
+import 'sidebar_utility_rail.dart';
 
 class Sidebar extends ConsumerWidget {
   const Sidebar({super.key});
@@ -196,7 +197,10 @@ class Sidebar extends ConsumerWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
                     child: Divider(
                       height: 1,
                       thickness: 1,
@@ -270,8 +274,7 @@ class Sidebar extends ConsumerWidget {
                       _SidebarSubItem(
                         icon: LucideIcons.cpu,
                         label: 'Fintech',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.fintech,
+                        isSelected: navigation.currentRoute == AppRoute.fintech,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
                           if (scaffold != null && scaffold.isDrawerOpen) {
@@ -728,7 +731,10 @@ class Sidebar extends ConsumerWidget {
                   ),
 
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 6,
+                    ),
                     child: Divider(
                       height: 1,
                       thickness: 1,
@@ -789,8 +795,7 @@ class Sidebar extends ConsumerWidget {
                       _buildMacOSSubItem(
                         icon: LucideIcons.cpu,
                         label: 'Fintech',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.fintech,
+                        isSelected: navigation.currentRoute == AppRoute.fintech,
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.fintech),
@@ -1139,9 +1144,8 @@ class Sidebar extends ConsumerWidget {
   ) {
     return _MacOSReferAndEarnTile(
       isSelected: navigation.currentRoute == AppRoute.referral,
-      onTap: () => ref
-          .read(navigationProvider.notifier)
-          .setRoute(AppRoute.referral),
+      onTap: () =>
+          ref.read(navigationProvider.notifier).setRoute(AppRoute.referral),
     );
   }
 
@@ -1168,9 +1172,14 @@ class Sidebar extends ConsumerWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
+                  final isMacOS =
+                      Theme.of(context).platform == TargetPlatform.macOS ||
+                      defaultTargetPlatform == TargetPlatform.macOS;
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => const MacOsStoragePage(),
+                      builder: (context) => isMacOS
+                          ? const MacOsStoragePage()
+                          : const MobileStoragePage(),
                     ),
                   );
                 },
@@ -1182,7 +1191,10 @@ class Sidebar extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFDBEAFE), width: 1),
+                    border: Border.all(
+                      color: const Color(0xFFDBEAFE),
+                      width: 1,
+                    ),
                   ),
                   child: Row(
                     children: [
@@ -1989,8 +2001,14 @@ class _SidebarBottomFixed extends ConsumerWidget {
             );
           } else {
             final scaffold = Scaffold.maybeOf(context);
-            if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
-            ref.read(navigationProvider.notifier).setRoute(AppRoute.storage);
+            if (scaffold != null && scaffold.isDrawerOpen) {
+              Navigator.pop(context);
+            }
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => const MobileStoragePage(),
+              ),
+            );
           }
         },
         child: Container(
@@ -2064,7 +2082,9 @@ class _SidebarBottomFixed extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () {
           final scaffold = Scaffold.maybeOf(context);
-          if (scaffold != null && scaffold.isDrawerOpen) Navigator.pop(context);
+          if (scaffold != null && scaffold.isDrawerOpen) {
+            Navigator.pop(context);
+          }
           ref.read(navigationProvider.notifier).setRoute(AppRoute.subscription);
         },
         child: Container(
@@ -2292,10 +2312,7 @@ class _MacOSReferAndEarnTile extends StatefulWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _MacOSReferAndEarnTile({
-    required this.isSelected,
-    required this.onTap,
-  });
+  const _MacOSReferAndEarnTile({required this.isSelected, required this.onTap});
 
   @override
   State<_MacOSReferAndEarnTile> createState() => _MacOSReferAndEarnTileState();
@@ -2325,8 +2342,8 @@ class _MacOSReferAndEarnTileState extends State<_MacOSReferAndEarnTile> {
               color: widget.isSelected
                   ? const Color(0xFFF3E8FF)
                   : (_isHovered
-                      ? const Color(0xFF7C3AED).withValues(alpha: 0.08)
-                      : Colors.transparent),
+                        ? const Color(0xFF7C3AED).withValues(alpha: 0.08)
+                        : Colors.transparent),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -2363,4 +2380,3 @@ class _MacOSReferAndEarnTileState extends State<_MacOSReferAndEarnTile> {
     );
   }
 }
-

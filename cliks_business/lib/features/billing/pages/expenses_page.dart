@@ -916,7 +916,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
         boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1225,39 +1225,73 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row with Title and + Add Subscription button (Image 2)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Active Recurring bills & Subscriptions',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+          if (isMobile)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Active Recurring bills & Subscriptions',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
-              ),
-              ElevatedButton.icon(
-                onPressed: _openAddSubscriptionDialog,
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text(
-                  '+ Add Subscription',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _openAddSubscriptionDialog,
+                    icon: const Icon(LucideIcons.plus, size: 14),
+                    label: const Text(
+                      '+ Add Subscription',
+                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ],
+            )
+          else
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Active Recurring bills & Subscriptions',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
-              ),
-            ],
-          ),
+                ElevatedButton.icon(
+                  onPressed: _openAddSubscriptionDialog,
+                  icon: const Icon(LucideIcons.plus, size: 14),
+                  label: const Text(
+                    '+ Add Subscription',
+                    style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2563EB),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 18),
 
           // Subscriptions Table (Image 2)
@@ -1406,13 +1440,16 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header Row with Title and + Set Budget Limit (Image 6)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 12,
+            runSpacing: 10,
             children: [
               const Text(
                 'Departmental Budgets & Spending Limits',
@@ -1572,12 +1609,16 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                           color: const Color(0xFFDCFCE7),
                                           borderRadius: BorderRadius.circular(6),
                                         ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: const [
-                                            Text('\$ ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-                                            Text('Record Spending', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-                                          ],
+                                        child: FittedBox(
+                                          fit: BoxFit.scaleDown,
+                                          alignment: Alignment.centerLeft,
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: const [
+                                              Text('\$ ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                              Text('Record Spending', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                            ],
+                                          ),
                                         ),
                                       ),
                                     ),
@@ -1587,24 +1628,27 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                               // ACTIONS (Edit & Delete)
                               Expanded(
                                 flex: 14,
-                                child: Row(
-                                  children: [
-                                    Material(
-                                      color: Colors.transparent,
-                                      child: InkWell(
-                                        onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
-                                        borderRadius: BorderRadius.circular(4),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFEFF6FF),
-                                            borderRadius: BorderRadius.circular(4),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: Row(
+                                    children: [
+                                      Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
+                                          borderRadius: BorderRadius.circular(4),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: const Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                                           ),
-                                          child: const Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
                                         ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
+                                      const SizedBox(width: 6),
                                     Material(
                                       color: Colors.transparent,
                                       child: InkWell(
@@ -1633,8 +1677,9 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                   ],
                                 ),
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
+                        ),
                         );
                       }),
                     ],
@@ -1665,7 +1710,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

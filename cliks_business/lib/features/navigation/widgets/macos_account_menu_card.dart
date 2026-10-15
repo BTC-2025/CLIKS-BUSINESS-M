@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/navigation/navigation_provider.dart';
+import '../../profile/presentation/manage_account_screen.dart';
 
 final macosAccountMenuVisibleProvider = StateProvider<bool>((ref) => false);
 
@@ -138,10 +138,12 @@ class MacOSAccountMenuCard extends ConsumerWidget {
               InkWell(
                 onTap: () {
                   ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
-                  ref.read(navigationProvider.notifier).setModuleAndRoute(
-                        AppModule.profile,
-                        AppRoute.profile,
-                      );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageAccountScreen(),
+                    ),
+                  );
                 },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(

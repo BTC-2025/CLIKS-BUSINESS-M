@@ -351,10 +351,10 @@ class _TransactionPageState extends State<TransactionPage> {
 
   Widget _buildTabsRow(bool isMobile) {
     final tabs = [
-      'Customer Receivables (Inward)',
-      'Supplier Payables (Outward)',
-      'Bank & Cash Registers',
-      'Overdue Collections & Reminders',
+      {'title': 'Customer Receivables (Inward)', 'icon': LucideIcons.arrowDownLeft},
+      {'title': 'Supplier Payables (Outward)', 'icon': LucideIcons.arrowUpRight},
+      {'title': 'Bank & Cash Registers', 'icon': LucideIcons.landmark},
+      {'title': 'Overdue Collections & Reminders', 'icon': LucideIcons.alertCircle},
     ];
 
     return SingleChildScrollView(
@@ -363,8 +363,12 @@ class _TransactionPageState extends State<TransactionPage> {
       child: Row(
         children: List.generate(tabs.length, (index) {
           final isSelected = _activeTab == index;
+          final tabItem = tabs[index];
+          final icon = tabItem['icon'] as IconData;
+          final title = tabItem['title'] as String;
+
           return Padding(
-            padding: const EdgeInsets.only(right: 6),
+            padding: const EdgeInsets.only(right: 8),
             child: GestureDetector(
               onTap: () => setState(() => _activeTab = index),
               child: AnimatedContainer(
@@ -372,7 +376,7 @@ class _TransactionPageState extends State<TransactionPage> {
                 curve: Curves.easeOutCubic,
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 12 : 18,
-                  vertical: 8,
+                  vertical: 9,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF166534) : Colors.white,
@@ -384,13 +388,24 @@ class _TransactionPageState extends State<TransactionPage> {
                       ? [BoxShadow(color: const Color(0xFF166534).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))]
                       : [],
                 ),
-                child: Text(
-                  tabs[index],
-                  style: TextStyle(
-                    color: isSelected ? Colors.white : AppColors.secondaryText,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      size: 14,
+                      color: isSelected ? Colors.white : AppColors.secondaryText,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      title,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.secondaryText,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -403,6 +418,10 @@ class _TransactionPageState extends State<TransactionPage> {
   Widget _buildRecordsCard(bool isMobile) {
     if (_activeTab == 2) {
       return _buildBankRegistersView(isMobile);
+    }
+
+    if (isMobile) {
+      return _buildMobileTransactionsList();
     }
 
     return Container(
@@ -429,14 +448,14 @@ class _TransactionPageState extends State<TransactionPage> {
                     defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                     columnWidths: const {
                       0: FlexColumnWidth(1.8), // RECEIPT ID
-                      1: FlexColumnWidth(1.3), // DATE
+                      1: FlexColumnWidth(1.2), // DATE
                       2: FlexColumnWidth(2.0), // CUSTOMER
-                      3: FlexColumnWidth(1.6), // INVOICE LINKED
-                      4: FlexColumnWidth(1.6), // TOTAL ORIGINAL
-                      5: FlexColumnWidth(1.6), // PAID AMOUNT
-                      6: FlexColumnWidth(1.2), // MODE
+                      3: FlexColumnWidth(1.4), // INVOICE LINKED
+                      4: FlexColumnWidth(1.5), // TOTAL ORIGINAL
+                      5: FlexColumnWidth(1.5), // PAID AMOUNT
+                      6: FlexColumnWidth(1.5), // MODE
                       7: FlexColumnWidth(1.6), // RECONCILIATION
-                      8: FlexColumnWidth(1.2), // ACTIONS
+                      8: FlexColumnWidth(1.4), // ACTIONS
                     },
                     children: [
                       TableRow(
@@ -445,15 +464,15 @@ class _TransactionPageState extends State<TransactionPage> {
                           border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                         ),
                         children: const [
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('RECEIPT ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('CUSTOMER', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('INVOICE LINKED', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('MODE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('RECONCILIATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('ACTIONS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECEIPT ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('CUSTOMER', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('INVOICE LINKED', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('MODE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECONCILIATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('ACTIONS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
                         ],
                       ),
                       ..._transactions.map((tx) {
@@ -462,25 +481,25 @@ class _TransactionPageState extends State<TransactionPage> {
                             border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                           ),
                           children: [
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['date'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['customer'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(tx['invoice'], style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['date'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['customer'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['invoice'], style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600))),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
-                                  child: Text(tx['mode'], style: const TextStyle(fontSize: 12, color: AppColors.darkText)),
+                                  child: Text(tx['mode'], style: const TextStyle(fontSize: 12, color: AppColors.darkText), overflow: TextOverflow.ellipsis),
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
@@ -489,29 +508,33 @@ class _TransactionPageState extends State<TransactionPage> {
                                     color: tx['status'] == 'Reconciled' ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: Text(tx['status'], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E))),
+                                  child: Text(tx['status'], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E)), overflow: TextOverflow.ellipsis),
                                 ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(LucideIcons.pencil, size: 15, color: AppColors.blue),
-                                    onPressed: () => _openTransactionSheet(tx),
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(4),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(LucideIcons.trash2, size: 15, color: Colors.red),
-                                    onPressed: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
-                                    constraints: const BoxConstraints(),
-                                    padding: const EdgeInsets.all(4),
-                                  ),
-                                ],
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(LucideIcons.pencil, size: 15, color: AppColors.blue),
+                                      onPressed: () => _openTransactionSheet(tx),
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(4),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(LucideIcons.trash2, size: 15, color: Colors.red),
+                                      onPressed: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
+                                      constraints: const BoxConstraints(),
+                                      padding: const EdgeInsets.all(4),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ],
@@ -537,6 +560,256 @@ class _TransactionPageState extends State<TransactionPage> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMobileTransactionsList() {
+    if (_transactions.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.receipt, color: Color(0xFF94A3B8), size: 24),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'No Transaction Records Found',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Transactions recorded will appear here automatically.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: _transactions.map((tx) {
+        final mode = tx['mode'] as String? ?? 'UPI';
+        final isUPI = mode.toLowerCase().contains('upi');
+        final isBank = mode.toLowerCase().contains('bank');
+        final isCash = mode.toLowerCase().contains('cash');
+        final isReconciled = tx['status'] == 'Reconciled';
+
+        final iconColor = isUPI
+            ? const Color(0xFF6366F1)
+            : isBank
+                ? const Color(0xFF2563EB)
+                : isCash
+                    ? const Color(0xFF059669)
+                    : const Color(0xFFD97706);
+        final iconBg = iconColor.withValues(alpha: 0.12);
+        final modeIcon = isUPI
+            ? LucideIcons.smartphone
+            : isBank
+                ? LucideIcons.landmark
+                : isCash
+                    ? LucideIcons.banknote
+                    : LucideIcons.creditCard;
+
+        final totalVal = (tx['total'] as num).toDouble();
+        final paidVal = (tx['paid'] as num).toDouble();
+        final totalStr = totalVal.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+        final paidStr = paidVal.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Avatar + Customer & Subtitle (Mode/Date) + Amount
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Icon(modeIcon, size: 18, color: iconColor),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          tx['customer'] as String? ?? 'Unknown Customer',
+                          style: const TextStyle(
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '${tx['mode'] ?? 'Payment'} • ${tx['date'] ?? ''}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '₹ $paidStr',
+                        style: const TextStyle(
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF166534),
+                        ),
+                      ),
+                      if (totalVal != paidVal) ...[
+                        const SizedBox(height: 1),
+                        Text(
+                          'of ₹ $totalStr',
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: Color(0xFF94A3B8),
+                            decoration: TextDecoration.lineThrough,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 10),
+
+              // Bottom Row: Status Badge & Invoice Chip + Action Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: isReconciled ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                isReconciled ? LucideIcons.checkCheck : LucideIcons.clock,
+                                size: 11,
+                                color: isReconciled ? const Color(0xFF166534) : const Color(0xFF92400E),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                tx['status'] as String? ?? 'Pending',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: isReconciled ? const Color(0xFF166534) : const Color(0xFF92400E),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              '${tx['invoice'] ?? tx['id']}',
+                              style: const TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF475569),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InkWell(
+                        onTap: () => _openTransactionSheet(tx),
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.all(5),
+                          child: Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
+                        borderRadius: BorderRadius.circular(6),
+                        child: const Padding(
+                          padding: EdgeInsets.all(5),
+                          child: Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 

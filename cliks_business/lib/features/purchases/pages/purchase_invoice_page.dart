@@ -3392,6 +3392,20 @@ class _NewPODialogState extends State<_NewPODialog> {
                 child: _buildInput(_phoneController, '+91 99881...'),
               );
 
+              if (constraints.maxWidth < 420) {
+                return Column(
+                  children: [
+                    col1,
+                    const SizedBox(height: 10),
+                    col2,
+                    const SizedBox(height: 10),
+                    col3,
+                    const SizedBox(height: 10),
+                    col4,
+                  ],
+                );
+              }
+
               if (isNarrow) {
                 return Column(
                   children: [
@@ -3508,6 +3522,17 @@ class _NewPODialogState extends State<_NewPODialog> {
               );
 
               if (isNarrow) {
+                if (constraints.maxWidth < 420) {
+                  return Column(
+                    children: [
+                      col1,
+                      const SizedBox(height: 10),
+                      col2,
+                      const SizedBox(height: 10),
+                      col3,
+                    ],
+                  );
+                }
                 return Column(
                   children: [
                     col1,
@@ -3545,10 +3570,11 @@ class _NewPODialogState extends State<_NewPODialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header with + Create Product & + Add Row buttons (Image 3)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Row(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isVeryNarrow = constraints.maxWidth < 460;
+              final titleWidget = const Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(LucideIcons.layers, size: 14, color: Color(0xFF166534)),
                   SizedBox(width: 8),
@@ -3562,57 +3588,83 @@ class _NewPODialogState extends State<_NewPODialog> {
                     ),
                   ),
                 ],
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  InkWell(
-                    onTap: _showCreateProductModal,
+              );
+
+              final createBtn = InkWell(
+                onTap: _showCreateProductModal,
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
                     borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFF86EFAC)),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(LucideIcons.plus, size: 12, color: Color(0xFF166534)),
-                          SizedBox(width: 4),
-                          Text('+ Create Product', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-                        ],
-                      ),
-                    ),
+                    border: Border.all(color: const Color(0xFF86EFAC)),
                   ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () {
-                      setState(() {
-                        _rows.add(_ProductRowData());
-                      });
-                    },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.plus, size: 12, color: Color(0xFF166534)),
+                      SizedBox(width: 4),
+                      Text('+ Create Product', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                    ],
+                  ),
+                ),
+              );
+
+              final addRowBtn = InkWell(
+                onTap: () {
+                  setState(() {
+                    _rows.add(_ProductRowData());
+                  });
+                },
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF166534),
                     borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF166534),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(LucideIcons.plus, size: 12, color: Colors.white),
-                          SizedBox(width: 4),
-                          Text('+ Add Row', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
-                        ],
-                      ),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(LucideIcons.plus, size: 12, color: Colors.white),
+                      SizedBox(width: 4),
+                      Text('+ Add Row', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)),
+                    ],
+                  ),
+                ),
+              );
+
+              if (isVeryNarrow) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    titleWidget,
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [createBtn, addRowBtn],
                     ),
+                  ],
+                );
+              }
+
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  titleWidget,
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      createBtn,
+                      const SizedBox(width: 8),
+                      addRowBtn,
+                    ],
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
           const SizedBox(height: 12),
 
@@ -3769,9 +3821,67 @@ class _NewPODialogState extends State<_NewPODialog> {
                   );
 
                   if (isNarrow) {
+                    final deleteBtn = _rows.length > 1
+                        ? IconButton(
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            icon: const Icon(LucideIcons.trash2, size: 15, color: Colors.red),
+                            onPressed: () {
+                              setState(() {
+                                final removed = _rows.removeAt(idx);
+                                removed.dispose();
+                              });
+                            },
+                          )
+                        : null;
+
+                    if (constraints.maxWidth < 420) {
+                      return Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(flex: 3, child: pName),
+                              const SizedBox(width: 8),
+                              Expanded(flex: 2, child: sku),
+                              if (deleteBtn != null) ...[
+                                const SizedBox(width: 6),
+                                deleteBtn,
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(child: cost),
+                              const SizedBox(width: 8),
+                              Expanded(child: qty),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(child: disc),
+                              const SizedBox(width: 8),
+                              Expanded(child: gst),
+                            ],
+                          ),
+                        ],
+                      );
+                    }
+
                     return Column(
                       children: [
-                        Row(children: [Expanded(flex: 3, child: pName), const SizedBox(width: 8), Expanded(flex: 2, child: sku)]),
+                        Row(
+                          children: [
+                            Expanded(flex: 3, child: pName),
+                            const SizedBox(width: 8),
+                            Expanded(flex: 2, child: sku),
+                            if (deleteBtn != null) ...[
+                              const SizedBox(width: 6),
+                              deleteBtn,
+                            ],
+                          ],
+                        ),
                         const SizedBox(height: 8),
                         Row(
                           children: [

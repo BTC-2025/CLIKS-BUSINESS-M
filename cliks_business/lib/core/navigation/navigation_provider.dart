@@ -10,6 +10,7 @@ enum AppModule {
 enum AppRoute {
   dashboard,
   profile,
+  manageAccount,
   meetup,
   billing,
   simpleBilling,

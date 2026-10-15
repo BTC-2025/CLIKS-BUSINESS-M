@@ -74,30 +74,34 @@ class _RegisterSupplierPageState extends ConsumerState<RegisterSupplierPage> {
     final isMobile = screenWidth < 900;
 
     return Scaffold(
-      backgroundColor: Colors.black45,
+      backgroundColor: isMobile ? Colors.white : Colors.black45,
       body: SafeArea(
         child: Center(
           child: Container(
             constraints: BoxConstraints(
               maxWidth: 820,
-              maxHeight: MediaQuery.of(context).size.height * 0.94,
+              maxHeight: isMobile ? double.infinity : MediaQuery.of(context).size.height * 0.94,
             ),
-            margin: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24, vertical: 16),
+            margin: EdgeInsets.symmetric(
+              horizontal: isMobile ? 0 : 24,
+              vertical: isMobile ? 0 : 16,
+            ),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
+              borderRadius: BorderRadius.circular(isMobile ? 0 : 24),
+              boxShadow: isMobile
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 24,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
+              borderRadius: BorderRadius.circular(isMobile ? 0 : 24),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   // 1. TOP HEADER (Screenshots 1 & 2)
                   Padding(
@@ -206,8 +210,11 @@ class _RegisterSupplierPageState extends ConsumerState<RegisterSupplierPage> {
                   // 3. BOTTOM ACTIONS (Cancel & Initialize buttons)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    child: Wrap(
+                      spacing: 12,
+                      runSpacing: 10,
+                      alignment: WrapAlignment.spaceBetween,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         OutlinedButton(
                           onPressed: _navigateBack,
@@ -499,9 +506,12 @@ class _RegisterSupplierPageState extends ConsumerState<RegisterSupplierPage> {
                   children: [
                     Icon(LucideIcons.clock, size: 14, color: Color(0xFF166534)),
                     SizedBox(width: 6),
-                    Text(
-                      'Credit & Payment Details',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                    Expanded(
+                      child: Text(
+                        'Credit & Payment Details',
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 ),
@@ -599,36 +609,45 @@ class _RegisterSupplierPageState extends ConsumerState<RegisterSupplierPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Center(
-                        child: Icon(icon, size: 14, color: const Color(0xFF166534)),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        Text(
-                          subtitle,
-                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                        child: Center(
+                          child: Icon(icon, size: 14, color: const Color(0xFF166534)),
                         ),
-                      ],
-                    ),
-                  ],
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                trailing ?? const SizedBox.shrink(),
+                if (trailing != null) ...[
+                  const SizedBox(width: 8),
+                  trailing,
+                ],
               ],
             ),
           ),

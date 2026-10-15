@@ -136,12 +136,20 @@ Widget _productRowItem(String productDd, List<String> productItems) => Container
 
 Widget _miniBox(String label, String value) => Container(
   height: 32,
-  padding: const EdgeInsets.symmetric(horizontal: 7),
+  padding: const EdgeInsets.symmetric(horizontal: 4),
   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(7), border: Border.all(color: const Color(0xFFE5EAF4))),
-  child: Row(children: [
-    Expanded(child: Text(value, style: const TextStyle(fontSize: 11, color: Color(0xFF1F2937), fontWeight: FontWeight.w500), overflow: TextOverflow.ellipsis)),
-    Text(label, style: const TextStyle(fontSize: 8.5, color: Color(0xFF9CA3AF))),
-  ]),
+  child: FittedBox(
+    fit: BoxFit.scaleDown,
+    alignment: Alignment.centerLeft,
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(value, style: const TextStyle(fontSize: 11, color: Color(0xFF1F2937), fontWeight: FontWeight.w500)),
+        const SizedBox(width: 3),
+        Text(label, style: const TextStyle(fontSize: 8.5, color: Color(0xFF9CA3AF))),
+      ],
+    ),
+  ),
 );
 
 Widget _miniGstDd() => Container(
@@ -173,7 +181,7 @@ Widget _addRowBtn(VoidCallback onTap) => GestureDetector(
 
 Widget _paymentToggle(String selected, ValueChanged<String> onChanged) {
   final modes = ['Cash', 'UPI', 'Bank', 'Credit'];
-  return Row(children: modes.map((m) {
+  return Wrap(children: modes.map((m) {
     final sel = m == selected;
     return Padding(
       padding: const EdgeInsets.only(right: 6),

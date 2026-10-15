@@ -1326,12 +1326,15 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                       children: const [
                         Text('🌴', style: TextStyle(fontSize: 12)),
                         SizedBox(width: 6),
-                        Text(
-                          'Monthly Quota: 1.5 Leaves / Month (18 Days / Year)',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF166534),
+                        Flexible(
+                          child: Text(
+                            'Monthly Quota: 1.5 Leaves / Month (18 Days / Year)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF166534),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -1553,12 +1556,15 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                 children: const [
                   Icon(LucideIcons.calendar, size: 17, color: Color(0xFF059669)),
                   SizedBox(width: 8),
-                  Text(
-                    'Official Public Holidays Roster (2026)',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                  Expanded(
+                    child: Text(
+                      'Official Public Holidays Roster (2026)',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],

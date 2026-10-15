@@ -170,12 +170,15 @@ class _FintechPageState extends State<FintechPage> {
                 size: 20,
               ),
               SizedBox(width: 8),
-              Text(
-                '📋 FIN-PRO-Assigned Compliance Checklist',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  '📋 FIN-PRO-Assigned Compliance Checklist',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
             ],
@@ -977,12 +980,15 @@ class _FintechPageState extends State<FintechPage> {
                   children: [
                     Text('ℹ', style: TextStyle(fontSize: 13)),
                     SizedBox(width: 6),
-                    Text(
-                      'Compliance & Tax Portals Supported',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0F172A),
+                    Expanded(
+                      child: Text(
+                        'Compliance & Tax Portals Supported',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
                     ),
                   ],
@@ -1046,12 +1052,15 @@ class _FintechPageState extends State<FintechPage> {
             children: [
               Text('💳', style: TextStyle(fontSize: 16)),
               SizedBox(width: 8),
-              Text(
-                'Professional Service Payment History',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  'Professional Service Payment History',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
             ],

@@ -538,14 +538,18 @@ class _NewSalesOrderPageState extends ConsumerState<NewSalesOrderPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: isPlaceholder ? const Color(0xFFC1C7D0) : const Color(0xFF1F2937),
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isPlaceholder ? const Color(0xFFC1C7D0) : const Color(0xFF1F2937),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
+            const SizedBox(width: 6),
             const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF7C3AED)),
           ],
         ),
@@ -686,17 +690,20 @@ class _NewSalesOrderPageState extends ConsumerState<NewSalesOrderPage> {
         borderRadius: BorderRadius.circular(7),
         border: Border.all(color: const Color(0xFFE5EAF4)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.centerLeft,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
               value,
               style: const TextStyle(fontSize: 11, color: Color(0xFF1F2937), fontWeight: FontWeight.w500),
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-          Text(hint, style: const TextStyle(fontSize: 9, color: Color(0xFF9CA3AF))),
-        ],
+            const SizedBox(width: 4),
+            Text(hint, style: const TextStyle(fontSize: 8.5, color: Color(0xFF9CA3AF))),
+          ],
+        ),
       ),
     );
   }
