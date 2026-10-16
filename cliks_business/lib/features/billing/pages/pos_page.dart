@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../widgets/quick_register_item_dialog.dart';
 import '../../../widgets/app_ui_kit.dart';
 import 'macos_pos_page.dart';
+import 'mobile_pos_billing_page.dart';
 
 class _TabItem {
   final String label;
@@ -66,7 +67,8 @@ class PosPage extends StatefulWidget {
 }
 
 class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
-  int _activeTab = 0; // 0: Billing Terminal, 1: Product Catalog, 2: Sales History, 3: Cash Drawer
+  int _activeTab =
+      0; // 0: Billing Terminal, 1: Product Catalog, 2: Sales History, 3: Cash Drawer
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
@@ -79,11 +81,41 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
 
   // Dummy Catalog
   final List<_PosProduct> _catalog = [
-    _PosProduct(sku: 'SKU-HD100', name: 'Wireless Bluetooth Headphones', category: 'Electronics', price: 2499.00, stock: 45),
-    _PosProduct(sku: 'SKU-CH201', name: 'Ergonomic Office Chair', category: 'Furniture', price: 8999.00, stock: 12),
-    _PosProduct(sku: 'SKU-KB305', name: 'Mechanical RGB Keyboard', category: 'Electronics', price: 3499.00, stock: 28),
-    _PosProduct(sku: 'SKU-MN404', name: '4K Ultra HD Monitor 27"', category: 'Electronics', price: 24999.00, stock: 8),
-    _PosProduct(sku: 'SKU-CB502', name: 'USB-C Fast Charging Cable', category: 'Accessories', price: 499.00, stock: 120),
+    _PosProduct(
+      sku: 'SKU-HD100',
+      name: 'Wireless Bluetooth Headphones',
+      category: 'Electronics',
+      price: 2499.00,
+      stock: 45,
+    ),
+    _PosProduct(
+      sku: 'SKU-CH201',
+      name: 'Ergonomic Office Chair',
+      category: 'Furniture',
+      price: 8999.00,
+      stock: 12,
+    ),
+    _PosProduct(
+      sku: 'SKU-KB305',
+      name: 'Mechanical RGB Keyboard',
+      category: 'Electronics',
+      price: 3499.00,
+      stock: 28,
+    ),
+    _PosProduct(
+      sku: 'SKU-MN404',
+      name: '4K Ultra HD Monitor 27"',
+      category: 'Electronics',
+      price: 24999.00,
+      stock: 8,
+    ),
+    _PosProduct(
+      sku: 'SKU-CB502',
+      name: 'USB-C Fast Charging Cable',
+      category: 'Accessories',
+      price: 499.00,
+      stock: 120,
+    ),
   ];
 
   // Active Cart Items
@@ -91,16 +123,51 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
 
   // Dummy Sales History
   final List<_PosSale> _salesHistory = [
-    _PosSale(billNo: 'POS-BILL-9901', customer: 'Walk-in Client', itemCount: 3, totalAmount: 6497.00, paymentMode: 'UPI', time: '11:42 AM'),
-    _PosSale(billNo: 'POS-BILL-9902', customer: 'Rahul Sharma', itemCount: 1, totalAmount: 24999.00, paymentMode: 'CARD', time: '11:15 AM'),
-    _PosSale(billNo: 'POS-BILL-9903', customer: 'Ananya Verma', itemCount: 4, totalAmount: 1996.00, paymentMode: 'CASH', time: '10:30 AM'),
-    _PosSale(billNo: 'POS-BILL-9904', customer: 'Priya Nair', itemCount: 2, totalAmount: 11498.00, paymentMode: 'UPI', time: '09:50 AM'),
+    _PosSale(
+      billNo: 'POS-BILL-9901',
+      customer: 'Walk-in Client',
+      itemCount: 3,
+      totalAmount: 6497.00,
+      paymentMode: 'UPI',
+      time: '11:42 AM',
+    ),
+    _PosSale(
+      billNo: 'POS-BILL-9902',
+      customer: 'Rahul Sharma',
+      itemCount: 1,
+      totalAmount: 24999.00,
+      paymentMode: 'CARD',
+      time: '11:15 AM',
+    ),
+    _PosSale(
+      billNo: 'POS-BILL-9903',
+      customer: 'Ananya Verma',
+      itemCount: 4,
+      totalAmount: 1996.00,
+      paymentMode: 'CASH',
+      time: '10:30 AM',
+    ),
+    _PosSale(
+      billNo: 'POS-BILL-9904',
+      customer: 'Priya Nair',
+      itemCount: 2,
+      totalAmount: 11498.00,
+      paymentMode: 'UPI',
+      time: '09:50 AM',
+    ),
   ];
 
   List<_PosProduct> get _filteredCatalog {
     if (_searchQuery.isEmpty) return _catalog;
     final q = _searchQuery.toLowerCase();
-    return _catalog.where((p) => p.name.toLowerCase().contains(q) || p.sku.toLowerCase().contains(q) || p.category.toLowerCase().contains(q)).toList();
+    return _catalog
+        .where(
+          (p) =>
+              p.name.toLowerCase().contains(q) ||
+              p.sku.toLowerCase().contains(q) ||
+              p.category.toLowerCase().contains(q),
+        )
+        .toList();
   }
 
   @override
@@ -137,10 +204,18 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final platform = Theme.of(context).platform;
+    final isMacOS = platform == TargetPlatform.macOS;
     if (isMacOS) {
       return const MacOsPosPage();
+    }
+
+    final isMobile =
+        platform == TargetPlatform.android ||
+        platform == TargetPlatform.iOS ||
+        screenWidth < 950;
+    if (isMobile) {
+      return const MobilePosBillingPage();
     }
 
     return Scaffold(
@@ -149,7 +224,8 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       floatingActionButton: isMobile
           ? Padding(
               padding: EdgeInsets.only(
-                bottom: (_cart.isNotEmpty && _activeTab == 0 ? 150 : 88) +
+                bottom:
+                    (_cart.isNotEmpty && _activeTab == 0 ? 150 : 88) +
                     MediaQuery.of(context).padding.bottom,
               ),
               child: _ExpandableFab(
@@ -175,14 +251,12 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                 child: isMacOS
                     ? _buildHeroSummary(isMobile)
                     : _buildHeroSummary(isMobile)
-                        .animate()
-                        .fadeIn(duration: 400.ms)
-                        .slideY(begin: -0.05, end: 0),
+                          .animate()
+                          .fadeIn(duration: 400.ms)
+                          .slideY(begin: -0.05, end: 0),
               ),
 
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 6),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 6)),
 
               // ─── STICKY TAB NAVIGATION BAR ───
               SliverPersistentHeader(
@@ -197,9 +271,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                 ),
               ),
 
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 8),
-              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 8)),
 
               // ─── MAIN CONTENT AREA ───
               SliverPadding(
@@ -217,9 +289,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                       if (!isMobile) const SizedBox(height: 12),
                       isMacOS
                           ? _buildMainContent(isMobile, screenWidth)
-                          : _buildMainContent(isMobile, screenWidth)
-                              .animate()
-                              .fadeIn(duration: 500.ms, delay: 150.ms),
+                          : _buildMainContent(
+                              isMobile,
+                              screenWidth,
+                            ).animate().fadeIn(duration: 500.ms, delay: 150.ms),
                     ],
                   ),
                 ),
@@ -254,12 +327,17 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           OutlinedButton.icon(
             onPressed: () => setState(() => _activeTab = 2),
             icon: const Icon(LucideIcons.history, size: 14),
-            label: const Text('View Sales History', style: TextStyle(fontSize: 12)),
+            label: const Text(
+              'View Sales History',
+              style: TextStyle(fontSize: 12),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFFD63384),
               side: const BorderSide(color: Color(0xFFF8D7DA)),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           ElevatedButton.icon(
@@ -270,12 +348,17 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               );
             },
             icon: const Icon(LucideIcons.plus, size: 14),
-            label: const Text('Add Quick Product', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Add Quick Product',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF166534),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               elevation: 0,
             ),
           ),
@@ -289,7 +372,12 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   // ═══════════════════════════════════════════════════════════════
   Widget _buildHeroSummary(bool isMobile) {
     return Container(
-      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      margin: EdgeInsets.fromLTRB(
+        isMobile ? 14 : 24,
+        isMobile ? 12 : 16,
+        isMobile ? 14 : 24,
+        0,
+      ),
       padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -322,7 +410,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                         color: Colors.white.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(LucideIcons.monitor, color: Colors.white, size: 14),
+                      child: const Icon(
+                        LucideIcons.monitor,
+                        color: Colors.white,
+                        size: 14,
+                      ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -343,7 +435,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(20),
@@ -351,7 +446,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(LucideIcons.trendingUp, size: 13, color: Colors.greenAccent.shade100),
+                    Icon(
+                      LucideIcons.trendingUp,
+                      size: 13,
+                      color: Colors.greenAccent.shade100,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'LIVE',
@@ -410,7 +509,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   Widget _buildHeroChip(String label, String value, bool isMobile) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 8 : 12,
+          vertical: isMobile ? 8 : 10,
+        ),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
@@ -458,7 +560,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 20, vertical: 6),
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 14 : 20,
+          vertical: 6,
+        ),
         itemCount: _tabs.length,
         itemBuilder: (context, index) {
           final isSelected = _activeTab == index;
@@ -467,7 +572,9 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
             child: GestureDetector(
               onTap: () => setState(() => _activeTab = index),
               child: AnimatedContainer(
-                duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
+                duration: Theme.of(context).platform == TargetPlatform.macOS
+                    ? Duration.zero
+                    : const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 12 : 18,
@@ -477,10 +584,20 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                   color: isSelected ? const Color(0xFF166534) : Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                    color: isSelected
+                        ? const Color(0xFF166534)
+                        : const Color(0xFFE5E7EB),
                   ),
                   boxShadow: isSelected
-                      ? [BoxShadow(color: const Color(0xFF166534).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))]
+                      ? [
+                          BoxShadow(
+                            color: const Color(
+                              0xFF166534,
+                            ).withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
                       : [],
                 ),
                 child: Row(
@@ -489,15 +606,21 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     Icon(
                       _tabs[index].icon,
                       size: isMobile ? 13 : 15,
-                      color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                      color: isSelected
+                          ? Colors.white
+                          : const Color(0xFF6B7280),
                     ),
                     const SizedBox(width: 5),
                     Text(
                       _tabs[index].label,
                       style: TextStyle(
                         fontSize: isMobile ? 11.5 : 13,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF374151),
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.w600,
+                        color: isSelected
+                            ? Colors.white
+                            : const Color(0xFF374151),
                       ),
                     ),
                   ],
@@ -538,7 +661,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: AppColors.border),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.01),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
       ),
       child: Column(
@@ -552,7 +679,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                   sectionTitle,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.stylishDarkGreen),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.stylishDarkGreen,
+                  ),
                 ),
               ),
             ],
@@ -596,15 +727,9 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          flex: 3,
-          child: _buildCatalogGrid(isMobile),
-        ),
+        Expanded(flex: 3, child: _buildCatalogGrid(isMobile)),
         const SizedBox(width: 20),
-        Expanded(
-          flex: 2,
-          child: _buildCartPanel(isMobile),
-        ),
+        Expanded(flex: 2, child: _buildCartPanel(isMobile)),
       ],
     );
   }
@@ -624,7 +749,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             children: [
-              const Icon(LucideIcons.search, size: 16, color: AppColors.secondaryText),
+              const Icon(
+                LucideIcons.search,
+                size: 16,
+                color: AppColors.secondaryText,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: TextField(
@@ -633,7 +762,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                   style: const TextStyle(fontSize: 12),
                   decoration: const InputDecoration(
                     hintText: 'Search products by name, SKU or barcode...',
-                    hintStyle: TextStyle(fontSize: 12, color: AppColors.secondaryText),
+                    hintStyle: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.secondaryText,
+                    ),
                     border: InputBorder.none,
                     isDense: true,
                   ),
@@ -667,7 +799,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                   boxShadow: [
-                    BoxShadow(color: Colors.black.withValues(alpha: 0.01), blurRadius: 4, offset: const Offset(0, 2)),
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.01),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
                 ),
                 child: Column(
@@ -679,21 +815,46 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                       children: [
                         Flexible(
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                            decoration: BoxDecoration(color: const Color(0xFFEFF6FF), borderRadius: BorderRadius.circular(4)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                             child: Text(
                               p.category,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF1D4ED8)),
+                              style: const TextStyle(
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1D4ED8),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(width: 4),
-                        Text('Stock: ${p.stock}', style: const TextStyle(fontSize: 10, color: AppColors.secondaryText)),
+                        Text(
+                          'Stock: ${p.stock}',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: AppColors.secondaryText,
+                          ),
+                        ),
                       ],
                     ),
-                    Text(p.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                    Text(
+                      p.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.darkText,
+                      ),
+                    ),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -701,14 +862,28 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             alignment: Alignment.centerLeft,
-                            child: Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                            child: Text(
+                              '₹${p.price.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF166534),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(width: 4),
                         Container(
                           padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(color: Color(0xFF166534), shape: BoxShape.circle),
-                          child: const Icon(LucideIcons.plus, size: 12, color: Colors.white),
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF166534),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.plus,
+                            size: 12,
+                            color: Colors.white,
+                          ),
                         ),
                       ],
                     ),
@@ -739,12 +914,20 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               const Expanded(
                 child: Row(
                   children: [
-                    Icon(LucideIcons.shoppingCart, size: 16, color: Color(0xFF166534)),
+                    Icon(
+                      LucideIcons.shoppingCart,
+                      size: 16,
+                      color: Color(0xFF166534),
+                    ),
                     SizedBox(width: 8),
                     Flexible(
                       child: Text(
                         'Current Checkout Cart',
-                        style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkText,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -754,7 +937,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               if (_cart.isNotEmpty)
                 TextButton(
                   onPressed: () => setState(() => _cart.clear()),
-                  child: const Text('Clear Cart', style: TextStyle(fontSize: 11, color: Color(0xFFDC2626))),
+                  child: const Text(
+                    'Clear Cart',
+                    style: TextStyle(fontSize: 11, color: Color(0xFFDC2626)),
+                  ),
                 ),
             ],
           ),
@@ -769,9 +955,19 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               child: const Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.shoppingBag, size: 36, color: AppColors.secondaryText),
+                  Icon(
+                    LucideIcons.shoppingBag,
+                    size: 36,
+                    color: AppColors.secondaryText,
+                  ),
                   SizedBox(height: 8),
-                  Text('Cart is empty. Tap products to add.', style: TextStyle(fontSize: 12, color: AppColors.secondaryText)),
+                  Text(
+                    'Cart is empty. Tap products to add.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppColors.secondaryText,
+                    ),
+                  ),
                 ],
               ),
             )
@@ -786,8 +982,23 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.product.name, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.darkText), maxLines: 1, overflow: TextOverflow.ellipsis),
-                            Text('₹${item.product.price} × ${item.quantity}', style: const TextStyle(fontSize: 10, color: AppColors.secondaryText)),
+                            Text(
+                              item.product.name,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.darkText,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            Text(
+                              '₹${item.product.price} × ${item.quantity}',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                color: AppColors.secondaryText,
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -797,8 +1008,15 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                           IconButton(
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                            icon: const Icon(LucideIcons.minusCircle, size: 16, color: AppColors.secondaryText),
+                            constraints: const BoxConstraints(
+                              minWidth: 26,
+                              minHeight: 26,
+                            ),
+                            icon: const Icon(
+                              LucideIcons.minusCircle,
+                              size: 16,
+                              color: AppColors.secondaryText,
+                            ),
                             onPressed: () {
                               setState(() {
                                 if (item.quantity > 1) {
@@ -811,13 +1029,26 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: Text('${item.quantity}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                            child: Text(
+                              '${item.quantity}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                           IconButton(
                             visualDensity: VisualDensity.compact,
                             padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(minWidth: 26, minHeight: 26),
-                            icon: const Icon(LucideIcons.plusCircle, size: 16, color: Color(0xFF166534)),
+                            constraints: const BoxConstraints(
+                              minWidth: 26,
+                              minHeight: 26,
+                            ),
+                            icon: const Icon(
+                              LucideIcons.plusCircle,
+                              size: 16,
+                              color: Color(0xFF166534),
+                            ),
                             onPressed: () => setState(() => item.quantity++),
                           ),
                         ],
@@ -826,7 +1057,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                       Flexible(
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text('₹${item.total.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                          child: Text(
+                            '₹${item.total.toStringAsFixed(2)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -843,24 +1081,68 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(child: Text('Subtotal', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
-              Text('₹${_cartSubtotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const Expanded(
+                child: Text(
+                  'Subtotal',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+              ),
+              Text(
+                '₹${_cartSubtotal.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(child: Text('GST Tax (18%)', style: TextStyle(fontSize: 12, color: AppColors.secondaryText))),
-              Text('₹${_cartGst.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+              const Expanded(
+                child: Text(
+                  'GST Tax (18%)',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+              ),
+              Text(
+                '₹${_cartGst.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Expanded(child: Text('Payable Amount', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-              Text('₹${_cartTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+              const Expanded(
+                child: Text(
+                  'Payable Amount',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+              Text(
+                '₹${_cartTotal.toStringAsFixed(2)}',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF166534),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -871,19 +1153,34 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    AppSnackbar.show(context, "Cash payment of ₹${_cartTotal.toStringAsFixed(2)} received! Receipt printed.", type: SnackType.success);
+                    AppSnackbar.show(
+                      context,
+                      "Cash payment of ₹${_cartTotal.toStringAsFixed(2)} received! Receipt printed.",
+                      type: SnackType.success,
+                    );
                     setState(() => _cart.clear());
                   },
                   icon: const Icon(LucideIcons.banknote, size: 13),
                   label: const FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Cash (F1)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Cash (F1)',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF166534),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     elevation: 0,
                   ),
                 ),
@@ -892,18 +1189,33 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    AppSnackbar.show(context, "UPI QR Code generated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
+                    AppSnackbar.show(
+                      context,
+                      "UPI QR Code generated for ₹${_cartTotal.toStringAsFixed(2)}.",
+                      type: SnackType.info,
+                    );
                   },
                   icon: const Icon(LucideIcons.qrCode, size: 13),
                   label: const FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('UPI (F2)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'UPI (F2)',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF7C3AED),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     elevation: 0,
                   ),
                 ),
@@ -912,18 +1224,33 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    AppSnackbar.show(context, "Card Terminal initiated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
+                    AppSnackbar.show(
+                      context,
+                      "Card Terminal initiated for ₹${_cartTotal.toStringAsFixed(2)}.",
+                      type: SnackType.info,
+                    );
                   },
                   icon: const Icon(LucideIcons.creditCard, size: 13),
                   label: const FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Card (F3)', style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Card (F3)',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFC2410C),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 2,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     elevation: 0,
                   ),
                 ),
@@ -942,27 +1269,56 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
     if (isMobile) {
       return Column(
         children: [
-          ..._catalog.map((p) => Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('${p.sku} • ${p.category}', style: const TextStyle(fontSize: 11, color: AppColors.secondaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
+          ..._catalog.map(
+            (p) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.name,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${p.sku} • ${p.category}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.secondaryText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-              ],
+                  const SizedBox(width: 8),
+                  Text(
+                    '₹${p.price.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF166534),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -974,12 +1330,17 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                 );
               },
               icon: const Icon(LucideIcons.plus, size: 15),
-              label: const Text('Add Quick Product', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Add Quick Product',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF166534),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 13),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 elevation: 0,
               ),
             ),
@@ -988,20 +1349,93 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       );
     }
 
-    final headers = ['SKU CODE', 'PRODUCT NAME', 'CATEGORY', 'SELLING PRICE', 'STOCK LEVEL'];
+    final headers = [
+      'SKU CODE',
+      'PRODUCT NAME',
+      'CATEGORY',
+      'SELLING PRICE',
+      'STOCK LEVEL',
+    ];
     return Table(
       children: [
         _buildTableHeaderRow(headers),
-        ..._catalog.map((p) => TableRow(
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB)))),
-          children: [
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(p.sku, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(p.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(p.category, style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹${p.price.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534)))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('${p.stock} Pcs', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-          ],
-        )),
+        ..._catalog.map(
+          (p) => TableRow(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  p.sku,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  p.name,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  p.category,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  '₹${p.price.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF166534),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  '${p.stock} Pcs',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1010,52 +1444,168 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
     if (isMobile) {
       return Column(
         children: [
-          ..._salesHistory.map((s) => Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12), border: Border.all(color: const Color(0xFFE2E8F0))),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(s.billNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
-                      Text('${s.customer} • ${s.time}', style: const TextStyle(fontSize: 11, color: AppColors.secondaryText), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    ],
+          ..._salesHistory.map(
+            (s) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.billNo,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${s.customer} • ${s.time}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.secondaryText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerRight,
-                    child: Text('₹${s.totalAmount.toStringAsFixed(2)} (${s.paymentMode})', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '₹${s.totalAmount.toStringAsFixed(2)} (${s.paymentMode})',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF166534),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       );
     }
 
-    final headers = ['BILL NO', 'CUSTOMER NAME', 'ITEM COUNT', 'PAYMENT MODE', 'TOTAL AMOUNT', 'TIME'];
+    final headers = [
+      'BILL NO',
+      'CUSTOMER NAME',
+      'ITEM COUNT',
+      'PAYMENT MODE',
+      'TOTAL AMOUNT',
+      'TIME',
+    ];
     return Table(
       children: [
         _buildTableHeaderRow(headers),
-        ..._salesHistory.map((s) => TableRow(
-          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB)))),
-          children: [
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.billNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.customer, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('${s.itemCount} Items', style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.paymentMode, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('₹${s.totalAmount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534)))),
-            Padding(padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text(s.time, style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-          ],
-        )),
+        ..._salesHistory.map(
+          (s) => TableRow(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  s.billNo,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  s.customer,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.darkText,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  '${s.itemCount} Items',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  s.paymentMode,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF7C3AED),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  '₹${s.totalAmount.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF166534),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+                child: Text(
+                  s.time,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -1063,17 +1613,29 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   Widget _buildCashDrawerTab(bool isMobile) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: const Color(0xFFF8FAFC), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         children: [
           const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text('Opening Cash Balance', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+                child: Text(
+                  'Opening Cash Balance',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
               ),
               SizedBox(width: 8),
-              Text('₹10,000.00', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              Text(
+                '₹10,000.00',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1081,10 +1643,23 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text('Today Cash Collections', style: TextStyle(fontSize: 13, color: AppColors.secondaryText)),
+                child: Text(
+                  'Today Cash Collections',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.secondaryText,
+                  ),
+                ),
               ),
               SizedBox(width: 8),
-              Text('₹45,200.00', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+              Text(
+                '₹45,200.00',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF166534),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -1106,7 +1681,14 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: const Text('₹55,200.00', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                  child: const Text(
+                    '₹55,200.00',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF166534),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1117,18 +1699,33 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: () {
-                    AppSnackbar.show(context, "Cash In / Cash Out recorded.", type: SnackType.info);
+                    AppSnackbar.show(
+                      context,
+                      "Cash In / Cash Out recorded.",
+                      type: SnackType.info,
+                    );
                   },
                   icon: const Icon(LucideIcons.arrowUpDown, size: 14),
                   label: const FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Cash In / Out', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Cash In / Out',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF166534),
                     side: const BorderSide(color: Color(0xFF166534)),
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -1136,18 +1733,33 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    AppSnackbar.show(context, "Till reconciled successfully for today.", type: SnackType.success);
+                    AppSnackbar.show(
+                      context,
+                      "Till reconciled successfully for today.",
+                      type: SnackType.success,
+                    );
                   },
                   icon: const Icon(LucideIcons.checkCheck, size: 14),
                   label: const FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text('Reconcile Till', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      'Reconcile Till',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF166534),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 0,
                   ),
                 ),
@@ -1186,7 +1798,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                         color: Colors.white.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(LucideIcons.shoppingBag, color: Colors.white, size: 16),
+                      child: const Icon(
+                        LucideIcons.shoppingBag,
+                        color: Colors.white,
+                        size: 16,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Expanded(
@@ -1196,12 +1812,20 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                         children: [
                           Text(
                             '$itemCount ${itemCount == 1 ? "Item" : "Items"} • Tax Incl.',
-                            style: const TextStyle(fontSize: 10.5, color: Colors.white70, fontWeight: FontWeight.w600),
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w600,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             '₹${_cartTotal.toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -1212,7 +1836,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 7,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -1229,7 +1856,11 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                       ),
                     ),
                     SizedBox(width: 4),
-                    Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF166534)),
+                    Icon(
+                      LucideIcons.chevronRight,
+                      size: 14,
+                      color: Color(0xFF166534),
+                    ),
                   ],
                 ),
               ),
@@ -1247,7 +1878,12 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
       isScrollControlled: true,
       builder: (ctx) {
         return Container(
-          padding: EdgeInsets.fromLTRB(16, 16, 16, 20 + MediaQuery.of(ctx).padding.bottom),
+          padding: EdgeInsets.fromLTRB(
+            16,
+            16,
+            16,
+            20 + MediaQuery.of(ctx).padding.bottom,
+          ),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -1270,14 +1906,35 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Complete Payment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                  Text('₹${_cartTotal.toStringAsFixed(2)}', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF166534))),
+                  const Text(
+                    'Complete Payment',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.darkText,
+                    ),
+                  ),
+                  Text(
+                    '₹${_cartTotal.toStringAsFixed(2)}',
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF166534),
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 14),
               const Divider(height: 1),
               const SizedBox(height: 14),
-              const Text('Select Payment Mode', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.secondaryText)),
+              const Text(
+                'Select Payment Mode',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.secondaryText,
+                ),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: [
@@ -1285,16 +1942,31 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        AppSnackbar.show(context, "Cash payment of ₹${_cartTotal.toStringAsFixed(2)} received! Receipt printed.", type: SnackType.success);
+                        AppSnackbar.show(
+                          context,
+                          "Cash payment of ₹${_cartTotal.toStringAsFixed(2)} received! Receipt printed.",
+                          type: SnackType.success,
+                        );
                         setState(() => _cart.clear());
                       },
                       icon: const Icon(LucideIcons.banknote, size: 14),
-                      label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Cash (F1)', style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Cash (F1)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF166534),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 4,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -1303,15 +1975,30 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        AppSnackbar.show(context, "UPI QR Code generated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
+                        AppSnackbar.show(
+                          context,
+                          "UPI QR Code generated for ₹${_cartTotal.toStringAsFixed(2)}.",
+                          type: SnackType.info,
+                        );
                       },
                       icon: const Icon(LucideIcons.qrCode, size: 14),
-                      label: const FittedBox(fit: BoxFit.scaleDown, child: Text('UPI (F2)', style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'UPI (F2)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF7C3AED),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 4,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -1320,15 +2007,30 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        AppSnackbar.show(context, "Card Terminal initiated for ₹${_cartTotal.toStringAsFixed(2)}.", type: SnackType.info);
+                        AppSnackbar.show(
+                          context,
+                          "Card Terminal initiated for ₹${_cartTotal.toStringAsFixed(2)}.",
+                          type: SnackType.info,
+                        );
                       },
                       icon: const Icon(LucideIcons.creditCard, size: 14),
-                      label: const FittedBox(fit: BoxFit.scaleDown, child: Text('Card (F3)', style: TextStyle(fontWeight: FontWeight.bold))),
+                      label: const FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          'Card (F3)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFC2410C),
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 4,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
                   ),
@@ -1342,8 +2044,15 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     Navigator.pop(ctx);
                     setState(() => _cart.clear());
                   },
-                  icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFDC2626)),
-                  label: const Text('Clear Cart & Cancel', style: TextStyle(fontSize: 12, color: Color(0xFFDC2626))),
+                  icon: const Icon(
+                    LucideIcons.trash2,
+                    size: 14,
+                    color: Color(0xFFDC2626),
+                  ),
+                  label: const Text(
+                    'Clear Cart & Cancel',
+                    style: TextStyle(fontSize: 12, color: Color(0xFFDC2626)),
+                  ),
                 ),
               ),
             ],
@@ -1357,15 +2066,25 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
     return TableRow(
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
-        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
-      ),
-      children: headers.map((h) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-        child: Text(
-          h,
-          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
         ),
-      )).toList(),
+      ),
+      children: headers
+          .map(
+            (h) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+              child: Text(
+                h,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.darkText,
+                ),
+              ),
+            ),
+          )
+          .toList(),
     );
   }
 }
@@ -1525,7 +2244,10 @@ class _ExpandableFabState extends State<_ExpandableFab>
               onTap: _toggle,
               customBorder: const CircleBorder(),
               child: RotationTransition(
-                turns: Tween<double>(begin: 0.0, end: 0.125).animate(_expandAnimation),
+                turns: Tween<double>(
+                  begin: 0.0,
+                  end: 0.125,
+                ).animate(_expandAnimation),
                 child: const Icon(
                   LucideIcons.plus,
                   color: Colors.white,
@@ -1575,7 +2297,11 @@ class _MiniFab extends StatelessWidget {
           ),
           child: Text(
             label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText),
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+              color: AppColors.darkText,
+            ),
           ),
         ),
         const SizedBox(width: 16),
@@ -1612,7 +2338,11 @@ class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return child;
   }
 
