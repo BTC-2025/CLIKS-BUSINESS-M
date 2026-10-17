@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -437,44 +438,378 @@ class _GstPageState extends ConsumerState<GstPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          isMobile ? 12 : 24,
-          isMobile ? 12 : 20,
-          isMobile ? 12 : 24,
-          isMobile ? 80 : 40,
+    if (isMacOS) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 12 : 24,
+            isMobile ? 12 : 20,
+            isMobile ? 12 : 24,
+            isMobile ? 80 : 40,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ─── 1. TOP HEADER (Image 1, 2, 3, 4) ───
+              _buildTopHeader(isMobile),
+              const SizedBox(height: 18),
+
+              // ─── 2. GOVERNMENT GSTIN REGISTERED CARD (Image 1, 2, 3, 4) ───
+              _buildGstinBanner(isMobile),
+              const SizedBox(height: 18),
+
+              // ─── 3. STAT METRIC CARDS (Image 1 & 2 vs Image 3 & 4) ───
+              _buildMetricStatCards(isMobile),
+              const SizedBox(height: 20),
+
+              // ─── 4. FOUR TAB NAVIGATION PILLS (Image 1, 2, 3, 4) ───
+              _buildTabBar(isMobile),
+              const SizedBox(height: 18),
+
+              // ─── 5. ACTIVE TAB CONTENT ───
+              if (_activeTab == 0) _buildGstr1Content(isMobile),
+              if (_activeTab == 1) _buildGstr2Content(isMobile),
+              if (_activeTab == 2) _buildGstr3bContent(isMobile),
+              if (_activeTab == 3) _buildGstr9Content(isMobile),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ─── 1. TOP HEADER (Image 1, 2, 3, 4) ───
-            _buildTopHeader(isMobile),
-            const SizedBox(height: 18),
+      );
+    }
 
-            // ─── 2. GOVERNMENT GSTIN REGISTERED CARD (Image 1, 2, 3, 4) ───
-            _buildGstinBanner(isMobile),
-            const SizedBox(height: 18),
-
-            // ─── 3. STAT METRIC CARDS (Image 1 & 2 vs Image 3 & 4) ───
-            _buildMetricStatCards(isMobile),
-            const SizedBox(height: 20),
-
-            // ─── 4. FOUR TAB NAVIGATION PILLS (Image 1, 2, 3, 4) ───
-            _buildTabBar(isMobile),
-            const SizedBox(height: 18),
-
-            // ─── 5. ACTIVE TAB CONTENT ───
-            if (_activeTab == 0) _buildGstr1Content(isMobile),
-            if (_activeTab == 1) _buildGstr2Content(isMobile),
-            if (_activeTab == 2) _buildGstr3bContent(isMobile),
-            if (_activeTab == 3) _buildGstr9Content(isMobile),
+    // ─── MOBILE OS REDESIGN (Android & iOS) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: _activeTab == 2 && !_gstr3bFiled
+          ? FloatingActionButton.extended(
+              heroTag: 'mobile_gst_file_fab',
+              onPressed: _fileGstr3b,
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 4,
+              icon: const Icon(LucideIcons.fileCheck, size: 16),
+              label: const Text(
+                'File GSTR-3B Return',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.1,
+                ),
+              ),
+            )
+          : null,
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                child: _buildMobileHeroSummary(),
+              ),
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyTabNavDelegate(
+                child: Container(
+                  color: const Color(0xFFF8FAFC),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: _buildMobileTabNav(),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 90),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildGstinBanner(true),
+                    const SizedBox(height: 14),
+                    Builder(
+                      builder: (context) {
+                        if (_activeTab == 0) return _buildGstr1Content(true);
+                        if (_activeTab == 1) return _buildGstr2Content(true);
+                        if (_activeTab == 2) return _buildGstr3bContent(true);
+                        if (_activeTab == 3) return _buildGstr9Content(true);
+                        return const SizedBox.shrink();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileHeroSummary() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.percent,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'GST RETURNS & COMPLIANCE',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'PORTAL SYNCED',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'GST Returns & Tax Liability',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'GSTIN',
+                  '05AAAPG7885R002',
+                  LucideIcons.award,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Output Tax',
+                  '₹2,28,433.69',
+                  LucideIcons.arrowUpRight,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Input Tax (ITC)',
+                  '₹1,68,177.97',
+                  LucideIcons.arrowDownLeft,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Net Payable',
+                  '₹60,255.72',
+                  LucideIcons.percent,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10.5, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      const _GstTabNavData('GSTR-1 (Sales)', LucideIcons.fileText),
+      const _GstTabNavData('GSTR-2 (Purchase)', LucideIcons.refreshCw),
+      const _GstTabNavData('GSTR-3B (Liability)', LucideIcons.percent),
+      const _GstTabNavData('GSTR-9 (Annual)', LucideIcons.award),
+    ];
+
+    return Container(
+      color: const Color(0xFFF8FAFC),
+      height: 38,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeTab == index;
+            final isLast = index == tabs.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(right: isLast ? 0 : 6),
+              child: Builder(
+                builder: (tabContext) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _activeTab = index);
+                      Scrollable.ensureVisible(
+                        tabContext,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        alignment: 0.5,
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF166534) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF166534)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1.5),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tabs[index].icon,
+                            size: 11.5,
+                            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            tabs[index].label,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -548,7 +883,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: isMobile ? 10 : 16),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = constraints.maxWidth < 600;
@@ -557,38 +892,38 @@ class _GstPageState extends ConsumerState<GstPage> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: isMobile ? 32 : 38,
+                height: isMobile ? 32 : 38,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.award,
-                  color: Color(0xFF2563EB),
-                  size: 20,
+                  color: const Color(0xFF2563EB),
+                  size: isMobile ? 16 : 20,
                 ),
               ),
-              const SizedBox(width: 14),
+              SizedBox(width: isMobile ? 10 : 14),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
                       'Government GSTIN Registered',
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: isMobile ? 12.5 : 14,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
+                        color: const Color(0xFF0F172A),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
-                    SizedBox(height: 3),
+                    const SizedBox(height: 3),
                     Text(
                       'Legal Name: Welton Consignor | Type: Private Limited',
                       style: TextStyle(
-                        fontSize: 11.5,
-                        color: Color(0xFF64748B),
+                        fontSize: isMobile ? 10.5 : 11.5,
+                        color: const Color(0xFF64748B),
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -600,22 +935,22 @@ class _GstPageState extends ConsumerState<GstPage> {
 
           final rightContent = Column(
             crossAxisAlignment: isNarrow ? CrossAxisAlignment.start : CrossAxisAlignment.end,
-            children: const [
+            children: [
               Text(
                 '05AAAPG7885R002',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: isMobile ? 13 : 15,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF2563EB),
+                  color: const Color(0xFF2563EB),
                   letterSpacing: 0.5,
                 ),
               ),
-              SizedBox(height: 3),
+              const SizedBox(height: 3),
               Text(
                 'Place of Supply Code: 05 (Uttarakhand)',
                 style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF64748B),
+                  fontSize: isMobile ? 10 : 11,
+                  color: const Color(0xFF64748B),
                 ),
               ),
             ],
@@ -626,9 +961,9 @@ class _GstPageState extends ConsumerState<GstPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 leftContent,
-                const SizedBox(height: 12),
+                SizedBox(height: isMobile ? 8 : 12),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 10),
+                SizedBox(height: isMobile ? 6 : 10),
                 rightContent,
               ],
             );
@@ -904,6 +1239,7 @@ class _GstPageState extends ConsumerState<GstPage> {
     required Color iconColor,
     required Color iconBgColor,
   }) {
+    final isMobile = Theme.of(context).platform != TargetPlatform.macOS;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -917,7 +1253,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 18, vertical: isMobile ? 10 : 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -931,23 +1267,23 @@ class _GstPageState extends ConsumerState<GstPage> {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 9.5,
+                  style: TextStyle(
+                    fontSize: isMobile ? 8.5 : 9.5,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF64748B),
+                    color: const Color(0xFF64748B),
                     letterSpacing: 0.3,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: isMobile ? 4 : 6),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
                     value,
-                    style: const TextStyle(
-                      fontSize: 19,
+                    style: TextStyle(
+                      fontSize: isMobile ? 15 : 19,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: const Color(0xFF0F172A),
                       letterSpacing: -0.4,
                     ),
                   ),
@@ -955,16 +1291,16 @@ class _GstPageState extends ConsumerState<GstPage> {
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: isMobile ? 6 : 10),
           Container(
-            width: 36,
-            height: 36,
+            width: isMobile ? 30 : 36,
+            height: isMobile ? 30 : 36,
             decoration: BoxDecoration(
               color: iconBgColor,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
-              child: Icon(icon, size: 18, color: iconColor),
+              child: Icon(icon, size: isMobile ? 15 : 18, color: iconColor),
             ),
           ),
         ],
@@ -1073,13 +1409,13 @@ class _GstPageState extends ConsumerState<GstPage> {
         boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
-      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      padding: EdgeInsets.all(isMobile ? 12 : 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Search Bar (Image 1 & 2)
           Container(
-            height: 42,
+            height: isMobile ? 36 : 42,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -1088,32 +1424,35 @@ class _GstPageState extends ConsumerState<GstPage> {
             child: TextField(
               controller: _searchCtrl,
               onChanged: (_) => setState(() {}),
-              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+              style: TextStyle(fontSize: isMobile ? 11.5 : 13, color: const Color(0xFF0F172A)),
               decoration: InputDecoration(
                 hintText: 'Search GST invoices or state...',
-                hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
-                prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                hintStyle: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF94A3B8)),
+                prefixIcon: Icon(LucideIcons.search, size: isMobile ? 14 : 16, color: const Color(0xFF94A3B8)),
                 suffixIcon: _searchCtrl.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                        icon: Icon(LucideIcons.x, size: isMobile ? 12 : 14, color: const Color(0xFF94A3B8)),
                         onPressed: () {
                           _searchCtrl.clear();
                           setState(() {});
                         },
                       )
                     : null,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                contentPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 14, vertical: isMobile ? 8 : 11),
                 border: InputBorder.none,
                 isDense: true,
               ),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 10 : 18),
 
-          // Invoices Table with Sort/Filter badges (Image 1 & 2)
-          LayoutBuilder(
+          // Invoices Table (Desktop) or Mobile Cards (Mobile)
+          if (isMobile)
+            _buildMobileGstr1List()
+          else
+            LayoutBuilder(
             builder: (context, constraints) {
-              const minWidth = 1100.0;
+              final minWidth = isMobile ? 680.0 : 1100.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
@@ -1125,7 +1464,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                     children: [
                       // Header Row
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20, vertical: isMobile ? 8 : 16),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -1170,7 +1509,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                       else
                         ..._filteredGstr1.map((inv) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20, vertical: isMobile ? 7 : 16),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                             ),
@@ -1182,9 +1521,9 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(inv.invNo, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                      Text(inv.invNo, style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
                                       const SizedBox(height: 2),
-                                      Text(inv.date, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                      Text(inv.date, style: TextStyle(fontSize: isMobile ? 9.5 : 11, color: const Color(0xFF64748B))),
                                     ],
                                   ),
                                 ),
@@ -1194,16 +1533,16 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(inv.customer, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                      Text(inv.customer, style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A))),
                                       const SizedBox(height: 2),
-                                      Text(inv.gstin, style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B))),
+                                      Text(inv.gstin, style: TextStyle(fontSize: isMobile ? 9.5 : 10.5, color: const Color(0xFF64748B))),
                                     ],
                                   ),
                                 ),
                                 // GSTIN
                                 Expanded(
                                   flex: 14,
-                                  child: Text(inv.gstin, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155))),
+                                  child: Text(inv.gstin, style: TextStyle(fontSize: isMobile ? 11 : 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF334155))),
                                 ),
                                 // TYPE
                                 Expanded(
@@ -1211,14 +1550,14 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2.5 : 3),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFEFF6FF),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         inv.type,
-                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                        style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB)),
                                       ),
                                     ),
                                   ),
@@ -1226,32 +1565,32 @@ class _GstPageState extends ConsumerState<GstPage> {
                                 // PLACE OF SUPPLY
                                 Expanded(
                                   flex: 16,
-                                  child: Text(inv.pos, style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155))),
+                                  child: Text(inv.pos, style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF334155))),
                                 ),
                                 // TAXABLE VALUE
                                 Expanded(
                                   flex: 13,
                                   child: Text(
                                     _formatCurrency(inv.taxableValue),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                    style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                                   ),
                                 ),
                                 // CGST/SGST
                                 Expanded(
                                   flex: 11,
-                                  child: Text(inv.cgstSgst, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+                                  child: Text(inv.cgstSgst, style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF64748B))),
                                 ),
                                 // IGST
                                 Expanded(
                                   flex: 10,
-                                  child: Text(inv.igst, style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B))),
+                                  child: Text(inv.igst, style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF64748B))),
                                 ),
                                 // TOTAL GST
                                 Expanded(
                                   flex: 12,
                                   child: Text(
                                     _formatCurrency(inv.totalGst),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                    style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB)),
                                   ),
                                 ),
                                 // STATUS
@@ -1260,9 +1599,9 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(inv.status, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                      Text(inv.status, style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF166534))),
                                       const SizedBox(height: 2),
-                                      Text(inv.irnStatus, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF166534))),
+                                      Text(inv.irnStatus, style: TextStyle(fontSize: isMobile ? 9 : 10, fontWeight: FontWeight.w600, color: const Color(0xFF166534))),
                                     ],
                                   ),
                                 ),
@@ -1275,18 +1614,18 @@ class _GstPageState extends ConsumerState<GstPage> {
                                         color: Colors.transparent,
                                         child: InkWell(
                                           onTap: () => _openQrCodeModal(inv),
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(4),
                                           child: Container(
-                                            padding: const EdgeInsets.all(6),
+                                            padding: EdgeInsets.all(isMobile ? 4.5 : 6),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFEFF6FF),
-                                              borderRadius: BorderRadius.circular(6),
+                                              borderRadius: BorderRadius.circular(4),
                                             ),
-                                            child: const Icon(LucideIcons.qrCode, size: 14, color: Color(0xFF2563EB)),
+                                            child: Icon(LucideIcons.qrCode, size: isMobile ? 12 : 14, color: const Color(0xFF2563EB)),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      SizedBox(width: isMobile ? 4 : 6),
                                       Material(
                                         color: Colors.transparent,
                                         child: InkWell(
@@ -1301,14 +1640,14 @@ class _GstPageState extends ConsumerState<GstPage> {
                                               ),
                                             );
                                           },
-                                          borderRadius: BorderRadius.circular(6),
+                                          borderRadius: BorderRadius.circular(4),
                                           child: Container(
-                                            padding: const EdgeInsets.all(6),
+                                            padding: EdgeInsets.all(isMobile ? 4.5 : 6),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFFEE2E2),
-                                              borderRadius: BorderRadius.circular(6),
+                                              borderRadius: BorderRadius.circular(4),
                                             ),
-                                            child: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFDC2626)),
+                                            child: Icon(LucideIcons.trash2, size: isMobile ? 12 : 14, color: const Color(0xFFDC2626)),
                                           ),
                                         ),
                                       ),
@@ -1330,6 +1669,305 @@ class _GstPageState extends ConsumerState<GstPage> {
     );
   }
 
+  /// Mobile-optimized responsive card list for GSTR-1 Invoices
+  Widget _buildMobileGstr1List() {
+    if (_filteredGstr1.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(LucideIcons.fileSpreadsheet, size: 28, color: Color(0xFF94A3B8)),
+              SizedBox(height: 12),
+              Text(
+                'No GST invoices matching search.',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _filteredGstr1.map((inv) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Invoice number & Type badge + Status badge
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                inv.invNo,
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                inv.type,
+                                style: const TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          inv.date,
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          inv.status,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF166534),
+                          ),
+                        ),
+                        if (inv.irnStatus.isNotEmpty)
+                          Text(
+                            inv.irnStatus,
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Customer & GSTIN & POS
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      inv.customer,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.fileCheck2, size: 12, color: Color(0xFF94A3B8)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            inv.gstin,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                              color: Color(0xFF64748B),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 3),
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.mapPin, size: 12, color: Color(0xFF94A3B8)),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            'POS: ${inv.pos}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Taxable value & Total GST
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Taxable Value',
+                          style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatCurrency(inv.taxableValue),
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Total GST',
+                          style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatCurrency(inv.totalGst),
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'CGST/SGST: ${inv.cgstSgst}',
+                      style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'IGST: ${inv.igst}',
+                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              const SizedBox(height: 8),
+
+              // Actions (QR Code button and Delete button)
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openQrCodeModal(inv),
+                      icon: const Icon(LucideIcons.qrCode, size: 14),
+                      label: const Text(
+                        'E-Invoice QR',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2563EB),
+                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        backgroundColor: const Color(0xFFEFF6FF),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {
+                      setState(() => _gstr1Invoices.remove(inv));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Invoice "${inv.invNo}" removed.'),
+                          backgroundColor: const Color(0xFFDC2626),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFDC2626)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 6. TAB 1: GSTR-2 (Purchase) CONTENT (Image 3 & 4)
   // ═══════════════════════════════════════════════════════════════
@@ -1347,7 +1985,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      padding: EdgeInsets.all(isMobile ? 12 : 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1359,26 +1997,26 @@ class _GstPageState extends ConsumerState<GstPage> {
                 const Text(
                   'GSTR-2B Purchase ITC Reconciliations',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () => _openVerifyVendorInvoiceModal(),
-                    icon: const Icon(LucideIcons.plus, size: 14),
+                    icon: const Icon(LucideIcons.plus, size: 13),
                     label: const Text(
                       'Verify Vendor Invoice',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
@@ -1414,12 +2052,15 @@ class _GstPageState extends ConsumerState<GstPage> {
                 ),
               ],
             ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 10 : 18),
 
-          // Reconciliations Table (Image 3 & 4)
-          LayoutBuilder(
+          // Reconciliations Table (Desktop) or Mobile Cards (Mobile)
+          if (isMobile)
+            _buildMobileGstr2List()
+          else
+            LayoutBuilder(
             builder: (context, constraints) {
-              const minWidth = 1150.0;
+              final minWidth = isMobile ? 680.0 : 1150.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
@@ -1431,7 +2072,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                     children: [
                       // Header Row
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20, vertical: isMobile ? 8 : 16),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -1477,7 +2118,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                           final isVerified = v.status.toUpperCase() == 'VERIFIED' || v.status.toUpperCase() == 'MATCHED';
 
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 20, vertical: isMobile ? 7 : 16),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                             ),
@@ -1488,7 +2129,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 16,
                                   child: Text(
                                     v.gstin,
-                                    style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                    style: TextStyle(fontSize: isMobile ? 11 : 12.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                                   ),
                                 ),
                                 // Vendor Name (Green bold as in Image 3)
@@ -1496,7 +2137,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 14,
                                   child: Text(
                                     v.vendor,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                                    style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF166534)),
                                   ),
                                 ),
                                 // Invoice No (Green bold as in Image 3)
@@ -1504,7 +2145,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 14,
                                   child: Text(
                                     v.invNo,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                                    style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF166534)),
                                   ),
                                 ),
                                 // Date
@@ -1512,15 +2153,14 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 12,
                                   child: Text(
                                     v.date,
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                                  ),
+                                    style: TextStyle(fontSize: isMobile ? 10.5 : 12, color: const Color(0xFF64748B))),
                                 ),
                                 // Total Value
                                 Expanded(
                                   flex: 12,
                                   child: Text(
                                     _formatCurrency(v.totalVal),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                    style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                                   ),
                                 ),
                                 // GST Amt
@@ -1528,7 +2168,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 12,
                                   child: Text(
                                     _formatCurrency(v.gstAmt),
-                                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155)),
+                                    style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF334155)),
                                   ),
                                 ),
                                 // CGST/SGST/IGST
@@ -1536,7 +2176,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 18,
                                   child: Text(
                                     v.split,
-                                    style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                    style: TextStyle(fontSize: isMobile ? 10.5 : 12, color: const Color(0xFF64748B)),
                                   ),
                                 ),
                                 // Eligible ITC (Bold Blue as in Image 3)
@@ -1544,7 +2184,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   flex: 12,
                                   child: Text(
                                     _formatCurrency(v.eligibleItc),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                    style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB)),
                                   ),
                                 ),
                                 // Status badge
@@ -1553,7 +2193,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2.5 : 3),
                                       decoration: BoxDecoration(
                                         color: isVerified ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
                                         borderRadius: BorderRadius.circular(4),
@@ -1561,7 +2201,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                                       child: Text(
                                         v.status,
                                         style: TextStyle(
-                                          fontSize: 10,
+                                          fontSize: isMobile ? 9 : 10,
                                           fontWeight: FontWeight.bold,
                                           color: isVerified ? const Color(0xFF166534) : const Color(0xFF475569),
                                         ),
@@ -1584,19 +2224,19 @@ class _GstPageState extends ConsumerState<GstPage> {
                                           onTap: () => _openVerifyVendorInvoiceModal(initialItem: v),
                                           borderRadius: BorderRadius.circular(4),
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                            padding: EdgeInsets.symmetric(horizontal: isMobile ? 7 : 10, vertical: isMobile ? 3 : 4),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFEFF6FF),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
-                                            child: const Text(
+                                            child: Text(
                                               'Verify',
-                                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                              style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB)),
                                             ),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 8),
+                                      SizedBox(width: isMobile ? 4 : 8),
                                       Material(
                                         color: Colors.transparent,
                                         child: InkWell(
@@ -1613,12 +2253,12 @@ class _GstPageState extends ConsumerState<GstPage> {
                                           },
                                           borderRadius: BorderRadius.circular(4),
                                           child: Container(
-                                            padding: const EdgeInsets.all(4),
+                                            padding: EdgeInsets.all(isMobile ? 3 : 4),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFFEE2E2),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
-                                            child: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFDC2626)),
+                                            child: Icon(LucideIcons.trash2, size: isMobile ? 12 : 14, color: const Color(0xFFDC2626)),
                                           ),
                                         ),
                                       ),
@@ -1641,6 +2281,252 @@ class _GstPageState extends ConsumerState<GstPage> {
     );
   }
 
+  /// Mobile-optimized responsive card list for GSTR-2 Purchase ITC records
+  Widget _buildMobileGstr2List() {
+    if (_vendorInvoices.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(LucideIcons.fileSearch, size: 28, color: Color(0xFF94A3B8)),
+              SizedBox(height: 12),
+              Text(
+                'No purchase ITC records found.',
+                style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _vendorInvoices.map((v) {
+        final isVerified = v.status.toUpperCase() == 'VERIFIED' || v.status.toUpperCase() == 'MATCHED';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Vendor & Status
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v.vendor,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF166534),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'GSTIN: ${v.gstin}',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                    decoration: BoxDecoration(
+                      color: isVerified ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      v.status,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isVerified ? const Color(0xFF166534) : const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Invoice & Date
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          const Icon(LucideIcons.fileText, size: 13, color: Color(0xFF64748B)),
+                          const SizedBox(width: 5),
+                          Flexible(
+                            child: Text(
+                              v.invNo,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      v.date,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Financial Values
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Total Value',
+                          style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatCurrency(v.totalVal),
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Eligible ITC',
+                          style: TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formatCurrency(v.eligibleItc),
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Text(
+                    'GST: ${_formatCurrency(v.gstAmt)}',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '(${v.split})',
+                      style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              const SizedBox(height: 8),
+
+              // Actions: Verify and Delete
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _openVerifyVendorInvoiceModal(initialItem: v),
+                      icon: const Icon(LucideIcons.checkCheck, size: 14),
+                      label: const Text(
+                        'Verify / Reconcile',
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2563EB),
+                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        backgroundColor: const Color(0xFFEFF6FF),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () {
+                      setState(() => _vendorInvoices.remove(v));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Vendor record "${v.invNo}" removed.'),
+                          backgroundColor: const Color(0xFFDC2626),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFDC2626)),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 7. TAB 2: GSTR-3B (Liability) CONTENT (Image 1 & 2)
   // ═══════════════════════════════════════════════════════════════
@@ -1658,7 +2544,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1669,40 +2555,40 @@ class _GstPageState extends ConsumerState<GstPage> {
 
               final badges = Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 8,
+                spacing: isMobile ? 8 : 12,
+                runSpacing: 6,
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 10, vertical: isMobile ? 3 : 4),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF3E8FF),
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: const Text(
+                    child: Text(
                       'GSTR-3B COMPLIANCE',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: isMobile ? 9.5 : 11,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF7C3AED),
+                        color: const Color(0xFF7C3AED),
                         letterSpacing: 0.5,
                       ),
                     ),
                   ),
                   Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: const [
+                    children: [
                       Icon(
                         LucideIcons.checkCircle2,
-                        size: 15,
-                        color: Color(0xFF16A34A),
+                        size: isMobile ? 13 : 15,
+                        color: const Color(0xFF16A34A),
                       ),
-                      SizedBox(width: 5),
+                      const SizedBox(width: 4),
                       Text(
                         'Status: Verified',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: isMobile ? 11 : 12.5,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF16A34A),
+                          color: const Color(0xFF16A34A),
                         ),
                       ),
                     ],
@@ -1712,16 +2598,16 @@ class _GstPageState extends ConsumerState<GstPage> {
 
               final downloadBtn = ElevatedButton.icon(
                 onPressed: _downloadGstr3bReport,
-                icon: const Icon(LucideIcons.download, size: 15),
-                label: const Text(
+                icon: Icon(LucideIcons.download, size: isMobile ? 13 : 15),
+                label: Text(
                   'Download Report',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6D28D9),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: isMobile ? 8 : 10),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               );
@@ -1731,7 +2617,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     badges,
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     downloadBtn,
                   ],
                 );
@@ -1747,27 +2633,27 @@ class _GstPageState extends ConsumerState<GstPage> {
               );
             },
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: isMobile ? 10 : 14),
 
           // Title & Subtitle
-          const Text(
+          Text(
             'Self-Declared Summary Return (Monthly)',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: isMobile ? 16 : 20,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: const Color(0xFF0F172A),
               letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 4),
-          const Text(
+          const SizedBox(height: 3),
+          Text(
             'Aggregate outward liabilities set off against eligible input tax credits.',
             style: TextStyle(
-              fontSize: 12.5,
-              color: Color(0xFF64748B),
+              fontSize: isMobile ? 11 : 12.5,
+              color: const Color(0xFF64748B),
             ),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isMobile ? 12 : 20),
 
           // Two boxes: Outward supplies & Eligible ITC
           LayoutBuilder(
@@ -1780,57 +2666,57 @@ class _GstPageState extends ConsumerState<GstPage> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFF3E8FF)),
                 ),
-                padding: const EdgeInsets.all(18),
+                padding: EdgeInsets.all(isMobile ? 12 : 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'OUTWARD TAXABLE SUPPLIES (SALES)',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: isMobile ? 10.5 : 11.5,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF7E22CE),
+                        color: const Color(0xFF7E22CE),
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isMobile ? 10 : 16),
                     _buildTaxSummaryRow(
                       label: 'Taxable Value:',
                       value: '₹10,22,01,44,47,392.67',
                       labelColor: const Color(0xFF6B21A8),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     _buildTaxSummaryRow(
                       label: 'Integrated Tax (IGST):',
                       value: '₹540',
                       labelColor: const Color(0xFF6B21A8),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     _buildTaxSummaryRow(
                       label: 'Central Tax (CGST):',
                       value: '₹1,98,13,51,622.9',
                       labelColor: const Color(0xFF6B21A8),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     _buildTaxSummaryRow(
                       label: 'State Tax (SGST):',
                       value: '₹1,98,13,51,622.9',
                       labelColor: const Color(0xFF6B21A8),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isMobile ? 10 : 16),
                     const Divider(height: 1, color: Color(0xFFE9D5FF)),
-                    const SizedBox(height: 14),
+                    SizedBox(height: isMobile ? 10 : 14),
                     _buildTaxSummaryRow(
                       label: 'Total Liability:',
                       value: '₹3,96,27,03,785.78',
                       labelColor: const Color(0xFF6B21A8),
                       valueColor: const Color(0xFF7C3AED),
                       isBold: true,
-                      valueFontSize: 15,
+                      valueFontSize: isMobile ? 13 : 15,
                     ),
                   ],
                 ),
@@ -1842,57 +2728,57 @@ class _GstPageState extends ConsumerState<GstPage> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFDCFCE7)),
                 ),
-                padding: const EdgeInsets.all(18),
+                padding: EdgeInsets.all(isMobile ? 12 : 18),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'ELIGIBLE INPUT TAX CREDIT (ITC)',
                       style: TextStyle(
-                        fontSize: 11.5,
+                        fontSize: isMobile ? 10.5 : 11.5,
                         fontWeight: FontWeight.w800,
-                        color: Color(0xFF15803D),
+                        color: const Color(0xFF15803D),
                         letterSpacing: 0.5,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isMobile ? 10 : 16),
                     _buildTaxSummaryRow(
                       label: 'Eligible IGST Available:',
                       value: '₹540',
                       labelColor: const Color(0xFF166534),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     _buildTaxSummaryRow(
                       label: 'Eligible Central Tax (CGST):',
                       value: '₹1,98,13,51,622.9',
                       labelColor: const Color(0xFF166534),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     _buildTaxSummaryRow(
                       label: 'Eligible State Tax (SGST):',
                       value: '₹1,98,13,51,622.9',
                       labelColor: const Color(0xFF166534),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: isMobile ? 8 : 12),
                     _buildTaxSummaryRow(
                       label: 'Ineligible/Blocked Credit:',
                       value: '₹0',
                       labelColor: const Color(0xFF166534),
                       valueColor: const Color(0xFF0F172A),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: isMobile ? 10 : 16),
                     const Divider(height: 1, color: Color(0xFFBBF7D0)),
-                    const SizedBox(height: 14),
+                    SizedBox(height: isMobile ? 10 : 14),
                     _buildTaxSummaryRow(
                       label: 'Total Claimable ITC:',
                       value: '₹0',
                       labelColor: const Color(0xFF166534),
                       valueColor: const Color(0xFF15803D),
                       isBold: true,
-                      valueFontSize: 15,
+                      valueFontSize: isMobile ? 13 : 15,
                     ),
                   ],
                 ),
@@ -1902,7 +2788,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                 return Column(
                   children: [
                     leftBox,
-                    const SizedBox(height: 16),
+                    SizedBox(height: isMobile ? 10 : 16),
                     rightBox,
                   ],
                 );
@@ -1918,7 +2804,7 @@ class _GstPageState extends ConsumerState<GstPage> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isMobile ? 12 : 20),
 
           // Bottom Card: FINAL NET TAX LIABILITY PAYABLE (CASH OUTFLOW) (Image 2)
           Container(
@@ -1927,27 +2813,27 @@ class _GstPageState extends ConsumerState<GstPage> {
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFFECDD3)),
             ),
-            padding: const EdgeInsets.all(18),
+            padding: EdgeInsets.all(isMobile ? 12 : 18),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'FINAL NET TAX LIABILITY PAYABLE (CASH OUTFLOW)',
                   style: TextStyle(
-                    fontSize: 11.5,
+                    fontSize: isMobile ? 10.5 : 11.5,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFFBE123C),
+                    color: const Color(0xFFBE123C),
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 14),
+                SizedBox(height: isMobile ? 10 : 14),
                 LayoutBuilder(
                   builder: (context, c) {
                     final isNarrow = c.maxWidth < 620;
 
                     Widget card(String label, String value) {
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: isMobile ? 9 : 14),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
@@ -1958,22 +2844,22 @@ class _GstPageState extends ConsumerState<GstPage> {
                           children: [
                             Text(
                               label,
-                              style: const TextStyle(
-                                fontSize: 11,
+                              style: TextStyle(
+                                fontSize: isMobile ? 9.5 : 11,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF64748B),
+                                color: const Color(0xFF64748B),
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            SizedBox(height: isMobile ? 3 : 6),
                             FittedBox(
                               fit: BoxFit.scaleDown,
                               alignment: Alignment.centerLeft,
                               child: Text(
                                 value,
-                                style: const TextStyle(
-                                  fontSize: 18,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 15 : 18,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFFDC2626),
+                                  color: const Color(0xFFDC2626),
                                 ),
                               ),
                             ),
@@ -1990,9 +2876,9 @@ class _GstPageState extends ConsumerState<GstPage> {
                       return Column(
                         children: [
                           c1,
-                          const SizedBox(height: 10),
+                          SizedBox(height: isMobile ? 6 : 10),
                           c2,
-                          const SizedBox(height: 10),
+                          SizedBox(height: isMobile ? 6 : 10),
                           c3,
                         ],
                       );
@@ -2025,6 +2911,7 @@ class _GstPageState extends ConsumerState<GstPage> {
     bool isBold = false,
     double valueFontSize = 13,
   }) {
+    final isMobile = Theme.of(context).platform != TargetPlatform.macOS;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -2032,7 +2919,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 12.5,
+              fontSize: isMobile ? 11 : 12.5,
               fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
               color: labelColor,
             ),
@@ -2046,7 +2933,7 @@ class _GstPageState extends ConsumerState<GstPage> {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: valueFontSize,
+                fontSize: isMobile ? (valueFontSize > 13 ? 13.5 : 11.5) : valueFontSize,
                 fontWeight: isBold ? FontWeight.w800 : FontWeight.w700,
                 color: valueColor,
               ),
@@ -2074,7 +2961,7 @@ class _GstPageState extends ConsumerState<GstPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2085,21 +2972,21 @@ class _GstPageState extends ConsumerState<GstPage> {
 
               final titleSection = Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     'GSTR-9 Annual Return',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: isMobile ? 14 : 18,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: const Color(0xFF0F172A),
                     ),
                   ),
-                  SizedBox(height: 3),
+                  const SizedBox(height: 2),
                   Text(
                     'Financial Year Summary & Reconciliation',
                     style: TextStyle(
-                      fontSize: 12.5,
-                      color: Color(0xFF64748B),
+                      fontSize: isMobile ? 11 : 12.5,
+                      color: const Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -2107,8 +2994,8 @@ class _GstPageState extends ConsumerState<GstPage> {
 
               final actionsSection = isMobile
                   ? Wrap(
-                      spacing: 10,
-                      runSpacing: 10,
+                      spacing: 8,
+                      runSpacing: 8,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         PopupMenuButton<String>(
@@ -2119,9 +3006,9 @@ class _GstPageState extends ConsumerState<GstPage> {
                               _selectedGstr9Fy = val;
                             });
                           },
-                          offset: const Offset(0, 42),
+                          offset: const Offset(0, 36),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             side: const BorderSide(color: Color(0xFFE2E8F0)),
                           ),
                           itemBuilder: (context) => [
@@ -2130,7 +3017,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                             _buildFyMenuItem('FY 2025–26'),
                           ],
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(8),
@@ -2142,29 +3029,29 @@ class _GstPageState extends ConsumerState<GstPage> {
                                 Text(
                                   _selectedGstr9Fy,
                                   style: const TextStyle(
-                                    fontSize: 13,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w600,
                                     color: Color(0xFF0F172A),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                                const SizedBox(width: 6),
+                                const Icon(LucideIcons.chevronDown, size: 12, color: Color(0xFF64748B)),
                               ],
                             ),
                           ),
                         ),
                         ElevatedButton.icon(
                           onPressed: _exportGstr9Pdf,
-                          icon: const Icon(LucideIcons.download, size: 14),
+                          icon: const Icon(LucideIcons.download, size: 13),
                           label: const Text(
                             'Export Annual PDF',
-                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF0F172A),
                             foregroundColor: Colors.white,
                             elevation: 0,
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
                         ),
@@ -2241,7 +3128,7 @@ class _GstPageState extends ConsumerState<GstPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     titleSection,
-                    const SizedBox(height: 14),
+                    SizedBox(height: isMobile ? 10 : 14),
                     actionsSection,
                   ],
                 );
@@ -2257,12 +3144,12 @@ class _GstPageState extends ConsumerState<GstPage> {
               );
             },
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: isMobile ? 14 : 24),
 
           // Large empty state container with ribbon icon (Image 3 & 4)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+            padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 24, vertical: isMobile ? 24 : 48),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
@@ -2274,40 +3161,40 @@ class _GstPageState extends ConsumerState<GstPage> {
               children: [
                 // Ribbon / Award badge icon
                 Container(
-                  width: 58,
-                  height: 58,
+                  width: isMobile ? 44 : 58,
+                  height: isMobile ? 44 : 58,
                   decoration: const BoxDecoration(
                     color: Color(0xFFF8FAFC),
                     shape: BoxShape.circle,
                   ),
-                  child: const Center(
+                  child: Center(
                     child: Icon(
                       LucideIcons.award,
-                      size: 30,
-                      color: Color(0xFF94A3B8),
+                      size: isMobile ? 22 : 30,
+                      color: const Color(0xFF94A3B8),
                     ),
                   ),
                 ),
-                const SizedBox(height: 18),
+                SizedBox(height: isMobile ? 12 : 18),
                 Text(
                   'No annual GST data found for ${_selectedGstr9Fy.replaceAll('FY ', '')}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16.5,
+                  style: TextStyle(
+                    fontSize: isMobile ? 13.5 : 16.5,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 520),
-                  child: const Text(
+                  child: Text(
                     'Create sales invoices and purchase bills for the selected financial year to automatically generate your GSTR-9 Annual Return and statutory summaries.',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12.5,
-                      color: Color(0xFF64748B),
-                      height: 1.45,
+                      fontSize: isMobile ? 11 : 12.5,
+                      color: const Color(0xFF64748B),
+                      height: 1.4,
                     ),
                   ),
                 ),
@@ -2347,6 +3234,7 @@ class _GstPageState extends ConsumerState<GstPage> {
   }
 
   Widget _buildSortableHeader(String text) {
+    final isMobile = Theme.of(context).platform != TargetPlatform.macOS;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -2356,16 +3244,16 @@ class _GstPageState extends ConsumerState<GstPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: isMobile ? 10.5 : 13,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1E293B),
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
             ),
           ),
         ),
-        const SizedBox(width: 4),
+        const SizedBox(width: 3),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 3 : 4, vertical: isMobile ? 1.5 : 2),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
@@ -2374,9 +3262,9 @@ class _GstPageState extends ConsumerState<GstPage> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: const [
-              Icon(LucideIcons.filter, size: 8, color: Color(0xFF94A3B8)),
+              Icon(LucideIcons.filter, size: 7.5, color: Color(0xFF94A3B8)),
               SizedBox(width: 2),
-              Icon(LucideIcons.arrowUpDown, size: 8, color: Color(0xFF94A3B8)),
+              Icon(LucideIcons.arrowUpDown, size: 7.5, color: Color(0xFF94A3B8)),
             ],
           ),
         ),
@@ -2393,12 +3281,13 @@ class _TableHeaderText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = Theme.of(context).platform != TargetPlatform.macOS;
     return Text(
       text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: GoogleFonts.inter(
-        fontSize: 13,
+        fontSize: isMobile ? 10.5 : 13,
         fontWeight: FontWeight.w700,
         color: const Color(0xFF1E293B),
         letterSpacing: 0.2,
@@ -2832,5 +3721,33 @@ class _InvoiceQrCodeDialog extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// ─── MOBILE TAB HELPER DATA ───────────────────────────────────
+
+class _GstTabNavData {
+  final String label;
+  final IconData icon;
+  const _GstTabNavData(this.label, this.icon);
+}
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _StickyTabNavDelegate({required this.child});
+
+  @override
+  double get minExtent => 42.0;
+  @override
+  double get maxExtent => 42.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.child != child;
   }
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../widgets/bento/bento.dart';
 
@@ -119,6 +121,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   bool _sortAscending = false;
 
   // Receivables & Payables state (Images 4 & 5)
+  final ScrollController _mobileTabScrollController = ScrollController();
   final TextEditingController _rpSearchController = TextEditingController();
   final TextEditingController _rpMinController = TextEditingController();
   final TextEditingController _rpMaxController = TextEditingController();
@@ -322,6 +325,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
 
   @override
   void dispose() {
+    _mobileTabScrollController.dispose();
     _rpSearchController.dispose();
     _rpMinController.dispose();
     _rpMaxController.dispose();
@@ -354,38 +358,537 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            isMobile ? 14 : 28,
-            isMobile ? 14 : 24,
-            isMobile ? 14 : 28,
-            isMobile ? 80 : 40,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. PAGE HEADER (Icon + Title + Record Entry Button)
-              _buildPageHeader(isMobile),
-              const SizedBox(height: 20),
-
-              // 2. 4 TOP METRIC CARDS (Gross Revenue, Expenses, Net Profit, GST)
-              _buildTopMetrics(screenWidth),
-              const SizedBox(height: 22),
-
-              // 3. TAB PILLS NAVIGATION
-              _buildTabPills(isMobile),
-              const SizedBox(height: 20),
-
-              // 4. ACTIVE TAB CONTENT
-              _buildActiveTabContent(isMobile, screenWidth),
-            ],
+    // Preserve exact macOS desktop UI untouched
+    if (isMacOS) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8F9FB),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPageHeader(false),
+                const SizedBox(height: 20),
+                _buildTopMetrics(screenWidth),
+                const SizedBox(height: 22),
+                _buildTabPills(false),
+                const SizedBox(height: 20),
+                _buildActiveTabContent(false, screenWidth),
+              ],
+            ),
           ),
         ),
+      );
+    }
+
+    // ─── MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: FloatingActionButton.extended(
+          onPressed: () => _openRecordEntryModal(context),
+          backgroundColor: const Color(0xFF166534),
+          elevation: 4,
+          icon: const Icon(LucideIcons.plus, color: Colors.white, size: 18),
+          label: const Text(
+            'Record Entry',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ),
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildMobileHeroSummary()
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: 42,
+              child: Container(
+                color: const Color(0xFFF8FAFC),
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: _buildMobileTabNav(),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── MAIN CONTENT AREA ───
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 140),
+            sliver: SliverToBoxAdapter(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onHorizontalDragEnd: (details) {
+                  final velocity = details.primaryVelocity ?? 0.0;
+                  if (velocity < -250) {
+                    if (_activeTab < 6) {
+                      _changeMobileTab(_activeTab + 1);
+                    }
+                  } else if (velocity > 250) {
+                    if (_activeTab > 0) {
+                      _changeMobileTab(_activeTab - 1);
+                    }
+                  }
+                },
+                child: _buildActiveTabContent(true, screenWidth),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE HERO SUMMARY CARD (Matching Reports & Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMobileHeroSummary() {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(14, 8, 14, 0),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.calculator,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'FINANCE & GENERAL LEDGER',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      'LIVE AUDIT',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Accounting & Financial Hub',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Horizontal scrollable KPI chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'Gross Revenue',
+                  '₹${_formatNumber(_grossRevenue)}',
+                  LucideIcons.trendingUp,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Total Expenses',
+                  '₹${_formatNumber(_totalExpenses)}',
+                  LucideIcons.trendingDown,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Net Profit',
+                  '₹${_formatNumber(_netProfit)}',
+                  LucideIcons.lineChart,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'GST Payable',
+                  '₹${_formatNumber(_gstPayable)}',
+                  LucideIcons.percent,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 8.5,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE STICKY TAB NAVIGATION (Matching Reports / Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  void _changeMobileTab(int index) {
+    if (index < 0 || index > 6) return;
+    setState(() => _activeTab = index);
+    if (_mobileTabScrollController.hasClients) {
+      final approxTabWidth = 105.0;
+      final target = (index * approxTabWidth) - 50.0;
+      _mobileTabScrollController.animateTo(
+        target.clamp(0.0, _mobileTabScrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeInOut,
+      );
+    }
+  }
+
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      const _AccountingTabItem('P & L', LucideIcons.lineChart),
+      const _AccountingTabItem('Balance Sheet', LucideIcons.scale),
+      const _AccountingTabItem('Receivables & Payables', LucideIcons.arrowLeftRight),
+      const _AccountingTabItem('Cash & Bank', LucideIcons.wallet),
+      const _AccountingTabItem('Day Book', LucideIcons.bookOpen),
+      const _AccountingTabItem('Expenses', LucideIcons.trendingDown),
+      const _AccountingTabItem('GST', LucideIcons.percent),
+    ];
+
+    return SizedBox(
+      height: 38,
+      child: SingleChildScrollView(
+        controller: _mobileTabScrollController,
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeTab == index;
+            final isLast = index == tabs.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(right: isLast ? 0 : 6),
+              child: Builder(
+                builder: (tabContext) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _activeTab = index);
+                      Scrollable.ensureVisible(
+                        tabContext,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        alignment: 0.5,
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF166534) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF166534)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tabs[index].icon,
+                            size: 12,
+                            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            tabs[index].label,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileSectionFooter(int currentIndex) {
+    const tabs = [
+      _AccountingTabItem('P & L', LucideIcons.lineChart),
+      _AccountingTabItem('Balance Sheet', LucideIcons.scale),
+      _AccountingTabItem('Receivables & Payables', LucideIcons.arrowLeftRight),
+      _AccountingTabItem('Cash & Bank', LucideIcons.wallet),
+      _AccountingTabItem('Day Book', LucideIcons.bookOpen),
+      _AccountingTabItem('Expenses', LucideIcons.trendingDown),
+      _AccountingTabItem('GST', LucideIcons.percent),
+    ];
+
+    final hasPrev = currentIndex > 0;
+    final hasNext = currentIndex < tabs.length - 1;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          if (hasPrev)
+            Expanded(
+              child: InkWell(
+                onTap: () => _changeMobileTab(currentIndex - 1),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x06000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.chevronLeft, size: 14, color: Color(0xFF166534)),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'PREVIOUS',
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF94A3B8),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              '‹ ${tabs[currentIndex - 1].label}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            const Spacer(),
+          const SizedBox(width: 10),
+          if (hasNext)
+            Expanded(
+              child: InkWell(
+                onTap: () => _changeMobileTab(currentIndex + 1),
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x06000000),
+                        blurRadius: 4,
+                        offset: Offset(0, 1),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              'NEXT',
+                              style: TextStyle(
+                                fontSize: 8.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF94A3B8),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            Text(
+                              '${tabs[currentIndex + 1].label} ›',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(LucideIcons.chevronRight, size: 14, color: Color(0xFF166534)),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            const Spacer(),
+        ],
       ),
     );
   }
@@ -879,24 +1382,63 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // 4. CONTENT ROUTER
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildActiveTabContent(bool isMobile, double screenWidth) {
+    if (!isMobile) {
+      switch (_activeTab) {
+        case 0:
+          return _buildPLTab(isMobile, screenWidth);
+        case 1:
+          return _buildBalanceSheetTab(isMobile, screenWidth);
+        case 2:
+          return _buildReceivablesPayablesTab(isMobile, screenWidth);
+        case 3:
+          return _buildExpensesTab(isMobile);
+        case 4:
+          return _buildCashBankTab(isMobile, screenWidth);
+        case 5:
+          return _buildGSTTab(isMobile, screenWidth);
+        case 6:
+          return _buildDayBookTab(isMobile, screenWidth);
+        default:
+          return _buildPLTab(isMobile, screenWidth);
+      }
+    }
+
+    Widget content;
     switch (_activeTab) {
       case 0:
-        return _buildPLTab(isMobile, screenWidth);
+        content = _buildPLTab(isMobile, screenWidth);
+        break;
       case 1:
-        return _buildBalanceSheetTab(isMobile, screenWidth);
+        content = _buildBalanceSheetTab(isMobile, screenWidth);
+        break;
       case 2:
-        return _buildReceivablesPayablesTab(isMobile, screenWidth);
+        content = _buildReceivablesPayablesTab(isMobile, screenWidth);
+        break;
       case 3:
-        return _buildExpensesTab(isMobile);
+        content = _buildCashBankTab(isMobile, screenWidth);
+        break;
       case 4:
-        return _buildCashBankTab(isMobile, screenWidth);
+        content = _buildDayBookTab(isMobile, screenWidth);
+        break;
       case 5:
-        return _buildGSTTab(isMobile, screenWidth);
+        content = _buildExpensesTab(isMobile);
+        break;
       case 6:
-        return _buildDayBookTab(isMobile, screenWidth);
+        content = _buildGSTTab(isMobile, screenWidth);
+        break;
       default:
-        return _buildPLTab(isMobile, screenWidth);
+        content = _buildPLTab(isMobile, screenWidth);
+        break;
     }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        content,
+        const SizedBox(height: 12),
+        _buildMobileSectionFooter(_activeTab),
+      ],
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
@@ -937,22 +1479,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
 
     final addBankCard = InkWell(
       onTap: () => _openAddBankModal(context),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(isMobile ? 12 : 14),
       child: Container(
-        height: 84,
+        height: isMobile ? 64 : 84,
         alignment: Alignment.center,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 16, vertical: isMobile ? 8 : 12),
         decoration: BoxDecoration(
           color: const Color(0xFFFFF1F2),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(isMobile ? 12 : 14),
           border: Border.all(color: const Color(0xFFFECDD3)),
         ),
-        child: const Text(
+        child: Text(
           'ADD NEW BANK',
           style: TextStyle(
-            fontSize: 13.5,
+            fontSize: isMobile ? 12 : 13.5,
             fontWeight: FontWeight.w800,
-            color: Color(0xFFDC2626),
+            color: const Color(0xFFDC2626),
             letterSpacing: 0.5,
           ),
         ),
@@ -994,15 +1536,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       );
     } else {
       subCardsLayout = Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          cashCard,
-          const SizedBox(height: 10),
-          bankCard,
-          const SizedBox(height: 10),
-          fundsCard,
-          const SizedBox(height: 10),
-          addBankCard,
+          Row(
+            children: [
+              Expanded(child: cashCard),
+              const SizedBox(width: 8),
+              Expanded(child: bankCard),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: fundsCard),
+              const SizedBox(width: 8),
+              Expanded(child: addBankCard),
+            ],
+          ),
         ],
       );
     }
@@ -1015,7 +1564,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         children: [
           for (int i = 0; i < _bankAccounts.length; i++) ...[
             if (i > 0) const SizedBox(width: 16),
-            Expanded(child: _buildBankAccountCard(_bankAccounts[i], i == 0)),
+            Expanded(child: _buildBankAccountCard(_bankAccounts[i], i == 0, isMobile)),
           ],
         ],
       );
@@ -1023,8 +1572,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       bankCardsGrid = Column(
         children: [
           for (int i = 0; i < _bankAccounts.length; i++) ...[
-            if (i > 0) const SizedBox(height: 14),
-            _buildBankAccountCard(_bankAccounts[i], i == 0),
+            if (i > 0) const SizedBox(height: 10),
+            _buildBankAccountCard(_bankAccounts[i], i == 0, isMobile),
           ],
         ],
       );
@@ -1032,7 +1581,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [subCardsLayout, const SizedBox(height: 22), bankCardsGrid],
+      children: [subCardsLayout, SizedBox(height: isMobile ? 14 : 22), bankCardsGrid],
     );
   }
 
@@ -1046,34 +1595,35 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   }) {
     return Container(
       width: double.infinity,
-      height: 84,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontSize: 10.5,
+              fontSize: 9.5,
               fontWeight: FontWeight.w800,
               color: labelColor,
               letterSpacing: 0.3,
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 3),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 22,
+                fontSize: 18,
                 fontWeight: FontWeight.w900,
                 color: valueColor,
                 letterSpacing: -0.5,
@@ -1085,12 +1635,12 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
   }
 
-  Widget _buildBankAccountCard(_BankAccountData bank, bool isPrimaryCard) {
+  Widget _buildBankAccountCard(_BankAccountData bank, bool isPrimaryCard, [bool isMobile = false]) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(
           color: isPrimaryCard
               ? const Color(0xFF3B82F6)
@@ -1296,10 +1846,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       alignment: Alignment.centerLeft,
                       child: Text(
                         '₹${_formatNumber(bank.balance)}',
-                        style: const TextStyle(
-                          fontSize: 20,
+                        style: TextStyle(
+                          fontSize: isMobile ? 17 : 20,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF2563EB),
+                          color: const Color(0xFF2563EB),
                           letterSpacing: -0.4,
                         ),
                       ),
@@ -1315,17 +1865,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12 : 18,
+                      vertical: isMobile ? 6 : 10,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'History',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: isMobile ? 11 : 12, fontWeight: FontWeight.bold),
                   ),
                 )
               else
@@ -1335,17 +1885,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     side: const BorderSide(color: Color(0xFFE2E8F0)),
                     backgroundColor: const Color(0xFFF8FAFC),
                     foregroundColor: const Color(0xFF2563EB),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 18,
-                      vertical: 10,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isMobile ? 12 : 18,
+                      vertical: isMobile ? 6 : 10,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
+                  child: Text(
                     'History',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: isMobile ? 11 : 12, fontWeight: FontWeight.bold),
                   ),
                 ),
             ],
@@ -1366,6 +1916,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       badgeColor: const Color(0xFFD97706),
       badgeBgColor: const Color(0xFFFEF3C7),
       amount: '₹3,96,22,49,874.28',
+      isMobile: isMobile,
       onViewDetail: () =>
           ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
@@ -1377,6 +1928,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       badgeColor: const Color(0xFFD97706),
       badgeBgColor: const Color(0xFFFEF3C7),
       amount: '₹0',
+      isMobile: isMobile,
       onViewDetail: () =>
           ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
@@ -1388,6 +1940,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       badgeColor: const Color(0xFFD97706),
       badgeBgColor: const Color(0xFFFEF3C7),
       amount: '₹9,18,822',
+      isMobile: isMobile,
       onViewDetail: () =>
           ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
     );
@@ -1407,6 +1960,75 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
 
     return Column(
       children: [
+        if (isMobile)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x12000000),
+                  blurRadius: 8,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(7),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(LucideIcons.percent, color: Colors.white, size: 16),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Full GST Compliance Portal',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12.5,
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        'File GSTR-1, GSTR-3B & Reconcile GSTR-2A/2B',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.7),
+                          fontSize: 10.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton.icon(
+                  onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF166534),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    elevation: 0,
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                  ),
+                  icon: const Icon(LucideIcons.arrowRight, size: 12),
+                  label: const Text('Open', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          ),
         gstr1Card,
         const SizedBox(height: 14),
         gstr3bCard,
@@ -1424,12 +2046,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required Color badgeBgColor,
     required String amount,
     required VoidCallback onViewDetail,
+    bool isMobile = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -1447,22 +2070,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: isMobile ? 30 : 36,
+                height: isMobile ? 30 : 36,
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   LucideIcons.fileText,
-                  color: Color(0xFF2563EB),
-                  size: 18,
+                  color: const Color(0xFF2563EB),
+                  size: isMobile ? 15 : 18,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                padding: EdgeInsets.symmetric(
+                  horizontal: isMobile ? 8 : 10,
+                  vertical: isMobile ? 3 : 4,
                 ),
                 decoration: BoxDecoration(
                   color: badgeBgColor,
@@ -1471,7 +2094,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 child: Text(
                   badgeText,
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: isMobile ? 9.5 : 10.5,
                     fontWeight: FontWeight.bold,
                     color: badgeColor,
                   ),
@@ -1479,15 +2102,15 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 10 : 16),
 
           // Title
           Text(
             title,
-            style: const TextStyle(
-              fontSize: 15,
+            style: TextStyle(
+              fontSize: isMobile ? 13.5 : 15,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: const Color(0xFF0F172A),
             ),
           ),
           const SizedBox(height: 2),
@@ -1495,9 +2118,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           // Period
           Text(
             period,
-            style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+            style: TextStyle(fontSize: isMobile ? 10.5 : 11.5, color: const Color(0xFF64748B)),
           ),
-          const SizedBox(height: 22),
+          SizedBox(height: isMobile ? 14 : 22),
 
           // Bottom Row: Amount + VIEW DETAIL link
           Row(
@@ -1510,10 +2133,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   alignment: Alignment.centerLeft,
                   child: Text(
                     amount,
-                    style: const TextStyle(
-                      fontSize: 18,
+                    style: TextStyle(
+                      fontSize: isMobile ? 16 : 18,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF2563EB),
+                      color: const Color(0xFF2563EB),
                       letterSpacing: -0.4,
                     ),
                   ),
@@ -1523,14 +2146,14 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               InkWell(
                 onTap: onViewDetail,
                 borderRadius: BorderRadius.circular(4),
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                   child: Text(
                     'VIEW DETAIL',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: isMobile ? 10 : 11,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF2563EB),
+                      color: const Color(0xFF2563EB),
                       letterSpacing: 0.3,
                     ),
                   ),
@@ -1547,6 +2170,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // TAB 6: DAY BOOK TABLE (IMAGE 3)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildDayBookTab(bool isMobile, double screenWidth) {
+    if (isMobile) {
+      return _buildMobileDayBookCardList();
+    }
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1564,14 +2190,15 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             constraints: BoxConstraints(
               minWidth: screenWidth >= 900
                   ? screenWidth - (isMobile ? 28 : 56)
-                  : 750,
+                  : (isMobile ? 500 : 750),
             ),
             child: DataTable(
               headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-              dataRowMinHeight: 48,
-              dataRowMaxHeight: 52,
-              horizontalMargin: 20,
-              columnSpacing: 24,
+              dataRowMinHeight: isMobile ? 36 : 48,
+              dataRowMaxHeight: isMobile ? 40 : 52,
+              headingRowHeight: isMobile ? 36 : 44,
+              horizontalMargin: isMobile ? 10 : 20,
+              columnSpacing: isMobile ? 12 : 24,
               columns: [
                 DataColumn(
                   label: _buildSortableHeader('DATE', 'date'),
@@ -1610,9 +2237,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     DataCell(
                       Text(
                         item.date,
-                        style: const TextStyle(
-                          fontSize: 12.5,
-                          color: Color(0xFF475569),
+                        style: TextStyle(
+                          fontSize: isMobile ? 11 : 12.5,
+                          color: const Color(0xFF475569),
                         ),
                       ),
                     ),
@@ -1621,10 +2248,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     DataCell(
                       Text(
                         item.category,
-                        style: const TextStyle(
-                          fontSize: 13,
+                        style: TextStyle(
+                          fontSize: isMobile ? 11.5 : 13,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
+                          color: const Color(0xFF0F172A),
                         ),
                       ),
                     ),
@@ -1632,9 +2259,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     // MODE (Pill)
                     DataCell(
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 6 : 10,
+                          vertical: isMobile ? 2 : 4,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
@@ -1642,10 +2269,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         ),
                         child: Text(
                           item.mode,
-                          style: const TextStyle(
-                            fontSize: 11,
+                          style: TextStyle(
+                            fontSize: isMobile ? 9.5 : 11,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF475569),
+                            color: const Color(0xFF475569),
                           ),
                         ),
                       ),
@@ -1654,9 +2281,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     // TYPE (Pill with arrow)
                     DataCell(
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 6 : 10,
+                          vertical: isMobile ? 2 : 4,
                         ),
                         decoration: BoxDecoration(
                           color: isExpense
@@ -1670,7 +2297,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                             Text(
                               isExpense ? '↘ ' : '↗ ',
                               style: TextStyle(
-                                fontSize: 11,
+                                fontSize: isMobile ? 9.5 : 11,
                                 fontWeight: FontWeight.bold,
                                 color: isExpense
                                     ? const Color(0xFFDC2626)
@@ -1680,7 +2307,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                             Text(
                               item.type,
                               style: TextStyle(
-                                fontSize: 10.5,
+                                fontSize: isMobile ? 9.5 : 10.5,
                                 fontWeight: FontWeight.w800,
                                 color: isExpense
                                     ? const Color(0xFFDC2626)
@@ -1702,7 +2329,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                               ? item.amount.toInt().toString()
                               : item.amount.toStringAsFixed(2),
                           style: TextStyle(
-                            fontSize: 13.5,
+                            fontSize: isMobile ? 12 : 13.5,
                             fontWeight: FontWeight.w800,
                             color: isExpense
                                 ? const Color(0xFFDC2626)
@@ -1721,36 +2348,275 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
   }
 
-  Widget _buildSortableHeader(String title, String colKey) {
+  Widget _buildMobileDayBookCardList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sort & Filter Bar
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: [
+              _buildMobileSortChip('DATE', 'date'),
+              const SizedBox(width: 6),
+              _buildMobileSortChip('CATEGORY', 'category'),
+              const SizedBox(width: 6),
+              _buildMobileSortChip('MODE', 'mode'),
+              const SizedBox(width: 6),
+              _buildMobileSortChip('TYPE', 'type'),
+              const SizedBox(width: 6),
+              _buildMobileSortChip('AMOUNT', 'amount'),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        if (_dayBookRecords.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              children: const [
+                Icon(LucideIcons.bookOpen, size: 32, color: Color(0xFF94A3B8)),
+                SizedBox(height: 10),
+                Text(
+                  'No transactions recorded in Day Book.',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ..._dayBookRecords.map((item) {
+            final isExpense = item.type == 'EXPENSE';
+            final rowBgColor = item.isSpecialHighlight
+                ? const Color(0xFFFDF2F8)
+                : Colors.white;
+            final borderColor = item.isSpecialHighlight
+                ? const Color(0xFFFBCFE8)
+                : const Color(0xFFE2E8F0);
+
+            final formattedAmount = item.amount.truncateToDouble() == item.amount
+                ? item.amount.toInt().toString()
+                : item.amount.toStringAsFixed(2);
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: rowBgColor,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: borderColor),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x06000000),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.category,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${isExpense ? '-' : '+'}₹$formattedAmount',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          color: isExpense
+                              ? const Color(0xFFDC2626)
+                              : const Color(0xFF15803D),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            LucideIcons.calendar,
+                            size: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            item.date,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          // Mode badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              item.mode,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          // Type badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 7,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isExpense
+                                  ? const Color(0xFFFEE2E2)
+                                  : const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  isExpense ? '↘ ' : '↗ ',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isExpense
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFF15803D),
+                                  ),
+                                ),
+                                Text(
+                                  item.type,
+                                  style: TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: isExpense
+                                        ? const Color(0xFFDC2626)
+                                        : const Color(0xFF15803D),
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+      ],
+    );
+  }
+
+  Widget _buildMobileSortChip(String label, String colKey) {
     final isSelected = _sortColumn == colKey;
     return InkWell(
       onTap: () => _sortDayBook(colKey),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            title,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: isSelected
-                  ? const Color(0xFF166534)
-                  : const Color(0xFF1E293B),
-              letterSpacing: 0.3,
+      borderRadius: BorderRadius.circular(6),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : const Color(0xFF475569),
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            isSelected
-                ? (_sortAscending ? LucideIcons.arrowUp : LucideIcons.arrowDown)
-                : LucideIcons.chevronsUpDown,
-            size: 13,
-            color: isSelected
-                ? const Color(0xFF0F172A)
-                : const Color(0xFF94A3B8),
-          ),
-        ],
+            if (isSelected) ...[
+              const SizedBox(width: 3),
+              Icon(
+                _sortAscending ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                size: 11,
+                color: Colors.white,
+              ),
+            ],
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildSortableHeader(String title, String colKey) {
+    final isSelected = _sortColumn == colKey;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.inter(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: isSelected
+                ? const Color(0xFF166534)
+                : const Color(0xFF1E293B),
+            letterSpacing: 0.3,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Icon(
+          isSelected
+              ? (_sortAscending ? LucideIcons.arrowUp : LucideIcons.arrowDown)
+              : LucideIcons.chevronsUpDown,
+          size: 13,
+          color: isSelected
+              ? const Color(0xFF0F172A)
+              : const Color(0xFF94A3B8),
+        ),
+      ],
     );
   }
 
@@ -1792,10 +2658,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildPLTab(bool isMobile, double screenWidth) {
     final revenueCard = Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -1809,52 +2675,55 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(
                 LucideIcons.arrowUpRight,
-                color: Color(0xFF10B981),
-                size: 20,
+                color: const Color(0xFF10B981),
+                size: isMobile ? 17 : 20,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Revenue Breakdown',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isMobile ? 14 : 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 12 : 18),
           _buildPLRevenueItem(
             label: 'Sales Revenue',
             amount: '₹10,00,00,07,06,880',
             pct: '100%',
+            isMobile: isMobile,
           ),
           _buildPLRevenueItem(
             label: 'Service Income',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLRevenueItem(
             label: 'Other Income',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
         ],
       ),
     );
 
     final expenseCard = Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -1868,92 +2737,105 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
+            children: [
               Icon(
                 LucideIcons.arrowDownRight,
-                color: Color(0xFFEF4444),
-                size: 20,
+                color: const Color(0xFFEF4444),
+                size: isMobile ? 17 : 20,
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   'Expense Breakdown',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isMobile ? 14 : 16,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 12 : 18),
           _buildPLExpenseItem(
             label: 'Office Expenses',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Rent & Utilities',
             amount: '₹30,000',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Salary & Wages',
             amount: '₹65,200',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Marketing & Advertising',
             amount: '₹50,000',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Travel & Meals',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Vehicle Expenses',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Software & Subscription',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Repairs & Maintenance',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Bank Charges',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Taxes & Government Fees',
             amount: '₹2,02,821.4',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Insurance',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Inventory Purchase',
             amount: '₹0',
             pct: '0%',
+            isMobile: isMobile,
           ),
           _buildPLExpenseItem(
             label: 'Miscellaneous',
             amount: '₹9,85,18,696',
             pct: '100%',
+            isMobile: isMobile,
           ),
         ],
       ),
@@ -1973,7 +2855,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     return Column(
       children: [
         revenueCard,
-        const SizedBox(height: 20),
+        SizedBox(height: isMobile ? 12 : 20),
         expenseCard,
       ],
     );
@@ -1983,13 +2865,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required String label,
     required String amount,
     required String pct,
+    bool isMobile = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      margin: EdgeInsets.only(bottom: isMobile ? 7 : 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 10 : 16,
+        vertical: isMobile ? 8 : 14,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
         border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
       child: Row(
@@ -1999,10 +2885,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13.5,
+              style: TextStyle(
+                fontSize: isMobile ? 11.5 : 13.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
+                color: const Color(0xFF334155),
               ),
             ),
           ),
@@ -2016,19 +2902,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 children: [
                   Text(
                     amount,
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: TextStyle(
+                      fontSize: isMobile ? 12 : 13.5,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: const Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '($pct)',
-                    style: const TextStyle(
-                      fontSize: 12.5,
+                    style: TextStyle(
+                      fontSize: isMobile ? 11 : 12.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF10B981),
+                      color: const Color(0xFF10B981),
                     ),
                   ),
                 ],
@@ -2044,13 +2930,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required String label,
     required String amount,
     required String pct,
+    bool isMobile = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      margin: EdgeInsets.only(bottom: isMobile ? 6 : 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 10 : 16,
+        vertical: isMobile ? 7 : 13,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
         border: Border.all(color: const Color(0xFFFEE2E2)),
       ),
       child: Row(
@@ -2060,10 +2950,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             child: Text(
               label,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13.5,
+              style: TextStyle(
+                fontSize: isMobile ? 11.5 : 13.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF991B1B),
+                color: const Color(0xFF991B1B),
               ),
             ),
           ),
@@ -2077,19 +2967,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 children: [
                   Text(
                     amount,
-                    style: const TextStyle(
-                      fontSize: 13.5,
+                    style: TextStyle(
+                      fontSize: isMobile ? 12 : 13.5,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: const Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '($pct)',
-                    style: const TextStyle(
-                      fontSize: 12.5,
+                    style: TextStyle(
+                      fontSize: isMobile ? 11 : 12.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFFEF4444),
+                      color: const Color(0xFFEF4444),
                     ),
                   ),
                 ],
@@ -2106,10 +2996,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildBalanceSheetTab(bool isMobile, double screenWidth) {
     final assetsCard = Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -2127,22 +3017,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             children: [
               Expanded(
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(
                       LucideIcons.briefcase,
-                      color: Color(0xFF2563EB),
-                      size: 19,
+                      color: const Color(0xFF2563EB),
+                      size: isMobile ? 17 : 19,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Assets',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: isMobile ? 14 : 16,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: const Color(0xFF0F172A),
                         ),
                       ),
                     ),
@@ -2152,10 +3042,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               const SizedBox(width: 8),
               IconButton(
                 onPressed: () => _openLedgerSettingsModal(context, 'Assets'),
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.settings,
-                  color: Color(0xFF94A3B8),
-                  size: 17,
+                  color: const Color(0xFF94A3B8),
+                  size: isMobile ? 15 : 17,
                 ),
                 tooltip: 'Asset Settings',
                 padding: EdgeInsets.zero,
@@ -2163,56 +3053,64 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 12 : 18),
           _buildBalanceSheetRow(
             label: 'Cash in Hand',
             amount: '₹0',
             isPink: false,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'Bank Balance',
             amount: '₹5,05,000',
             isPink: false,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'Inventory Value',
             amount: '₹80,87,81,36,83,773.3',
             isPink: false,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'Accounts Receivable',
             amount: '₹9,18,822',
             isPink: false,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'Fixed Assets',
             amount: '₹0',
             isPink: false,
+            isMobile: isMobile,
           ),
           const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 10 : 16,
+              vertical: isMobile ? 9 : 15,
+            ),
             decoration: BoxDecoration(
               color: const Color(0xFFDCFCE7),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
               border: Border.all(color: const Color(0xFFA7F3D0)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Expanded(
                   child: Text(
                     'Total Assets',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: isMobile ? 12.5 : 14,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF166534),
+                      color: const Color(0xFF166534),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
@@ -2220,9 +3118,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     child: Text(
                       '₹80,87,81,51,07,595.3',
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: isMobile ? 13 : 14.5,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF15803D),
+                        color: const Color(0xFF15803D),
                       ),
                     ),
                   ),
@@ -2235,10 +3133,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
 
     final liabilitiesCard = Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -2256,22 +3154,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             children: [
               Expanded(
                 child: Row(
-                  children: const [
+                  children: [
                     Icon(
                       LucideIcons.scale,
-                      color: Color(0xFFEF4444),
-                      size: 19,
+                      color: const Color(0xFFEF4444),
+                      size: isMobile ? 17 : 19,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Liabilities & Equity',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: isMobile ? 14 : 16,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
+                          color: const Color(0xFF0F172A),
                         ),
                       ),
                     ),
@@ -2282,10 +3180,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               IconButton(
                 onPressed: () =>
                     _openLedgerSettingsModal(context, 'Liabilities & Equity'),
-                icon: const Icon(
+                icon: Icon(
                   LucideIcons.settings,
-                  color: Color(0xFF94A3B8),
-                  size: 17,
+                  color: const Color(0xFF94A3B8),
+                  size: isMobile ? 15 : 17,
                 ),
                 tooltip: 'Liabilities Settings',
                 padding: EdgeInsets.zero,
@@ -2293,56 +3191,64 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 12 : 18),
           _buildBalanceSheetRow(
             label: 'Accounts Payable',
             amount: '₹-9,71,63,707',
             isPink: true,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'GST Payable',
             amount: '₹3,96,22,49,874.28',
             isPink: true,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'Loans / Credit',
             amount: '₹0',
             isPink: true,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: "Owner's Equity",
             amount: '₹90,83,84,88,49,264.62',
             isPink: true,
+            isMobile: isMobile,
           ),
           _buildBalanceSheetRow(
             label: 'Retained Earnings',
             amount: '₹0',
             isPink: true,
+            isMobile: isMobile,
           ),
           const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
+            padding: EdgeInsets.symmetric(
+              horizontal: isMobile ? 10 : 16,
+              vertical: isMobile ? 9 : 15,
+            ),
             decoration: BoxDecoration(
               color: const Color(0xFFFEE2E2),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
               border: Border.all(color: const Color(0xFFFECACA)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
+              children: [
                 Expanded(
                   child: Text(
                     'Total Liab. & Equity',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: isMobile ? 12.5 : 14,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF991B1B),
+                      color: const Color(0xFF991B1B),
                     ),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 8),
                 Flexible(
                   child: FittedBox(
                     fit: BoxFit.scaleDown,
@@ -2350,9 +3256,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     child: Text(
                       '₹90,87,71,39,35,431.9',
                       style: TextStyle(
-                        fontSize: 14.5,
+                        fontSize: isMobile ? 13 : 14.5,
                         fontWeight: FontWeight.w900,
-                        color: Color(0xFF991B1B),
+                        color: const Color(0xFF991B1B),
                       ),
                     ),
                   ),
@@ -2378,7 +3284,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     return Column(
       children: [
         assetsCard,
-        const SizedBox(height: 20),
+        SizedBox(height: isMobile ? 12 : 20),
         liabilitiesCard,
       ],
     );
@@ -2388,13 +3294,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required String label,
     required String amount,
     required bool isPink,
+    bool isMobile = false,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      margin: EdgeInsets.only(bottom: isMobile ? 6 : 10),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 10 : 16,
+        vertical: isMobile ? 8 : 14,
+      ),
       decoration: BoxDecoration(
         color: isPink ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
         border: Border.all(
           color: isPink ? const Color(0xFFFEE2E2) : const Color(0xFFF1F5F9),
         ),
@@ -2408,7 +3318,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 13.5,
+                fontSize: isMobile ? 11.5 : 13.5,
                 fontWeight: FontWeight.w600,
                 color:
                     isPink ? const Color(0xFF991B1B) : const Color(0xFF334155),
@@ -2442,7 +3352,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     // 1. Top Overdue Reminder Banner (Image 4)
     final overdueBanner = Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 16,
+        vertical: isMobile ? 10 : 14,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFFFF1F2),
         borderRadius: BorderRadius.circular(12),
@@ -2450,19 +3363,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             LucideIcons.bell,
-            color: Color(0xFFE11D48),
-            size: 18,
+            color: const Color(0xFFE11D48),
+            size: isMobile ? 16 : 18,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               'You have $_overdueInvoicesCount invoice(s) overdue for a total amount of ₹${_formatIndianCurrency(_overdueAmount)}. Please send reminders.',
-              style: const TextStyle(
-                fontSize: 13,
+              style: TextStyle(
+                fontSize: isMobile ? 11.5 : 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFFBE123C),
+                color: const Color(0xFFBE123C),
               ),
             ),
           ),
@@ -2479,6 +3392,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       valueColor: const Color(0xFF5B21B6),
       bgColor: const Color(0xFFF5F3FF),
       borderColor: const Color(0xFFDDD6FE),
+      isMobile: isMobile,
     );
 
     final card2 = _buildRpMiniCard(
@@ -2489,6 +3403,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       valueColor: const Color(0xFF991B1B),
       bgColor: const Color(0xFFFEF2F2),
       borderColor: const Color(0xFFFECACA),
+      isMobile: isMobile,
     );
 
     final card3 = _buildRpMiniCard(
@@ -2499,6 +3414,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       valueColor: const Color(0xFF854D0E),
       bgColor: const Color(0xFFFEFCE8),
       borderColor: const Color(0xFFFEF08A),
+      isMobile: isMobile,
     );
 
     final card4 = _buildRpMiniCard(
@@ -2509,6 +3425,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       valueColor: const Color(0xFF0369A1),
       bgColor: const Color(0xFFF0F9FF),
       borderColor: const Color(0xFFBAE6FD),
+      isMobile: isMobile,
     );
 
     final card5 = _buildRpMiniCard(
@@ -2519,6 +3436,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       valueColor: const Color(0xFF15803D),
       bgColor: const Color(0xFFF0FDF4),
       borderColor: const Color(0xFFBBF7D0),
+      isMobile: isMobile,
     );
 
     Widget miniCardsLayout;
@@ -2561,14 +3479,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     } else {
       miniCardsLayout = Column(
         children: [
-          card1,
-          const SizedBox(height: 10),
-          card2,
-          const SizedBox(height: 10),
-          card3,
-          const SizedBox(height: 10),
-          card4,
-          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(child: card1),
+              const SizedBox(width: 8),
+              Expanded(child: card2),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(child: card3),
+              const SizedBox(width: 8),
+              Expanded(child: card4),
+            ],
+          ),
+          const SizedBox(height: 8),
           card5,
         ],
       );
@@ -2576,10 +3502,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
 
     // 3. Lower Section: Left Aging Report + Right Party-wise Outstanding Table
     final agingReportCard = Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -2592,112 +3518,117 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Aging Report (Receivables)',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isMobile ? 14 : 16,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: const Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 10 : 16),
           // Progress bar (Amber/Orange segment)
           Container(
-            height: 10,
+            height: isMobile ? 8 : 10,
             width: double.infinity,
             decoration: BoxDecoration(
               color: const Color(0xFFF59E0B),
               borderRadius: BorderRadius.circular(5),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 12 : 18),
           _buildAgingRow(
             dotColor: const Color(0xFF10B981),
             label: 'Current (Not Due)',
             amount: '₹0',
             invCount: '0 inv',
+            isMobile: isMobile,
           ),
           _buildAgingRow(
             dotColor: const Color(0xFFF59E0B),
             label: '1-30 Days',
             amount: '₹9,18,822',
             invCount: '25 inv',
+            isMobile: isMobile,
           ),
           _buildAgingRow(
             dotColor: const Color(0xFFEF4444),
             label: '31-60 Days',
             amount: '₹0',
             invCount: '0 inv',
+            isMobile: isMobile,
           ),
           _buildAgingRow(
             dotColor: const Color(0xFFDC2626),
             label: '61-90 Days',
             amount: '₹0',
             invCount: '0 inv',
+            isMobile: isMobile,
           ),
           _buildAgingRow(
             dotColor: const Color(0xFF991B1B),
             label: 'Above 90 Days',
             amount: '₹0',
             invCount: '0 inv',
+            isMobile: isMobile,
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 12 : 18),
           // Total Receivables Purple Summary Box
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(isMobile ? 12 : 16),
             decoration: BoxDecoration(
               color: const Color(0xFFF5F3FF),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
               border: Border.all(color: const Color(0xFFEDE9FE)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'TOTAL RECEIVABLES',
                   style: TextStyle(
-                    fontSize: 10.5,
+                    fontSize: isMobile ? 9.5 : 10.5,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF7C3AED),
+                    color: const Color(0xFF7C3AED),
                     letterSpacing: 0.5,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
                     '₹${_formatIndianCurrency(_totalReceivables)}',
-                    style: const TextStyle(
-                      fontSize: 24,
+                    style: TextStyle(
+                      fontSize: isMobile ? 20 : 24,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF5B21B6),
+                      color: const Color(0xFF5B21B6),
                       letterSpacing: -0.5,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: isMobile ? 6 : 10),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
+                  children: [
                     Expanded(
                       child: Text(
                         '25 Pending Invoices',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: 11.5,
+                          fontSize: isMobile ? 10.5 : 11.5,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF7C3AED),
+                          color: const Color(0xFF7C3AED),
                         ),
                       ),
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       'Updated: 15:14:18',
                       style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6B7280),
+                        fontSize: isMobile ? 10 : 11,
+                        color: const Color(0xFF6B7280),
                       ),
                     ),
                   ],
@@ -2710,10 +3641,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
 
     final partyTableCard = Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -2733,12 +3664,12 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             crossAxisAlignment: WrapCrossAlignment.center,
             alignment: WrapAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Party-wise Outstanding',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: isMobile ? 14 : 16,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: const Color(0xFF0F172A),
                 ),
               ),
               Wrap(
@@ -2764,21 +3695,21 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 7,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 8 : 12,
+                        vertical: isMobile ? 5 : 7,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFEEF2FF),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(color: const Color(0xFFC7D2FE)),
                       ),
-                      child: const Text(
+                      child: Text(
                         'VIEW ALL PARTY',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: isMobile ? 10 : 11,
                           fontWeight: FontWeight.w800,
-                          color: Color(0xFF4F46E5),
+                          color: const Color(0xFF4F46E5),
                           letterSpacing: 0.3,
                         ),
                       ),
@@ -2794,9 +3725,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 7,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 8 : 10,
+                        vertical: isMobile ? 5 : 7,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -2805,19 +3736,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             LucideIcons.fileSpreadsheet,
                             size: 14,
                             color: Color(0xFF16A34A),
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             'Excel',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: isMobile ? 11 : 12,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF334155),
+                              color: const Color(0xFF334155),
                             ),
                           ),
                         ],
@@ -2834,9 +3765,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     },
                     borderRadius: BorderRadius.circular(8),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 7,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 8 : 10,
+                        vertical: isMobile ? 5 : 7,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
@@ -2845,19 +3776,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             LucideIcons.fileText,
                             size: 14,
                             color: Color(0xFF0284C7),
                           ),
-                          SizedBox(width: 4),
+                          const SizedBox(width: 4),
                           Text(
                             'CSV',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: isMobile ? 11 : 12,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF334155),
+                              color: const Color(0xFF334155),
                             ),
                           ),
                         ],
@@ -2868,11 +3799,11 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 10 : 16),
 
           // Filter Controls Container (Image 4)
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(isMobile ? 8 : 12),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(12),
@@ -2883,7 +3814,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 if (isMobile) ...[
                   // Mobile Row 1: Search field (full width)
                   Container(
-                    height: 38,
+                    height: 34,
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(8),
@@ -2894,18 +3825,18 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       children: [
                         const Icon(
                           LucideIcons.search,
-                          size: 15,
+                          size: 14,
                           color: Color(0xFF94A3B8),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: TextField(
                             controller: _rpSearchController,
-                            style: const TextStyle(fontSize: 12.5),
+                            style: const TextStyle(fontSize: 11.5),
                             decoration: const InputDecoration(
                               hintText: 'Search client/invoice...',
                               hintStyle: TextStyle(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 color: Color(0xFF94A3B8),
                               ),
                               border: InputBorder.none,
@@ -2917,14 +3848,14 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   // Mobile Row 2: Status dropdown + Date range picker
                   Row(
                     children: [
                       Expanded(
                         child: Container(
-                          height: 38,
-                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          height: 34,
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
@@ -2936,11 +3867,11 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                               isExpanded: true,
                               icon: const Icon(
                                 LucideIcons.chevronDown,
-                                size: 14,
+                                size: 13,
                                 color: Color(0xFF64748B),
                               ),
                               style: const TextStyle(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
                                 color: Color(0xFF334155),
                               ),
@@ -2967,7 +3898,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: InkWell(
                           onTap: () async {
@@ -2990,8 +3921,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           },
                           borderRadius: BorderRadius.circular(8),
                           child: Container(
-                            height: 38,
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            height: 34,
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(8),
@@ -3008,22 +3939,22 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                         ? 'dd/mm/yyyy'
                                         : '${_rpFromDate!.day}/${_rpFromDate!.month}/${_rpFromDate!.year}',
                                     style: const TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 11,
                                       color: Color(0xFF64748B),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 3),
                                   const Icon(
                                     LucideIcons.calendar,
-                                    size: 13,
+                                    size: 12,
                                     color: Color(0xFF64748B),
                                   ),
                                   const Padding(
-                                    padding: EdgeInsets.symmetric(horizontal: 6),
+                                    padding: EdgeInsets.symmetric(horizontal: 4),
                                     child: Text(
                                       'to',
                                       style: TextStyle(
-                                        fontSize: 11.5,
+                                        fontSize: 11,
                                         color: Color(0xFF94A3B8),
                                       ),
                                     ),
@@ -3033,14 +3964,14 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                         ? 'dd/mm/yyyy'
                                         : '${_rpToDate!.day}/${_rpToDate!.month}/${_rpToDate!.year}',
                                     style: const TextStyle(
-                                      fontSize: 11.5,
+                                      fontSize: 11,
                                       color: Color(0xFF64748B),
                                     ),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: 3),
                                   const Icon(
                                     LucideIcons.calendar,
-                                    size: 13,
+                                    size: 12,
                                     color: Color(0xFF64748B),
                                   ),
                                 ],
@@ -3051,29 +3982,29 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   // Mobile Row 3: Min ₹ & Max ₹
                   Row(
                     children: [
                       Expanded(
                         child: SizedBox(
-                          height: 36,
+                          height: 34,
                           child: TextField(
                             controller: _rpMinController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(fontSize: 12),
+                            style: const TextStyle(fontSize: 11.5),
                             decoration: InputDecoration(
                               hintText: 'Min ₹',
                               hintStyle: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 11,
                                 color: Color(0xFF94A3B8),
                               ),
                               filled: true,
                               fillColor: Colors.white,
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10,
+                                horizontal: 8,
+                                vertical: 8,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -3091,26 +4022,26 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: SizedBox(
-                          height: 36,
+                          height: 34,
                           child: TextField(
                             controller: _rpMaxController,
                             keyboardType: TextInputType.number,
-                            style: const TextStyle(fontSize: 12),
+                            style: const TextStyle(fontSize: 11.5),
                             decoration: InputDecoration(
                               hintText: 'Max ₹',
                               hintStyle: const TextStyle(
-                                fontSize: 11.5,
+                                fontSize: 11,
                                 color: Color(0xFF94A3B8),
                               ),
                               filled: true,
                               fillColor: Colors.white,
                               isDense: true,
                               contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 10,
+                                horizontal: 8,
+                                vertical: 8,
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -3381,22 +4312,25 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           ),
           const SizedBox(height: 16),
 
-          // Invoices Table (Image 5) wrapped in horizontal SingleChildScrollView to avoid ANY overflow
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minWidth: isMobile ? 700 : 780,
-              ),
+          // Invoices Table: mobile card list on mobile, horizontal scroll table on desktop/macOS
+          if (isMobile)
+            _buildMobileInvoicesList()
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: 780,
+                ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Table Header
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 12,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: isMobile ? 8 : 12,
                     ),
                     decoration: const BoxDecoration(
                       color: Color(0xFFF8FAFC),
@@ -3405,75 +4339,75 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       ),
                     ),
                     child: Row(
-                      children: const [
+                      children: [
                         SizedBox(
-                          width: 150,
+                          width: isMobile ? 110 : 150,
                           child: Text(
                             'PARTY NAME',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: isMobile ? 10 : 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
+                              color: const Color(0xFF64748B),
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         SizedBox(
-                          width: 120,
+                          width: isMobile ? 85 : 120,
                           child: Text(
                             'INV NUMBER',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: isMobile ? 10 : 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
+                              color: const Color(0xFF64748B),
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         SizedBox(
-                          width: 110,
+                          width: isMobile ? 75 : 110,
                           child: Text(
                             'DUE DATE',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: isMobile ? 10 : 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
+                              color: const Color(0xFF64748B),
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         SizedBox(
-                          width: 130,
+                          width: isMobile ? 95 : 130,
                           child: Text(
                             'PENDING AMOUNT',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: isMobile ? 10 : 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
+                              color: const Color(0xFF64748B),
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         SizedBox(
-                          width: 90,
+                          width: isMobile ? 70 : 90,
                           child: Text(
                             'STATUS',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: isMobile ? 10 : 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
+                              color: const Color(0xFF64748B),
                               letterSpacing: 0.5,
                             ),
                           ),
                         ),
                         SizedBox(
-                          width: 200,
+                          width: isMobile ? 180 : 200,
                           child: Text(
                             'ACTIONS',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: isMobile ? 10 : 11,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF64748B),
+                              color: const Color(0xFF64748B),
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -3485,7 +4419,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   // Table Rows
                   if (_filteredInvoices.isEmpty)
                     Container(
-                      width: 760,
+                      width: isMobile ? 620 : 760,
                       padding: const EdgeInsets.symmetric(vertical: 40),
                       alignment: Alignment.center,
                       child: Column(
@@ -3514,9 +4448,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           (inv['pendingAmount'] as num).toDouble();
 
                       return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 12,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: isMobile ? 7 : 12,
                         ),
                         decoration: const BoxDecoration(
                           border: Border(
@@ -3529,57 +4463,57 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         child: Row(
                           children: [
                             SizedBox(
-                              width: 150,
+                              width: isMobile ? 110 : 150,
                               child: Text(
                                 inv['partyName'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 13,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 11.5 : 13,
                                   fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
+                                  color: const Color(0xFF0F172A),
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 120,
+                              width: isMobile ? 85 : 120,
                               child: Text(
                                 inv['invNumber'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 11 : 12,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
+                                  color: const Color(0xFF64748B),
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 110,
+                              width: isMobile ? 75 : 110,
                               child: Text(
                                 inv['dueDate'] ?? '',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 11 : 12,
                                   fontWeight: FontWeight.w500,
-                                  color: Color(0xFF64748B),
+                                  color: const Color(0xFF64748B),
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 130,
+                              width: isMobile ? 95 : 130,
                               child: Text(
                                 '₹${_formatIndianCurrency(pendingAmt)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
+                                style: TextStyle(
+                                  fontSize: isMobile ? 11.5 : 13,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF0F172A),
+                                  color: const Color(0xFF0F172A),
                                 ),
                               ),
                             ),
                             SizedBox(
-                              width: 90,
+                              width: isMobile ? 70 : 90,
                               child: Align(
                                 alignment: Alignment.centerLeft,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: isMobile ? 6 : 8,
+                                    vertical: isMobile ? 2 : 3,
                                   ),
                                   decoration: BoxDecoration(
                                     color: isOverdue
@@ -3590,7 +4524,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                   child: Text(
                                     inv['status'] ?? '',
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: isMobile ? 9.5 : 11,
                                       fontWeight: FontWeight.bold,
                                       color: isOverdue
                                           ? const Color(0xFF991B1B)
@@ -3601,31 +4535,31 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                               ),
                             ),
                             SizedBox(
-                              width: 200,
+                              width: isMobile ? 180 : 200,
                               child: Row(
                                 children: [
                                   IconButton(
                                     onPressed: () =>
                                         _showInvoiceDetailsModal(context, inv),
-                                    icon: const Icon(
+                                    icon: Icon(
                                       LucideIcons.eye,
-                                      size: 16,
-                                      color: Color(0xFF64748B),
+                                      size: isMobile ? 14 : 16,
+                                      color: const Color(0xFF64748B),
                                     ),
                                     tooltip: 'View Invoice',
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(),
                                   ),
                                   if (isOverdue) ...[
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: isMobile ? 6 : 8),
                                     InkWell(
                                       onTap: () =>
                                           _showRecordPaymentModal(context, inv),
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 4,
+                                        padding: EdgeInsets.symmetric(
+                                          horizontal: isMobile ? 6 : 8,
+                                          vertical: isMobile ? 3 : 4,
                                         ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFEDE9FE),
@@ -3635,19 +4569,19 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                             color: const Color(0xFFDDD6FE),
                                           ),
                                         ),
-                                        child: const Text(
+                                        child: Text(
                                           'Record\nPayment',
                                           textAlign: TextAlign.center,
                                           style: TextStyle(
-                                            fontSize: 10,
+                                            fontSize: isMobile ? 9 : 10,
                                             fontWeight: FontWeight.w800,
-                                            color: Color(0xFF6D28D9),
+                                            color: const Color(0xFF6D28D9),
                                             height: 1.1,
                                           ),
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: isMobile ? 6 : 8),
                                     InkWell(
                                       onTap: () {
                                         AppSnackbar.show(
@@ -3658,7 +4592,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                       },
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
-                                        padding: const EdgeInsets.all(6),
+                                        padding: EdgeInsets.all(isMobile ? 4 : 6),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFE0F2FE),
                                           borderRadius:
@@ -3667,10 +4601,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                             color: const Color(0xFFBAE6FD),
                                           ),
                                         ),
-                                        child: const Icon(
+                                        child: Icon(
                                           LucideIcons.send,
-                                          size: 13,
-                                          color: Color(0xFF0284C7),
+                                          size: isMobile ? 11 : 13,
+                                          color: const Color(0xFF0284C7),
                                         ),
                                       ),
                                     ),
@@ -3718,6 +4652,277 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
   }
 
+  Widget _buildMobileInvoicesList() {
+    if (_filteredInvoices.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        alignment: Alignment.center,
+        child: Column(
+          children: const [
+            Icon(LucideIcons.searchX, size: 32, color: Color(0xFF94A3B8)),
+            SizedBox(height: 10),
+            Text(
+              'No matching invoices found.',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: _filteredInvoices.map((inv) {
+        final isOverdue = inv['status'] == 'Overdue';
+        final pendingAmt = (inv['pendingAmount'] as num).toDouble();
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Party name & Status
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      inv['partyName'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isOverdue
+                          ? const Color(0xFFFEE2E2)
+                          : const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      inv['status'] ?? '',
+                      style: TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: isOverdue
+                            ? const Color(0xFF991B1B)
+                            : const Color(0xFF166534),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Row 2: Invoice No & Due Date
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      inv['invNumber'] ?? '',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.calendar,
+                          size: 11,
+                          color: Color(0xFF64748B),
+                        ),
+                        const SizedBox(width: 3),
+                        Flexible(
+                          child: Text(
+                            'Due: ${inv['dueDate'] ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: Color(0xFF64748B),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '₹${_formatIndianCurrency(pendingAmt)}',
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+
+              // Row 3: Action Buttons
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  InkWell(
+                    onTap: () => _showInvoiceDetailsModal(context, inv),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(
+                            LucideIcons.eye,
+                            size: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Details',
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (isOverdue) ...[
+                    InkWell(
+                      onTap: () => _showRecordPaymentModal(context, inv),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEDE9FE),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFDDD6FE)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              LucideIcons.creditCard,
+                              size: 11,
+                              color: Color(0xFF6D28D9),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Payment',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF6D28D9),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        AppSnackbar.show(
+                          context,
+                          'Payment reminder sent to ${inv['partyName']} (${inv['invNumber']}) via WhatsApp & SMS',
+                          type: SnackType.success,
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0F2FE),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFFBAE6FD)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              LucideIcons.send,
+                              size: 11,
+                              color: Color(0xFF0284C7),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Remind',
+                              style: TextStyle(
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0284C7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildRpMiniCard({
     required String label,
     required String value,
@@ -3726,12 +4931,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required Color valueColor,
     required Color bgColor,
     required Color borderColor,
+    bool isMobile = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 10 : 14,
+        vertical: isMobile ? 8 : 12,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
         border: Border.all(color: borderColor),
       ),
       child: Column(
@@ -3740,33 +4950,33 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: isMobile ? 8.5 : 10,
               fontWeight: FontWeight.w800,
               color: labelColor,
               letterSpacing: 0.3,
             ),
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: isMobile ? 4 : 6),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: isMobile ? 14 : 18,
                 fontWeight: FontWeight.w900,
                 color: valueColor,
                 letterSpacing: -0.4,
               ),
             ),
           ),
-          const SizedBox(height: 4),
+          SizedBox(height: isMobile ? 2 : 4),
           Text(
             subtitle,
-            style: const TextStyle(
-              fontSize: 10.5,
+            style: TextStyle(
+              fontSize: isMobile ? 9 : 10.5,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF6B7280),
             ),
           ),
         ],
@@ -3779,31 +4989,32 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required String label,
     required String amount,
     required String invCount,
+    bool isMobile = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: EdgeInsets.symmetric(vertical: isMobile ? 4 : 6),
       child: Row(
         children: [
           Container(
-            width: 7,
-            height: 7,
+            width: isMobile ? 6 : 7,
+            height: isMobile ? 6 : 7,
             decoration: BoxDecoration(
               color: dotColor,
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: isMobile ? 6 : 8),
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 12.5,
+              style: TextStyle(
+                fontSize: isMobile ? 11 : 12.5,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF334155),
+                color: const Color(0xFF334155),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: isMobile ? 6 : 8),
           Flexible(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -3813,18 +5024,18 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                 children: [
                   Text(
                     amount,
-                    style: const TextStyle(
-                      fontSize: 12.5,
+                    style: TextStyle(
+                      fontSize: isMobile ? 11 : 12.5,
                       fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                      color: const Color(0xFF0F172A),
                     ),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     '($invCount)',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF64748B),
+                    style: TextStyle(
+                      fontSize: isMobile ? 9.5 : 11,
+                      color: const Color(0xFF64748B),
                     ),
                   ),
                 ],
@@ -4371,10 +5582,11 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // TAB 3: EXPENSES
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildExpensesTab(bool isMobile) {
-    return _buildBentoSectionCard(
+    final bentoCard = _buildBentoSectionCard(
       title: 'Operational Expense Categories',
       total: '₹9,88,56,717.40',
       accentColor: const Color(0xFFEF4444),
+      isMobile: isMobile,
       items: [
         {
           'label': 'Rent & Facility Management',
@@ -4403,6 +5615,83 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         },
       ],
     );
+
+    if (!isMobile) return bentoCard;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x12000000),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.trendingDown, color: Colors.white, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Dedicated Expenses Section',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      'Manage claims, recurring subscriptions & budgets',
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 10.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.expenses),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF166534),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  elevation: 0,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
+                ),
+                icon: const Icon(LucideIcons.arrowRight, size: 12),
+                label: const Text('Open', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ),
+        bentoCard,
+      ],
+    );
   }
 
   Widget _buildBentoSectionCard({
@@ -4410,12 +5699,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     required String total,
     required Color accentColor,
     required List<Map<String, dynamic>> items,
+    bool isMobile = false,
   }) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -4436,10 +5726,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
+                  style: TextStyle(
+                    fontSize: isMobile ? 13.5 : 15,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
+                    color: const Color(0xFF0F172A),
                   ),
                 ),
               ),
@@ -4451,7 +5741,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   child: Text(
                     total,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: isMobile ? 14.5 : 16,
                       fontWeight: FontWeight.w900,
                       color: accentColor,
                     ),
@@ -4460,13 +5750,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 10 : 16),
           const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 12),
+          SizedBox(height: isMobile ? 8 : 12),
           ...items.map((item) {
             final double pct = (item['pct'] as num).toDouble();
             return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: EdgeInsets.symmetric(vertical: isMobile ? 5 : 8),
               child: Column(
                 children: [
                   Row(
@@ -4477,10 +5767,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           item['label'],
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontSize: 12.5,
+                          style: TextStyle(
+                            fontSize: isMobile ? 11.5 : 12.5,
                             fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
+                            color: const Color(0xFF334155),
                           ),
                         ),
                       ),
@@ -4491,17 +5781,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                           alignment: Alignment.centerRight,
                           child: Text(
                             item['value'],
-                            style: const TextStyle(
-                              fontSize: 12.5,
+                            style: TextStyle(
+                              fontSize: isMobile ? 11.5 : 12.5,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
+                              color: const Color(0xFF0F172A),
                             ),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 5),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
@@ -4510,7 +5800,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       valueColor: AlwaysStoppedAnimation<Color>(
                         accentColor.withValues(alpha: 0.7),
                       ),
-                      minHeight: 5,
+                      minHeight: isMobile ? 4 : 5,
                     ),
                   ),
                 ],
@@ -4984,6 +6274,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         buildLabel('Category'),
                         DropdownButtonFormField<String>(
                           value: category,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -5041,6 +6332,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         buildLabel('Payment Mode'),
                         DropdownButtonFormField<String>(
                           value: paymentMode,
+                          isExpanded: true,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -5905,14 +7197,117 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   ),
                   const SizedBox(height: 10),
 
-                  // Aligned Table for bank entries
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                    ),
+                  // Aligned Table for bank entries (mobile card on mobile, table on desktop/macOS)
+                  Builder(
+                    builder: (context) {
+                      final isMobile = Theme.of(context).platform != TargetPlatform.macOS &&
+                          MediaQuery.of(context).size.width < 950;
+                      if (isMobile) {
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: const [
+                              BoxShadow(
+                                color: Color(0x06000000),
+                                blurRadius: 4,
+                                offset: Offset(0, 1),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      bank.balance > 0 ? 'Opening Balance' : 'Account Created',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCFCE7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: const Text(
+                                      'CREDIT',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF16A34A),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.calendar, size: 12, color: Color(0xFF64748B)),
+                                  const SizedBox(width: 4),
+                                  const Text(
+                                    '14 Oct 2026',
+                                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                  ),
+                                  const Spacer(),
+                                  Text(
+                                    '₹${_formatNumber(bank.balance)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                              const SizedBox(height: 6),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Expanded(
+                                    child: Text(
+                                      'Running Balance',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '₹${_formatNumber(bank.balance)}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        );
+                      }
+                      return Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: SingleChildScrollView(
@@ -6031,7 +7426,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         ),
                       ),
                     ),
-                  ),
+                  );
+                },
+              ),
                   const SizedBox(height: 20),
 
                   Align(
@@ -6313,5 +7710,34 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       intPart = '${buffer.toString()},$lastThree';
     }
     return '${isNegative ? '-' : ''}$intPart$decPart';
+  }
+}
+
+class _AccountingTabItem {
+  final String label;
+  final IconData icon;
+  const _AccountingTabItem(this.label, this.icon);
+}
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

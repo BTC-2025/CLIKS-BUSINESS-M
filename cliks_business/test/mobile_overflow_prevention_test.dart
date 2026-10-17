@@ -7,6 +7,7 @@ import 'package:clicks_business_frontend/features/billing/pages/accounting_page.
 import 'package:clicks_business_frontend/features/billing/pages/expenses_page.dart';
 import 'package:clicks_business_frontend/features/billing/pages/gst_page.dart';
 import 'package:clicks_business_frontend/features/billing/pages/billing_page.dart';
+import 'package:clicks_business_frontend/features/billing/pages/customers_page.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 void main() {
@@ -610,6 +611,355 @@ void main() {
       expect(find.text('Rahul Varma'), findsOneWidget);
       expect(find.text('Reschedule Pickup'), findsOneWidget);
     });
+
+    testWidgets('AccountingPage mobile tabs are arranged left-to-right correctly and can navigate sections via footer', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: AccountingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Verify initial tab 0 is P & L and footer shows next tab 'Balance Sheet ›'
+      expect(find.text('Gross Revenue'), findsOneWidget);
+      expect(find.text('Balance Sheet ›'), findsOneWidget);
+
+      // Tap 'Balance Sheet' tab in sticky tab bar
+      final balanceSheetTab = find.text('Balance Sheet');
+      expect(balanceSheetTab, findsOneWidget);
+      await tester.tap(balanceSheetTab);
+      await tester.pumpAndSettle();
+
+      // On Balance Sheet (tab 1), footer shows previous '‹ P & L' and next 'Receivables & Payables ›'
+      expect(find.text('‹ P & L'), findsOneWidget);
+      expect(find.text('Receivables & Payables ›'), findsOneWidget);
+      expect(find.text('Liabilities & Equity'), findsOneWidget);
+
+      // Tap 'Receivables & Payables' tab in sticky tab bar
+      final rpTab = find.text('Receivables & Payables');
+      expect(rpTab, findsOneWidget);
+      await tester.ensureVisible(rpTab);
+      await tester.pumpAndSettle();
+      await tester.tap(rpTab);
+      await tester.pumpAndSettle();
+
+      // On Receivables & Payables (tab 2), next is Cash & Bank (tab 3)
+      expect(find.text('Cash & Bank ›'), findsOneWidget);
+      expect(find.text('‹ Balance Sheet'), findsOneWidget);
+
+      // Tap 'Cash & Bank' tab in sticky tab bar
+      final cashTab = find.text('Cash & Bank');
+      expect(cashTab, findsOneWidget);
+      await tester.ensureVisible(cashTab);
+      await tester.pumpAndSettle();
+      await tester.tap(cashTab);
+      await tester.pumpAndSettle();
+
+      // On Cash & Bank (tab 3), next is Day Book (tab 4)
+      expect(find.text('Day Book ›'), findsOneWidget);
+      expect(find.text('‹ Receivables & Payables'), findsOneWidget);
+      expect(find.text('TOTAL AVAILABLE FUNDS'), findsOneWidget);
+
+      // Tap 'Day Book' tab in sticky tab bar
+      final dayBookTab = find.text('Day Book');
+      expect(dayBookTab, findsOneWidget);
+      await tester.ensureVisible(dayBookTab);
+      await tester.pumpAndSettle();
+      await tester.tap(dayBookTab);
+      await tester.pumpAndSettle();
+
+      // On Day Book (tab 4), next is Expenses (tab 5)
+      expect(find.text('Expenses ›'), findsOneWidget);
+      expect(find.text('‹ Cash & Bank'), findsOneWidget);
+
+      // Tap 'Expenses' tab in sticky tab bar
+      final expensesTab = find.text('Expenses');
+      expect(expensesTab, findsOneWidget);
+      await tester.ensureVisible(expensesTab);
+      await tester.pumpAndSettle();
+      await tester.tap(expensesTab);
+      await tester.pumpAndSettle();
+
+      // On Expenses (tab 5), Dedicated Expenses Section banner is present with Open button
+      expect(find.text('Dedicated Expenses Section'), findsOneWidget);
+      expect(find.text('Operational Expense Categories'), findsOneWidget);
+      expect(find.text('GST ›'), findsOneWidget);
+      expect(find.text('‹ Day Book'), findsOneWidget);
+
+      // Tap 'GST' tab in sticky tab bar
+      final gstTab = find.text('GST');
+      expect(gstTab, findsOneWidget);
+      await tester.ensureVisible(gstTab);
+      await tester.pumpAndSettle();
+      await tester.tap(gstTab);
+      await tester.pumpAndSettle();
+
+      // On GST (tab 6), Full GST Compliance Portal banner is present
+      expect(find.text('Full GST Compliance Portal'), findsOneWidget);
+      expect(find.text('GSTR-1 Summary'), findsOneWidget);
+      expect(find.text('‹ Expenses'), findsOneWidget);
+    });
+
+    testWidgets('AccountingPage on macOS platform preserves original desktop UI without mobile changes', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: AccountingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // On macOS desktop, mobile footer is not present
+      expect(find.text('Balance Sheet ›'), findsNothing);
+      expect(find.text('‹ P & L'), findsNothing);
+      expect(find.text('Dedicated Expenses Section'), findsNothing);
+    });
+
+    testWidgets('BillingPage on mobile OS platform renders redesigned hero summary card, sticky tab bar, and mobile FAB', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.android),
+            home: const Scaffold(
+              body: BillingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Hero Card elements
+      expect(find.text('SALES & BILLING HUB'), findsOneWidget);
+      expect(find.text('LIVE SYNC'), findsOneWidget);
+      expect(find.text('TOTAL INVOICED'), findsOneWidget);
+      expect(find.text('PAID REVENUE'), findsOneWidget);
+      expect(find.text('UNPAID DUES'), findsOneWidget);
+
+      // Mobile FAB
+      expect(find.text('Generate Invoice'), findsOneWidget);
+
+      // Tabs
+      expect(find.text('Invoices List'), findsOneWidget);
+      expect(find.text('Warranty & Replacement Claims'), findsOneWidget);
+      expect(find.text('DELIVERY CHALLAN'), findsOneWidget);
+    });
+
+    testWidgets('BillingPage on macOS platform preserves original desktop UI without mobile changes', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: BillingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // On macOS desktop, mobile hero header and mobile FAB are not present
+      expect(find.text('SALES & BILLING HUB'), findsNothing);
+      expect(find.text('LIVE SYNC'), findsNothing);
+      expect(find.text('Billing Center'), findsOneWidget);
+      expect(find.byType(FloatingActionButton), findsNothing);
+    });
+
+    testWidgets('CustomersPage on mobile OS platform renders redesigned hero summary card, sticky tab bar, and mobile FAB', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.android),
+            home: const Scaffold(
+              body: CustomersPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Hero Card elements
+      expect(find.text('CUSTOMER & UDHAAR LEDGER'), findsOneWidget);
+      expect(find.text('LIVE STATUS'), findsOneWidget);
+      expect(find.text('ACTIVE CUSTOMERS'), findsOneWidget);
+      expect(find.text('TOTAL OUTSTANDING'), findsOneWidget);
+      expect(find.text('COLLECTION EFFICIENCY'), findsOneWidget);
+
+      // Mobile FAB
+      expect(find.text('Add Customer'), findsOneWidget);
+
+      // Sticky Tabs
+      expect(find.text('Customers List'), findsOneWidget);
+      expect(find.text('Aging & Collection Reports 📊'), findsOneWidget);
+      expect(find.text('Points Rules & Ratio'), findsOneWidget);
+    });
+
+    testWidgets('CustomersPage on macOS platform preserves original desktop UI without mobile changes', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: CustomersPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // On macOS desktop, mobile hero header is not present
+      expect(find.text('CUSTOMER & UDHAAR LEDGER'), findsNothing);
+      expect(find.text('LIVE STATUS'), findsNothing);
+      expect(find.text('Customers & Udhaar Ledger'), findsOneWidget);
+    });
+
+    testWidgets('BillingPage renders on 320px ultra-compact mobile without overflow across all tabs', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.android),
+            home: const Scaffold(
+              body: BillingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(BillingPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Tab 1: Warranty & Replacement Claims
+      final warrantyTab = find.text('Warranty & Replacement Claims');
+      await tester.ensureVisible(warrantyTab);
+      await tester.pumpAndSettle();
+      await tester.tap(warrantyTab);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Tab 2: DELIVERY CHALLAN
+      final challanTab = find.text('DELIVERY CHALLAN');
+      await tester.ensureVisible(challanTab);
+      await tester.pumpAndSettle();
+      await tester.tap(challanTab);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Sub-tab: Fleet & Route Tracking
+      final fleetTab = find.text('Fleet & Route Tracking');
+      if (fleetTab.evaluate().isNotEmpty) {
+        await tester.ensureVisible(fleetTab);
+        await tester.pumpAndSettle();
+        await tester.tap(fleetTab);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      }
+
+      // Return to Tab 0: Invoices List
+      final invoicesTab = find.text('Invoices List');
+      await tester.ensureVisible(invoicesTab);
+      await tester.pumpAndSettle();
+      await tester.tap(invoicesTab);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('CustomersPage renders on 320px ultra-compact mobile without overflow across all tabs', (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.android),
+            home: const Scaffold(
+              body: CustomersPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CustomersPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Tab 1: Aging & Collection Reports
+      final agingTab = find.text('Aging & Collection Reports 📊');
+      await tester.ensureVisible(agingTab);
+      await tester.pumpAndSettle();
+      await tester.tap(agingTab);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Tab 2: Points Rules & Ratio
+      final pointsTab = find.text('Points Rules & Ratio');
+      await tester.ensureVisible(pointsTab);
+      await tester.pumpAndSettle();
+      await tester.tap(pointsTab);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
   });
 }
+
 

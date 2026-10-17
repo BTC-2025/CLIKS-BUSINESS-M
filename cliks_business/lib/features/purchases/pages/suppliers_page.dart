@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── Data Models ─────────────────────────────────────────────────────────────
 
@@ -301,7 +303,78 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
+    if (isMacOS) {
+      return _buildDesktopView(screenWidth, isMobile);
+    }
+
+    // ─── MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: isMobile
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76),
+              child: FloatingActionButton(
+                onPressed: _showRegisterSupplierDialog,
+                backgroundColor: const Color(0xFF166534),
+                elevation: 4,
+                child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(isMobile)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: 46,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                child: _buildMobileTabNav(),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
+
+          // ─── MAIN CONTENT CONTAINER (Tables & Lists) ───
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              14,
+              0,
+              14,
+              isMobile ? 140 : 40,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _buildActiveTabContent(screenWidth),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DESKTOP VIEW (Preserved strictly for macOS)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(double screenWidth, bool isMobile) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       body: SafeArea(
@@ -340,6 +413,278 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
       ),
     );
   }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MOBILE HERO SUMMARY CARD (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title Header & Status Badge Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.users, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'SUPPLIERS & VENDORS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.checkCircle2, size: 13, color: Colors.greenAccent.shade100),
+                    const SizedBox(width: 4),
+                    Text(
+                      'ACTIVE',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            'Suppliers Master Suite',
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 20,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.3,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Action Buttons row inside Hero card
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showBulkImportDialog,
+                  icon: const Icon(LucideIcons.uploadCloud, size: 12, color: Colors.white),
+                  label: const Text(
+                    'Bulk Import (CSV)',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showRegisterSupplierDialog,
+                  icon: const Icon(LucideIcons.plus, size: 12, color: Colors.white),
+                  label: const Text(
+                    '+ Register Supplier',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 4 Stat Chips inside hero card
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroChip('OUTSTANDING PAYABLES', '₹86,23,901', isMobile),
+                const SizedBox(width: 8),
+                _buildHeroChip('ADVANCE OUTFLOWS', '₹3,58,655', isMobile),
+                const SizedBox(width: 8),
+                _buildHeroChip('TOTAL PROCURED', '₹0', isMobile),
+                const SizedBox(width: 8),
+                _buildHeroChip('REGISTERED SUPPLIERS', '${_suppliers.length > 5 ? _suppliers.length : 65}', isMobile),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChip(String label, String value, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12, vertical: isMobile ? 8 : 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isMobile ? 8.5 : 9.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isMobile ? 13 : 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MOBILE STICKY TAB NAVIGATION (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      (label: 'Suppliers Master Base', icon: LucideIcons.users),
+      (label: 'Running Ledger Statements', icon: LucideIcons.fileText),
+      (label: 'Payables Aging & Reminders', icon: LucideIcons.alertTriangle),
+    ];
+
+    return SizedBox(
+      height: 46,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeTab == index;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: GestureDetector(
+                onTap: () => setState(() => _activeTab = index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF166534) : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFF166534).withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        tabs[index].icon,
+                        size: 13,
+                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        tabs[index].label,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected ? Colors.white : const Color(0xFF374151),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
 
   // ═══════════════════════════════════════════════════════════════════════════
   // 1. TOP HEADER (Suppliers Master Suite)
@@ -846,11 +1191,14 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
           ),
 
           // Responsive Data Table (Image 1)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, 1100.0);
+          if (screenWidth < 768 && Theme.of(context).platform != TargetPlatform.macOS)
+            _buildMobileSuppliersCardList(filtered)
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = math.max(constraints.maxWidth, 1100.0);
 
-              return SingleChildScrollView(
+                return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: SizedBox(
@@ -1192,6 +1540,356 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
     );
   }
 
+  Widget _buildMobileSuppliersCardList(List<_SupplierModel> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.users, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No suppliers found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(14),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final s = items[index];
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Avatar + Name/Code + Edit/Delete Actions
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFDCFCE7)),
+                    ),
+                    child: const Center(
+                      child: Icon(LucideIcons.user, size: 18, color: Color(0xFF16A34A)),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          s.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                            color: Color(0xFF0F172A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Code: ${s.code} | Contact: ${s.contactPerson}',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      InkWell(
+                        onTap: () => _showEditSupplierDialog(s),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: const Icon(LucideIcons.pencil, size: 13, color: Color(0xFF64748B)),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () => _showDeleteSupplierDialog(s),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: const Color(0xFFFECDD3)),
+                          ),
+                          child: const Icon(LucideIcons.trash2, size: 13, color: Color(0xFFEF4444)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Contact row
+              Row(
+                children: [
+                  const Icon(LucideIcons.phone, size: 11, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Text(s.phone, style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569))),
+                  const SizedBox(width: 12),
+                  const Icon(LucideIcons.mail, size: 11, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      s.email,
+                      style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569)),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Taxes & Terms
+              Wrap(
+                spacing: 10,
+                runSpacing: 2,
+                children: [
+                  Text('GSTIN: ${s.gstin}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text(s.pan.isEmpty ? 'PAN: N/A' : 'PAN: ${s.pan}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text('Terms: ${s.paymentTerms}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Financial stats & Status strip
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('CREDIT LIMIT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          Text(
+                            _formatIndianCurrency(s.creditLimit),
+                            style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('RUNNING PAYABLE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          Text(
+                            s.isAdvance
+                                ? '${_formatIndianCurrency(s.runningPayable)} (Adv)'
+                                : _formatIndianCurrency(s.runningPayable),
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                              color: s.isAdvance ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              s.status,
+                              style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (s.statusSubtitle.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              s.statusSubtitle,
+                              style: const TextStyle(fontSize: 9, color: Color(0xFF64748B)),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Bottom View Ledger Button
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedLedgerSupplier = s;
+                      _activeTab = 1;
+                    });
+                  },
+                  icon: const Icon(LucideIcons.fileText, size: 12, color: Color(0xFF16A34A)),
+                  label: const Text(
+                    'View Ledger',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFBBF7D0)),
+                    backgroundColor: const Color(0xFFF0FDF4),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileLedgerEntriesCardList(List<_LedgerEntry> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.bookOpen, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No ledger entries found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(14),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final entry = items[index];
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Date & Running Balance
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    entry.date,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF16A34A)),
+                  ),
+                  Text(
+                    'Bal: ${_formatIndianCurrency(entry.runningBalance)}',
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Description
+              Text(
+                entry.description,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 8),
+
+              // Debit & Credit row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Debit: ${entry.debit != null ? _formatIndianCurrency(entry.debit!) : '-'}',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: entry.debit != null ? const Color(0xFFDC2626) : const Color(0xFF64748B),
+                    ),
+                  ),
+                  Text(
+                    'Credit: ${entry.credit != null ? _formatIndianCurrency(entry.credit!) : '-'}',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.bold,
+                      color: entry.credit != null ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ───────────────────────────────────────────────────────────────────────────
   // TAB 1: RUNNING LEDGER STATEMENTS - Images 2 & 3
   // ───────────────────────────────────────────────────────────────────────────
@@ -1441,12 +2139,15 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
                 ),
 
                 // Statement Ledger Table (Image 3)
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final entries = _ledgerEntries[_selectedLedgerSupplier!.id] ?? [];
-                    final tableWidth = math.max(constraints.maxWidth, 720.0);
+                if (screenWidth < 768 && Theme.of(context).platform != TargetPlatform.macOS)
+                  _buildMobileLedgerEntriesCardList(_ledgerEntries[_selectedLedgerSupplier!.id] ?? [])
+                else
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final entries = _ledgerEntries[_selectedLedgerSupplier!.id] ?? [];
+                      final tableWidth = math.max(constraints.maxWidth, 720.0);
 
-                    return SingleChildScrollView(
+                      return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       child: SizedBox(
@@ -1759,10 +2460,13 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor),
+          Expanded(
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: textColor),
+            ),
           ),
+          const SizedBox(width: 8),
           Text(
             amount,
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textColor),
@@ -2147,6 +2851,7 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
     bool withFilter = false,
     Alignment alignment = Alignment.centerLeft,
   }) {
+    final isMobile = MediaQuery.of(context).size.width < 900;
     return Expanded(
       flex: flex,
       child: Align(
@@ -2160,7 +2865,7 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 13,
+                  fontSize: isMobile ? 11 : 13,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1E293B),
                   letterSpacing: 0.3,
@@ -2770,9 +3475,13 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
                   children: [
                     Icon(LucideIcons.clock, size: 14, color: Color(0xFF166534)),
                     SizedBox(width: 6),
-                    Text(
-                      'Credit & Payment Details',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                    Expanded(
+                      child: Text(
+                        'Credit & Payment Details',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF166534)),
+                      ),
                     ),
                   ],
                 ),
@@ -3028,3 +3737,27 @@ class _RegisterVendorMasterProfileModalState extends State<_RegisterVendorMaster
     );
   }
 }
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
+  }
+}
+

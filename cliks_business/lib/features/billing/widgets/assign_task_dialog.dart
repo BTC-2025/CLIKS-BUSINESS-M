@@ -92,31 +92,41 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 24),
       child: ConstrainedBox(
         constraints: const BoxConstraints(
           maxWidth: 500,
         ),
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(28),
+          padding: EdgeInsets.all(isMobile ? 18 : 28),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
-              const Text(
-                '✅ Assign Practice Operation Task',
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
-                  letterSpacing: -0.2,
-                ),
+              Row(
+                children: const [
+                  Text('✅ ', style: TextStyle(fontSize: 18)),
+                  Expanded(
+                    child: Text(
+                      'Assign Practice Operation Task',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111827),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 22),
 
@@ -359,12 +369,14 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      const Text(
-                        'Require document upload from client',
-                        style: TextStyle(
-                          fontSize: 13.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF111827),
+                      const Expanded(
+                        child: Text(
+                          'Require document upload from client',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF111827),
+                          ),
                         ),
                       ),
                     ],
@@ -377,46 +389,97 @@ class _AssignTaskDialogState extends State<AssignTaskDialog> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF374151),
-                      side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.2),
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  if (isMobile)
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF374151),
+                          side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.2),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF374151),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    OutlinedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF374151),
+                        side: const BorderSide(color: Color(0xFFD1D5DB), width: 1.2),
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
                       ),
                     ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF374151),
+                  SizedBox(width: isMobile ? 10 : 14),
+                  if (isMobile)
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _handleAssignTask,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF166534),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Assign Task',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    ElevatedButton(
+                      onPressed: _handleAssignTask,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF166534),
+                        foregroundColor: Colors.white,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Assign Task',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 14),
-                  ElevatedButton(
-                    onPressed: _handleAssignTask,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF166534),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Assign Task',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ],

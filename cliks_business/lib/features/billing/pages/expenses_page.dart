@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -368,40 +369,364 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: EdgeInsets.fromLTRB(
-          isMobile ? 12 : 24,
-          isMobile ? 12 : 20,
-          isMobile ? 12 : 24,
-          isMobile ? 80 : 40,
+    if (isMacOS) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF8FAFC),
+        body: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            isMobile ? 12 : 24,
+            isMobile ? 12 : 20,
+            isMobile ? 12 : 24,
+            isMobile ? 80 : 40,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ─── 1. TOP HEADER & ACTION BUTTONS (Image 1 & 2) ───
+              _buildTopHeader(isMobile),
+              const SizedBox(height: 20),
+
+              // ─── 2. METRIC STAT CARDS (Image 1 & 2 vs Image 6 & 8) ───
+              _buildMetricCards(isMobile),
+              const SizedBox(height: 20),
+
+              // ─── 3. FOUR TAB NAVIGATION BAR ───
+              _buildTabBar(isMobile),
+              const SizedBox(height: 18),
+
+              // ─── 4. ACTIVE TAB CONTENT VIEW ───
+              if (_activeTab == 0) _buildRegistryContent(isMobile),
+              if (_activeTab == 1) _buildSubscriptionsContent(isMobile),
+              if (_activeTab == 2) _buildBudgetsContent(isMobile),
+              if (_activeTab == 3) _buildReimbursementsContent(isMobile),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ─── 1. TOP HEADER & ACTION BUTTONS (Image 1 & 2) ───
-            _buildTopHeader(isMobile),
-            const SizedBox(height: 20),
+      );
+    }
 
-            // ─── 2. METRIC STAT CARDS (Image 1 & 2 vs Image 6 & 8) ───
-            _buildMetricCards(isMobile),
-            const SizedBox(height: 20),
-
-            // ─── 3. FOUR TAB NAVIGATION BAR ───
-            _buildTabBar(isMobile),
-            const SizedBox(height: 18),
-
-            // ─── 4. ACTIVE TAB CONTENT VIEW ───
-            if (_activeTab == 0) _buildRegistryContent(isMobile),
-            if (_activeTab == 1) _buildSubscriptionsContent(isMobile),
-            if (_activeTab == 2) _buildBudgetsContent(isMobile),
-            if (_activeTab == 3) _buildReimbursementsContent(isMobile),
+    // ─── MOBILE OS REDESIGN (Android & iOS) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'mobile_expenses_record_fab',
+        onPressed: _openRecordExpenseDialog,
+        backgroundColor: const Color(0xFF166534),
+        foregroundColor: Colors.white,
+        elevation: 4,
+        icon: const Icon(LucideIcons.plus, size: 16),
+        label: const Text(
+          'Record Expense',
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.1,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+                child: _buildMobileHeroSummary(),
+              ),
+            ),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _StickyTabNavDelegate(
+                child: Container(
+                  color: const Color(0xFFF8FAFC),
+                  padding: const EdgeInsets.symmetric(vertical: 2),
+                  child: _buildMobileTabNav(),
+                ),
+              ),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 90),
+              sliver: SliverToBoxAdapter(
+                child: Builder(
+                  builder: (context) {
+                    if (_activeTab == 0) return _buildRegistryContent(true);
+                    if (_activeTab == 1) return _buildSubscriptionsContent(true);
+                    if (_activeTab == 2) return _buildBudgetsContent(true);
+                    if (_activeTab == 3) return _buildReimbursementsContent(true);
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ),
+            ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileHeroSummary() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.receipt,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'EXPENSES & COST AUDIT',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE AUDIT',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            'Expenses & Budget Control',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'Total Paid',
+                  _formatIndianCurrency(_totalOperationalCosts),
+                  LucideIcons.trendingDown,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Total ITC',
+                  _formatIndianCurrency(_totalItcCredits),
+                  LucideIcons.receipt,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Subscriptions',
+                  '$_activeSubscriptionsCount Active',
+                  LucideIcons.calendar,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Budgets',
+                  '${_budgets.length} Depts',
+                  LucideIcons.pieChart,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      const _ExpensesTabItem('Expenses Registry & ITC', LucideIcons.receipt),
+      const _ExpensesTabItem('Recurring Subscriptions', LucideIcons.calendar),
+      const _ExpensesTabItem('Department Budgets & Limits', LucideIcons.pieChart),
+      const _ExpensesTabItem('Staff Reimbursements', LucideIcons.userCheck),
+    ];
+
+    return SizedBox(
+      height: 38,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeTab == index;
+            final isLast = index == tabs.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(right: isLast ? 0 : 6),
+              child: Builder(
+                builder: (tabContext) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _activeTab = index);
+                      Scrollable.ensureVisible(
+                        tabContext,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        alignment: 0.5,
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF166534) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isSelected
+                              ? const Color(0xFF166534)
+                              : const Color(0xFFE5E7EB),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tabs[index].icon,
+                            size: 12,
+                            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            tabs[index].label,
+                            style: TextStyle(
+                              fontSize: 10.5,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -911,12 +1236,12 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
         boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -926,7 +1251,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
               final isNarrow = constraints.maxWidth < 680;
 
               final searchField = Container(
-                height: 42,
+                height: isMobile ? 36 : 42,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -935,21 +1260,21 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                 child: TextField(
                   controller: _searchCtrl,
                   onChanged: (_) => setState(() {}),
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                  style: TextStyle(fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
                   decoration: InputDecoration(
                     hintText: 'Search any column (date, payee, amour',
-                    hintStyle: const TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
-                    prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+                    hintStyle: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF94A3B8)),
+                    prefixIcon: Icon(LucideIcons.search, size: isMobile ? 14 : 16, color: const Color(0xFF94A3B8)),
                     suffixIcon: _searchCtrl.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                            icon: Icon(LucideIcons.x, size: isMobile ? 13 : 14, color: const Color(0xFF94A3B8)),
                             onPressed: () {
                               _searchCtrl.clear();
                               setState(() {});
                             },
                           )
                         : null,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                    contentPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 14, vertical: isMobile ? 8 : 11),
                     border: InputBorder.none,
                     isDense: true,
                   ),
@@ -957,8 +1282,8 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
               );
 
               final categoriesDropdown = Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                height: isMobile ? 36 : 42,
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -967,7 +1292,8 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedCategory,
-                    icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                    isExpanded: true,
+                    icon: Icon(LucideIcons.chevronDown, size: isMobile ? 13 : 14, color: const Color(0xFF64748B)),
                     items: [
                       'All Categories',
                       'Rent',
@@ -977,7 +1303,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                       'Marketing',
                       'Travel',
                       'Maintenance',
-                    ].map((c) => DropdownMenuItem(value: c, child: Text(c, style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155))))).toList(),
+                    ].map((c) => DropdownMenuItem(value: c, child: Text(c, style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF334155)), overflow: TextOverflow.ellipsis))).toList(),
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedCategory = val);
                     },
@@ -986,8 +1312,8 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
               );
 
               final modesDropdown = Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                height: isMobile ? 36 : 42,
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
@@ -996,7 +1322,8 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
                     value: _selectedMode,
-                    icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                    isExpanded: true,
+                    icon: Icon(LucideIcons.chevronDown, size: isMobile ? 13 : 14, color: const Color(0xFF64748B)),
                     items: [
                       'All Modes',
                       'UPI',
@@ -1004,7 +1331,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                       'Credit Card',
                       'Debit Card',
                       'Cash',
-                    ].map((m) => DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155))))).toList(),
+                    ].map((m) => DropdownMenuItem(value: m, child: Text(m, style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF334155))))).toList(),
                     onChanged: (val) {
                       if (val != null) setState(() => _selectedMode = val);
                     },
@@ -1016,11 +1343,11 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                 return Column(
                   children: [
                     searchField,
-                    const SizedBox(height: 10),
+                    SizedBox(height: isMobile ? 8 : 10),
                     Row(
                       children: [
                         Expanded(child: categoriesDropdown),
-                        const SizedBox(width: 10),
+                        SizedBox(width: isMobile ? 8 : 10),
                         Expanded(child: modesDropdown),
                       ],
                     ),
@@ -1039,13 +1366,16 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isMobile ? 10 : 20),
 
-          // Registry Table (Image 1)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const minWidth = 1040.0;
-              final width = math.max(constraints.maxWidth, minWidth);
+          // Registry Table (Image 1): mobile card list on mobile, table on desktop/macOS
+          if (isMobile)
+            _buildMobileExpenseRegisterList()
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final minWidth = 1040.0;
+                final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -1056,7 +1386,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                     children: [
                       // Header Row with Sort/Filter Pills (Image 1)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 10 : 20,
+                          vertical: isMobile ? 8 : 16,
+                        ),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -1111,7 +1444,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                       else
                         ..._filteredExpenses.map((exp) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isMobile ? 10 : 20,
+                              vertical: isMobile ? 7 : 16,
+                            ),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                             ),
@@ -1121,14 +1457,21 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                   flex: 14,
                                   child: Text(
                                     exp.voucherNo,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11.5 : 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF065F46),
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 12,
                                   child: Text(
                                     exp.date,
-                                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11 : 12.5,
+                                      color: const Color(0xFF475569),
+                                    ),
                                   ),
                                 ),
                                 Expanded(
@@ -1138,12 +1481,19 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                     children: [
                                       Text(
                                         exp.description,
-                                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 11.5 : 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF0F172A),
+                                        ),
                                       ),
                                       const SizedBox(height: 2),
                                       Text(
                                         exp.category,
-                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 10 : 11,
+                                          color: const Color(0xFF64748B),
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1152,28 +1502,44 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                   flex: 16,
                                   child: Text(
                                     exp.payee,
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11.5 : 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF334155),
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 14,
                                   child: Text(
                                     _formatIndianCurrency(exp.subtotal),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11.5 : 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF065F46),
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 14,
                                   child: Text(
                                     _formatIndianCurrency(exp.itcClaim),
-                                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11.5 : 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF2563EB),
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 14,
                                   child: Text(
                                     _formatIndianCurrency(exp.totalPaid),
-                                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 12 : 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF0F172A),
+                                    ),
                                   ),
                                 ),
                                 Expanded(
@@ -1181,14 +1547,21 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isMobile ? 6 : 8,
+                                        vertical: isMobile ? 2 : 3,
+                                      ),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF1F5F9),
                                         borderRadius: BorderRadius.circular(4),
                                       ),
                                       child: Text(
                                         exp.paymentMode,
-                                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 9.5 : 11,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF334155),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -1215,7 +1588,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
@@ -1225,7 +1598,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1237,26 +1610,26 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                 const Text(
                   'Active Recurring bills & Subscriptions',
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 14,
                     fontWeight: FontWeight.w800,
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: _openAddSubscriptionDialog,
-                    icon: const Icon(LucideIcons.plus, size: 14),
+                    icon: const Icon(LucideIcons.plus, size: 13),
                     label: const Text(
                       '+ Add Subscription',
-                      style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF2563EB),
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                     ),
                   ),
@@ -1292,13 +1665,16 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                 ),
               ],
             ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 10 : 18),
 
-          // Subscriptions Table (Image 2)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const minWidth = 980.0;
-              final width = math.max(constraints.maxWidth, minWidth);
+          // Subscriptions Table (Image 2): mobile card list on mobile, table on desktop/macOS
+          if (isMobile)
+            _buildMobileSubscriptionsList()
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final minWidth = 980.0;
+                final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -1309,7 +1685,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                     children: [
                       // Header Row
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 10 : 16,
+                          vertical: isMobile ? 8 : 12,
+                        ),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -1358,7 +1737,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                       else
                         ..._subscriptions.map((sub) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isMobile ? 10 : 16,
+                              vertical: isMobile ? 7 : 16,
+                            ),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
                             ),
@@ -1369,32 +1751,119 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(sub.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                                      Text(sub.id, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                                      Text(
+                                        sub.name,
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 11.5 : 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF0F172A),
+                                        ),
+                                      ),
+                                      Text(
+                                        sub.id,
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 10 : 11,
+                                          color: const Color(0xFF64748B),
+                                        ),
+                                      ),
                                     ],
                                   ),
                                 ),
-                                Expanded(flex: 18, child: Text(sub.vendor, style: const TextStyle(fontSize: 13, color: Color(0xFF334155)))),
-                                Expanded(flex: 16, child: Text(sub.category, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
-                                Expanded(flex: 14, child: Text(sub.frequency, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
-                                Expanded(flex: 16, child: Text(sub.nextDueDate, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
+                                Expanded(
+                                  flex: 18,
+                                  child: Text(
+                                    sub.vendor,
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11 : 13,
+                                      color: const Color(0xFF334155),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 16,
+                                  child: Text(
+                                    sub.category,
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11 : 12.5,
+                                      color: const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 14,
+                                  child: Text(
+                                    sub.frequency,
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11 : 12.5,
+                                      color: const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 16,
+                                  child: Text(
+                                    sub.nextDueDate,
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11 : 12.5,
+                                      color: const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
                                 Expanded(
                                   flex: 12,
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                      decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(4)),
-                                      child: Text(sub.status, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                      padding: EdgeInsets.symmetric(
+                                        horizontal: isMobile ? 6 : 8,
+                                        vertical: isMobile ? 2 : 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFDCFCE7),
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                      child: Text(
+                                        sub.status,
+                                        style: TextStyle(
+                                          fontSize: isMobile ? 9.5 : 10.5,
+                                          fontWeight: FontWeight.bold,
+                                          color: const Color(0xFF166534),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
-                                Expanded(flex: 18, child: Text(sub.autoPost, style: const TextStyle(fontSize: 12, color: Color(0xFF475569)))),
-                                Expanded(flex: 16, child: Text(_formatIndianCurrency(sub.cost), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
+                                Expanded(
+                                  flex: 18,
+                                  child: Text(
+                                    sub.autoPost,
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 11 : 12,
+                                      color: const Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 16,
+                                  child: Text(
+                                    _formatIndianCurrency(sub.cost),
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 12 : 13.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
                                 Expanded(
                                   flex: 10,
                                   child: IconButton(
-                                    icon: const Icon(LucideIcons.trash2, size: 15, color: Color(0xFFDC2626)),
+                                    icon: Icon(
+                                      LucideIcons.trash2,
+                                      size: isMobile ? 13 : 15,
+                                      color: const Color(0xFFDC2626),
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
                                     onPressed: () {
                                       setState(() => _subscriptions.remove(sub));
                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1430,7 +1899,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
@@ -1440,7 +1909,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1449,39 +1918,43 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
             alignment: WrapAlignment.spaceBetween,
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 12,
-            runSpacing: 10,
+            runSpacing: 8,
             children: [
-              const Text(
+              Text(
                 'Departmental Budgets & Spending Limits',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: isMobile ? 14 : 18,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
+                  color: const Color(0xFF0F172A),
                 ),
               ),
               ElevatedButton.icon(
                 onPressed: _openSetTeamBudgetDialog,
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text(
+                icon: Icon(LucideIcons.plus, size: isMobile ? 13 : 14),
+                label: Text(
                   'Set Budget Limit',
-                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, fontWeight: FontWeight.bold),
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFBE185D),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: isMobile ? 7 : 9),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 10 : 18),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const minWidth = 980.0;
-              final width = math.max(constraints.maxWidth, minWidth);
+          // Budgets Table: mobile card list on mobile, table on desktop/macOS
+          if (isMobile)
+            _buildMobileBudgetsList()
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final minWidth = 980.0;
+                final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -1491,7 +1964,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                   child: Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 10 : 16,
+                          vertical: isMobile ? 8 : 12,
+                        ),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -1514,7 +1990,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                       ),
                       ..._budgets.map((b) {
                         return Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 16, vertical: isMobile ? 7 : 16),
                           decoration: const BoxDecoration(
                             border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
                           ),
@@ -1529,10 +2005,10 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                     onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
                                     child: Text(
                                       b.categoryGroup,
-                                      style: const TextStyle(
-                                        fontSize: 13.5,
+                                      style: TextStyle(
+                                        fontSize: isMobile ? 11.5 : 13.5,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF6D28D9),
+                                        color: const Color(0xFF6D28D9),
                                         decoration: TextDecoration.underline,
                                       ),
                                     ),
@@ -1544,7 +2020,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                 flex: 16,
                                 child: Text(
                                   b.teamMembers,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                  style: TextStyle(fontSize: isMobile ? 11 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)),
                                 ),
                               ),
                               // MONTHLY BUDGET (Dark green)
@@ -1552,7 +2028,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                 flex: 16,
                                 child: Text(
                                   _formatIndianCurrency(b.monthlyBudget),
-                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                                  style: TextStyle(fontSize: isMobile ? 12 : 13.5, fontWeight: FontWeight.bold, color: const Color(0xFF065F46)),
                                 ),
                               ),
                               // ACTUAL SPENT (Purple)
@@ -1560,7 +2036,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                 flex: 14,
                                 child: Text(
                                   _formatIndianCurrency(b.actualSpent),
-                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)),
+                                  style: TextStyle(fontSize: isMobile ? 12 : 13.5, fontWeight: FontWeight.bold, color: const Color(0xFF7C3AED)),
                                 ),
                               ),
                               // REMAINING BUDGET (Green)
@@ -1568,7 +2044,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                 flex: 16,
                                 child: Text(
                                   _formatIndianCurrency(b.remainingBudget),
-                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF059669)),
+                                  style: TextStyle(fontSize: isMobile ? 12 : 13.5, fontWeight: FontWeight.bold, color: const Color(0xFF059669)),
                                 ),
                               ),
                               // STATUS (OPTIMAL badge)
@@ -1577,17 +2053,17 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                 child: Align(
                                   alignment: Alignment.centerLeft,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2.5 : 3),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFDCFCE7),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       b.status,
-                                      style: const TextStyle(
-                                        fontSize: 10.5,
+                                      style: TextStyle(
+                                        fontSize: isMobile ? 9.5 : 10.5,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF166534),
+                                        color: const Color(0xFF166534),
                                       ),
                                     ),
                                   ),
@@ -1604,7 +2080,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                       onTap: () => _openRecordSpendingDialog(b),
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 3 : 4),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFDCFCE7),
                                           borderRadius: BorderRadius.circular(6),
@@ -1614,9 +2090,9 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                           alignment: Alignment.centerLeft,
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
-                                            children: const [
-                                              Text('\$ ', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-                                              Text('Record Spending', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                            children: [
+                                              Text('\$ ', style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF166534))),
+                                              Text('Record Spending', style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF166534))),
                                             ],
                                           ),
                                         ),
@@ -1639,16 +2115,16 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                           onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
                                           borderRadius: BorderRadius.circular(4),
                                           child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                            padding: EdgeInsets.symmetric(horizontal: isMobile ? 5 : 7, vertical: isMobile ? 2.5 : 3),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFEFF6FF),
                                               borderRadius: BorderRadius.circular(4),
                                             ),
-                                            child: const Text('Edit', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                                            child: Text('Edit', style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFF2563EB))),
                                           ),
                                         ),
                                       ),
-                                      const SizedBox(width: 6),
+                                      SizedBox(width: isMobile ? 4 : 6),
                                     Material(
                                       color: Colors.transparent,
                                       child: InkWell(
@@ -1665,12 +2141,12 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                                         },
                                         borderRadius: BorderRadius.circular(4),
                                         child: Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                                          padding: EdgeInsets.symmetric(horizontal: isMobile ? 5 : 7, vertical: isMobile ? 2.5 : 3),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFFFEE2E2),
                                             borderRadius: BorderRadius.circular(4),
                                           ),
-                                          child: const Text('Delete', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                                          child: Text('Delete', style: TextStyle(fontSize: isMobile ? 9.5 : 11, fontWeight: FontWeight.bold, color: const Color(0xFFDC2626))),
                                         ),
                                       ),
                                     ),
@@ -1710,25 +2186,29 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
           ),
         ],
       ),
-      padding: EdgeInsets.all(isMobile ? 16 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header inside white card (Image 8)
-          const Text(
+          Text(
             'Employee Reimbursements & Travel claims',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: isMobile ? 14 : 18,
               fontWeight: FontWeight.w800,
-              color: Color(0xFF0F172A),
+              color: const Color(0xFF0F172A),
             ),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 10 : 18),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              const minWidth = 980.0;
-              final width = math.max(constraints.maxWidth, minWidth);
+          // Claims Table: mobile card list on mobile, table on desktop/macOS
+          if (isMobile)
+            _buildMobileClaimsList()
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final minWidth = 980.0;
+                final width = math.max(constraints.maxWidth, minWidth);
 
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
@@ -1738,7 +2218,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                   child: Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 16, vertical: isMobile ? 8 : 12),
                         decoration: const BoxDecoration(
                           color: Color(0xFFF8FAFC),
                           border: Border(
@@ -1784,33 +2264,35 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
                       else
                         ..._claims.map((c) {
                           return Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 16, vertical: isMobile ? 7 : 16),
                             decoration: const BoxDecoration(
                               border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
                             ),
                             child: Row(
                               children: [
-                                Expanded(flex: 14, child: Text(c.claimId, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF065F46)))),
-                                Expanded(flex: 18, child: Text(c.employee, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
-                                Expanded(flex: 22, child: Text(c.description, style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)))),
-                                Expanded(flex: 14, child: Text(c.date, style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)))),
-                                Expanded(flex: 16, child: Text(c.receipt, style: const TextStyle(fontSize: 12, color: Color(0xFF2563EB)))),
+                                Expanded(flex: 14, child: Text(c.claimId, style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF065F46)))),
+                                Expanded(flex: 18, child: Text(c.employee, style: TextStyle(fontSize: isMobile ? 11.5 : 13, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)))),
+                                Expanded(flex: 22, child: Text(c.description, style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF475569)))),
+                                Expanded(flex: 14, child: Text(c.date, style: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF64748B)))),
+                                Expanded(flex: 16, child: Text(c.receipt, style: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF2563EB)))),
                                 Expanded(
                                   flex: 12,
                                   child: Align(
                                     alignment: Alignment.centerLeft,
                                     child: Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2.5 : 3),
                                       decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(4)),
-                                      child: Text(c.status, style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+                                      child: Text(c.status, style: TextStyle(fontSize: isMobile ? 9.5 : 10.5, fontWeight: FontWeight.bold, color: const Color(0xFF166534))),
                                     ),
                                   ),
                                 ),
-                                Expanded(flex: 14, child: Text(_formatIndianCurrency(c.amount), style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)))),
+                                Expanded(flex: 14, child: Text(_formatIndianCurrency(c.amount), style: TextStyle(fontSize: isMobile ? 12 : 13.5, fontWeight: FontWeight.bold, color: const Color(0xFF0F172A)))),
                                 Expanded(
                                   flex: 12,
                                   child: IconButton(
-                                    icon: const Icon(LucideIcons.trash2, size: 15, color: Color(0xFFDC2626)),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    icon: Icon(LucideIcons.trash2, size: isMobile ? 13 : 15, color: const Color(0xFFDC2626)),
                                     onPressed: () {
                                       setState(() => _claims.remove(c));
                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1839,7 +2321,880 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     );
   }
 
+  Widget _buildMobileExpenseRegisterList() {
+    if (_filteredExpenses.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: const Icon(
+                  LucideIcons.fileSpreadsheet,
+                  size: 22,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'No operational expenses recorded yet.',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Click "+ Record Expense" at the top to log operational costs and ITC claims.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _filteredExpenses.map((exp) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Description & Total Paid
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      exp.description,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatIndianCurrency(exp.totalPaid),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Row 2: Category, Voucher & Mode
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      exp.voucherNo,
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF065F46),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    exp.category,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      exp.paymentMode,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Row 3: Payee & Date
+              Row(
+                children: [
+                  const Icon(LucideIcons.store, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      exp.payee,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(LucideIcons.calendar, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Text(
+                    exp.date,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+
+              // Row 4: Subtotal & ITC Claim
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'GST Subtotal: ${_formatIndianCurrency(exp.subtotal)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'ITC Claim: ${_formatIndianCurrency(exp.itcClaim)}',
+                      style: const TextStyle(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMobileSubscriptionsList() {
+    if (_subscriptions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(LucideIcons.calendarClock, size: 28, color: Color(0xFF94A3B8)),
+              SizedBox(height: 12),
+              Text(
+                'No active recurring subscriptions found.',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Click "+ Add Subscription" to automate vendor and tool bills.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _subscriptions.map((sub) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Name & Cost & Delete action
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sub.name,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          sub.id,
+                          style: const TextStyle(
+                            fontSize: 10.5,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatIndianCurrency(sub.cost),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    icon: const Icon(
+                      LucideIcons.trash2,
+                      size: 14,
+                      color: Color(0xFFDC2626),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () {
+                      setState(() => _subscriptions.remove(sub));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Subscription "${sub.name}" deleted.'),
+                          backgroundColor: const Color(0xFFDC2626),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Row 2: Vendor, Status & Frequency
+              Row(
+                children: [
+                  const Icon(LucideIcons.store, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      sub.vendor,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      sub.status,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      sub.frequency,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+
+              // Row 3: Category, Next Due Date & Auto-Post
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      sub.category,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(LucideIcons.calendar, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Due: ${sub.nextDueDate}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      sub.autoPost,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMobileBudgetsList() {
+    return Column(
+      children: _budgets.map((b) {
+        final spentPct = b.monthlyBudget > 0
+            ? (b.actualSpent / b.monthlyBudget).clamp(0.0, 1.0)
+            : 0.0;
+        final isOptimal = b.status.toUpperCase() == 'OPTIMAL';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Category Group & Status & Edit
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _openSetTeamBudgetDialog(initialBudget: b),
+                      child: Text(
+                        b.categoryGroup,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF6D28D9),
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isOptimal
+                          ? const Color(0xFFDCFCE7)
+                          : const Color(0xFFFEF3C7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      b.status,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: isOptimal
+                            ? const Color(0xFF166534)
+                            : const Color(0xFFB45309),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Row 2: Team Members
+              Row(
+                children: [
+                  const Icon(LucideIcons.users, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Team: ${b.teamMembers}',
+                    style: const TextStyle(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Row 3: Financial metrics with flexible layout
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Monthly Budget',
+                          style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            _formatIndianCurrency(b.monthlyBudget),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF065F46),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Actual Spent',
+                          style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            _formatIndianCurrency(b.actualSpent),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF7C3AED),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'Remaining',
+                          style: TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 1),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Text(
+                            _formatIndianCurrency(b.remainingBudget),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Progress bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: spentPct,
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    spentPct > 0.9
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF059669),
+                  ),
+                  minHeight: 5,
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // Row 4: Actions (Record Spending + Edit + Delete)
+              Row(
+                children: [
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => _openRecordSpendingDialog(b),
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              LucideIcons.wallet,
+                              size: 12,
+                              color: Color(0xFF166534),
+                            ),
+                            SizedBox(width: 4),
+                            Flexible(
+                              child: Text(
+                                'Record Spending',
+                                style: TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF166534),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          LucideIcons.penSquare,
+                          size: 14,
+                          color: Color(0xFF64748B),
+                        ),
+                        onPressed: () =>
+                            _openSetTeamBudgetDialog(initialBudget: b),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        icon: const Icon(
+                          LucideIcons.trash2,
+                          size: 14,
+                          color: Color(0xFFDC2626),
+                        ),
+                        onPressed: () {
+                          setState(() => _budgets.remove(b));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                'Budget for "${b.categoryGroup}" removed.',
+                              ),
+                              backgroundColor: const Color(0xFFDC2626),
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildMobileClaimsList() {
+    if (_claims.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(LucideIcons.receipt, size: 28, color: Color(0xFF94A3B8)),
+              SizedBox(height: 12),
+              Text(
+                'No staff reimbursement claims lodged yet.',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Click "Lodge Staff Claim" at the top to file an employee expense reimbursement.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _claims.map((c) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Employee, Amount & Delete
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          c.employee,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 1),
+                        Text(
+                          'Claim: ${c.claimId}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF065F46),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatIndianCurrency(c.amount),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: const Icon(
+                      LucideIcons.trash2,
+                      size: 14,
+                      color: Color(0xFFDC2626),
+                    ),
+                    onPressed: () {
+                      setState(() => _claims.remove(c));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Claim "${c.claimId}" deleted.'),
+                          backgroundColor: const Color(0xFFDC2626),
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Row 2: Purpose description
+              Text(
+                c.description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF475569),
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+
+              // Row 3: Date, Receipt details & Status
+              Row(
+                children: [
+                  const Icon(LucideIcons.calendar, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Text(
+                    c.date,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Icon(LucideIcons.fileText, size: 12, color: Color(0xFF2563EB)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      c.receipt,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      c.status,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   Widget _buildSortableHeader(String text) {
+    final isMobile = Theme.of(context).platform != TargetPlatform.macOS;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -1849,16 +3204,16 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.inter(
-              fontSize: 13,
+              fontSize: isMobile ? 10.5 : 13,
               fontWeight: FontWeight.w700,
               color: const Color(0xFF1E293B),
-              letterSpacing: 0.3,
+              letterSpacing: 0.2,
             ),
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          padding: EdgeInsets.symmetric(horizontal: isMobile ? 3 : 4, vertical: isMobile ? 1.5 : 2),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
@@ -3200,5 +4555,33 @@ class _RecordSpendingDialogState extends State<_RecordSpendingDialog> {
         ),
       ),
     );
+  }
+}
+
+// ─── MOBILE TAB HELPER DATA ───────────────────────────────────
+
+class _ExpensesTabItem {
+  final String label;
+  final IconData icon;
+  const _ExpensesTabItem(this.label, this.icon);
+}
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final Widget child;
+  _StickyTabNavDelegate({required this.child});
+
+  @override
+  double get minExtent => 42.0;
+  @override
+  double get maxExtent => 42.0;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.child != child;
   }
 }

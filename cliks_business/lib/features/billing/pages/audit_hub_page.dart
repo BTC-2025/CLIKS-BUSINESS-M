@@ -82,10 +82,27 @@ class AuditHubPage extends StatefulWidget {
   const AuditHubPage({super.key});
 
   @override
-  State<AuditHubPage> createState() => _AuditHubPageState();
+  State<AuditHubPage> createState() => AuditHubPageState();
 }
 
-class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderStateMixin {
+class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderStateMixin {
+  @visibleForTesting
+  void setTestState({
+    int? activeAdvisoryTab,
+    int? selectedAuditorIndex,
+    int? activeSubTab,
+    bool? showTeamRequests,
+    bool? showClientRequests,
+  }) {
+    setState(() {
+      if (activeAdvisoryTab != null) _activeAdvisoryTab = activeAdvisoryTab;
+      if (selectedAuditorIndex != null) _selectedAuditorIndex = selectedAuditorIndex;
+      if (activeSubTab != null) _activeSubTab = activeSubTab;
+      if (showTeamRequests != null) _showTeamRequests = showTeamRequests;
+      if (showClientRequests != null) _showClientRequests = showClientRequests;
+    });
+  }
+
   final int _activeWorkplace = 1; // 1: FIN-PRO Firm
   int _activeAdvisoryTab = 1; // 0: Home, 1: Clients, 2: Tasks, 3: Teams, 4: Time Tracking, 5: Workpaper, 6: Auditor Suite, 7: consult, 8: Reports, 9: Senior CA
   int _selectedAuditorIndex = 0; // 0: Statutory, 1: Tax, 2: Internal, 3: Cost, 4: Secretarial, 5: Forensic
@@ -1145,6 +1162,72 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── SUB-TAB 0: RULE 11(g) VAULT & CERTIFICATE (IMAGE 1 & 5) ───
   Widget _buildRule11gVault(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final downloadButton = InkWell(
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Downloading Rule 11(g) Audit Trail Certificate PDF...'),
+            backgroundColor: Color(0xFF1D4ED8),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1D4ED8),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Row(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(LucideIcons.download, size: 14, color: Colors.white),
+            SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                '1-Click Rule 11(g) Report (.PDF)',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12.5,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    const titleColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('🛡️', style: TextStyle(fontSize: 15)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Immutable Rule 11(g) Audit-Log Vault & Certificate',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Append-only, tamper-evident datastore logging all voucher creations, modifications, and deletions with field-level diffs.',
+          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1155,73 +1238,20 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text('🛡️', style: TextStyle(fontSize: 15)),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Immutable Rule 11(g) Audit-Log Vault & Certificate',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Append-only, tamper-evident datastore logging all voucher creations, modifications, and deletions with field-level diffs.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              InkWell(
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Downloading Rule 11(g) Audit Trail Certificate PDF...'),
-                      backgroundColor: Color(0xFF1D4ED8),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1D4ED8),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.download, size: 14, color: Colors.white),
-                      SizedBox(width: 8),
-                      Text(
-                        '1-Click Rule 11(g) Report (.PDF)',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
+          if (!isMacOS && isMobile) ...[
+            titleColumn,
+            const SizedBox(height: 12),
+            SizedBox(width: double.infinity, child: downloadButton),
+          ] else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Expanded(child: titleColumn),
+                const SizedBox(width: 16),
+                downloadButton,
+              ],
+            ),
+          ],
 
           const SizedBox(height: 18),
 
@@ -1268,6 +1298,153 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── SUB-TAB 1: SMART VOUCHING & SAMPLER (IMAGE 2) ───
   Widget _buildSmartVouching(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    const titleColumn = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(LucideIcons.search, size: 16, color: Color(0xFF4B5563)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Smart Vouching & Materiality Sampler',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 4),
+        Text(
+          '3-Way Match Verification (PO ↔ GRN ↔ Purchase Invoice) & Statistical Sampling Engine.',
+          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+
+    final chips = [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFF6FF),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFBFDBFE)),
+        ),
+        child: const Text(
+          'Cutoff: > ₹50,000',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF1D4ED8),
+          ),
+        ),
+      ),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: const Color(0xFFECFDF5),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: const Color(0xFFA7F3D0)),
+        ),
+        child: const Text(
+          '3-Way Match Rate: 98.4%',
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF047857),
+          ),
+        ),
+      ),
+    ];
+
+    final tableWidget = Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
+            ),
+            child: const Row(
+              children: [
+                Expanded(flex: 2, child: Text('PO Number', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                Expanded(flex: 2, child: Text('GRN Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                Expanded(flex: 2, child: Text('Invoice Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                Expanded(flex: 2, child: Text('Amount', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+                Expanded(flex: 3, child: Text('3-Way Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: const [
+                Expanded(flex: 2, child: Text('PO-8821', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)))),
+                Expanded(flex: 2, child: Text('GRN-4012', style: TextStyle(fontSize: 12.5, color: Color(0xFF166534)))),
+                Expanded(flex: 2, child: Text('INV-9021', style: TextStyle(fontSize: 12.5, color: Color(0xFF374151)))),
+                Expanded(flex: 2, child: Text('₹1,25,000', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF111827)))),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.check, size: 14, color: Color(0xFF15803D)),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Matched (Qty & Rate)',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: const Row(
+              children: [
+                Expanded(flex: 2, child: Text('PO-8840', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)))),
+                Expanded(flex: 2, child: Text('GRN-4029', style: TextStyle(fontSize: 12.5, color: Color(0xFF166534)))),
+                Expanded(flex: 2, child: Text('INV-9055', style: TextStyle(fontSize: 12.5, color: Color(0xFF374151)))),
+                Expanded(flex: 2, child: Text('₹68,000', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF111827)))),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.triangleAlert, size: 14, color: Color(0xFFDC2626)),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'Rate Discrepancy (2.5% spike)',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFFDC2626)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1278,148 +1455,43 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(LucideIcons.search, size: 16, color: Color(0xFF4B5563)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Smart Vouching & Materiality Sampler',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      '3-Way Match Verification (PO ↔ GRN ↔ Purchase Invoice) & Statistical Sampling Engine.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: const Text(
-                      'Cutoff: > ₹50,000',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1D4ED8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFECFDF5),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: const Color(0xFFA7F3D0)),
-                    ),
-                    child: const Text(
-                      '3-Way Match Rate: 98.4%',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF047857),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+          if (!isMacOS && isMobile) ...[
+            titleColumn,
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              children: chips,
             ),
-            child: Column(
+          ] else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF9FAFB),
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-                  ),
-                  child: const Row(
-                    children: [
-                      Expanded(flex: 2, child: Text('PO Number', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
-                      Expanded(flex: 2, child: Text('GRN Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
-                      Expanded(flex: 2, child: Text('Invoice Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
-                      Expanded(flex: 2, child: Text('Amount', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
-                      Expanded(flex: 3, child: Text('3-Way Status', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4B5563)))),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: const Row(
-                    children: [
-                      Expanded(flex: 2, child: Text('PO-8821', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)))),
-                      Expanded(flex: 2, child: Text('GRN-4012', style: TextStyle(fontSize: 12.5, color: Color(0xFF166534)))),
-                      Expanded(flex: 2, child: Text('INV-9021', style: TextStyle(fontSize: 12.5, color: Color(0xFF374151)))),
-                      Expanded(flex: 2, child: Text('₹1,25,000', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF111827)))),
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: [
-                            Icon(LucideIcons.check, size: 14, color: Color(0xFF15803D)),
-                            SizedBox(width: 4),
-                            Text('Matched (Qty & Rate)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF15803D))),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  child: const Row(
-                    children: [
-                      Expanded(flex: 2, child: Text('PO-8840', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF15803D)))),
-                      Expanded(flex: 2, child: Text('GRN-4029', style: TextStyle(fontSize: 12.5, color: Color(0xFF166534)))),
-                      Expanded(flex: 2, child: Text('INV-9055', style: TextStyle(fontSize: 12.5, color: Color(0xFF374151)))),
-                      Expanded(flex: 2, child: Text('₹68,000', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFF111827)))),
-                      Expanded(
-                        flex: 3,
-                        child: Row(
-                          children: [
-                            Icon(LucideIcons.triangleAlert, size: 14, color: Color(0xFFDC2626)),
-                            SizedBox(width: 4),
-                            Text('Rate Discrepancy (2.5% spike)', style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFFDC2626))),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                const Expanded(child: titleColumn),
+                const SizedBox(width: 16),
+                Row(
+                  children: [
+                    chips[0],
+                    const SizedBox(width: 10),
+                    chips[1],
+                  ],
                 ),
               ],
             ),
-          ),
+          ],
+
+          const SizedBox(height: 18),
+
+          if (!isMacOS && isMobile)
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: 750,
+                child: tableWidget,
+              ),
+            )
+          else
+            tableWidget,
         ],
       ),
     );
@@ -1437,19 +1509,23 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            children: const [
               Row(
                 children: [
                   Text('📓', style: TextStyle(fontSize: 15)),
                   SizedBox(width: 8),
-                  Text(
-                    'Fixed Asset & Depreciation Engine',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111827),
+                  Expanded(
+                    child: Text(
+                      'Fixed Asset & Depreciation Engine',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                      ),
                     ),
                   ),
                 ],
@@ -1552,19 +1628,23 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            children: const [
               Row(
                 children: [
                   Text('🏛️', style: TextStyle(fontSize: 15)),
                   SizedBox(width: 8),
-                  Text(
-                    'Direct Bank Reconciliation (BRS) Engine',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF111827),
+                  Expanded(
+                    child: Text(
+                      'Direct Bank Reconciliation (BRS) Engine',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF111827),
+                      ),
                     ),
                   ),
                 ],
@@ -1652,65 +1732,145 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── TAX SUB-TAB 0: SEC 40A(3) CASH PAYMENT WATCHDOG (IMAGE 1) ───
   Widget _buildTaxCashPaymentWatchdog(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    const titleWidget = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text('📕', style: TextStyle(fontSize: 14)),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Section 40A(3) Cash Payment Watchdog',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 4),
+        Text(
+          'Flags aggregate daily cash payments to a single vendor subject to tax disallowance under Sec 40A(3).',
+          style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+
+    final thresholdBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF1F2),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+      ),
+      child: const Text(
+        'Threshold: > ₹10,000 / Day / Party',
+        style: TextStyle(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFFE11D48),
+        ),
+      ),
+    );
+
+    final alertIcon = Container(
+      padding: const EdgeInsets.all(6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFFECDD3)),
+      ),
+      child: const Icon(LucideIcons.alertTriangle, color: Color(0xFFE11D48), size: 16),
+    );
+
+    final alertTextContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Vendor: Balaji Heavy Roadways',
+          style: TextStyle(
+            fontSize: 12.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text.rich(
+          TextSpan(
+            children: const [
+              TextSpan(
+                text: 'Date: 2026-08-18 | Total Cash: ',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+              ),
+              TextSpan(
+                text: '₹38,200',
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFBE123C),
+                ),
+              ),
+              TextSpan(
+                text: ' across 1 vouchers (VCH-8411)',
+                style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
+    final disallowedBadge = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: const Text(
+        'DISALLOWED u/s 40A(3)',
+        style: TextStyle(
+          fontSize: 10.5,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFFBE123C),
+          letterSpacing: 0.3,
+        ),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 1. Top Watchdog Header Box
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: isMobile ? 12 : 14),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
+          child: (!isMacOS && isMobile)
+              ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Row(
-                      children: [
-                        Text('📕', style: TextStyle(fontSize: 14)),
-                        SizedBox(width: 8),
-                        Text(
-                          'Section 40A(3) Cash Payment Watchdog',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Flags aggregate daily cash payments to a single vendor subject to tax disallowance under Sec 40A(3).',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                    ),
+                  children: [
+                    titleWidget,
+                    const SizedBox(height: 10),
+                    thresholdBadge,
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Expanded(child: titleWidget),
+                    const SizedBox(width: 12),
+                    thresholdBadge,
                   ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1F2),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: const Color(0xFFFECDD3)),
-                ),
-                child: const Text(
-                  'Threshold: > ₹10,000 / Day / Party',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFFE11D48),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
 
         const SizedBox(height: 14),
@@ -1723,74 +1883,29 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFFECDD3)),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFFECDD3)),
-                ),
-                child: const Icon(LucideIcons.alertTriangle, color: Color(0xFFE11D48), size: 16),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+          child: (!isMacOS && isMobile)
+              ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Vendor: Balaji Heavy Roadways',
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF111827),
-                      ),
+                    Row(
+                      children: [
+                        alertIcon,
+                        const SizedBox(width: 10),
+                        Flexible(child: disallowedBadge),
+                      ],
                     ),
-                    const SizedBox(height: 2),
-                    Text.rich(
-                      TextSpan(
-                        children: const [
-                          TextSpan(
-                            text: 'Date: 2026-08-18 | Total Cash: ',
-                            style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
-                          ),
-                          TextSpan(
-                            text: '₹38,200',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFFBE123C),
-                            ),
-                          ),
-                          TextSpan(
-                            text: ' across 1 vouchers (VCH-8411)',
-                            style: TextStyle(fontSize: 11.5, color: Color(0xFF6B7280)),
-                          ),
-                        ],
-                      ),
-                    ),
+                    const SizedBox(height: 8),
+                    alertTextContent,
+                  ],
+                )
+              : Row(
+                  children: [
+                    alertIcon,
+                    const SizedBox(width: 12),
+                    Expanded(child: alertTextContent),
+                    disallowedBadge,
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Text(
-                  'DISALLOWED u/s 40A(3)',
-                  style: TextStyle(
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFBE123C),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
 
         const SizedBox(height: 14),
@@ -1806,27 +1921,50 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'SEC 40A(3) AUDIT INSPECTION LEDGER',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF374151),
-                        letterSpacing: 0.5,
+                child: (!isMacOS && isMobile)
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'SEC 40A(3) AUDIT INSPECTION LEDGER',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'FY 2025-2026 | Auto-aggregated by Date & Party',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text(
+                            'SEC 40A(3) AUDIT INSPECTION LEDGER',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'FY 2025-2026 | Auto-aggregated by Date & Party',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      'FY 2025-2026 | Auto-aggregated by Date & Party',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               SingleChildScrollView(
@@ -2151,6 +2289,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── TAX SUB-TAB 1: TDS/TCS HUB (CLAUSE 34) (IMAGE 2) ───
   Widget _buildTaxTdsTcsHub(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isCompact = !isMacOS && isMobile;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2176,12 +2317,15 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                           children: const [
                             Icon(LucideIcons.check, size: 13, color: Color(0xFF047857)),
                             SizedBox(width: 5),
-                            Text(
-                              'Sec 194C (Contractors) - ✓ Compliant',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF047857),
+                            Flexible(
+                              child: Text(
+                                'Sec 194C (Contractors) - ✓ Compliant',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF047857),
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -2199,12 +2343,15 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                           children: const [
                             Icon(LucideIcons.check, size: 13, color: Color(0xFF047857)),
                             SizedBox(width: 5),
-                            Text(
-                              'Sec 194J (Professional) - ✓ Compliant',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF047857),
+                            Flexible(
+                              child: Text(
+                                'Sec 194J (Professional) - ✓ Compliant',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF047857),
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -2222,12 +2369,15 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                           children: const [
                             Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFFB45309)),
                             SizedBox(width: 5),
-                            Text(
-                              'Sec 194Q (Goods Purchase) - ⚠️ 1 Delay Deposit',
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFFB45309),
+                            Flexible(
+                              child: Text(
+                                'Sec 194Q (Goods Purchase) - ⚠️ 1 Delay Deposit',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFB45309),
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
@@ -2236,25 +2386,30 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                     ],
                   ),
                   const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Exporting Form 3CD Clause 34 (.XLSX)...'),
-                          backgroundColor: Color(0xFF2563EB),
-                        ),
-                      );
-                    },
-                    icon: const Icon(LucideIcons.fileSpreadsheet, size: 14, color: Colors.white),
-                    label: const Text(
-                      'Form 3CD Clause 34 - Ready to Export (.XLSX)',
-                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      elevation: 0,
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Exporting Form 3CD Clause 34 (.XLSX)...'),
+                            backgroundColor: Color(0xFF2563EB),
+                          ),
+                        );
+                      },
+                      icon: const Icon(LucideIcons.fileSpreadsheet, size: 14, color: Colors.white),
+                      label: const Text(
+                        'Form 3CD Clause 34 - Ready to Export (.XLSX)',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        elevation: 0,
+                      ),
                     ),
                   ),
                 ],
@@ -2375,56 +2530,114 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFFECDD3)),
           ),
-          child: Row(
-            children: [
-              const Icon(LucideIcons.shieldAlert, color: Color(0xFFE11D48), size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text.rich(
-                  TextSpan(
-                    children: const [
-                      TextSpan(
-                        text: 'Statutory Disallowance Alert: ',
+          child: isCompact
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(LucideIcons.shieldAlert, color: Color(0xFFE11D48), size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text.rich(
+                            TextSpan(
+                              children: const [
+                                TextSpan(
+                                  text: 'Statutory Disallowance Alert: ',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFBE123C),
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: 'Total 30% expenditure disallowed under Section 40(a)(ia) due to belated deposit: ',
+                                  style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                                ),
+                                TextSpan(
+                                  text: '₹10,20,000.',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFBE123C),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFFECDD3)),
+                      ),
+                      child: const Text(
+                        'Add back to P&L in 3CD',
                         style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFFBE123C),
                         ),
                       ),
-                      TextSpan(
-                        text: 'Total 30% expenditure disallowed under Section 40(a)(ia) due to belated deposit: ',
-                        style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                    ),
+                  ],
+                )
+              : Row(
+                  children: [
+                    const Icon(LucideIcons.shieldAlert, color: Color(0xFFE11D48), size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text.rich(
+                        TextSpan(
+                          children: const [
+                            TextSpan(
+                              text: 'Statutory Disallowance Alert: ',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFFBE123C),
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'Total 30% expenditure disallowed under Section 40(a)(ia) due to belated deposit: ',
+                              style: TextStyle(fontSize: 11.5, color: Color(0xFFBE123C)),
+                            ),
+                            TextSpan(
+                              text: '₹10,20,000.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFFBE123C),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      TextSpan(
-                        text: '₹10,20,000.',
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFFECDD3)),
+                      ),
+                      child: const Text(
+                        'Add back to P&L in 3CD',
                         style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w800,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
                           color: Color(0xFFBE123C),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFFECDD3)),
-                ),
-                child: const Text(
-                  'Add back to P&L in 3CD',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFBE123C),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
 
         const SizedBox(height: 14),
@@ -2440,27 +2653,50 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'FORM 3CD CLAUSE 34 MASTER SCHEDULE',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF374151),
-                        letterSpacing: 0.5,
+                child: isCompact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'FORM 3CD CLAUSE 34 MASTER SCHEDULE',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 4),
+                          Text(
+                            'Statutory Due Date: Strict 7th of Following Month',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text(
+                            'FORM 3CD CLAUSE 34 MASTER SCHEDULE',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'Statutory Due Date: Strict 7th of Following Month',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      'Statutory Due Date: Strict 7th of Following Month',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               SingleChildScrollView(
@@ -2634,6 +2870,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── TAX SUB-TAB 2: CLAUSE 44 EXPENSE BREAKDOWN (IMAGE 3) ───
   Widget _buildTaxClause44ExpenseBreakdown(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
     Widget buildMetricCard({
       required String title,
       required String amount,
@@ -2641,104 +2879,163 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       required Color indicatorColor,
       required Color amountColor,
     }) {
-      return Expanded(
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 3.5,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: indicatorColor,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 3.5,
+                  height: 18,
+                  decoration: BoxDecoration(
+                    color: indicatorColor,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF4B5563),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(
-                amount,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: amountColor,
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF4B5563),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              amount,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: amountColor,
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+            ),
+          ],
         ),
       );
     }
 
+    final card1 = buildMetricCard(
+      title: 'GST EXEMPT SUPPLIES',
+      amount: '₹4,20,000',
+      subtitle: 'Nil-rated / Non-taxable',
+      indicatorColor: const Color(0xFF10B981),
+      amountColor: const Color(0xFF047857),
+    );
+    final card2 = buildMetricCard(
+      title: 'COMPOSITION SCHEME',
+      amount: '₹1,80,000',
+      subtitle: 'Sec 10 Composition dealers',
+      indicatorColor: const Color(0xFF3B82F6),
+      amountColor: const Color(0xFF2563EB),
+    );
+    final card3 = buildMetricCard(
+      title: 'REGISTERED ENTITIES',
+      amount: '₹45,60,000',
+      subtitle: 'Regular GST registered suppliers',
+      indicatorColor: const Color(0xFF8B5CF6),
+      amountColor: const Color(0xFF7C3AED),
+    );
+    final card4 = buildMetricCard(
+      title: 'NON-REGISTERED ENTITIES',
+      amount: '₹8,10,000',
+      subtitle: 'Unregistered entities (URD)',
+      indicatorColor: const Color(0xFFF59E0B),
+      amountColor: const Color(0xFFD97706),
+    );
+
+    const titleMatrix = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'FORM 3CD CLAUSE 44 OFFICIAL EXPENDITURE MATRIX',
+          style: TextStyle(
+            fontSize: 11.5,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF374151),
+            letterSpacing: 0.5,
+          ),
+        ),
+        SizedBox(height: 2),
+        Text(
+          'Break-up of total expenditure in respect of entities registered under GST vs unregistered entities.',
+          style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+        ),
+      ],
+    );
+
+    final exportButton = ElevatedButton.icon(
+      onPressed: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Exporting Clause 44 Excel for Form 3CD...'),
+            backgroundColor: Color(0xFF059669),
+          ),
+        );
+      },
+      icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+      label: const Text(
+        'Export Clause 44 Excel for Form 3CD',
+        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF059669),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 0,
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 1. Metric Cards Row
-        Row(
-          children: [
-            buildMetricCard(
-              title: 'GST EXEMPT SUPPLIES',
-              amount: '₹4,20,000',
-              subtitle: 'Nil-rated / Non-taxable',
-              indicatorColor: const Color(0xFF10B981),
-              amountColor: const Color(0xFF047857),
-            ),
-            const SizedBox(width: 12),
-            buildMetricCard(
-              title: 'COMPOSITION SCHEME',
-              amount: '₹1,80,000',
-              subtitle: 'Sec 10 Composition dealers',
-              indicatorColor: const Color(0xFF3B82F6),
-              amountColor: const Color(0xFF2563EB),
-            ),
-            const SizedBox(width: 12),
-            buildMetricCard(
-              title: 'REGISTERED ENTITIES',
-              amount: '₹45,60,000',
-              subtitle: 'Regular GST registered suppliers',
-              indicatorColor: const Color(0xFF8B5CF6),
-              amountColor: const Color(0xFF7C3AED),
-            ),
-            const SizedBox(width: 12),
-            buildMetricCard(
-              title: 'NON-REGISTERED ENTITIES',
-              amount: '₹8,10,000',
-              subtitle: 'Unregistered entities (URD)',
-              indicatorColor: const Color(0xFFF59E0B),
-              amountColor: const Color(0xFFD97706),
-            ),
-          ],
-        ),
+        // 1. Metric Cards
+        if (!isMacOS && isMobile)
+          Column(
+            children: [
+              card1,
+              const SizedBox(height: 10),
+              card2,
+              const SizedBox(height: 10),
+              card3,
+              const SizedBox(height: 10),
+              card4,
+            ],
+          )
+        else
+          Row(
+            children: [
+              Expanded(child: card1),
+              const SizedBox(width: 12),
+              Expanded(child: card2),
+              const SizedBox(width: 12),
+              Expanded(child: card3),
+              const SizedBox(width: 12),
+              Expanded(child: card4),
+            ],
+          ),
 
         const SizedBox(height: 16),
 
@@ -2753,54 +3050,23 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
+                child: (!isMacOS && isMobile)
+                    ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            'FORM 3CD CLAUSE 44 OFFICIAL EXPENDITURE MATRIX',
-                            style: TextStyle(
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF374151),
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          SizedBox(height: 2),
-                          Text(
-                            'Break-up of total expenditure in respect of entities registered under GST vs unregistered entities.',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
-                          ),
+                        children: [
+                          titleMatrix,
+                          const SizedBox(height: 10),
+                          exportButton,
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Expanded(child: titleMatrix),
+                          const SizedBox(width: 12),
+                          exportButton,
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Exporting Clause 44 Excel for Form 3CD...'),
-                            backgroundColor: Color(0xFF059669),
-                          ),
-                        );
-                      },
-                      icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
-                      label: const Text(
-                        'Export Clause 44 Excel for Form 3CD',
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF059669),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               SingleChildScrollView(
@@ -2889,6 +3155,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── TAX SUB-TAB 3: SEC 43B(h) MSME PAYMENT TRACKER (IMAGE 4) ───
   Widget _buildTaxMsmePaymentTracker(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -2900,22 +3167,45 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFFDE68A)),
           ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Icon(LucideIcons.clock, color: Color(0xFFD97706), size: 18),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
+          child: (!isMacOS && isMobile)
+              ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    Text(
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFFEF3C7),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(LucideIcons.clock, color: Color(0xFFD97706), size: 18),
+                        ),
+                        const SizedBox(width: 10),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: const Color(0xFFFDE68A)),
+                            ),
+                            child: const Text(
+                              '[ 5 Days Remaining ]',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFFB45309),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
                       'Micro Vendor: Precision Tools Pvt Ltd | Invoice Date: 2026-08-01 (40 Days Elapsed) | Limit: 45 Days',
                       style: TextStyle(
                         fontSize: 12.5,
@@ -2923,32 +3213,62 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                         color: Color(0xFF78350F),
                       ),
                     ),
-                    SizedBox(height: 3),
-                    Text(
+                    const SizedBox(height: 3),
+                    const Text(
                       'Payment must be settled within the statutory limit to avoid non-deductible tax disallowance under Section 43B(h).',
                       style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E)),
                     ),
                   ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(LucideIcons.clock, color: Color(0xFFD97706), size: 18),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Micro Vendor: Precision Tools Pvt Ltd | Invoice Date: 2026-08-01 (40 Days Elapsed) | Limit: 45 Days',
+                            style: TextStyle(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF78350F),
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'Payment must be settled within the statutory limit to avoid non-deductible tax disallowance under Section 43B(h).',
+                            style: TextStyle(fontSize: 11.5, color: Color(0xFF92400E)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFFDE68A)),
+                      ),
+                      child: const Text(
+                        '[ 5 Days Remaining ]',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
-                ),
-                child: const Text(
-                  '[ 5 Days Remaining ]',
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFFB45309),
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
 
         const SizedBox(height: 16),
@@ -2964,14 +3284,11 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Column(
+                child: (!isMacOS && isMobile)
+                    ? Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
+                        children: [
+                          const Text(
                             'MSMED ACT SEC 15 & INCOME TAX SEC 43B(H) AGING LEDGER',
                             style: TextStyle(
                               fontSize: 11.5,
@@ -2980,38 +3297,86 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                               letterSpacing: 0.5,
                             ),
                           ),
-                          SizedBox(height: 2),
-                          Text(
+                          const SizedBox(height: 2),
+                          const Text(
                             'Statutory Rule: Default 15 days without agreement / Maximum 45 days with written agreement.',
                             style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
                           ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Exporting Section 43B(h) Disallowance Schedule...'),
+                                    backgroundColor: Color(0xFFD97706),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                              label: const Text(
+                                'Export Section 43B(h) Disallowance Schedule',
+                                style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD97706),
+                                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                elevation: 0,
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'MSMED ACT SEC 15 & INCOME TAX SEC 43B(H) AGING LEDGER',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF374151),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Statutory Rule: Default 15 days without agreement / Maximum 45 days with written agreement.',
+                                  style: TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Exporting Section 43B(h) Disallowance Schedule...'),
+                                  backgroundColor: Color(0xFFD97706),
+                                ),
+                              );
+                            },
+                            icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                            label: const Text(
+                              'Export Section 43B(h) Disallowance Schedule',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFD97706),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              elevation: 0,
+                            ),
+                          ),
                         ],
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Exporting Section 43B(h) Disallowance Schedule...'),
-                            backgroundColor: Color(0xFFD97706),
-                          ),
-                        );
-                      },
-                      icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
-                      label: const Text(
-                        'Export Section 43B(h) Disallowance Schedule',
-                        style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD97706),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                        elevation: 0,
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               SingleChildScrollView(
@@ -3181,6 +3546,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── TAX SUB-TAB 4: STATUTORY DUES CLOCK (PF/ESI) (IMAGE 5) ───
   Widget _buildTaxStatutoryDuesClock(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -3192,7 +3558,7 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFE5E7EB)),
           ),
-          child: isMobile
+          child: (!isMacOS && isMobile)
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -3200,12 +3566,15 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                       children: const [
                         Text('⏰', style: TextStyle(fontSize: 14)),
                         SizedBox(width: 8),
-                        Text(
-                          'Statutory Dues Clock (Clause 20(b) of Form 3CD)',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
+                        Expanded(
+                          child: Text(
+                            'Statutory Dues Clock (Clause 20(b) of Form 3CD)',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF111827),
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -3216,10 +3585,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                       style: TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                     ),
                     const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 10,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -3233,36 +3600,44 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                             children: const [
                               Icon(LucideIcons.alertTriangle, size: 13, color: Color(0xFFE11D48)),
                               SizedBox(width: 5),
-                              Text(
-                                'Late Deposit Observed',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFFE11D48),
+                              Flexible(
+                                child: Text(
+                                  'Late Deposit Observed',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFFE11D48),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Exporting Form 3CD Clause 20(b) Format...'),
-                                backgroundColor: Color(0xFF0F172A),
-                              ),
-                            );
-                          },
-                          icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
-                          label: const Text(
-                            'Export Form 3CD Clause 20(b) Format',
-                            style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF0F172A),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            elevation: 0,
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Exporting Form 3CD Clause 20(b) Format...'),
+                                  backgroundColor: Color(0xFF0F172A),
+                                ),
+                              );
+                            },
+                            icon: const Icon(LucideIcons.downloadCloud, size: 14, color: Colors.white),
+                            label: const Text(
+                              'Export Form 3CD Clause 20(b) Format',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0F172A),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              elevation: 0,
+                            ),
                           ),
                         ),
                       ],
@@ -3429,27 +3804,50 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             children: [
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Text(
-                      'CLAUSE 20(B) MONTHLY STATUTORY DUES GRID',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF374151),
-                        letterSpacing: 0.5,
+                child: (!isMacOS && isMobile)
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'CLAUSE 20(B) MONTHLY STATUTORY DUES GRID',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          SizedBox(height: 3),
+                          Text(
+                            'EPF (12% + 12%) | ESIC (0.75% + 3.25%)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: const [
+                          Text(
+                            'CLAUSE 20(B) MONTHLY STATUTORY DUES GRID',
+                            style: TextStyle(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF374151),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          Text(
+                            'EPF (12% + 12%) | ESIC (0.75% + 3.25%)',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    Text(
-                      'EPF (12% + 12%) | ESIC (0.75% + 3.25%)',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                  ],
-                ),
               ),
               const Divider(height: 1, color: Color(0xFFE5E7EB)),
               SingleChildScrollView(
@@ -3890,6 +4288,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── STATUTORY FINANCIAL AUDIT MODULES (COMPANIES ACT 2013 & CARO 2020) ───
   Widget _buildStatutoryAuditModuleView(_StatutoryAuditModule module, bool isMobile, int moduleIndex) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isCompact = !isMacOS && isMobile;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -4161,88 +4561,188 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    if (moduleIndex > 0) {
-                      _activeSubTab = 4 + moduleIndex - 1;
-                    } else {
-                      _activeSubTab = 3; // Direct Bank BRS Engine
-                    }
-                  });
-                },
-                icon: const Icon(LucideIcons.arrowLeft, size: 14),
-                label: Text(
-                  moduleIndex > 0
-                      ? 'Previous: Module $moduleIndex'
-                      : 'Previous: Direct Bank BRS',
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF334155),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  backgroundColor: Colors.white,
-                ),
-              ),
-              Text(
-                'Module ${moduleIndex + 1} of ${_statutoryAuditModules.length}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              if (moduleIndex < _statutoryAuditModules.length - 1)
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _activeSubTab = 4 + moduleIndex + 1;
-                    });
-                  },
-                  icon: const Icon(LucideIcons.arrowRight, size: 14),
-                  label: Text(
-                    'Next: Module ${moduleIndex + 2}',
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF2563EB),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                  ),
+          child: isCompact
+              ? Column(
+                  children: [
+                    Text(
+                      'Module ${moduleIndex + 1} of ${_statutoryAuditModules.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                if (moduleIndex > 0) {
+                                  _activeSubTab = 4 + moduleIndex - 1;
+                                } else {
+                                  _activeSubTab = 3; // Direct Bank BRS Engine
+                                }
+                              });
+                            },
+                            icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                            label: Text(
+                              moduleIndex > 0 ? 'Prev: Mod $moduleIndex' : 'Prev: BRS Engine',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF334155),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (moduleIndex < _statutoryAuditModules.length - 1)
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _activeSubTab = 4 + moduleIndex + 1;
+                                });
+                              },
+                              icon: const Icon(LucideIcons.arrowRight, size: 14),
+                              label: Text(
+                                'Next: Mod ${moduleIndex + 2}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                elevation: 0,
+                              ),
+                            ),
+                          )
+                        else
+                          Expanded(
+                            child: Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFF86EFAC)),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(LucideIcons.checkCheck, size: 13, color: Color(0xFF166534)),
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'All Modules Ready',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF166534),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFF86EFAC)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFF166534)),
-                      SizedBox(width: 6),
-                      Text(
-                        'All 5 Modules Ready',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF166534),
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          if (moduleIndex > 0) {
+                            _activeSubTab = 4 + moduleIndex - 1;
+                          } else {
+                            _activeSubTab = 3; // Direct Bank BRS Engine
+                          }
+                        });
+                      },
+                      icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                      label: Text(
+                        moduleIndex > 0
+                            ? 'Previous: Module $moduleIndex'
+                            : 'Previous: Direct Bank BRS',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF334155),
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Module ${moduleIndex + 1} of ${_statutoryAuditModules.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    if (moduleIndex < _statutoryAuditModules.length - 1)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _activeSubTab = 4 + moduleIndex + 1;
+                          });
+                        },
+                        icon: const Icon(LucideIcons.arrowRight, size: 14),
+                        label: Text(
+                          'Next: Module ${moduleIndex + 2}',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF2563EB),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFF86EFAC)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFF166534)),
+                            SizedBox(width: 6),
+                            Text(
+                              'All 5 Modules Ready',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF166534),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-            ],
-          ),
         ),
       ],
     );
@@ -4493,6 +4993,9 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
   // ─── TAX AUDIT MODULES (SECTION 44AB & FORM 3CD) ───
   Widget _buildTaxAuditModuleView(_TaxAuditModule module, bool isMobile, int moduleIndex) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isCompact = !isMacOS && isMobile;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -4510,24 +5013,28 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             children: [
               Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFEF3C7),
-                      borderRadius: BorderRadius.circular(5),
-                      border: Border.all(color: const Color(0xFFFCD34D)),
-                    ),
-                    child: Text(
-                      'SEC 44AB • FORM 3CD MODULE ${moduleIndex + 1}',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFFB45309),
-                        letterSpacing: 0.5,
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(5),
+                        border: Border.all(color: const Color(0xFFFCD34D)),
+                      ),
+                      child: Text(
+                        'SEC 44AB • FORM 3CD MODULE ${moduleIndex + 1}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFB45309),
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ),
                   ),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   const Icon(LucideIcons.fileSpreadsheet, size: 16, color: Color(0xFFB45309)),
                 ],
               ),
@@ -4788,88 +5295,188 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () {
-                  setState(() {
-                    if (moduleIndex > 0) {
-                      _activeSubTab = 5 + moduleIndex - 1;
-                    } else {
-                      _activeSubTab = 4; // Statutory Dues Clock (PF/ESI)
-                    }
-                  });
-                },
-                icon: const Icon(LucideIcons.arrowLeft, size: 14),
-                label: Text(
-                  moduleIndex > 0
-                      ? 'Previous: Module $moduleIndex'
-                      : 'Previous: Statutory Dues Clock',
-                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
-                ),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF334155),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  backgroundColor: Colors.white,
-                ),
-              ),
-              Text(
-                'Module ${moduleIndex + 1} of ${_taxAuditModules.length}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-              if (moduleIndex < _taxAuditModules.length - 1)
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _activeSubTab = 5 + moduleIndex + 1;
-                    });
-                  },
-                  icon: const Icon(LucideIcons.arrowRight, size: 14),
-                  label: Text(
-                    'Next: Module ${moduleIndex + 2}',
-                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFD97706),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                  ),
+          child: isCompact
+              ? Column(
+                  children: [
+                    Text(
+                      'Module ${moduleIndex + 1} of ${_taxAuditModules.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              setState(() {
+                                if (moduleIndex > 0) {
+                                  _activeSubTab = 5 + moduleIndex - 1;
+                                } else {
+                                  _activeSubTab = 4; // Statutory Dues Clock (PF/ESI)
+                                }
+                              });
+                            },
+                            icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                            label: Text(
+                              moduleIndex > 0 ? 'Prev: Mod $moduleIndex' : 'Prev: Dues Clock',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF334155),
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              backgroundColor: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (moduleIndex < _taxAuditModules.length - 1)
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _activeSubTab = 5 + moduleIndex + 1;
+                                });
+                              },
+                              icon: const Icon(LucideIcons.arrowRight, size: 14),
+                              label: Text(
+                                'Next: Mod ${moduleIndex + 2}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFD97706),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                elevation: 0,
+                              ),
+                            ),
+                          )
+                        else
+                          Expanded(
+                            child: Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFFEF3C7),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: const Color(0xFFFCD34D)),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(LucideIcons.checkCheck, size: 13, color: Color(0xFFB45309)),
+                                  SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      'All Modules Ready',
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFFB45309),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF3C7),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFFCD34D)),
-                  ),
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFFB45309)),
-                      SizedBox(width: 6),
-                      Text(
-                        'All 5 Modules Ready',
-                        style: TextStyle(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFFB45309),
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          if (moduleIndex > 0) {
+                            _activeSubTab = 5 + moduleIndex - 1;
+                          } else {
+                            _activeSubTab = 4; // Statutory Dues Clock (PF/ESI)
+                          }
+                        });
+                      },
+                      icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                      label: Text(
+                        moduleIndex > 0
+                            ? 'Previous: Module $moduleIndex'
+                            : 'Previous: Statutory Dues Clock',
+                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF334155),
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        backgroundColor: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      'Module ${moduleIndex + 1} of ${_taxAuditModules.length}',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    if (moduleIndex < _taxAuditModules.length - 1)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _activeSubTab = 5 + moduleIndex + 1;
+                          });
+                        },
+                        icon: const Icon(LucideIcons.arrowRight, size: 14),
+                        label: Text(
+                          'Next: Module ${moduleIndex + 2}',
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFD97706),
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          elevation: 0,
+                        ),
+                      )
+                    else
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFCD34D)),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.checkCheck, size: 14, color: Color(0xFFB45309)),
+                            SizedBox(width: 6),
+                            Text(
+                              'All 5 Modules Ready',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFFB45309),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-            ],
-          ),
         ),
       ],
     );
@@ -4879,6 +5486,8 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   Widget _buildGeneralAuditorSuiteContent(bool isMobile) {
     final subTabs = _getSuiteSubTabs();
     final currentSubTab = _activeSubTab < subTabs.length ? subTabs[_activeSubTab] : subTabs[0];
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isCompact = !isMacOS && isMobile;
 
     return Container(
       decoration: BoxDecoration(
@@ -4890,37 +5499,34 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Icon(LucideIcons.clipboardCheck, size: 16, color: Color(0xFF166534)),
-                        const SizedBox(width: 8),
-                        Text(
-                          currentSubTab,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                      ],
+          if (isCompact) ...[
+            Row(
+              children: [
+                const Icon(LucideIcons.clipboardCheck, size: 16, color: Color(0xFF166534)),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    currentSubTab,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF111827),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Automated compliance, verification checks and working papers for ${_auditorRoles[_selectedAuditorIndex]}.',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              InkWell(
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Automated compliance, verification checks and working papers for ${_auditorRoles[_selectedAuditorIndex]}.',
+              style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: InkWell(
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -4937,24 +5543,93 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(LucideIcons.download, size: 14, color: Colors.white),
                       SizedBox(width: 8),
-                      Text(
-                        '1-Click Export (.PDF)',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12.5,
+                      Flexible(
+                        child: Text(
+                          '1-Click Export (.PDF)',
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ] else ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(LucideIcons.clipboardCheck, size: 16, color: Color(0xFF166534)),
+                          const SizedBox(width: 8),
+                          Text(
+                            currentSubTab,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Automated compliance, verification checks and working papers for ${_auditorRoles[_selectedAuditorIndex]}.',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                InkWell(
+                  onTap: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Generating $currentSubTab Report...'),
+                        backgroundColor: const Color(0xFF166534),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF166534),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(LucideIcons.download, size: 14, color: Colors.white),
+                        SizedBox(width: 8),
+                        Text(
+                          '1-Click Export (.PDF)',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
 
           const SizedBox(height: 18),
 
@@ -4968,28 +5643,55 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'STATUS: COMPLIANT & READY FOR SIGNING',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green.shade800,
-                        letterSpacing: 0.5,
+                if (isCompact) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'STATUS: COMPLIANT & READY FOR SIGNING',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade800,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
                       ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
-                        borderRadius: BorderRadius.circular(4),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('UDIN COMPLIANT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
                       ),
-                      child: const Text('UDIN COMPLIANT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ] else ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'STATUS: COMPLIANT & READY FOR SIGNING',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green.shade800,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text('UDIN COMPLIANT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 12),
                 Text(
                   '• Verified data feeds from company trial balance and statutory ledgers.\n'
@@ -5985,134 +6687,154 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
 
         const SizedBox(height: 14),
 
-        // Table Header Row matching Screenshot 1
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
-            children: [
-              Expanded(flex: 3, child: _buildTableHeaderFilterBadge('TAXPAYER NAME')),
-              Expanded(flex: 3, child: _buildTableHeaderFilterBadge('EMAIL ADDRESS')),
-              Expanded(flex: 2, child: _buildTableHeaderFilterBadge('REGIME')),
-              Expanded(flex: 3, child: _buildTableHeaderFilterBadge('EST. GROSS INCOME')),
-              Expanded(flex: 2, child: _buildTableHeaderFilterBadge('PENDING FILINGS')),
-              Expanded(flex: 2, child: _buildTableHeaderFilterBadge('STATUS')),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // Table Body Rows (only shown if taxpayers exist; empty by default matching Screenshot 1)
-        if (filtered.isNotEmpty)
-          Column(
-            children: filtered.map((c) {
-              final status = c['status'] as String;
-              final isVerified = status == 'Active';
-              final isPending = status == 'Pending Audit';
-
-              return Container(
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+        // Table Header & Body
+        Builder(
+          builder: (context) {
+            final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+            final tableContent = Column(
+              children: [
+                // Table Header Row matching Screenshot 1
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(flex: 3, child: _buildTableHeaderFilterBadge('TAXPAYER NAME')),
+                      Expanded(flex: 3, child: _buildTableHeaderFilterBadge('EMAIL ADDRESS')),
+                      Expanded(flex: 2, child: _buildTableHeaderFilterBadge('REGIME')),
+                      Expanded(flex: 3, child: _buildTableHeaderFilterBadge('EST. GROSS INCOME')),
+                      Expanded(flex: 2, child: _buildTableHeaderFilterBadge('PENDING FILINGS')),
+                      Expanded(flex: 2, child: _buildTableHeaderFilterBadge('STATUS')),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: const Icon(LucideIcons.building, color: Color(0xFF15803D), size: 14),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              c['name'] as String,
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        c['email'] as String,
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        c['regime'] as String,
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 3,
-                      child: Text(
-                        c['estIncome'] as String,
-                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Text(
-                        c['pendingFilings'] as String,
-                        style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFD97706)),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 2,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                const SizedBox(height: 8),
+                // Table Body Rows (only shown if taxpayers exist; empty by default matching Screenshot 1)
+                if (filtered.isNotEmpty)
+                  Column(
+                    children: filtered.map((c) {
+                      final status = c['status'] as String;
+                      final isVerified = status == 'Active';
+                      final isPending = status == 'Pending Audit';
+
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                         decoration: BoxDecoration(
-                          color: isVerified
-                              ? const Color(0xFFDCFCE7)
-                              : isPending
-                                  ? const Color(0xFFFEF3C7)
-                                  : const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(6),
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: isVerified
-                                ? const Color(0xFF15803D)
-                                : isPending
-                                    ? const Color(0xFFB45309)
-                                    : const Color(0xFF475569),
-                          ),
-                          textAlign: TextAlign.center,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFDCFCE7),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: const Icon(LucideIcons.building, color: Color(0xFF15803D), size: 14),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      c['name'] as String,
+                                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                c['email'] as String,
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                c['regime'] as String,
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                c['estIncome'] as String,
+                                style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                c['pendingFilings'] as String,
+                                style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFFD97706)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: isVerified
+                                      ? const Color(0xFFDCFCE7)
+                                      : isPending
+                                          ? const Color(0xFFFEF3C7)
+                                          : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isVerified
+                                        ? const Color(0xFF15803D)
+                                        : isPending
+                                            ? const Color(0xFFB45309)
+                                            : const Color(0xFF475569),
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ),
-                  ],
+                      );
+                    }).toList(),
+                  ),
+              ],
+            );
+
+            if (!isMacOS && isMobile) {
+              return SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: SizedBox(
+                  width: 760,
+                  child: tableContent,
                 ),
               );
-            }).toList(),
-          ),
+            }
+            return tableContent;
+          },
+        ),
       ],
     );
   }
@@ -6157,77 +6879,111 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   // CLIENT REQUESTS: OUTBOUND DOCUMENT REQUESTS LEDGER (Screenshot 2)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildClientRequestsLedgerView(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    final backButton = OutlinedButton.icon(
+      onPressed: () {
+        setState(() {
+          _showClientRequests = false;
+          _selectedLedgerRequest = null;
+        });
+      },
+      icon: const Icon(LucideIcons.arrowLeft, size: 14, color: Color(0xFF0F172A)),
+      label: const Text(
+        'Back to Clients',
+        style: TextStyle(
+          fontSize: 12.5,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF0F172A),
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        side: const BorderSide(color: Color(0xFFCBD5E1)),
+        backgroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+
+    final createButton = ElevatedButton.icon(
+      onPressed: () async {
+        final result = await showDialog<Map<String, dynamic>>(
+          context: context,
+          builder: (_) => const RequestDocumentDialog(),
+        );
+        if (result != null) {
+          setState(() {
+            _outboundDocumentRequests.insert(0, result);
+            _selectedLedgerRequest = result;
+          });
+        }
+      },
+      icon: const Icon(LucideIcons.plusCircle, size: 16),
+      label: const Text(
+        'Create Document Requisition',
+        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF166534),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        elevation: 0,
+      ),
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Top Action Bar matching Screenshot 2
-        Row(
-          children: [
-            OutlinedButton.icon(
-              onPressed: () {
-                setState(() {
-                  _showClientRequests = false;
-                  _selectedLedgerRequest = null;
-                });
-              },
-              icon: const Icon(LucideIcons.arrowLeft, size: 14, color: Color(0xFF0F172A)),
-              label: const Text(
-                'Back to Clients',
+        if (!isMacOS && isMobile) ...[
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              backButton,
+              createButton,
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Row(
+            children: [
+              Text('🤝 ', style: TextStyle(fontSize: 18)),
+              Expanded(
+                child: Text(
+                  'Outbound Document Requests Ledger',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ] else ...[
+          Row(
+            children: [
+              backButton,
+              const SizedBox(width: 14),
+              const Text(
+                '🤝 ',
+                style: TextStyle(fontSize: 18),
+              ),
+              const Text(
+                'Outbound Document Requests Ledger',
                 style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
                 ),
               ),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Color(0xFFCBD5E1)),
-                backgroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-            ),
-            const SizedBox(width: 14),
-            const Text(
-              '🤝 ',
-              style: TextStyle(fontSize: 18),
-            ),
-            const Text(
-              'Outbound Document Requests Ledger',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-            const Spacer(),
-            ElevatedButton.icon(
-              onPressed: () async {
-                final result = await showDialog<Map<String, dynamic>>(
-                  context: context,
-                  builder: (_) => const RequestDocumentDialog(),
-                );
-                if (result != null) {
-                  setState(() {
-                    _outboundDocumentRequests.insert(0, result);
-                    _selectedLedgerRequest = result;
-                  });
-                }
-              },
-              icon: const Icon(LucideIcons.plusCircle, size: 16),
-              label: const Text(
-                'Create Document Requisition',
-                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF166534),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                elevation: 0,
-              ),
-            ),
-          ],
-        ),
+              const Spacer(),
+              createButton,
+            ],
+          ),
+        ],
 
         const SizedBox(height: 24),
 
@@ -6273,23 +7029,50 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'REQUISITIONS LEDGER (${_outboundDocumentRequests.length})',
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF64748B),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              const Text(
-                'Click row to simulate collaboration',
-                style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
-              ),
-            ],
+          Builder(
+            builder: (context) {
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              final isMobile = MediaQuery.of(context).size.width < 950;
+              if (!isMacOS && isMobile) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'REQUISITIONS LEDGER (${_outboundDocumentRequests.length})',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF64748B),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Click row to simulate collaboration',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
+                    ),
+                  ],
+                );
+              }
+              return Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'REQUISITIONS LEDGER (${_outboundDocumentRequests.length})',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF64748B),
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const Text(
+                    'Click row to simulate collaboration',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontStyle: FontStyle.italic),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 14),
 
@@ -6840,12 +7623,16 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               const Row(
                 children: [
                   Text('✉️ ', style: TextStyle(fontSize: 16)),
-                  Text(
-                    'Team Invitations & Requests',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                  Expanded(
+                    child: Text(
+                      'Team Invitations & Requests',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
                   ),
                 ],
@@ -6976,9 +7763,13 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               const Row(
                 children: [
                   Text('👥 ', style: TextStyle(fontSize: 16)),
-                  Text(
-                    'Practice Team Members',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                  Expanded(
+                    child: Text(
+                      'Practice Team Members',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                    ),
                   ),
                 ],
               ),
@@ -6998,7 +7789,12 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                         });
                       },
                       icon: const Icon(LucideIcons.userCheck, size: 13, color: Color(0xFF2563EB)),
-                      label: const Text('Team Requests', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB))),
+                      label: const Text(
+                        'Team Requests',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                      ),
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Color(0xFF2563EB), width: 1.2),
                         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -7012,7 +7808,12 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                     child: ElevatedButton.icon(
                       onPressed: () => showDialog(context: context, builder: (_) => const InviteTeamDialog()),
                       icon: const Icon(LucideIcons.plus, size: 13),
-                      label: const Text('Add Team Member', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                      label: const Text(
+                        'Add Team Member',
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF166534),
                         foregroundColor: Colors.white,
@@ -7164,12 +7965,16 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                const Text(
-                                  'aruntest',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF0F172A),
+                                const Expanded(
+                                  child: Text(
+                                    'aruntest',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF0F172A),
+                                    ),
                                   ),
                                 ),
                               ],
@@ -7282,6 +8087,16 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
                 ],
               );
 
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              if (!isMacOS && constraints.maxWidth < 750) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 750,
+                    child: tableContent,
+                  ),
+                );
+              }
               if (constraints.maxWidth < 650) {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -7303,13 +8118,17 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.bold,
-            color: AppColors.darkText,
-            letterSpacing: 0.3,
+        Flexible(
+          child: Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.darkText,
+              letterSpacing: 0.3,
+            ),
           ),
         ),
         const SizedBox(width: 5),
@@ -7393,34 +8212,77 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: const Color(0xFFDCFCE7)),
             ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: const Color(0xFFDCFCE7),
-                  child: const Text('U', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
-                ),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Column(
+            child: Builder(
+              builder: (context) {
+                final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+                final isMobile = MediaQuery.of(context).size.width < 950;
+                if (!isMacOS && isMobile) {
+                  return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('uhgk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText)),
-                      Text('uhgk@gmail.com', style: TextStyle(fontSize: 10.5, color: AppColors.secondaryText)),
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 18,
+                            backgroundColor: const Color(0xFFDCFCE7),
+                            child: const Text('U', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                          ),
+                          const SizedBox(width: 10),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text('uhgk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                                Text('uhgk@gmail.com', style: TextStyle(fontSize: 10.5, color: AppColors.secondaryText)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          const Icon(LucideIcons.messageSquare, size: 14, color: Color(0xFF166534)),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text('Active Client', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                      ),
                     ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text('Active Client', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
-                ),
-                const SizedBox(width: 6),
-                const Icon(LucideIcons.messageSquare, size: 14, color: Color(0xFF166534)),
-              ],
+                  );
+                }
+                return Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: const Color(0xFFDCFCE7),
+                      child: const Text('U', style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                    ),
+                    const SizedBox(width: 10),
+                    const Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('uhgk', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText)),
+                          Text('uhgk@gmail.com', style: TextStyle(fontSize: 10.5, color: AppColors.secondaryText)),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFDCFCE7),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text('Active Client', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF15803D))),
+                    ),
+                    const SizedBox(width: 6),
+                    const Icon(LucideIcons.messageSquare, size: 14, color: Color(0xFF166534)),
+                  ],
+                );
+              },
             ),
           ),
 
@@ -7613,6 +8475,19 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   }
 
   Widget _buildAdvisoryWorkpaperTab(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isCompact = !isMacOS && isMobile;
+
+    final headerRow = Row(
+      children: [
+        Expanded(flex: 3, child: Text('Client Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
+        Expanded(flex: 3, child: Text('Email', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
+        Expanded(flex: 2, child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
+        Expanded(flex: 3, child: Text('Checklist Progress', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
+        Expanded(flex: 2, child: Text('Action', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
+      ],
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -7635,15 +8510,16 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
           ),
           child: Column(
             children: [
-              Row(
-                children: [
-                  Expanded(flex: 3, child: Text('Client Name', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
-                  Expanded(flex: 3, child: Text('Email', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
-                  Expanded(flex: 2, child: Text('Status', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
-                  Expanded(flex: 3, child: Text('Checklist Progress', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
-                  Expanded(flex: 2, child: Text('Action', textAlign: TextAlign.right, style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade700))),
-                ],
-              ),
+              if (isCompact)
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: 650,
+                    child: headerRow,
+                  ),
+                )
+              else
+                headerRow,
               const Divider(height: 24, color: Color(0xFFE2E8F0)),
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 36),
@@ -7662,11 +8538,42 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   }
 
   Widget _buildAdvisoryConsultTab(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isCompact = !isMacOS && isMobile;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 6 Summary Stat Cards (Earnings & Revenue)
-        if (isMobile)
+        if (isCompact)
+          Column(
+            children: [
+              Row(
+                children: [
+                  _buildConsultStatCard("Today's Earnings", '₹0', const Color(0xFF15803D)),
+                  const SizedBox(width: 8),
+                  _buildConsultStatCard('This Week', '₹0', const Color(0xFF2563EB)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildConsultStatCard('This Month', '₹0', const Color(0xFF2563EB)),
+                  const SizedBox(width: 8),
+                  _buildConsultStatCard('Pending Payments', '₹0', const Color(0xFFD97706)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  _buildConsultStatCard('Paid Payments', '₹0', const Color(0xFF15803D)),
+                  const SizedBox(width: 8),
+                  _buildConsultStatCard('Total Revenue', '₹0', const Color(0xFF2563EB)),
+                ],
+              ),
+            ],
+          )
+        else if (isMobile)
           Column(
             children: [
               Row(
@@ -7980,145 +8887,217 @@ class _AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSt
   }
 
   Widget _buildAdvisorySeniorCATab(bool isMobile) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Senior CA Executive Desk Header Card
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return Builder(
+      builder: (context) {
+        final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Senior CA Executive Desk Header Card
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Row(
+                  if (!isMacOS && isMobile)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFDCFCE7),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(LucideIcons.userCheck, color: Color(0xFF15803D), size: 18),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                '🛡️ Senior CA Executive Advisory Desk',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDCFCE7),
+                                borderRadius: BorderRadius.circular(10),
                               ),
-                              SizedBox(height: 2),
+                              child: const Icon(LucideIcons.userCheck, color: Color(0xFF15803D), size: 18),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '🛡️ Senior CA Executive Advisory Desk',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Senior Audit Leadership, Quality Review & Executive Compliance Sign-off',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(fontSize: 11, color: AppColors.secondaryText),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFDCFCE7)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.checkCircle2, size: 12, color: Color(0xFF15803D)),
+                              SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  'Senior CA Active Clearance',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: Color(0xFF15803D), fontSize: 9.5, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(LucideIcons.userCheck, color: Color(0xFF15803D), size: 18),
+                              ),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      '🛡️ Senior CA Executive Advisory Desk',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                                    ),
+                                    SizedBox(height: 2),
+                                    Text(
+                                      'Senior Audit Leadership, Quality Review & Executive Compliance Sign-off',
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(fontSize: 11, color: AppColors.secondaryText),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFDCFCE7)),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.checkCircle2, size: 12, color: Color(0xFF15803D)),
+                              SizedBox(width: 4),
                               Text(
-                                'Senior Audit Leadership, Quality Review & Executive Compliance Sign-off',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(fontSize: 11, color: AppColors.secondaryText),
+                                'Senior CA Active Clearance',
+                                style: TextStyle(color: Color(0xFF15803D), fontSize: 9.5, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF0FDF4),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFDCFCE7)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
+
+                  const SizedBox(height: 20),
+
+                  // 3 Stat Cards Row
+                  if (isMobile)
+                    Column(
                       children: [
-                        Icon(LucideIcons.checkCircle2, size: 12, color: Color(0xFF15803D)),
-                        SizedBox(width: 4),
-                        Text(
-                          'Senior CA Active Clearance',
-                          style: TextStyle(color: Color(0xFF15803D), fontSize: 9.5, fontWeight: FontWeight.bold),
-                        ),
+                        _buildSeniorCACard('HIGH RISK AUDITS', '0 Active', 'All clear & verified', const Color(0xFF15803D), isMobile: true),
+                        const SizedBox(height: 10),
+                        _buildSeniorCACard('QUALITY SIGN-OFFS', '100% Passed', 'Compliance standard met', const Color(0xFF15803D), isMobile: true),
+                        const SizedBox(height: 10),
+                        _buildSeniorCACard('SENIOR CONSULTANT DESK', 'Ready', 'Live advisory session active', const Color(0xFF2563EB), isMobile: true),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        _buildSeniorCACard('HIGH RISK AUDITS', '0 Active', 'All clear & verified', const Color(0xFF15803D)),
+                        const SizedBox(width: 12),
+                        _buildSeniorCACard('QUALITY SIGN-OFFS', '100% Passed', 'Compliance standard met', const Color(0xFF15803D)),
+                        const SizedBox(width: 12),
+                        _buildSeniorCACard('SENIOR CONSULTANT DESK', 'Ready', 'Live advisory session active', const Color(0xFF2563EB)),
                       ],
                     ),
-                  ),
                 ],
               ),
-
-              const SizedBox(height: 20),
-
-              // 3 Stat Cards Row
-              if (isMobile)
-                Column(
-                  children: [
-                    _buildSeniorCACard('HIGH RISK AUDITS', '0 Active', 'All clear & verified', const Color(0xFF15803D)),
-                    const SizedBox(height: 10),
-                    _buildSeniorCACard('QUALITY SIGN-OFFS', '100% Passed', 'Compliance standard met', const Color(0xFF15803D)),
-                    const SizedBox(height: 10),
-                    _buildSeniorCACard('SENIOR CONSULTANT DESK', 'Ready', 'Live advisory session active', const Color(0xFF2563EB)),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    _buildSeniorCACard('HIGH RISK AUDITS', '0 Active', 'All clear & verified', const Color(0xFF15803D)),
-                    const SizedBox(width: 12),
-                    _buildSeniorCACard('QUALITY SIGN-OFFS', '100% Passed', 'Compliance standard met', const Color(0xFF15803D)),
-                    const SizedBox(width: 12),
-                    _buildSeniorCACard('SENIOR CONSULTANT DESK', 'Ready', 'Live advisory session active', const Color(0xFF2563EB)),
-                  ],
-                ),
-            ],
-          ),
-        ),
-      ],
+            ),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildSeniorCACard(String label, String value, String subtitle, Color subColor) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppColors.secondaryText, letterSpacing: 0.5),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              value,
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: subColor),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: subColor),
-            ),
-          ],
-        ),
+  Widget _buildSeniorCACard(String label, String value, String subtitle, Color subColor, {bool isMobile = false}) {
+    final cardContent = Container(
+      width: isMobile ? double.infinity : null,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: AppColors.secondaryText, letterSpacing: 0.5),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: subColor),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            subtitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w600, color: subColor),
+          ),
+        ],
       ),
     );
+
+    if (isMobile) {
+      return cardContent;
+    }
+    return Expanded(child: cardContent);
   }
 
   Widget _buildClientCard(String name, String ref, String status, String phone) {

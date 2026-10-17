@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── Data Models ─────────────────────────────────────────────────────────────
 
@@ -261,7 +263,77 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
+    if (isMacOS) {
+      return _buildDesktopView(screenWidth, isMobile);
+    }
+
+    // ─── MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: isMobile
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76),
+              child: _ExpandableFab(
+                onNewPO: _showNewPODialog,
+                onNewBill: _showNewPurchaseBillDialog,
+                onReturn: _showPurchaseReturnDialog,
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(isMobile)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: 46,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                child: _buildMobileTabNav(),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
+
+          // ─── MAIN CONTENT CONTAINER (Tables & Lists) ───
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              14,
+              0,
+              14,
+              isMobile ? 140 : 40,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: _buildActiveTabContent(screenWidth),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // DESKTOP VIEW (Preserved strictly for macOS)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(double screenWidth, bool isMobile) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       floatingActionButton: isMobile
@@ -306,6 +378,295 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
               _buildActiveTabContent(screenWidth),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MOBILE HERO SUMMARY CARD (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Title Header & Status Badge Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.shoppingBag, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        'PURCHASES & PROCUREMENT',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.activity, size: 13, color: Colors.greenAccent.shade100),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE SYNC',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Text(
+            'Purchase Invoices & Orders',
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 20,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.3,
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Action Buttons row inside Hero card
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showNewPODialog,
+                  icon: const Icon(LucideIcons.plus, size: 12, color: Colors.white),
+                  label: const Text(
+                    '+ New PO',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showNewPurchaseBillDialog,
+                  icon: const Icon(LucideIcons.plus, size: 12, color: Colors.white),
+                  label: const Text(
+                    '+ New Bill',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: _showPurchaseReturnDialog,
+                  icon: const Icon(LucideIcons.rotateCcw, size: 12, color: Colors.white),
+                  label: const Text(
+                    '+ Return',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 4 Stat Chips inside hero card
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroChip('OUTWARD PROCUREMENT', '₹13,84,608', isMobile),
+                const SizedBox(width: 8),
+                _buildHeroChip('ACTIVE PO CYCLES', '${_purchaseOrders.length}', isMobile),
+                const SizedBox(width: 8),
+                _buildHeroChip('CLAIMABLE ITC', '₹2,03,584.11', isMobile),
+                const SizedBox(width: 8),
+                _buildHeroChip('REFUND ADJUSTMENTS', '₹0', isMobile),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChip(String label, String value, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12, vertical: isMobile ? 8 : 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: isMobile ? 8.5 : 9.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.7),
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isMobile ? 13 : 15,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MOBILE STICKY TAB NAVIGATION (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      (label: 'Purchase Orders (PO)', icon: LucideIcons.shoppingCart),
+      (label: 'Purchase Bills & Invoices', icon: LucideIcons.fileText),
+      (label: 'Purchase Returns (Suppliers)', icon: LucideIcons.rotateCcw),
+    ];
+
+    return SizedBox(
+      height: 46,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeTab == index;
+            return Padding(
+              padding: const EdgeInsets.only(right: 6),
+              child: GestureDetector(
+                onTap: () => setState(() => _activeTab = index),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeOutCubic,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? const Color(0xFF166534) : Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFF166534).withValues(alpha: 0.2),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        tabs[index].icon,
+                        size: 13,
+                        color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        tabs[index].label,
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          color: isSelected ? Colors.white : const Color(0xFF374151),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -965,11 +1326,14 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
           ),
 
           // Table Structure (guaranteed NO horizontal overflow via SingleChildScrollView)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, 1020.0);
+          if (screenWidth < 768 && Theme.of(context).platform != TargetPlatform.macOS)
+            _buildMobilePoCardList(_purchaseOrders)
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = math.max(constraints.maxWidth, 1020.0);
 
-              return SingleChildScrollView(
+                return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: SizedBox(
@@ -1321,11 +1685,14 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
           ),
 
           // Data Table wrapped in horizontal scroll view
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, 1020.0);
+          if (screenWidth < 768 && Theme.of(context).platform != TargetPlatform.macOS)
+            _buildMobileBillsCardList(filteredBills)
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = math.max(constraints.maxWidth, 1020.0);
 
-              return SingleChildScrollView(
+                return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: SizedBox(
@@ -1673,11 +2040,14 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
           ),
 
           // Table Structure (Image 3)
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, 960.0);
+          if (screenWidth < 768 && Theme.of(context).platform != TargetPlatform.macOS)
+            _buildMobileReturnsCardList(filteredReturns)
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = math.max(constraints.maxWidth, 960.0);
 
-              return SingleChildScrollView(
+                return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
                 child: SizedBox(
@@ -1895,6 +2265,531 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
     );
   }
 
+  Widget _buildMobilePoCardList(List<_PurchaseBillItem> items) {
+    if (items.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFFF1F2),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(LucideIcons.shoppingBag, size: 32, color: Color(0xFFE11D48)),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'No active purchase orders found',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Create a new purchase order cycle with vendor terms to get started.',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _showNewPODialog,
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text('Create Purchase Order', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFE11D48),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(14),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final po = items[index];
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: PO Number, Status, More Menu
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      po.poNumber,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      po.status,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF475569)),
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(LucideIcons.moreVertical, size: 16, color: Color(0xFF64748B)),
+                    onPressed: () => _showBillDetailsModal(po),
+                    constraints: const BoxConstraints(),
+                    padding: EdgeInsets.zero,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Supplier & GSTIN
+              Text(
+                po.supplier,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 2),
+              Wrap(
+                spacing: 10,
+                runSpacing: 2,
+                children: [
+                  Text('GSTIN: ${po.gstin}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                  Text('Date: ${po.date} | Due: ${po.dueDate}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Item details
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        po.itemName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Qty: ${po.qty} @ ${_formatIndianCurrency(po.rate)}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Total payable & Tax breakdown
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CGST: ${_formatIndianCurrency(po.cgst)} | SGST: ${_formatIndianCurrency(po.sgst)}',
+                          style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Total Payable',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatIndianCurrency(po.totalPayable),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileBillsCardList(List<_PurchaseBillItem> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.fileText, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No purchase bills found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(14),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final bill = items[index];
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: PO Number and Status Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      bill.poNumber,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  bill.isCompleted
+                      ? Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.checkCircle2, size: 12, color: Color(0xFF16A34A)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Completed',
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.clock, size: 12, color: Colors.blueGrey.shade600),
+                              const SizedBox(width: 4),
+                              Text(
+                                bill.status,
+                                style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey.shade700),
+                              ),
+                            ],
+                          ),
+                        ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Supplier & GSTIN
+              Text(
+                bill.supplier,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 2),
+              Wrap(
+                spacing: 10,
+                runSpacing: 2,
+                children: [
+                  Text(
+                    bill.gstin == 'Unregistered' ? 'Unregistered' : 'GSTIN: ${bill.gstin}',
+                    style: TextStyle(fontSize: 11, color: bill.gstin == 'Unregistered' ? const Color(0xFF94A3B8) : const Color(0xFF64748B)),
+                  ),
+                  Text('Date: ${bill.date} | Due: ${bill.dueDate}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Items
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        bill.itemName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Qty: ${bill.qty} @ ${_formatIndianCurrency(bill.rate)}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Payables & Tax
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'CGST (9%): ${_formatIndianCurrency(bill.cgst)} | SGST (9%): ${_formatIndianCurrency(bill.sgst)}',
+                          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        const Text(
+                          'Total Payable',
+                          style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF94A3B8)),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _formatIndianCurrency(bill.totalPayable),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14.5, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Action button
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => _showBillDetailsModal(bill),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                  child: Text(
+                    bill.isCompleted ? 'View Details' : 'Supplier Status',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileReturnsCardList(List<_PurchaseReturnItem> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.rotateCcw, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No purchase returns found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(14),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final ret = items[index];
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Ref ID & Status
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      ret.refId,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7).withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.checkCircle2, size: 12, color: Color(0xFF16A34A)),
+                        const SizedBox(width: 4),
+                        Text(
+                          ret.status,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Supplier
+              Text(
+                ret.supplier,
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A)),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 8),
+
+              // Item capsule
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        ret.itemName,
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5, color: Color(0xFF0F172A)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Returned: ${ret.returnedQty} Units',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+
+              // Refund Amount
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Credit Note Applied',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  Text(
+                    _formatIndianCurrency(ret.refundAmount),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14.5,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════════════════
   // SHARED TABLE HEADER CELL HELPER
   // ═══════════════════════════════════════════════════════════════════════════
@@ -1905,6 +2800,7 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
     bool withFilter = false,
     Alignment alignment = Alignment.centerLeft,
   }) {
+    final isMobile = MediaQuery.of(context).size.width < 900;
     return Expanded(
       flex: flex,
       child: Align(
@@ -1918,7 +2814,7 @@ class _PurchaseInvoicePageState extends ConsumerState<PurchaseInvoicePage> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(
-                  fontSize: 13,
+                  fontSize: isMobile ? 11 : 13,
                   fontWeight: FontWeight.w700,
                   color: const Color(0xFF1E293B),
                   letterSpacing: 0.3,
@@ -5279,5 +6175,28 @@ class _ExpandableFabState extends State<_ExpandableFab> with SingleTickerProvide
         ),
       ],
     );
+  }
+}
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

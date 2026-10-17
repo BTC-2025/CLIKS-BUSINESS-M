@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -445,8 +447,86 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 768;
+    final isMobile = screenWidth < 900;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
+    if (isMacOS) {
+      return _buildDesktopView(isMobile);
+    }
+
+    // ─── MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: isMobile
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76),
+              child: FloatingActionButton(
+                onPressed: _openRegisterWarehouseDialog,
+                backgroundColor: const Color(0xFF166534),
+                elevation: 4,
+                child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(isMobile)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: 46,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                child: _buildMobileTabNav(),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
+
+          // ─── MAIN CONTENT CONTAINER (Tables & Lists) ───
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              14,
+              0,
+              14,
+              isMobile ? 140 : 40,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_activeTab == 0) _buildGodownsTab(isMobile),
+                  if (_activeTab == 1) _buildStockRegistryTab(isMobile),
+                  if (_activeTab == 2) _buildGoodsInwardAuditTab(isMobile),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // DESKTOP VIEW (Preserved strictly for macOS)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(bool isMobile) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
@@ -478,6 +558,292 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
             if (_activeTab == 2) _buildGoodsInwardAuditTab(isMobile),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // HERO SUMMARY CARD (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Title Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.warehouse, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'WAREHOUSE LOGISTICS & GODOWNS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4ADE80),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Text(
+                      'GODOWNS ACTIVE',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Warehouse Facilities & Inward Hub',
+            style: TextStyle(
+              fontSize: isMobile ? 20 : 24,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Quick Action Buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHeroActionButton(
+                label: 'Register Warehouse',
+                icon: LucideIcons.plus,
+                onPressed: _openRegisterWarehouseDialog,
+                isPrimary: true,
+              ),
+              _buildHeroActionButton(
+                label: 'Goods Inward Receiving',
+                icon: LucideIcons.packagePlus,
+                onPressed: _openGoodsInwardReceiptDialog,
+                isPrimary: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 4 KPI Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip('REGISTERED FACILITIES', '4 Godowns'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('INVENTORY VALUATION', '₹287.70 Cr'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('MULTI-LOCATION SKUS', '4 Active SKUs'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('INWARD RECEIPTS AUDIT', '3 Logs Recorded'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isPrimary,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isPrimary ? const Color(0xFF0F172A) : Colors.white,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: isPrimary ? const Color(0xFF0F172A) : Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.75),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // STICKY MOBILE TAB NAVIGATION
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      (label: 'Registered Godowns & Locations', icon: LucideIcons.warehouse),
+      (label: 'Warehouse Stock Registry', icon: LucideIcons.layers),
+      (label: 'Goods Inward Historical logs', icon: LucideIcons.fileText),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          final tab = tabs[index];
+          final isSelected = _activeTab == index;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    tab.icon,
+                    size: 13,
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    tab.label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (_) => setState(() => _activeTab = index),
+              selectedColor: const Color(0xFF0F172A),
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              elevation: isSelected ? 2 : 0,
+              pressElevation: 1,
+              showCheckmark: false,
+            ),
+          );
+        }),
       ),
     );
   }
@@ -1293,6 +1659,11 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
       clipBehavior: Clip.antiAlias,
       child: LayoutBuilder(
         builder: (context, constraints) {
+          final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+          if (isMobile && !isMacOS) {
+            return _buildMobileWarehouseStockCardList(_stockRegistry);
+          }
+
           const minWidth = 980.0;
           final width = math.max(constraints.maxWidth, minWidth);
 
@@ -1522,6 +1893,11 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
           // Audit Table
           LayoutBuilder(
             builder: (context, constraints) {
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              if (isMobile && !isMacOS) {
+                return _buildMobileGoodsInwardCardList(_inwardReceipts);
+              }
+
               const minWidth = 920.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
@@ -1650,6 +2026,250 @@ class _WarehousePageState extends ConsumerState<WarehousePage> {
           const SizedBox(height: 12),
         ],
       ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE CARD PRESENTATION WIDGETS (WAREHOUSE PAGE)
+  // ═══════════════════════════════════════════════════════════════
+
+  Widget _buildMobileWarehouseStockCardList(List<WarehouseProductItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text(
+            'No warehouse stock items found.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(12),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final valText = item.name == 'curd aarokya'
+            ? '₹3,510'
+            : item.name == 'gulob jamun'
+                ? '₹7,79,95,788'
+                : item.name == 'new product cliks business'
+                    ? '₹2,50,000'
+                    : '₹${item.valuation.toStringAsFixed(0)}';
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _openStockMovementDetailsDialog(item),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.warehouse,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF065F46),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${item.stock} pcs',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.name,
+                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Zone A • Open Floor / Unassigned',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Valuation:',
+                          style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                        ),
+                        Flexible(
+                          child: Text(
+                            valText,
+                            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileGoodsInwardCardList(List<InwardReceiptItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text(
+            'No goods inward records found.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.all(12),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final rc = items[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      rc.inwardId,
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                    ),
+                  ),
+                  Text(
+                    rc.dateReceived,
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                rc.productDescription,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Bill Ref: ${rc.purchaseBillRef}',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF334155), fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        'Qty: ${rc.receivedQty} pcs',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        'By: ${rc.receivedBy}',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 4,
+                      child: Text(
+                        'To: ${rc.destinationWarehouse}',
+                        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF16A34A)),
+                        textAlign: TextAlign.end,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -2892,11 +3512,19 @@ class _WarehouseProductsListDialogState extends State<_WarehouseProductsListDial
 
               // Products Table
               Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: SizedBox(
-                    width: 780,
+                child: Builder(
+                  builder: (context) {
+                    final isMobile = MediaQuery.of(context).size.width < 700;
+                    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+                    if (isMobile && !isMacOS) {
+                      return _buildMobileProductsCardList(filtered);
+                    }
+
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: SizedBox(
+                        width: 780,
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -3031,13 +3659,105 @@ class _WarehouseProductsListDialogState extends State<_WarehouseProductsListDial
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+      ),
+    ),
+  ),
+);
+  }
+
+  Widget _buildMobileProductsCardList(List<WarehouseProductItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text(
+            'No products found in this warehouse.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
           ),
         ),
-      ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final p = items[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      p.name,
+                      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      p.status,
+                      style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Text(
+                    p.sku,
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '• ${p.category}',
+                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Stock: ${p.stock} ${p.unit}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                  ),
+                  Text(
+                    'Cost: ₹${p.unitCost.toStringAsFixed(0)}',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
@@ -3281,5 +4001,28 @@ class _EditWarehouseProfileDialogState extends State<_EditWarehouseProfileDialog
         ),
       ],
     );
+  }
+}
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

@@ -1,9 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 
 // ═══════════════════════════════════════════════════════════════
@@ -225,6 +227,87 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 900;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    if (isMacOS) {
+      return _buildDesktopView(context);
+    }
+
+    // ─── MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing) ───
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: isMobile
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76),
+              child: FloatingActionButton(
+                onPressed: _showAddProductDialog,
+                backgroundColor: const Color(0xFF166534),
+                elevation: 4,
+                child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(isMobile)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: 46,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                child: _buildMobileTabNav(),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
+
+          // ─── MAIN CONTENT CONTAINER (Search, Filters & Tables) ───
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              14,
+              0,
+              14,
+              isMobile ? 140 : 40,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildSearchAndFilters(context, isMobile),
+                  const SizedBox(height: 14),
+                  _buildTableCard(screenWidth),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // DESKTOP VIEW (Preserved strictly for macOS)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
@@ -261,6 +344,297 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
             );
           },
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // HERO SUMMARY CARD (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Title Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.package, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'PRODUCTS & INVENTORY CATALOG',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4ADE80),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Text(
+                      'CATALOG LIVE',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Products & Service Catalog',
+            style: TextStyle(
+              fontSize: isMobile ? 20 : 24,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Quick Action Buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHeroActionButton(
+                label: '+ Add Product',
+                icon: LucideIcons.plus,
+                onPressed: _showAddProductDialog,
+                isPrimary: true,
+              ),
+              _buildHeroActionButton(
+                label: 'Bulk Import (CSV)',
+                icon: LucideIcons.uploadCloud,
+                onPressed: _showBulkImportDialog,
+                isPrimary: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 4 KPI Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip('TOTAL CATALOG SKUS', '$_totalCatalogSkus'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('STOCK VALUATION', _stockValuationDisplay),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('LOW STOCK ALERTS', '$_lowStockAlertsCount'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('TOTAL PHYSICAL UNITS', _totalPhysicalUnitsDisplay),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isPrimary,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.25),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isPrimary ? const Color(0xFF0F172A) : Colors.white,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: isPrimary ? const Color(0xFF0F172A) : Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.75),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // STICKY MOBILE TAB NAVIGATION
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      (label: 'All Products', status: 'All Stock Status', icon: LucideIcons.package),
+      (label: 'In Stock', status: 'In Stock', icon: LucideIcons.checkCircle2),
+      (label: 'Low Stock', status: 'Low Stock', icon: LucideIcons.alertTriangle),
+      (label: 'Out of Stock', status: 'Out of Stock', icon: LucideIcons.xCircle),
+      (label: 'Unlimited', status: 'Unlimited', icon: LucideIcons.infinity),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Row(
+        children: tabs.map((tab) {
+          final isSelected = _selectedStatus == tab.status;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    tab.icon,
+                    size: 13,
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    tab.label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (_) {
+                setState(() {
+                  _selectedStatus = tab.status;
+                });
+              },
+              selectedColor: const Color(0xFF0F172A),
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              elevation: isSelected ? 2 : 0,
+              pressElevation: 1,
+              showCheckmark: false,
+            ),
+          );
+        }).toList(),
       ),
     );
   }
@@ -666,9 +1040,9 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
       children: [
         Expanded(child: searchInput),
         const SizedBox(width: 14),
-        statusDropdown,
+        SizedBox(width: 180, child: statusDropdown),
         const SizedBox(width: 12),
-        categoryDropdown,
+        SizedBox(width: 180, child: categoryDropdown),
       ],
     );
   }
@@ -678,6 +1052,13 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
   // ═══════════════════════════════════════════════════════════════
   Widget _buildTableCard(double screenWidth) {
     final filtered = _filteredProducts;
+    final isMobile = screenWidth < 900;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    if (isMobile && !isMacOS) {
+      return _buildMobileProductsCardList(filtered);
+    }
+
     final tableWidth = max(screenWidth - (screenWidth < 950 ? 32 : 56), 1180.0);
 
     return Container(
@@ -712,6 +1093,326 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileProductsCardList(List<ProductItem> items) {
+    if (items.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final product = items[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Top row: Icon, Name/SKU, Status Badge
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCFCE7),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.box,
+                        color: Color(0xFF16A34A),
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'SKU: ${product.sku} | Code: ${product.code}',
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: Color(0xFF64748B),
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  _buildStatusBadge(product),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // 2. Classification & Tax Tags
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      product.category,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
+                      ),
+                    ),
+                  ),
+                  if (product.brand.isNotEmpty && product.brand != '-')
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Text(
+                        product.brand,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      '${product.gstRate}% GST • HSN ${product.hsnCode}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // 3. Metrics Summary Container
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFF1F5F9)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'STOCK',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          if (product.isUnlimited)
+                            const Text(
+                              '∞ Unlimited',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF2563EB),
+                              ),
+                            )
+                          else
+                            Text(
+                              '${product.stock} Sellable',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: product.stockStatus == 'OUT OF STOCK'
+                                    ? const Color(0xFFDC2626)
+                                    : const Color(0xFF0F172A),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Container(width: 1, height: 26, color: const Color(0xFFE2E8F0)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'BUY PRICE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹${product.buyPrice.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(width: 1, height: 26, color: const Color(0xFFE2E8F0)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'SELL PRICE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹${product.sellPrice.toStringAsFixed(0)}',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF166534),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // 4. Action Buttons Strip
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: Row(
+                  children: [
+                    // Stock In
+                    _actionIconButton(
+                      icon: LucideIcons.arrowUpRight,
+                      tooltip: 'Induct Stock',
+                      bgColor: const Color(0xFF166534),
+                      iconColor: Colors.white,
+                      onTap: () => _showInductStockDialog(product),
+                    ),
+                    const SizedBox(width: 6),
+                    // Stock Out
+                    _actionIconButton(
+                      icon: LucideIcons.arrowDownRight,
+                      tooltip: 'Deplete Stock',
+                      bgColor: const Color(0xFFDC2626),
+                      iconColor: Colors.white,
+                      onTap: () => _showDepleteStockDialog(product),
+                    ),
+                    const SizedBox(width: 6),
+                    // Damaged
+                    _actionIconButton(
+                      icon: LucideIcons.alertTriangle,
+                      tooltip: 'Mark Damaged',
+                      bgColor: const Color(0xFFEF4444),
+                      iconColor: Colors.white,
+                      onTap: () => _showMarkDamagedDialog(product),
+                    ),
+                    const SizedBox(width: 6),
+                    // Expired
+                    _actionIconButton(
+                      icon: LucideIcons.alertCircle,
+                      tooltip: 'Mark Expired',
+                      bgColor: const Color(0xFFD97706),
+                      iconColor: Colors.white,
+                      onTap: () => _showMarkExpiredDialog(product),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(width: 1, height: 22, color: const Color(0xFFE2E8F0)),
+                    const SizedBox(width: 10),
+                    // Edit
+                    _actionIconButton(
+                      icon: LucideIcons.pencil,
+                      tooltip: 'Edit Product',
+                      bgColor: Colors.white,
+                      borderColor: const Color(0xFFE2E8F0),
+                      iconColor: const Color(0xFF64748B),
+                      onTap: () => _showEditProductDialog(product),
+                    ),
+                    const SizedBox(width: 6),
+                    // Delete
+                    _actionIconButton(
+                      icon: LucideIcons.trash2,
+                      tooltip: 'Delete Product',
+                      bgColor: Colors.white,
+                      borderColor: const Color(0xFFFEE2E2),
+                      iconColor: const Color(0xFFEF4444),
+                      onTap: () => _showDeleteDialog(product),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -3005,5 +3706,28 @@ class _ProductsPageState extends ConsumerState<ProductsPage> {
         ),
       ],
     );
+  }
+}
+
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  const _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(covariant _StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

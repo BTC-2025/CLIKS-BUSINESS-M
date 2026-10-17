@@ -1,8 +1,10 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../core/theme/app_colors.dart';
 
 // ─── DATA MODELS ──────────────────────────────────────────────
 
@@ -335,11 +337,25 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
 
   // ─── BUILD ROOT ──────────────────────────────────────────────
 
+  // ─── BUILD ROOT ──────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
+    if (isMacOS) {
+      return _buildDesktopView(screenWidth, isMobile);
+    }
+
+    return _buildMobileView(context);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // DESKTOP VIEW (Preserved strictly for macOS)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(double screenWidth, bool isMobile) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SingleChildScrollView(
@@ -372,6 +388,350 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
             if (_activeTab == 3) _buildLoansContent(isMobile),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMobileView(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 76),
+        child: FloatingActionButton(
+          heroTag: 'payroll_mobile_fab',
+          onPressed: () {
+            if (_activeTab == 3) {
+              _openGrantLoanDialog();
+            } else {
+              _openProcessPayrollDialog();
+            }
+          },
+          backgroundColor: const Color(0xFFBE185D),
+          elevation: 4,
+          child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
+        ),
+      ),
+      body: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
+            _buildHeroSummary(true)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+            const SizedBox(height: 10),
+
+            // ─── STICKY TAB NAVIGATION BAR ───
+            _buildMobileTabNav(),
+            const SizedBox(height: 10),
+
+            // ─── MAIN CONTENT CONTAINER (Tables & Lists) ───
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 140),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_activeTab == 0) _buildRegisterContent(true),
+                  if (_activeTab == 1) _buildStructuresContent(true),
+                  if (_activeTab == 2) _buildComplianceContent(true),
+                  if (_activeTab == 3) _buildLoansContent(true),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // HERO SUMMARY CARD (Matching Reports / Barcode / Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Title Row
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.creditCard, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'PAYROLL ENGINE & DISBURSEMENTS',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF4ADE80),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 5),
+                    const Text(
+                      'SYSTEM ACTIVE',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Workforce Payroll Engine',
+            style: TextStyle(
+              fontSize: isMobile ? 20 : 24,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 14),
+          // Quick Action Buttons
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildHeroActionButton(
+                label: 'Process Monthly Payroll',
+                icon: LucideIcons.plus,
+                onPressed: _openProcessPayrollDialog,
+                isPrimary: true,
+              ),
+              _buildHeroActionButton(
+                label: 'Allocate Employee Loan',
+                icon: LucideIcons.sliders,
+                onPressed: _openGrantLoanDialog,
+                isPrimary: false,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // 4 KPI Chips
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip('MONTHLY EXPENSE', '₹${(_totalMonthlyExpense / 100000).toStringAsFixed(1)}L'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('STATUTORY COMPLIANCE', '₹6,325 Filed'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('OUTSTANDING LOANS', '₹${(_totalLoansOutstanding / 1000).toStringAsFixed(0)}K'),
+                const SizedBox(width: 8),
+                _buildHeroKpiChip('PAYSLIPS GENERATED', '${_payrollRegister.length} Slips'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroActionButton({
+    required String label,
+    required IconData icon,
+    required VoidCallback onPressed,
+    required bool isPrimary,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+          decoration: BoxDecoration(
+            color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.15),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isPrimary ? Colors.white : Colors.white.withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 13,
+                color: isPrimary ? const Color(0xFF0F172A) : Colors.white,
+              ),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: isPrimary ? const Color(0xFF0F172A) : Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w600,
+              color: Colors.white.withValues(alpha: 0.75),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // STICKY MOBILE TAB NAVIGATION
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildMobileTabNav() {
+    final tabs = [
+      (label: 'Monthly Payroll Register', icon: LucideIcons.fileText),
+      (label: 'Salary Structures (CTC)', icon: LucideIcons.creditCard),
+      (label: 'Compliance (PF / ESI / PAN)', icon: LucideIcons.shieldCheck),
+      (label: 'Loans & Salary Advances', icon: LucideIcons.sliders),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      child: Row(
+        children: List.generate(tabs.length, (index) {
+          final tab = tabs[index];
+          final isSelected = _activeTab == index;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    tab.icon,
+                    size: 13,
+                    color: isSelected ? Colors.white : const Color(0xFF64748B),
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    tab.label,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      fontSize: 11.5,
+                    ),
+                  ),
+                ],
+              ),
+              selected: isSelected,
+              onSelected: (_) => setState(() => _activeTab = index),
+              selectedColor: const Color(0xFF0F172A),
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+                side: BorderSide(
+                  color: isSelected ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                ),
+              ),
+              elevation: isSelected ? 2 : 0,
+              pressElevation: 1,
+              showCheckmark: false,
+            ),
+          );
+        }),
       ),
     );
   }
@@ -900,7 +1260,7 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
         boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -940,6 +1300,11 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
           // Register Table (Image 1)
           LayoutBuilder(
             builder: (context, constraints) {
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              if (isMobile && !isMacOS) {
+                return _buildMobilePayrollRegisterCardList(_filteredPayroll);
+              }
+
               const minWidth = 1040.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
@@ -1170,7 +1535,7 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1188,6 +1553,10 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
           // Table (Image 5)
           LayoutBuilder(
             builder: (context, constraints) {
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              if (isMobile && !isMacOS) {
+                return _buildMobileStructuresCardList(_structures);
+              }
               const minWidth = 880.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
@@ -1320,7 +1689,7 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1336,6 +1705,10 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
 
           LayoutBuilder(
             builder: (context, constraints) {
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              if (isMobile && !isMacOS) {
+                return _buildMobileComplianceCardList(_complianceList);
+              }
               const minWidth = 940.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
@@ -1410,7 +1783,7 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1426,6 +1799,10 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
 
           LayoutBuilder(
             builder: (context, constraints) {
+              final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+              if (isMobile && !isMacOS) {
+                return _buildMobileLoansCardList(_loans);
+              }
               const minWidth = 940.0;
               final width = math.max(constraints.maxWidth, minWidth);
 
@@ -1520,6 +1897,464 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
           ),
         ),
       ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE CARD PRESENTATION WIDGETS (PAYROLL PAGE)
+  // ═══════════════════════════════════════════════════════════════
+
+  Widget _buildMobilePayrollRegisterCardList(List<PayrollRecordItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 50),
+        child: Center(
+          child: Text(
+            'No payroll records found matching search.',
+            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+          ),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final record = items[index];
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => _openPayslipDetailsDialog(record),
+            borderRadius: BorderRadius.circular(12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.tableBorder),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          record.payslipRef,
+                          style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                        ),
+                      ),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            record.month,
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              record.status,
+                              style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    record.empName,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${record.bankName} • ${record.bankAccount}',
+                    style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('BASE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  const SizedBox(height: 2),
+                                  Text('₹${record.baseSalary.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF047857))),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('EARNINGS', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  const SizedBox(height: 2),
+                                  Text('₹${record.otherEarnings.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF047857))),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('DEDUCTIONS', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  const SizedBox(height: 2),
+                                  Text('-₹${record.totalDeductions.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                                ],
+                              ),
+                            ),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('NET PAY', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                                  const SizedBox(height: 2),
+                                  Text('₹${record.netTakeHome.toStringAsFixed(0)}', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileStructuresCardList(List<SalaryStructureItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text('No salary structures defined.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final s = items[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.tableBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    s.empName,
+                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                  ),
+                  Text(
+                    'CTC: ₹${s.annualCtc.toStringAsFixed(0)} /yr',
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('BASIC BASE', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text('₹${s.basicBase.toStringAsFixed(0)} /mo', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('HRA', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text('₹${s.hra.toStringAsFixed(0)} /mo', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('SPECIAL', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text('₹${s.specialAllowances.toStringAsFixed(0)} /mo', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileComplianceCardList(List<ComplianceRecordItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text('No compliance records found.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final c = items[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.tableBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                c.empName,
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+              ),
+              const SizedBox(height: 6),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text('PAN: ${c.panNumber}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF065F46))),
+                  const Text('•', style: TextStyle(color: Color(0xFF94A3B8))),
+                  Text('UAN: ${c.uanNumber}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF065F46))),
+                  const Text('•', style: TextStyle(color: Color(0xFF94A3B8))),
+                  Text('ESI: ${c.esiNumber}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF065F46))),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('EPF Contribution:', style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B))),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '₹${c.monthlyEpf.toStringAsFixed(0)} ${c.autoEpfText}',
+                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMobileLoansCardList(List<LoanRecordItem> items) {
+    if (items.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 40),
+        child: Center(
+          child: Text('No loan records found.', style: TextStyle(fontSize: 13, color: Color(0xFF64748B))),
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final l = items[index];
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.tableBorder),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    l.empName,
+                    style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                  ),
+                  Text(
+                    '${l.deductionPeriodMonths} Months Tenure',
+                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('LOAN AMOUNT', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text('₹${l.loanAmount.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('MONTHLY EMI', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text('-₹${l.monthlyEmi.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('REMAINING', style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
+                          const SizedBox(height: 2),
+                          Text('₹${l.remainingBalance.toStringAsFixed(0)}', style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF065F46))),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (l.salaryAdvance > 0) ...[
+                const SizedBox(height: 6),
+                Text(
+                  'Salary Advance: ₹${l.salaryAdvance.toStringAsFixed(0)}',
+                  style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF065F46)),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/app_ui_kit.dart';
 
@@ -267,6 +269,94 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 14.0 : 28.0;
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    if (isMacOS) {
+      return _buildDesktopView(isMobile, paddingVal);
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: (isMobile && _activeMainTab == 0)
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76),
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  ref.read(navigationProvider.notifier).setRoute(AppRoute.newInvoice);
+                },
+                backgroundColor: const Color(0xFF166534),
+                elevation: 4,
+                icon: const Icon(LucideIcons.plus, color: Colors.white, size: 18),
+                label: const Text(
+                  'Generate Invoice',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(isMobile)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: isMobile ? 50 : 56,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: _buildTabNav(isMobile),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
+
+          // ─── MAIN CONTENT AREA ───
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              isMobile ? 14 : 24,
+              0,
+              isMobile ? 14 : 24,
+              isMobile ? 140 : 40,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_activeMainTab == 0) ...[
+                    _buildOrdersListTab(isMobile),
+                  ] else if (_activeMainTab == 1) ...[
+                    _buildWarrantyClaimsTab(isMobile),
+                  ] else ...[
+                    _buildDeliveryChallanTab(isMobile),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS / DESKTOP VIEW (UNTOUCHED ORIGINAL LAYOUT)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(bool isMobile, double paddingVal) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       body: SingleChildScrollView(
@@ -296,6 +386,232 @@ class _BillingPageState extends ConsumerState<BillingPage> {
               _buildDeliveryChallanTab(isMobile),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE HERO SUMMARY CARD (Reports / Marketing / Barcode Gen Style)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.receipt, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'SALES & BILLING HUB',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.trendingUp, size: 13, color: Colors.greenAccent.shade100),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE SYNC',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _buildHeroChip('TOTAL INVOICED', '₹10,259.7 Cr', isMobile),
+              const SizedBox(width: 8),
+              _buildHeroChip('PAID REVENUE', '₹10,258.7 Cr', isMobile),
+              const SizedBox(width: 8),
+              _buildHeroChip('UNPAID DUES', '₹10.21 Cr', isMobile),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChip(String label, String value, bool isMobile) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isMobile ? 8.5 : 9.5,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.7),
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: isMobile ? 14 : 17,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE STICKY TAB NAVIGATION (Choice Chips matching Reports & Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildTabNav(bool isMobile) {
+    final tabs = [
+      {'label': 'Invoices List', 'icon': LucideIcons.receipt},
+      {'label': 'Warranty & Replacement Claims', 'icon': LucideIcons.shieldCheck},
+      {'label': 'DELIVERY CHALLAN', 'icon': LucideIcons.truck},
+    ];
+
+    return Container(
+      color: const Color(0xFFF8F9FB),
+      height: isMobile ? 46 : 52,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 20, vertical: 4),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeMainTab == index;
+            final isLast = index == tabs.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(right: isLast ? 0 : 6),
+              child: Builder(
+                builder: (tabContext) {
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() => _activeMainTab = index);
+                      Scrollable.ensureVisible(
+                        tabContext,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        alignment: 0.5,
+                      );
+                    },
+                    child: AnimatedContainer(
+                      duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 12 : 18,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF166534) : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tabs[index]['icon'] as IconData,
+                            size: isMobile ? 13 : 15,
+                            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            tabs[index]['label'] as String,
+                            style: TextStyle(
+                              fontSize: isMobile ? 11.5 : 13,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -668,17 +984,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     );
   }
 
-  Widget _buildTableHeaderCell(String text, {Alignment alignment = Alignment.centerLeft}) {
+  Widget _buildTableHeaderCell(String text, {Alignment alignment = Alignment.centerLeft, bool isMobile = false}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14, vertical: isMobile ? 8 : 14),
       child: FittedBox(
         fit: BoxFit.scaleDown,
         alignment: alignment,
         child: Text(
           text,
           style: GoogleFonts.inter(
-            fontSize: 12.5,
+            fontSize: isMobile ? 11.0 : 12.5,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF1E293B),
             letterSpacing: 0.3,
@@ -688,10 +1004,10 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     );
   }
 
-  Widget _buildTableCell(Widget child, {Alignment alignment = Alignment.centerLeft}) {
+  Widget _buildTableCell(Widget child, {Alignment alignment = Alignment.centerLeft, bool isMobile = false}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14, vertical: isMobile ? 7 : 14),
       child: ClipRect(child: child),
     );
   }
@@ -707,6 +1023,22 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           inv['client'].toString().toLowerCase().contains(query);
     }).toList();
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    if (isMobile && !isMacOS) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFilterBar(
+            hintText: 'Search client or invoice #...',
+            isMobile: isMobile,
+            extraAction: null,
+          ),
+          const SizedBox(height: 16),
+          _buildMobileOrdersCardList(filtered),
+        ],
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -721,16 +1053,18 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
             boxShadow: const [],
           ),
           clipBehavior: Clip.antiAlias,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1060.0);
+                final tableWidth = isMobile
+                    ? math.max(constraints.maxWidth, 680.0)
+                    : math.max(constraints.maxWidth, 1060.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -738,14 +1072,23 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     width: tableWidth,
                     child: Table(
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                      columnWidths: const {
-                        0: FlexColumnWidth(2.6), // INVOICE
-                        1: FlexColumnWidth(2.6), // CLIENT
-                        2: FlexColumnWidth(1.6), // DUE DATE
-                        3: FlexColumnWidth(1.6), // AMOUNT
-                        4: FlexColumnWidth(2.2), // STATUS
-                        5: FixedColumnWidth(185), // ACTIONS
-                      },
+                      columnWidths: isMobile
+                          ? const {
+                              0: FlexColumnWidth(2.2), // INVOICE
+                              1: FlexColumnWidth(2.4), // CLIENT
+                              2: FlexColumnWidth(1.4), // DUE DATE
+                              3: FlexColumnWidth(1.4), // AMOUNT
+                              4: FlexColumnWidth(2.0), // STATUS
+                              5: FixedColumnWidth(140), // ACTIONS
+                            }
+                          : const {
+                              0: FlexColumnWidth(2.6), // INVOICE
+                              1: FlexColumnWidth(2.6), // CLIENT
+                              2: FlexColumnWidth(1.6), // DUE DATE
+                              3: FlexColumnWidth(1.6), // AMOUNT
+                              4: FlexColumnWidth(2.2), // STATUS
+                              5: FixedColumnWidth(185), // ACTIONS
+                            },
                       children: [
                         TableRow(
                           decoration: const BoxDecoration(
@@ -753,12 +1096,12 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                             border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                           ),
                           children: [
-                            _buildTableHeaderCell('INVOICE ▽'),
-                            _buildTableHeaderCell('CLIENT ▽'),
-                            _buildTableHeaderCell('DUE DATE ▽'),
-                            _buildTableHeaderCell('AMOUNT ▽'),
-                            _buildTableHeaderCell('STATUS ▽'),
-                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight),
+                            _buildTableHeaderCell('INVOICE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CLIENT ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('DUE DATE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('AMOUNT ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('STATUS ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight, isMobile: isMobile),
                           ],
                         ),
                         ...filtered.map((inv) {
@@ -772,17 +1115,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                 Row(
                                   children: [
                                     Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: isMobile ? 24 : 28,
+                                      height: isMobile ? 24 : 28,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFFFF1F2),
-                                        borderRadius: BorderRadius.circular(8),
+                                        borderRadius: BorderRadius.circular(isMobile ? 6 : 8),
                                       ),
-                                      child: const Center(
-                                        child: Icon(LucideIcons.fileText, color: Color(0xFFE11D48), size: 14),
+                                      child: Center(
+                                        child: Icon(LucideIcons.fileText, color: const Color(0xFFE11D48), size: isMobile ? 12 : 14),
                                       ),
                                     ),
-                                    const SizedBox(width: 8),
+                                    SizedBox(width: isMobile ? 6 : 8),
                                     Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -790,20 +1133,20 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                         children: [
                                           Text(
                                             inv['id'] ?? 'POS-239759',
-                                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                            style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
                                             overflow: TextOverflow.ellipsis,
                                             maxLines: 1,
                                           ),
-                                          const SizedBox(height: 3),
+                                          const SizedBox(height: 2),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                            padding: EdgeInsets.symmetric(horizontal: isMobile ? 5 : 6, vertical: isMobile ? 1.5 : 2),
                                             decoration: BoxDecoration(
                                               color: const Color(0xFFEEF2FF),
                                               borderRadius: BorderRadius.circular(5),
                                             ),
                                             child: Text(
                                               inv['tag'] ?? 'Billed in POS',
-                                              style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5)),
+                                              style: TextStyle(fontSize: isMobile ? 8 : 9, fontWeight: FontWeight.w700, color: const Color(0xFF4F46E5)),
                                               overflow: TextOverflow.ellipsis,
                                               maxLines: 1,
                                             ),
@@ -813,6 +1156,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     ),
                                   ],
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Column(
@@ -821,25 +1165,26 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   children: [
                                     Text(
                                       inv['client'] ?? '',
-                                      style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
                                     if (inv['email'] != null && (inv['email'] as String).isNotEmpty)
                                       Text(
                                         inv['email'] as String,
-                                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        style: TextStyle(fontSize: isMobile ? 10 : 11, color: const Color(0xFF64748B)),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
                                       ),
                                     Text(
                                       inv['subClient'] ?? '',
-                                      style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF16A34A)),
+                                      style: TextStyle(fontSize: isMobile ? 10 : 11, fontWeight: FontWeight.w600, color: const Color(0xFF16A34A)),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
                                     ),
                                   ],
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 FittedBox(
@@ -848,15 +1193,16 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
-                                      const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF94A3B8)),
-                                      const SizedBox(width: 6),
+                                      Icon(LucideIcons.calendar, size: isMobile ? 11 : 13, color: const Color(0xFF94A3B8)),
+                                      SizedBox(width: isMobile ? 4 : 6),
                                       Text(
                                         inv['dueDate'] ?? '',
-                                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), fontWeight: FontWeight.w600),
+                                        style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF334155), fontWeight: FontWeight.w600),
                                       ),
                                     ],
                                   ),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 FittedBox(
@@ -864,9 +1210,10 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   alignment: Alignment.centerLeft,
                                   child: Text(
                                     inv['amount'] ?? '',
-                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13.5, color: const Color(0xFF0F172A)),
                                   ),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Column(
@@ -874,17 +1221,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFE0E7FF),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
                                         inv['status'] ?? 'POS BILLED PRODUCT',
-                                        style: const TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: Color(0xFF3730A3)),
+                                        style: TextStyle(fontSize: isMobile ? 8.5 : 9.5, fontWeight: FontWeight.w800, color: const Color(0xFF3730A3)),
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 3),
                                     InkWell(
                                       onTap: () {
                                         setState(() {
@@ -898,7 +1245,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                       },
                                       borderRadius: BorderRadius.circular(6),
                                       child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
                                         decoration: BoxDecoration(
                                           color: isEInv ? const Color(0xFFDCFCE7) : const Color(0xFFECFDF5),
                                           borderRadius: BorderRadius.circular(6),
@@ -914,16 +1261,16 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                             children: [
                                               Icon(
                                                 isEInv ? LucideIcons.check : LucideIcons.sparkles,
-                                                size: 11,
+                                                size: isMobile ? 10 : 11,
                                                 color: const Color(0xFF059669),
                                               ),
                                               const SizedBox(width: 4),
                                               Text(
                                                 isEInv ? 'IRN Verified' : '+ Generate E-Invoice',
-                                                style: const TextStyle(
-                                                  fontSize: 9.5,
+                                                style: TextStyle(
+                                                  fontSize: isMobile ? 8.5 : 9.5,
                                                   fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF059669),
+                                                  color: const Color(0xFF059669),
                                                 ),
                                               ),
                                             ],
@@ -933,6 +1280,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     ),
                                   ],
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 FittedBox(
@@ -944,37 +1292,43 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                       _buildActionIconButton(
                                         icon: LucideIcons.history,
                                         tooltip: 'Audit Log',
+                                        isCompact: isMobile,
                                         onTap: () => _showAuditLogDialog(inv['id']),
                                       ),
-                                      const SizedBox(width: 3),
+                                      SizedBox(width: isMobile ? 2 : 3),
                                       _buildActionIconButton(
                                         icon: LucideIcons.share2,
                                         tooltip: 'Share',
+                                        isCompact: isMobile,
                                         onTap: () => AppSnackbar.show(context, 'Public billing share link copied to clipboard.', type: SnackType.info),
                                       ),
-                                      const SizedBox(width: 3),
+                                      SizedBox(width: isMobile ? 2 : 3),
                                       _buildActionIconButton(
                                         icon: LucideIcons.printer,
                                         tooltip: 'Print Invoice',
+                                        isCompact: isMobile,
                                         onTap: () => AppSnackbar.show(context, 'Sent ${inv['id']} to thermal printer queue.', type: SnackType.success),
                                       ),
-                                      const SizedBox(width: 3),
+                                      SizedBox(width: isMobile ? 2 : 3),
                                       _buildActionIconButton(
                                         icon: LucideIcons.edit3,
                                         tooltip: 'Edit',
+                                        isCompact: isMobile,
                                         onTap: () => _showEditInvoiceDialog(inv),
                                       ),
-                                      const SizedBox(width: 3),
+                                      SizedBox(width: isMobile ? 2 : 3),
                                       _buildActionIconButton(
                                         icon: LucideIcons.trash2,
                                         tooltip: 'Delete',
                                         color: const Color(0xFFEF4444),
+                                        isCompact: isMobile,
                                         onTap: () => _confirmDeleteInvoice(inv),
                                       ),
                                     ],
                                   ),
                                 ),
                                 alignment: Alignment.centerRight,
+                                isMobile: isMobile,
                               ),
                             ],
                           );
@@ -991,6 +1345,261 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     );
   }
 
+  Widget _buildMobileOrdersCardList(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Column(
+          children: [
+            Icon(LucideIcons.fileText, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 10),
+            Text('No invoices match the search filter', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final inv = items[index];
+        final isEInv = inv['hasEInvoice'] == true;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Invoice ID + Tag badge + Amount
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF1F2),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: const Center(
+                      child: Icon(LucideIcons.fileText, color: Color(0xFFE11D48), size: 14),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Wrap(
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          spacing: 6,
+                          runSpacing: 2,
+                          children: [
+                            Text(
+                              inv['id'] ?? 'POS-239759',
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEEF2FF),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                inv['tag'] ?? 'Billed in POS',
+                                style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: Color(0xFF4F46E5)),
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (inv['subClient'] != null && (inv['subClient'] as String).isNotEmpty)
+                          Text(
+                            inv['subClient'] as String,
+                            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600, color: Color(0xFF16A34A)),
+                          ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    inv['amount'] ?? '',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+
+              // Row 2: Client info + Due Date
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Icon(LucideIcons.user, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      inv['client'] ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF334155)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(LucideIcons.calendar, size: 11, color: Color(0xFF94A3B8)),
+                  const SizedBox(width: 4),
+                  Text(
+                    inv['dueDate'] ?? '',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+              if (inv['email'] != null && (inv['email'] as String).isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Padding(
+                  padding: const EdgeInsets.only(left: 17),
+                  child: Text(
+                    inv['email'] as String,
+                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
+
+              // Row 3: Status badge & E-Invoice trigger
+              Wrap(
+                spacing: 8,
+                runSpacing: 6,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0E7FF),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      inv['status'] ?? 'POS BILLED PRODUCT',
+                      style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800, color: Color(0xFF3730A3)),
+                    ),
+                  ),
+                  InkWell(
+                    onTap: () {
+                      setState(() {
+                        inv['hasEInvoice'] = true;
+                      });
+                      AppSnackbar.show(
+                        context,
+                        "Government e-Invoice generated for ${inv['id']}! IRN acknowledged.",
+                        type: SnackType.success,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: isEInv ? const Color(0xFFDCFCE7) : const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isEInv ? const Color(0xFF16A34A) : const Color(0xFFA7F3D0),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            isEInv ? LucideIcons.check : LucideIcons.sparkles,
+                            size: 11,
+                            color: const Color(0xFF059669),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            isEInv ? 'IRN Verified' : '+ Generate E-Invoice',
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 6),
+
+              // Row 4: Actions Row
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  _buildActionIconButton(
+                    icon: LucideIcons.history,
+                    tooltip: 'Audit Log',
+                    isCompact: true,
+                    onTap: () => _showAuditLogDialog(inv['id']),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildActionIconButton(
+                    icon: LucideIcons.share2,
+                    tooltip: 'Share',
+                    isCompact: true,
+                    onTap: () => AppSnackbar.show(context, 'Public billing share link copied to clipboard.', type: SnackType.info),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildActionIconButton(
+                    icon: LucideIcons.printer,
+                    tooltip: 'Print Invoice',
+                    isCompact: true,
+                    onTap: () => AppSnackbar.show(context, 'Sent ${inv['id']} to thermal printer queue.', type: SnackType.success),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildActionIconButton(
+                    icon: LucideIcons.edit3,
+                    tooltip: 'Edit',
+                    isCompact: true,
+                    onTap: () => _showEditInvoiceDialog(inv),
+                  ),
+                  const SizedBox(width: 4),
+                  _buildActionIconButton(
+                    icon: LucideIcons.trash2,
+                    tooltip: 'Delete',
+                    color: const Color(0xFFEF4444),
+                    isCompact: true,
+                    onTap: () => _confirmDeleteInvoice(inv),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 5. TAB 1: SALES RETURNS (CUSTOMERS) (Image 2)
   // ═══════════════════════════════════════════════════════════════
@@ -1001,6 +1610,36 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           ret['ref'].toString().toLowerCase().contains(query) ||
           ret['client'].toString().toLowerCase().contains(query);
     }).toList();
+
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    if (isMobile && !isMacOS) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildFilterBar(
+            hintText: 'Search client or return ref #...',
+            isMobile: isMobile,
+            leftExtraAction: ElevatedButton.icon(
+              onPressed: () => _openCreateSalesReturnModal(),
+              icon: const Icon(LucideIcons.plus, size: 14),
+              label: const Text(
+                'Create Sales Return',
+                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE11D48),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildMobileSalesReturnsCardList(filtered),
+        ],
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1030,16 +1669,18 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
             boxShadow: const [],
           ),
           clipBehavior: Clip.antiAlias,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1060.0);
+                final tableWidth = isMobile
+                    ? math.max(constraints.maxWidth, 660.0)
+                    : math.max(constraints.maxWidth, 1060.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -1047,15 +1688,25 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     width: tableWidth,
                     child: Table(
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                      columnWidths: const {
-                        0: FlexColumnWidth(2.0), // RETURN REF #
-                        1: FlexColumnWidth(2.4), // CUSTOMER / CLIENT
-                        2: FlexColumnWidth(2.0), // ORIGINAL INVOICE
-                        3: FlexColumnWidth(1.6), // RETURN DATE
-                        4: FlexColumnWidth(1.6), // AMOUNT
-                        5: FlexColumnWidth(2.6), // STATUS
-                        6: FixedColumnWidth(155), // ACTIONS
-                      },
+                      columnWidths: isMobile
+                          ? const {
+                              0: FlexColumnWidth(1.8), // RETURN REF #
+                              1: FlexColumnWidth(2.0), // CUSTOMER / CLIENT
+                              2: FlexColumnWidth(1.8), // ORIGINAL INVOICE
+                              3: FlexColumnWidth(1.4), // RETURN DATE
+                              4: FlexColumnWidth(1.4), // AMOUNT
+                              5: FlexColumnWidth(2.0), // STATUS
+                              6: FixedColumnWidth(100), // ACTIONS
+                            }
+                          : const {
+                              0: FlexColumnWidth(2.0), // RETURN REF #
+                              1: FlexColumnWidth(2.4), // CUSTOMER / CLIENT
+                              2: FlexColumnWidth(2.0), // ORIGINAL INVOICE
+                              3: FlexColumnWidth(1.6), // RETURN DATE
+                              4: FlexColumnWidth(1.6), // AMOUNT
+                              5: FlexColumnWidth(2.6), // STATUS
+                              6: FixedColumnWidth(155), // ACTIONS
+                            },
                       children: [
                         TableRow(
                           decoration: const BoxDecoration(
@@ -1063,13 +1714,13 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                             border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                           ),
                           children: [
-                            _buildTableHeaderCell('RETURN REF # ▽'),
-                            _buildTableHeaderCell('CUSTOMER / CLIENT ▽'),
-                            _buildTableHeaderCell('ORIGINAL INVOICE ▽'),
-                            _buildTableHeaderCell('RETURN DATE ▽'),
-                            _buildTableHeaderCell('AMOUNT ▽'),
-                            _buildTableHeaderCell('STATUS ▽'),
-                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight),
+                            _buildTableHeaderCell('RETURN REF # ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CUSTOMER / CLIENT ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('ORIGINAL INVOICE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('RETURN DATE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('AMOUNT ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('STATUS ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight, isMobile: isMobile),
                           ],
                         ),
                         ...filtered.map((ret) {
@@ -1082,36 +1733,41 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                               _buildTableCell(
                                 Text(
                                   ret['ref'] ?? '',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 13.5,
-                                    color: Color(0xFFBE123C),
+                                    fontSize: isMobile ? 12 : 13.5,
+                                    color: const Color(0xFFBE123C),
                                   ),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ret['client'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: Color(0xFF0F172A)),
+                                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ret['origInvoice'] ?? '',
-                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569), fontWeight: FontWeight.w500),
+                                  style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF475569), fontWeight: FontWeight.w500),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ret['date'] ?? '',
-                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                                  style: TextStyle(fontSize: isMobile ? 11 : 12.5, color: const Color(0xFF475569)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ret['amount'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13.5, color: const Color(0xFF0F172A)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Column(
@@ -1119,7 +1775,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
                                       decoration: BoxDecoration(
                                         color: isPending ? const Color(0xFFFEF3C7) : const Color(0xFFDCFCE7),
                                         borderRadius: BorderRadius.circular(6),
@@ -1127,16 +1783,16 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                       child: Text(
                                         ret['status'] ?? '',
                                         style: TextStyle(
-                                          fontSize: 9.5,
+                                          fontSize: isMobile ? 8.5 : 9.5,
                                           fontWeight: FontWeight.w800,
                                           color: isPending ? const Color(0xFFB45309) : const Color(0xFF15803D),
                                         ),
                                       ),
                                     ),
                                     if (ret['godown'] != null && (ret['godown'] as String).isNotEmpty) ...[
-                                      const SizedBox(height: 3),
+                                      const SizedBox(height: 2),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 5 : 7, vertical: isMobile ? 1.5 : 2.5),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF0FDF4),
                                           borderRadius: BorderRadius.circular(5),
@@ -1146,17 +1802,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                           child: Row(
                                             mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              const Icon(LucideIcons.warehouse, size: 10, color: Color(0xFF15803D)),
+                                              Icon(LucideIcons.warehouse, size: isMobile ? 9 : 10, color: const Color(0xFF15803D)),
                                               const SizedBox(width: 4),
                                               Flexible(
                                                 child: Text(
                                                   ret['godown'] as String,
                                                   maxLines: 1,
                                                   overflow: TextOverflow.ellipsis,
-                                                  style: const TextStyle(
-                                                    fontSize: 9,
+                                                  style: TextStyle(
+                                                    fontSize: isMobile ? 8 : 9,
                                                     fontWeight: FontWeight.w600,
-                                                    color: Color(0xFF15803D),
+                                                    color: const Color(0xFF15803D),
                                                   ),
                                                 ),
                                               ),
@@ -1167,6 +1823,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     ],
                                   ],
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 FittedBox(
@@ -1177,15 +1834,16 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(color: Color(0xFFCBD5E1)),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14, vertical: isMobile ? 4 : 8),
                                     ),
-                                    child: const Text(
+                                    child: Text(
                                       'View Details',
-                                      style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                      style: TextStyle(fontSize: isMobile ? 10 : 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF334155)),
                                     ),
                                   ),
                                 ),
                                 alignment: Alignment.centerRight,
+                                isMobile: isMobile,
                               ),
                             ],
                           );
@@ -1202,10 +1860,181 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     );
   }
 
+  Widget _buildMobileSalesReturnsCardList(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Column(
+          children: [
+            Icon(LucideIcons.cornerDownLeft, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 10),
+            Text('No sales returns found', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF475569))),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final ret = items[index];
+        final isPending = ret['status'] == 'PENDING';
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Ref # + Status + Amount
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          ret['ref'] ?? '',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: Color(0xFFBE123C),
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'Orig: ${ret['origInvoice'] ?? ''}',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        ret['amount'] ?? '',
+                        style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13.5, color: Color(0xFF0F172A)),
+                      ),
+                      const SizedBox(height: 3),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isPending ? const Color(0xFFFEF3C7) : const Color(0xFFDCFCE7),
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                        child: Text(
+                          ret['status'] ?? '',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: isPending ? const Color(0xFFB45309) : const Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+
+              // Middle Row: Customer + Date
+              Row(
+                children: [
+                  const Icon(LucideIcons.user, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      ret['client'] ?? '',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12, color: Color(0xFF0F172A)),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(LucideIcons.calendar, size: 11, color: Color(0xFF94A3B8)),
+                  const SizedBox(width: 4),
+                  Text(
+                    ret['date'] ?? '',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+              if (ret['godown'] != null && (ret['godown'] as String).isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.warehouse, size: 10, color: Color(0xFF15803D)),
+                      const SizedBox(width: 4),
+                      Text(
+                        ret['godown'] as String,
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w600, color: Color(0xFF15803D)),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+
+              // Action button
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () => _showReturnDetailsDialog(ret),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  ),
+                  child: const Text(
+                    'View Details',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 6. TAB 2: WARRANTY & REPLACEMENT CLAIMS (Image 3)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildWarrantyClaimsTab(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final query = _searchController.text.trim().toLowerCase();
     final filtered = _warrantyClaims.where((clm) {
       return query.isEmpty ||
@@ -1238,20 +2067,25 @@ class _BillingPageState extends ConsumerState<BillingPage> {
         ),
         const SizedBox(height: 16),
 
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
-            boxShadow: const [],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1100.0);
+        if (isMobile && !isMacOS)
+          _buildMobileWarrantyClaimsCardList(filtered)
+        else
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+              boxShadow: const [],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final tableWidth = isMobile
+                      ? math.max(constraints.maxWidth, 720.0)
+                      : math.max(constraints.maxWidth, 1100.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -1259,16 +2093,27 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     width: tableWidth,
                     child: Table(
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                      columnWidths: const {
-                        0: FlexColumnWidth(1.8), // CLAIM REF #
-                        1: FlexColumnWidth(1.8), // PRODUCT / ITEM
-                        2: FlexColumnWidth(2.2), // CUSTOMER / SUPPLIER
-                        3: FlexColumnWidth(1.3), // SERIAL / IMEI
-                        4: FlexColumnWidth(1.8), // CLAIM TYPE
-                        5: FlexColumnWidth(2.6), // STATUS
-                        6: FlexColumnWidth(1.4), // PERIOD
-                        7: FixedColumnWidth(155), // ACTIONS
-                      },
+                      columnWidths: isMobile
+                          ? const {
+                              0: FlexColumnWidth(1.6), // CLAIM REF #
+                              1: FlexColumnWidth(1.6), // PRODUCT / ITEM
+                              2: FlexColumnWidth(1.8), // CUSTOMER / SUPPLIER
+                              3: FlexColumnWidth(1.2), // SERIAL / IMEI
+                              4: FlexColumnWidth(1.6), // CLAIM TYPE
+                              5: FlexColumnWidth(2.0), // STATUS
+                              6: FlexColumnWidth(1.2), // PERIOD
+                              7: FixedColumnWidth(105), // ACTIONS
+                            }
+                          : const {
+                              0: FlexColumnWidth(1.8), // CLAIM REF #
+                              1: FlexColumnWidth(1.8), // PRODUCT / ITEM
+                              2: FlexColumnWidth(2.2), // CUSTOMER / SUPPLIER
+                              3: FlexColumnWidth(1.3), // SERIAL / IMEI
+                              4: FlexColumnWidth(1.8), // CLAIM TYPE
+                              5: FlexColumnWidth(2.6), // STATUS
+                              6: FlexColumnWidth(1.4), // PERIOD
+                              7: FixedColumnWidth(155), // ACTIONS
+                            },
                       children: [
                         TableRow(
                           decoration: const BoxDecoration(
@@ -1276,14 +2121,14 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                             border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                           ),
                           children: [
-                            _buildTableHeaderCell('CLAIM REF # ▽'),
-                            _buildTableHeaderCell('PRODUCT / ITEM ▽'),
-                            _buildTableHeaderCell('CUSTOMER / SUPPLIER ▽'),
-                            _buildTableHeaderCell('SERIAL / IMEI ▽'),
-                            _buildTableHeaderCell('CLAIM TYPE ▽'),
-                            _buildTableHeaderCell('STATUS ▽'),
-                            _buildTableHeaderCell('PERIOD ▽'),
-                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight),
+                            _buildTableHeaderCell('CLAIM REF # ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('PRODUCT / ITEM ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CUSTOMER / SUPPLIER ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('SERIAL / IMEI ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CLAIM TYPE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('STATUS ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('PERIOD ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight, isMobile: isMobile),
                           ],
                         ),
                         ...filtered.map((clm) {
@@ -1310,34 +2155,39 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   clm['ref'] ?? '',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    fontSize: 13.5,
+                                    fontSize: isMobile ? 12 : 13.5,
                                     color: isGreenRef ? const Color(0xFF059669) : const Color(0xFFBE123C),
                                   ),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   clm['product'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   clm['client'] ?? '',
-                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF334155), fontWeight: FontWeight.w600),
+                                  style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF334155), fontWeight: FontWeight.w600),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   clm['serial'] ?? 'N/A',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                  style: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF64748B)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   clm['claimType'] ?? 'Warranty Tracking',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                                  style: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF475569)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Column(
@@ -1345,20 +2195,20 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
                                       decoration: BoxDecoration(
                                         color: statusBg,
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
                                         status,
-                                        style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: statusFg),
+                                        style: TextStyle(fontSize: isMobile ? 8.5 : 9.5, fontWeight: FontWeight.w800, color: statusFg),
                                       ),
                                     ),
                                     if (clm['godown'] != null && (clm['godown'] as String).isNotEmpty) ...[
-                                      const SizedBox(height: 3),
+                                      const SizedBox(height: 2),
                                       Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                                        padding: EdgeInsets.symmetric(horizontal: isMobile ? 5 : 7, vertical: isMobile ? 1.5 : 2.5),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF0FDF4),
                                           borderRadius: BorderRadius.circular(5),
@@ -1367,17 +2217,17 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
-                                            const Icon(LucideIcons.warehouse, size: 10, color: Color(0xFF15803D)),
+                                            Icon(LucideIcons.warehouse, size: isMobile ? 9 : 10, color: const Color(0xFF15803D)),
                                             const SizedBox(width: 4),
                                             Flexible(
                                               child: Text(
                                                 clm['godown'] as String,
                                                 maxLines: 1,
                                                 overflow: TextOverflow.ellipsis,
-                                                style: const TextStyle(
-                                                  fontSize: 9,
+                                                style: TextStyle(
+                                                  fontSize: isMobile ? 8 : 9,
                                                   fontWeight: FontWeight.w600,
-                                                  color: Color(0xFF15803D),
+                                                  color: const Color(0xFF15803D),
                                                 ),
                                               ),
                                             ),
@@ -1387,12 +2237,14 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     ],
                                   ],
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   clm['period'] ?? '3 Years',
-                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                                  style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF475569)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 FittedBox(
@@ -1409,15 +2261,16 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(color: Color(0xFFCBD5E1)),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14, vertical: isMobile ? 4 : 8),
                                     ),
                                     child: Text(
                                       status == 'ACTIVE' ? 'View Detail' : 'Manage Claim',
-                                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                                      style: TextStyle(fontSize: isMobile ? 10 : 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF334155)),
                                     ),
                                   ),
                                 ),
                                 alignment: Alignment.centerRight,
+                                isMobile: isMobile,
                               ),
                             ],
                           );
@@ -1431,6 +2284,204 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMobileWarrantyClaimsCardList(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.shieldAlert, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No warranty claims found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final clm = items[index];
+        final isGreenRef = clm['isGreenRef'] == true;
+        final status = (clm['status'] as String?) ?? 'PENDING';
+
+        Color statusBg = const Color(0xFFDCFCE7);
+        Color statusFg = const Color(0xFF15803D);
+        if (status == 'PENDING') {
+          statusBg = const Color(0xFFFEF3C7);
+          statusFg = const Color(0xFFB45309);
+        } else if (status == 'DONE') {
+          statusBg = const Color(0xFFCCFBF1);
+          statusFg = const Color(0xFF0F766E);
+        }
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header: Claim Ref # and Status Badge
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Flexible(
+                    child: Text(
+                      clm['ref'] ?? '',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: isGreenRef ? const Color(0xFF059669) : const Color(0xFFBE123C),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: statusFg,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Product / Item name
+              Text(
+                clm['product'] ?? '',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13.5,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              // Customer / Client
+              Row(
+                children: [
+                  const Icon(LucideIcons.user, size: 12, color: Color(0xFF64748B)),
+                  const SizedBox(width: 5),
+                  Expanded(
+                    child: Text(
+                      clm['client'] ?? '',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF334155), fontWeight: FontWeight.w600),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Metadata wrap
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  if (clm['serial'] != null && clm['serial'].toString().isNotEmpty)
+                    Text(
+                      'S/N: ${clm['serial']}',
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  Text(
+                    'Type: ${clm['claimType'] ?? 'Warranty Tracking'}',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  Text(
+                    'Period: ${clm['period'] ?? '3 Years'}',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+
+              // Godown tag if present
+              if (clm['godown'] != null && (clm['godown'] as String).isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0FDF4),
+                    borderRadius: BorderRadius.circular(5),
+                    border: Border.all(color: const Color(0xFFA7F3D0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.warehouse, size: 10, color: Color(0xFF15803D)),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          clm['godown'] as String,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF15803D),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+
+              // Action button
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () {
+                    if (status == 'ACTIVE') {
+                      _showWarrantyDetailDialog(clm);
+                    } else {
+                      _showMoveReturnedProductsDialog(clm);
+                    }
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  ),
+                  child: Text(
+                    status == 'ACTIVE' ? 'View Detail' : 'Manage Claim',
+                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -1655,40 +2706,51 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           final isSel = _activeDeliverySubTab == idx;
           final item = subTabs[idx];
           return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: InkWell(
+            padding: const EdgeInsets.only(right: 6),
+            child: GestureDetector(
               onTap: () => setState(() => _activeDeliverySubTab = idx),
-              borderRadius: BorderRadius.circular(8),
-              child: Container(
+              child: AnimatedContainer(
+                duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
                 padding: EdgeInsets.symmetric(
                   horizontal: isMobile ? 12 : 10,
-                  vertical: isMobile ? 8 : 6,
+                  vertical: isMobile ? 6 : 6,
                 ),
                 decoration: BoxDecoration(
                   color: isMobile
-                      ? (isSel ? const Color(0xFFF0FDF4) : Colors.white)
+                      ? (isSel ? const Color(0xFF166534) : Colors.white)
                       : Colors.transparent,
                   border: isMobile
                       ? Border.all(
-                          color: isSel ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
-                          width: isSel ? 1.5 : 1.0,
+                          color: isSel ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
                         )
                       : (isSel
                           ? Border.all(color: const Color(0xFF0284C7), width: 1.5)
                           : Border.all(color: Colors.transparent, width: 1.5)),
-                  borderRadius: BorderRadius.circular(isMobile ? 8 : 6),
+                  borderRadius: BorderRadius.circular(isMobile ? 10 : 6),
+                  boxShadow: (isMobile && isSel)
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF166534).withValues(alpha: 0.2),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : [],
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(item['icon']!, style: const TextStyle(fontSize: 14)),
-                    const SizedBox(width: 6),
+                    Text(item['icon']!, style: const TextStyle(fontSize: 13)),
+                    const SizedBox(width: 5),
                     Text(
                       item['title']!,
                       style: TextStyle(
-                        fontSize: isMobile ? 12.5 : 13,
-                        fontWeight: isSel ? FontWeight.w800 : FontWeight.w600,
-                        color: isSel ? const Color(0xFF166534) : const Color(0xFF64748B),
+                        fontSize: isMobile ? 11.5 : 13,
+                        fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
+                        color: isMobile
+                            ? (isSel ? Colors.white : const Color(0xFF374151))
+                            : (isSel ? const Color(0xFF0284C7) : const Color(0xFF64748B)),
                       ),
                     ),
                   ],
@@ -1703,6 +2765,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
 
   // ─── Sub-Tab 1: Delivery Challans Table (Image 5) ───
   Widget _buildDeliveryChallansTable(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final titleWidget = Row(
       children: const [
         Text('📄', style: TextStyle(fontSize: 16)),
@@ -1771,20 +2834,25 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           ),
         const SizedBox(height: 14),
 
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
-            boxShadow: const [],
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final tableWidth = math.max(constraints.maxWidth, 1060.0);
+        if (isMobile && !isMacOS)
+          _buildMobileDeliveryChallansCardList(_generatedChallans)
+        else
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+              border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
+              boxShadow: const [],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final tableWidth = isMobile
+                      ? math.max(constraints.maxWidth, 680.0)
+                      : math.max(constraints.maxWidth, 1060.0);
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   physics: const BouncingScrollPhysics(),
@@ -1792,15 +2860,25 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                     width: tableWidth,
                     child: Table(
                       defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                      columnWidths: const {
-                        0: FlexColumnWidth(2.0), // CHALLAN NO #
-                        1: FlexColumnWidth(2.4), // CUSTOMER / CLIENT
-                        2: FlexColumnWidth(1.8), // LINKED INVOICE
-                        3: FlexColumnWidth(1.5), // CHALLAN TYPE
-                        4: FlexColumnWidth(1.6), // CHALLAN DATE
-                        5: FlexColumnWidth(1.8), // STATUS
-                        6: FixedColumnWidth(155), // ACTIONS
-                      },
+                      columnWidths: isMobile
+                          ? const {
+                              0: FlexColumnWidth(1.8), // CHALLAN NO #
+                              1: FlexColumnWidth(2.0), // CUSTOMER / CLIENT
+                              2: FlexColumnWidth(1.6), // LINKED INVOICE
+                              3: FlexColumnWidth(1.3), // CHALLAN TYPE
+                              4: FlexColumnWidth(1.4), // CHALLAN DATE
+                              5: FlexColumnWidth(1.6), // STATUS
+                              6: FixedColumnWidth(100), // ACTIONS
+                            }
+                          : const {
+                              0: FlexColumnWidth(2.0), // CHALLAN NO #
+                              1: FlexColumnWidth(2.4), // CUSTOMER / CLIENT
+                              2: FlexColumnWidth(1.8), // LINKED INVOICE
+                              3: FlexColumnWidth(1.5), // CHALLAN TYPE
+                              4: FlexColumnWidth(1.6), // CHALLAN DATE
+                              5: FlexColumnWidth(1.8), // STATUS
+                              6: FixedColumnWidth(155), // ACTIONS
+                            },
                       children: [
                         TableRow(
                           decoration: const BoxDecoration(
@@ -1808,13 +2886,13 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                             border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                           ),
                           children: [
-                            _buildTableHeaderCell('CHALLAN NO # ▽'),
-                            _buildTableHeaderCell('CUSTOMER / CLIENT ▽'),
-                            _buildTableHeaderCell('LINKED INVOICE ▽'),
-                            _buildTableHeaderCell('CHALLAN TYPE ▽'),
-                            _buildTableHeaderCell('CHALLAN DATE ▽'),
-                            _buildTableHeaderCell('STATUS ▽'),
-                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight),
+                            _buildTableHeaderCell('CHALLAN NO # ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CUSTOMER / CLIENT ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('LINKED INVOICE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CHALLAN TYPE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('CHALLAN DATE ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('STATUS ▽', isMobile: isMobile),
+                            _buildTableHeaderCell('ACTIONS', alignment: Alignment.centerRight, isMobile: isMobile),
                           ],
                         ),
                         ..._generatedChallans.map((ch) {
@@ -1840,24 +2918,27 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                               _buildTableCell(
                                 Text(
                                   ch['challanNo'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0284C7)),
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13, color: const Color(0xFF0284C7)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ch['client'] ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, color: Color(0xFF0F172A)),
+                                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ch['invoice'] ?? '',
-                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                                  style: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF475569)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
                                   decoration: BoxDecoration(
                                     color: isGst ? const Color(0xFFE0F2FE) : const Color(0xFFF1F5F9),
                                     borderRadius: BorderRadius.circular(6),
@@ -1865,31 +2946,34 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                   child: Text(
                                     ch['type'] ?? '',
                                     style: TextStyle(
-                                      fontSize: 10,
+                                      fontSize: isMobile ? 8.5 : 10,
                                       fontWeight: FontWeight.w800,
                                       color: isGst ? const Color(0xFF0284C7) : const Color(0xFF475569),
                                     ),
                                   ),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Text(
                                   ch['date'] ?? '',
-                                  style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                  style: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF64748B)),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 6 : 8, vertical: isMobile ? 2 : 3),
                                   decoration: BoxDecoration(
                                     color: statusBg,
                                     borderRadius: BorderRadius.circular(6),
                                   ),
                                   child: Text(
                                     status,
-                                    style: TextStyle(fontSize: 9.5, fontWeight: FontWeight.w800, color: statusFg),
+                                    style: TextStyle(fontSize: isMobile ? 8.5 : 9.5, fontWeight: FontWeight.w800, color: statusFg),
                                   ),
                                 ),
+                                isMobile: isMobile,
                               ),
                               _buildTableCell(
                                 FittedBox(
@@ -1922,12 +3006,13 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                                     style: OutlinedButton.styleFrom(
                                       side: const BorderSide(color: Color(0xFFCBD5E1)),
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14, vertical: isMobile ? 4 : 8),
                                     ),
-                                    child: const Text('View Details', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF334155))),
+                                    child: Text('View Details', style: TextStyle(fontSize: isMobile ? 10 : 11.5, fontWeight: FontWeight.bold, color: const Color(0xFF334155))),
                                   ),
                                 ),
                                 alignment: Alignment.centerRight,
+                                isMobile: isMobile,
                               ),
                             ],
                           );
@@ -1941,6 +3026,192 @@ class _BillingPageState extends ConsumerState<BillingPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMobileDeliveryChallansCardList(List<Map<String, dynamic>> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.fileText, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No delivery challans found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final ch = items[index];
+        final status = (ch['status'] as String?) ?? 'IN TRANSIT';
+        Color statusBg = const Color(0xFFFEF3C7);
+        Color statusFg = const Color(0xFFB45309);
+
+        if (status == 'DELIVERED') {
+          statusBg = const Color(0xFFDCFCE7);
+          statusFg = const Color(0xFF15803D);
+        } else if (status == 'FAILED ATTEMPT') {
+          statusBg = const Color(0xFFFEE2E2);
+          statusFg = const Color(0xFFDC2626);
+        }
+
+        final isGst = ch['type'] == 'GST';
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Challan No, Type, Status
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      ch['challanNo'] ?? '',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: Color(0xFF0284C7),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: isGst ? const Color(0xFFE0F2FE) : const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      ch['type'] ?? '',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: isGst ? const Color(0xFF0284C7) : const Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: statusBg,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      status,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: statusFg,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Customer / Client name
+              Text(
+                ch['client'] ?? '',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13.5,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(height: 6),
+
+              // Linked Invoice & Date
+              Wrap(
+                spacing: 12,
+                runSpacing: 4,
+                children: [
+                  if (ch['invoice'] != null && ch['invoice'].toString().isNotEmpty)
+                    Text(
+                      'Invoice: ${ch['invoice']}',
+                      style: const TextStyle(fontSize: 11.5, color: Color(0xFF475569)),
+                    ),
+                  if (ch['date'] != null && ch['date'].toString().isNotEmpty)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.calendar, size: 11, color: Color(0xFF64748B)),
+                        const SizedBox(width: 4),
+                        Text(
+                          ch['date'] ?? '',
+                          style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // Action button
+              Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton(
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        title: Text('Challan Details: ${ch['challanNo']}'),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('Customer: ${ch['client']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            Text('Linked Invoice: ${ch['invoice']}'),
+                            Text('Challan Type: ${ch['type']}'),
+                            Text('Challan Date: ${ch['date']}'),
+                            Text('Current Status: ${ch['status']}'),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Close')),
+                        ],
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                  ),
+                  child: const Text(
+                    'View Details',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF334155)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -2607,18 +3878,18 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     Widget? leftExtraAction,
   }) {
     final searchInput = SizedBox(
-      height: 40,
+      height: isMobile ? 36 : 40,
       child: TextField(
         controller: _searchController,
         onChanged: (_) => setState(() {}),
-        style: const TextStyle(fontSize: 12.5),
+        style: TextStyle(fontSize: isMobile ? 12 : 12.5),
         decoration: InputDecoration(
           hintText: hintText,
-          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
-          prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+          hintStyle: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF94A3B8)),
+          prefixIcon: Icon(LucideIcons.search, size: isMobile ? 14 : 16, color: const Color(0xFF94A3B8)),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12, vertical: isMobile ? 6 : 10),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -2649,8 +3920,8 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       },
       borderRadius: BorderRadius.circular(10),
       child: Container(
-        height: 40,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
+        height: isMobile ? 36 : 40,
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(10),
@@ -2664,21 +3935,21 @@ class _BillingPageState extends ConsumerState<BillingPage> {
                   ? "${_selectedDate!.day.toString().padLeft(2, '0')}/${_selectedDate!.month.toString().padLeft(2, '0')}/${_selectedDate!.year}"
                   : 'dd/mm/yyyy',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: isMobile ? 11 : 12,
                 color: _selectedDate != null ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(LucideIcons.calendar, size: 14, color: Color(0xFF64748B)),
+            SizedBox(width: isMobile ? 6 : 8),
+            Icon(LucideIcons.calendar, size: isMobile ? 13 : 14, color: const Color(0xFF64748B)),
           ],
         ),
       ),
     );
 
     final statusDropdown = Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      height: isMobile ? 36 : 40,
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -2687,8 +3958,8 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedStatus,
-          icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+          icon: Icon(LucideIcons.chevronDown, size: isMobile ? 13 : 14, color: const Color(0xFF64748B)),
+          style: TextStyle(fontSize: isMobile ? 11 : 12, fontWeight: FontWeight.w600, color: const Color(0xFF334155)),
           items: const [
             DropdownMenuItem(value: 'All Status', child: Text('All Status')),
             DropdownMenuItem(value: 'Paid', child: Text('Paid')),
@@ -2705,8 +3976,8 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     );
 
     final funnelBtn = Container(
-      height: 40,
-      width: 40,
+      height: isMobile ? 36 : 40,
+      width: isMobile ? 36 : 40,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -2714,7 +3985,7 @@ class _BillingPageState extends ConsumerState<BillingPage> {
       ),
       child: IconButton(
         padding: EdgeInsets.zero,
-        icon: const Icon(LucideIcons.filter, size: 15, color: Color(0xFF64748B)),
+        icon: Icon(LucideIcons.filter, size: isMobile ? 14 : 15, color: const Color(0xFF64748B)),
         onPressed: () {
           setState(() {
             _searchController.clear();
@@ -2792,19 +4063,20 @@ class _BillingPageState extends ConsumerState<BillingPage> {
     required String tooltip,
     required VoidCallback onTap,
     Color color = const Color(0xFF64748B),
+    bool isCompact = false,
   }) {
     return Tooltip(
       message: tooltip,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(isCompact ? 5 : 6),
         child: Container(
-          padding: const EdgeInsets.all(5),
+          padding: EdgeInsets.all(isCompact ? 3.5 : 5),
           decoration: BoxDecoration(
             color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(isCompact ? 5 : 6),
           ),
-          child: Icon(icon, size: 13.5, color: color),
+          child: Icon(icon, size: isCompact ? 11.5 : 13.5, color: color),
         ),
       ),
     );
@@ -4265,5 +5537,31 @@ class _BillingPageState extends ConsumerState<BillingPage> {
         ],
       ),
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STICKY TAB NAV DELEGATE
+// ═══════════════════════════════════════════════════════════════
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

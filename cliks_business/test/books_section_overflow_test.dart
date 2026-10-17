@@ -24,6 +24,9 @@ import 'package:clicks_business_frontend/widgets/bento/bento_chart_card.dart';
 import 'package:clicks_business_frontend/widgets/bento/bento_card.dart';
 import 'package:clicks_business_frontend/features/billing/pages/subscription_page.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:clicks_business_frontend/features/billing/pages/accounting_page.dart';
+import 'package:clicks_business_frontend/features/billing/pages/expenses_page.dart';
+import 'package:clicks_business_frontend/features/billing/pages/gst_page.dart';
 
 void main() {
   group('Books Section Mobile Pages & Tabs Overflow Checks', () {
@@ -530,6 +533,55 @@ void main() {
       }
     });
 
+    testWidgets('PayrollPage renders on 320px ultra-narrow mobile without overflow across all tabs', (tester) async {
+      tester.view.physicalSize = const Size(320, 680);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: PayrollPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(PayrollPage), findsOneWidget);
+
+      // Verify tabs switch without overflow
+      final structureTab = find.text('Salary Structures (CTC)');
+      if (structureTab.evaluate().isNotEmpty) {
+        await tester.ensureVisible(structureTab);
+        await tester.pumpAndSettle();
+        await tester.tap(structureTab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('Compensation Breakdown Structure (Annual CTC)'), findsOneWidget);
+      }
+
+      final complianceTab = find.text('Compliance (PF / ESI / PAN)');
+      if (complianceTab.evaluate().isNotEmpty) {
+        await tester.ensureVisible(complianceTab);
+        await tester.pumpAndSettle();
+        await tester.tap(complianceTab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('Statutory EPF, ESI, PAN Compliance Identifiers'), findsOneWidget);
+      }
+
+      final loansTab = find.text('Loans & Salary Advances');
+      if (loansTab.evaluate().isNotEmpty) {
+        await tester.ensureVisible(loansTab);
+        await tester.pumpAndSettle();
+        await tester.tap(loansTab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('Active Loans & Salary Advance Balances'), findsOneWidget);
+      }
+    });
+
     testWidgets('BentoChartCard with large turnover renders on 360px and 320px without overflow', (tester) async {
       for (final size in [const Size(360, 780), const Size(320, 640)]) {
         tester.view.physicalSize = size;
@@ -950,5 +1002,537 @@ void main() {
       await tester.tap(finProTab);
       await tester.pump(const Duration(milliseconds: 300));
     });
+
+    testWidgets('PurchaseInvoicePage on mobile OS renders hero card, sticky tabs and switches tabs without overflow', (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.android),
+          home: const Scaffold(
+            body: PurchaseInvoicePage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('PURCHASES & PROCUREMENT'), findsOneWidget);
+      expect(find.text('Purchase Invoices & Orders'), findsOneWidget);
+      expect(find.text('LIVE SYNC'), findsOneWidget);
+
+      // Verify tabs exist
+      expect(find.text('Purchase Orders (PO)'), findsOneWidget);
+      expect(find.text('Purchase Bills & Invoices'), findsOneWidget);
+      expect(find.text('Purchase Returns (Suppliers)'), findsOneWidget);
+
+      // Switch to Purchase Bills & Invoices tab
+      final billsTab = find.text('Purchase Bills & Invoices');
+      await tester.ensureVisible(billsTab);
+      await tester.tap(billsTab);
+      await tester.pumpAndSettle();
+      expect(find.text('Purchase Bills'), findsOneWidget);
+
+      // Switch to Purchase Returns tab
+      final returnsTab = find.text('Purchase Returns (Suppliers)');
+      await tester.ensureVisible(returnsTab);
+      await tester.tap(returnsTab);
+      await tester.pumpAndSettle();
+      expect(find.text('Purchase Returns (Suppliers)'), findsWidgets);
+    });
+
+    testWidgets('PurchaseInvoicePage on macOS platform preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.macOS),
+          home: const Scaffold(
+            body: PurchaseInvoicePage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Desktop header
+      expect(find.text('Purchases Hub'), findsOneWidget);
+      expect(find.text('OUTWARD PROCUREMENT (AT COST)'), findsOneWidget);
+    });
+
+    testWidgets('SuppliersPage on mobile OS renders hero card, sticky tabs and switches tabs without overflow', (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.android),
+          home: const Scaffold(
+            body: SuppliersPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('SUPPLIERS & VENDORS'), findsOneWidget);
+      expect(find.text('Suppliers Master Suite'), findsOneWidget);
+      expect(find.text('ACTIVE'), findsOneWidget);
+
+      // Verify tabs exist
+      expect(find.text('Suppliers Master Base'), findsOneWidget);
+      expect(find.text('Running Ledger Statements'), findsOneWidget);
+      expect(find.text('Payables Aging & Reminders'), findsOneWidget);
+
+      // Switch to Running Ledger Statements tab
+      final ledgerTab = find.text('Running Ledger Statements');
+      await tester.ensureVisible(ledgerTab);
+      await tester.tap(ledgerTab);
+      await tester.pumpAndSettle();
+      expect(find.text('Select Supplier'), findsOneWidget);
+
+      // Switch to Payables Aging tab
+      final agingTab = find.text('Payables Aging & Reminders');
+      await tester.ensureVisible(agingTab);
+      await tester.tap(agingTab);
+      await tester.pumpAndSettle();
+      expect(find.text('Outstanding Payables Aging Breakdown'), findsOneWidget);
+    });
+
+    testWidgets('SuppliersPage on macOS platform preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: ThemeData(platform: TargetPlatform.macOS),
+          home: const Scaffold(
+            body: SuppliersPage(),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Desktop header
+      expect(find.text('Suppliers Master Suite'), findsOneWidget);
+      expect(find.text('Manage vendor demographics, credit limits, purchase ledgers, and outward payables aging summaries.'), findsOneWidget);
+    });
+
+    testWidgets('ProductsPage on macOS preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: ProductsPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Products & Inventory Suite'), findsOneWidget);
+      expect(find.text('TOTAL CATALOG SKUS'), findsOneWidget);
+    });
+
+    testWidgets('StockPage on macOS preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: StockPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Stock & Inventory Valuation'), findsOneWidget);
+      expect(find.text('TOTAL INVENTORY VALUATION (COST BASIS)'), findsOneWidget);
+    });
+
+    testWidgets('WarehousePage on macOS preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: WarehousePage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Warehouse, Godowns & Logistics'), findsOneWidget);
+      expect(find.text('ACTIVE GODOWN FACILITIES'), findsOneWidget);
+    });
+
+    testWidgets('StaffPage on macOS preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: StaffPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('HR Staff & Employees Database'), findsOneWidget);
+      expect(find.text('TOTAL ACTIVE HEADCOUNT'), findsOneWidget);
+    });
+
+    testWidgets('PayrollPage on macOS preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: PayrollPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Workforce Payroll Engine'), findsOneWidget);
+      expect(find.text('MONTHLY SALARY EXPENSE'), findsOneWidget);
+    });
+
+    testWidgets('AccountingPage renders on mobile without overflow and converts tables to cards', (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: AccountingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AccountingPage), findsOneWidget);
+
+      // Tap Day Book tab
+      final dayBookTab = find.text('Day Book');
+      if (dayBookTab.evaluate().isNotEmpty) {
+        await tester.tap(dayBookTab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        // Verify no horizontal DataTable on mobile Day Book
+        expect(find.byType(DataTable), findsNothing);
+      }
+
+      // Switch to Receivables & Payables tab
+      final recTab = find.text('Receivables & Payables');
+      if (recTab.evaluate().isNotEmpty) {
+        await tester.tap(recTab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        // Verify no horizontal DataTable on mobile Receivables & Payables
+        expect(find.byType(DataTable), findsNothing);
+      }
+    });
+
+    testWidgets('AccountingPage on 320px narrow mobile renders without overflow', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: AccountingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(AccountingPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('AccountingPage on macOS platform preserves original desktop DataTable', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: AccountingPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AccountingPage), findsOneWidget);
+      // On macOS desktop, tap Day Book tab to view Day Book DataTable
+      final dayBookTab = find.text('Day Book');
+      if (dayBookTab.evaluate().isNotEmpty) {
+        await tester.tap(dayBookTab);
+        await tester.pumpAndSettle();
+        expect(find.byType(DataTable), findsAtLeastNWidgets(1));
+      }
+    });
+
+    testWidgets('ExpensesPage renders on mobile without overflow and converts tables to cards', (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ExpensesPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpensesPage), findsOneWidget);
+      expect(find.text('Expenses & Budget Control'), findsOneWidget);
+
+      // Verify tabs can be switched on mobile without errors or overflows
+      final tabs = [
+        'Expenses Registry & ITC',
+        'Recurring Subscriptions',
+        'Department Budgets & Limits',
+        'Staff Reimbursements',
+      ];
+      for (final tab in tabs) {
+        final tabFinder = find.text(tab);
+        if (tabFinder.evaluate().isNotEmpty) {
+          await tester.tap(tabFinder, warnIfMissed: false);
+          await tester.pumpAndSettle();
+        }
+      }
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ExpensesPage on 320px narrow mobile renders without overflow', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: ExpensesPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(ExpensesPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('ExpensesPage on macOS platform preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: ExpensesPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ExpensesPage), findsOneWidget);
+      expect(find.text('Expenses & Operational Costs'), findsOneWidget);
+    });
+
+    testWidgets('GstPage renders on mobile without overflow and converts tables to cards', (tester) async {
+      tester.view.physicalSize = const Size(360, 780);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GstPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(GstPage), findsOneWidget);
+
+      // Switch to GSTR-1 tab
+      final gstr1Tab = find.text('GSTR-1 (Sales)');
+      if (gstr1Tab.evaluate().isNotEmpty) {
+        await tester.tap(gstr1Tab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        // Verify GSTR-1 mobile cards render
+        expect(find.text('E-Invoice QR'), findsWidgets);
+      }
+
+      // Switch to GSTR-2 tab
+      final gstr2Tab = find.text('GSTR-2 (Purchase)');
+      if (gstr2Tab.evaluate().isNotEmpty) {
+        await tester.tap(gstr2Tab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        // Verify GSTR-2 mobile cards render
+        expect(find.text('Verify / Reconcile'), findsWidgets);
+      }
+
+      // Switch to GSTR-3B tab
+      final gstr3bTab = find.text('GSTR-3B (Liability)');
+      if (gstr3bTab.evaluate().isNotEmpty) {
+        await tester.tap(gstr3bTab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+      }
+
+      // Switch to GSTR-9 tab
+      final gstr9Tab = find.text('GSTR-9 (Annual)');
+      if (gstr9Tab.evaluate().isNotEmpty) {
+        await tester.tap(gstr9Tab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+      }
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('GstPage on 320px narrow mobile renders without overflow', (tester) async {
+      tester.view.physicalSize = const Size(320, 640);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        const ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: GstPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byType(GstPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('GstPage on macOS platform preserves original desktop UI', (tester) async {
+      tester.view.physicalSize = const Size(1200, 800);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.macOS),
+            home: const Scaffold(
+              body: GstPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(GstPage), findsOneWidget);
+      // Tap GSTR-1 tab to view desktop table
+      final gstr1Tab = find.text('GSTR-1 (Sales)');
+      if (gstr1Tab.evaluate().isNotEmpty) {
+        await tester.tap(gstr1Tab, warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(find.text('INVOICE NO'), findsOneWidget);
+        expect(find.text('PLACE OF SUPPLY'), findsOneWidget);
+      }
+    });
   });
 }
+

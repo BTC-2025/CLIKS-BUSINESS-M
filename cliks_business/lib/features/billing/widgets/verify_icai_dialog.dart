@@ -188,6 +188,8 @@ class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
               value: item,
               child: Text(
                 item,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontSize: 13,
                   color: Color(0xFF056B43),
@@ -204,9 +206,12 @@ class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 20, vertical: 24),
       child: Container(
         width: 660,
         decoration: BoxDecoration(
@@ -304,7 +309,7 @@ class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
 
               // ─── FORM CONTENT ───
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+                padding: EdgeInsets.fromLTRB(isMobile ? 16 : 24, 20, isMobile ? 16 : 24, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -492,59 +497,124 @@ class _VerifyIcaiDialogState extends State<VerifyIcaiDialog> {
 
               // ─── BOTTOM ACTION BUTTONS ───
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    InkWell(
-                      onTap: () => Navigator.of(context).pop(),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF334155),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    InkWell(
-                      onTap: _handleSubmit,
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF056B43),
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF056B43).withValues(alpha: 0.25),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
+                padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 24, vertical: 16),
+                child: isMobile
+                    ? Row(
+                        children: [
+                          Expanded(
+                            flex: 2,
+                            child: InkWell(
+                              onTap: () => Navigator.of(context).pop(),
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 11),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                                ),
+                                child: const Text(
+                                  'Cancel',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF334155),
+                                  ),
+                                ),
+                              ),
                             ),
-                          ],
-                        ),
-                        child: const Text(
-                          'Submit for ICAI Verification',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
                           ),
-                        ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 4,
+                            child: InkWell(
+                              onTap: _handleSubmit,
+                              borderRadius: BorderRadius.circular(10),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 8),
+                                alignment: Alignment.center,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF056B43),
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: const Color(0xFF056B43).withValues(alpha: 0.25),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Text(
+                                  screenWidth < 360 ? 'Submit Verification' : 'Submit for ICAI Verification',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          InkWell(
+                            onTap: () => Navigator.of(context).pop(),
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 11),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: const Color(0xFFCBD5E1), width: 1),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          InkWell(
+                            onTap: _handleSubmit,
+                            borderRadius: BorderRadius.circular(10),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 11),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF056B43),
+                                borderRadius: BorderRadius.circular(10),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: const Color(0xFF056B43).withValues(alpha: 0.25),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Text(
+                                'Submit for ICAI Verification',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),

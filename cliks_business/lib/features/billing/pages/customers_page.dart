@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../widgets/customer_registration_dialog.dart';
 
@@ -359,15 +361,21 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
 
             return Dialog(
               backgroundColor: Colors.white,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 580),
-                padding: const EdgeInsets.all(24),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: 580,
+                  maxHeight: MediaQuery.of(context).size.height * 0.85,
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                     // Header (Image 4)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -688,9 +696,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 ),
               ),
             ),
-          );
-        },
+          ),
         );
+      },
+    );
       },
     );
   }
@@ -704,7 +713,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: Container(
             constraints: const BoxConstraints(maxWidth: 680),
-            padding: const EdgeInsets.all(24),
+            padding: EdgeInsets.all(MediaQuery.of(ctx).size.width < 550 ? 14 : 24),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -797,50 +806,109 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 const SizedBox(height: 16),
                 const Text('Recent Ledger Entries', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF0F172A))),
                 const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minWidth: MediaQuery.of(ctx).size.width < 550 ? 460 : 0,
-                      ),
-                      child: Table(
-                        columnWidths: const {
-                          0: FlexColumnWidth(1.4),
-                          1: FlexColumnWidth(2.0),
-                          2: FlexColumnWidth(1.2),
-                          3: FlexColumnWidth(1.2),
-                          4: FlexColumnWidth(1.2),
-                        },
-                        children: const [
-                          TableRow(
-                            decoration: BoxDecoration(color: Color(0xFFF8FAFC)),
-                            children: [
-                              Padding(padding: EdgeInsets.all(8), child: Text('DATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('VOUCHER / REF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('DEBIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('CREDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('BALANCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
-                            ],
-                          ),
-                          TableRow(
-                            children: [
-                              Padding(padding: EdgeInsets.all(8), child: Text('2026-08-20', style: TextStyle(fontSize: 11))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('Opening Balance', style: TextStyle(fontSize: 11))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
-                              Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
-                            ],
-                          ),
-                        ],
+                if (Theme.of(ctx).platform != TargetPlatform.macOS && MediaQuery.of(ctx).size.width < 550)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Expanded(
+                              child: Text(
+                                '2026-08-20',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Opening Balance',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: const [
+                            Expanded(
+                              child: Text(
+                                'Debit: ₹0',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Credit: ₹0',
+                                style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Text(
+                              'Bal: ₹0',
+                              style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.of(ctx).size.width < 550 ? 460 : 0,
+                        ),
+                        child: Table(
+                          columnWidths: const {
+                            0: FlexColumnWidth(1.4),
+                            1: FlexColumnWidth(2.0),
+                            2: FlexColumnWidth(1.2),
+                            3: FlexColumnWidth(1.2),
+                            4: FlexColumnWidth(1.2),
+                          },
+                          children: const [
+                            TableRow(
+                              decoration: BoxDecoration(color: Color(0xFFF8FAFC)),
+                              children: [
+                                Padding(padding: EdgeInsets.all(8), child: Text('DATE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('VOUCHER / REF', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('DEBIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('CREDIT', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('BALANCE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF64748B)))),
+                              ],
+                            ),
+                            TableRow(
+                              children: [
+                                Padding(padding: EdgeInsets.all(8), child: Text('2026-08-20', style: TextStyle(fontSize: 11))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('Opening Balance', style: TextStyle(fontSize: 11))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11))),
+                                Padding(padding: EdgeInsets.all(8), child: Text('₹0', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold))),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
                 const SizedBox(height: 20),
                 Wrap(
                   spacing: 10,
@@ -887,6 +955,95 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
 
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    if (isMacOS) {
+      return _buildDesktopView(isMobile);
+    }
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      floatingActionButton: (isMobile && _activeTab == 0)
+          ? Padding(
+              padding: const EdgeInsets.only(bottom: 76),
+              child: FloatingActionButton.extended(
+                onPressed: _openAddCustomerModal,
+                backgroundColor: const Color(0xFF166534),
+                elevation: 4,
+                icon: const Icon(LucideIcons.plus, color: Colors.white, size: 18),
+                label: const Text(
+                  'Add Customer',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
+                ),
+              ),
+            )
+          : null,
+      body: CustomScrollView(
+        physics: const BouncingScrollPhysics(),
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting / Reports Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(isMobile)
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: -0.05, end: 0),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
+
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: isMobile ? 50 : 56,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: _buildTabNav(isMobile),
+              ),
+            ),
+          ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
+
+          // ─── MAIN CONTENT AREA ───
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(
+              isMobile ? 14 : 24,
+              0,
+              isMobile ? 14 : 24,
+              isMobile ? 140 : 40,
+            ),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_activeTab == 0) ...[
+                    // Search & Filter Row
+                    _buildSearchFilterRow(isMobile),
+                    const SizedBox(height: 16),
+                    // Customers Table
+                    _buildCustomersTable(isMobile),
+                  ] else if (_activeTab == 1) ...[
+                    // Aging & Collection Reports
+                    _buildAgingReportsView(isMobile),
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MACOS / DESKTOP VIEW (UNTOUCHED ORIGINAL LAYOUT)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildDesktopView(bool isMobile) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       body: SingleChildScrollView(
@@ -924,6 +1081,236 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
               _buildAgingReportsView(isMobile),
             ],
           ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE HERO SUMMARY CARD (Reports / Marketing / Barcode Gen Style)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildHeroSummary(bool isMobile) {
+    return Container(
+      margin: EdgeInsets.fromLTRB(isMobile ? 14 : 24, isMobile ? 12 : 16, isMobile ? 14 : 24, 0),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: AppColors.heroGradientColors,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(LucideIcons.users, color: Colors.white, size: 14),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'CUSTOMER & UDHAAR LEDGER',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white.withValues(alpha: 0.85),
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.userCheck, size: 13, color: Colors.greenAccent.shade100),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE STATUS',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              _buildHeroChip('ACTIVE CUSTOMERS', '${_customers.length}', isMobile),
+              const SizedBox(width: 8),
+              _buildHeroChip('TOTAL OUTSTANDING', '₹0', isMobile),
+              const SizedBox(width: 8),
+              _buildHeroChip('COLLECTION EFFICIENCY', '0%', isMobile),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroChip(String label, String value, bool isMobile) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: isMobile ? 8.5 : 9.5,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withValues(alpha: 0.7),
+                letterSpacing: 0.2,
+              ),
+            ),
+            const SizedBox(height: 4),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: isMobile ? 14 : 17,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MOBILE STICKY TAB NAVIGATION (Choice Chips matching Reports & Marketing)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildTabNav(bool isMobile) {
+    final tabs = [
+      {'label': 'Customers List', 'icon': LucideIcons.users},
+      {'label': 'Aging & Collection Reports 📊', 'icon': LucideIcons.barChart2},
+      {'label': 'Points Rules & Ratio', 'icon': LucideIcons.fileText},
+    ];
+
+    return Container(
+      color: const Color(0xFFF8F9FB),
+      height: isMobile ? 46 : 52,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 20, vertical: 4),
+        child: Row(
+          children: List.generate(tabs.length, (index) {
+            final isSelected = _activeTab == index;
+            final isLast = index == tabs.length - 1;
+            return Padding(
+              padding: EdgeInsets.only(right: isLast ? 0 : 6),
+              child: Builder(
+                builder: (tabContext) {
+                  return GestureDetector(
+                    onTap: () {
+                      if (index == 2) {
+                        _openPointsRulesModal();
+                      } else {
+                        setState(() => _activeTab = index);
+                        Scrollable.ensureVisible(
+                          tabContext,
+                          duration: const Duration(milliseconds: 250),
+                          curve: Curves.easeInOut,
+                          alignment: 0.5,
+                        );
+                      }
+                    },
+                    child: AnimatedContainer(
+                      duration: Theme.of(context).platform == TargetPlatform.macOS ? Duration.zero : const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 12 : 18,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF166534) : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tabs[index]['icon'] as IconData,
+                            size: isMobile ? 13 : 15,
+                            color: isSelected ? Colors.white : const Color(0xFF6B7280),
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            tabs[index]['label'] as String,
+                            style: TextStyle(
+                              fontSize: isMobile ? 11.5 : 13,
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF374151),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
         ),
       ),
     );
@@ -1303,7 +1690,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   // ═══════════════════════════════════════════════════════════════════
   Widget _buildSearchFilterRow(bool isMobile) {
     final searchBox = Container(
-      height: 42,
+      height: isMobile ? 36 : 42,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -1312,13 +1699,13 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       child: TextField(
         controller: _searchController,
         onChanged: (val) => setState(() {}),
-        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-        decoration: const InputDecoration(
+        style: TextStyle(fontSize: isMobile ? 12 : 13, color: const Color(0xFF0F172A)),
+        decoration: InputDecoration(
           hintText: 'Search by name, business or phone...',
-          hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF94A3B8)),
-          prefixIcon: Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+          hintStyle: TextStyle(fontSize: isMobile ? 11.5 : 12.5, color: const Color(0xFF94A3B8)),
+          prefixIcon: Icon(LucideIcons.search, size: isMobile ? 14 : 16, color: const Color(0xFF94A3B8)),
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          contentPadding: EdgeInsets.symmetric(horizontal: isMobile ? 10 : 12, vertical: isMobile ? 8 : 11),
         ),
       ),
     );
@@ -1328,8 +1715,8 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             children: [
               Expanded(
                 child: Container(
-                  height: 42,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
@@ -1339,8 +1726,8 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                     child: DropdownButton<String>(
                       value: _selectedBalanceFilter,
                       isExpanded: true,
-                      icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
-                      style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                      icon: const Icon(LucideIcons.chevronDown, size: 13, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
                       items: const [
                         DropdownMenuItem(value: 'All Balances', child: Text('All Balances')),
                         DropdownMenuItem(value: 'Receivables Only', child: Text('Receivables (Udhaar)')),
@@ -1356,15 +1743,16 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
               ),
               const SizedBox(width: 8),
               Container(
-                width: 42,
-                height: 42,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: IconButton(
-                  icon: const Icon(LucideIcons.filter, size: 16, color: Color(0xFF64748B)),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(LucideIcons.filter, size: 14, color: Color(0xFF64748B)),
                   onPressed: () {
                     AppSnackbar.show(context, 'Advanced customer filters applied.', type: SnackType.info);
                   },
@@ -1445,6 +1833,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
   // 5. CUSTOMERS BENTO TABLE (Image 2)
   // ═══════════════════════════════════════════════════════════════════
   Widget _buildCustomersTable(bool isMobile) {
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final query = _searchController.text.trim().toLowerCase();
     final filtered = _customers.where((c) {
       final matchesQuery = query.isEmpty ||
@@ -1465,20 +1854,26 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       return true;
     }).toList();
 
+    if (isMobile && !isMacOS) {
+      return _buildMobileCustomersCardList(filtered);
+    }
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         border: Border.all(color: const Color(0xFFE5E7EB), width: 1.0),
         boxShadow: const [],
       ),
       clipBehavior: Clip.antiAlias,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final tableWidth = math.max(constraints.maxWidth, 1140.0);
+            final tableWidth = isMobile
+                ? math.max(constraints.maxWidth, 680.0)
+                : math.max(constraints.maxWidth, 1140.0);
 
             return SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -1487,15 +1882,25 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                 width: tableWidth,
                 child: Table(
                   defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                  columnWidths: const {
-                    0: FlexColumnWidth(2.6), // CUSTOMER NAME
-                    1: FlexColumnWidth(3.4), // BUSINESS / EMAIL
-                    2: FlexColumnWidth(1.8), // GSTIN / TYPE
-                    3: FlexColumnWidth(1.4), // CREDIT LIMIT
-                    4: FlexColumnWidth(1.4), // OUTSTANDING
-                    5: FlexColumnWidth(2.0), // LOYALTY PTS / VIEW LEDGER
-                    6: FixedColumnWidth(60), // ACTIONS
-                  },
+                  columnWidths: isMobile
+                      ? const {
+                          0: FlexColumnWidth(2.5), // CUSTOMER NAME
+                          1: FlexColumnWidth(2.7), // BUSINESS / EMAIL
+                          2: FlexColumnWidth(1.6), // GSTIN / TYPE
+                          3: FlexColumnWidth(1.2), // CREDIT LIMIT
+                          4: FlexColumnWidth(1.2), // OUTSTANDING
+                          5: FlexColumnWidth(1.8), // LOYALTY PTS / VIEW LEDGER
+                          6: FixedColumnWidth(44), // ACTIONS
+                        }
+                      : const {
+                          0: FlexColumnWidth(2.6), // CUSTOMER NAME
+                          1: FlexColumnWidth(3.4), // BUSINESS / EMAIL
+                          2: FlexColumnWidth(1.8), // GSTIN / TYPE
+                          3: FlexColumnWidth(1.4), // CREDIT LIMIT
+                          4: FlexColumnWidth(1.4), // OUTSTANDING
+                          5: FlexColumnWidth(2.0), // LOYALTY PTS / VIEW LEDGER
+                          6: FixedColumnWidth(60), // ACTIONS
+                        },
                   children: [
                     // Table Header Row (Image 2)
                     TableRow(
@@ -1504,13 +1909,13 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0)),
                       ),
                       children: [
-                        _buildTableHeaderCell('CUSTOMER NAME ▽'),
-                        _buildTableHeaderCell('BUSINESS / EMAIL ▽'),
-                        _buildTableHeaderCell('GSTIN / TYPE ▽'),
-                        _buildTableHeaderCell('CREDIT LIMIT ▽'),
-                        _buildTableHeaderCell('OUTSTANDING ▽'),
-                        _buildTableHeaderCell('LOYALTY PTS ▽'),
-                        _buildTableHeaderCell('ACTIONS', alignment: Alignment.center),
+                        _buildTableHeaderCell('CUSTOMER NAME ▽', isMobile: isMobile),
+                        _buildTableHeaderCell('BUSINESS / EMAIL ▽', isMobile: isMobile),
+                        _buildTableHeaderCell('GSTIN / TYPE ▽', isMobile: isMobile),
+                        _buildTableHeaderCell('CREDIT LIMIT ▽', isMobile: isMobile),
+                        _buildTableHeaderCell('OUTSTANDING ▽', isMobile: isMobile),
+                        _buildTableHeaderCell('LOYALTY PTS ▽', isMobile: isMobile),
+                        _buildTableHeaderCell('ACTIONS', alignment: Alignment.center, isMobile: isMobile),
                       ],
                     ),
 
@@ -1526,18 +1931,18 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                             Row(
                               children: [
                                 CircleAvatar(
-                                  radius: 17,
+                                  radius: isMobile ? 13 : 17,
                                   backgroundColor: cust.avatarBg,
                                   child: Text(
                                     cust.avatarLetter,
                                     style: TextStyle(
-                                      fontSize: 13.5,
+                                      fontSize: isMobile ? 11 : 13.5,
                                       fontWeight: FontWeight.w800,
                                       color: cust.avatarFg,
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 10),
+                                SizedBox(width: isMobile ? 7 : 10),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1545,10 +1950,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                     children: [
                                       Text(
                                         cust.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w800,
-                                          fontSize: 13,
-                                          color: Color(0xFF0F172A),
+                                          fontSize: isMobile ? 11.5 : 13,
+                                          color: const Color(0xFF0F172A),
                                         ),
                                         overflow: TextOverflow.ellipsis,
                                         maxLines: 1,
@@ -1556,17 +1961,17 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                       const SizedBox(height: 2),
                                       Wrap(
                                         crossAxisAlignment: WrapCrossAlignment.center,
-                                        spacing: 5,
+                                        spacing: isMobile ? 4 : 5,
                                         runSpacing: 2,
                                         children: [
                                           Text(
                                             cust.code != null ? 'Code: ${cust.code}' : 'Code:',
-                                            style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+                                            style: TextStyle(fontSize: isMobile ? 9 : 10, color: const Color(0xFF64748B)),
                                           ),
                                           Text(
                                             cust.statusText,
                                             style: TextStyle(
-                                              fontSize: 10,
+                                              fontSize: isMobile ? 9 : 10,
                                               fontWeight: FontWeight.bold,
                                               color: cust.statusFg,
                                             ),
@@ -1580,6 +1985,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                 ),
                               ],
                             ),
+                            isMobile: isMobile,
                           ),
 
                           // Col 1: Business / Email / Phone / Supplier Pill (Image 2)
@@ -1590,10 +1996,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                               children: [
                                 Text(
                                   cust.business,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 12.5,
-                                    color: Color(0xFF0F172A),
+                                    fontSize: isMobile ? 11 : 12.5,
+                                    color: const Color(0xFF0F172A),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
@@ -1601,9 +2007,9 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                 const SizedBox(height: 1),
                                 Text(
                                   cust.email,
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    color: Color(0xFF2563EB),
+                                  style: TextStyle(
+                                    fontSize: isMobile ? 9.5 : 11,
+                                    color: const Color(0xFF2563EB),
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                   maxLines: 1,
@@ -1612,23 +2018,23 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                   const SizedBox(height: 1),
                                   Text(
                                     cust.phone!,
-                                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                                    style: TextStyle(fontSize: isMobile ? 9 : 10.5, color: const Color(0xFF64748B)),
                                   ),
                                 ],
                                 if (cust.connectionRequest != null) ...[
-                                  const SizedBox(height: 4),
+                                  const SizedBox(height: 3),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    padding: EdgeInsets.symmetric(horizontal: isMobile ? 4 : 6, vertical: isMobile ? 1.5 : 2),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFFEEF2FF),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
                                       cust.connectionRequest!,
-                                      style: const TextStyle(
-                                        fontSize: 9.5,
+                                      style: TextStyle(
+                                        fontSize: isMobile ? 8.5 : 9.5,
                                         fontWeight: FontWeight.w600,
-                                        color: Color(0xFF4F46E5),
+                                        color: const Color(0xFF4F46E5),
                                       ),
                                       overflow: TextOverflow.ellipsis,
                                       maxLines: 1,
@@ -1637,44 +2043,48 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                                 ],
                               ],
                             ),
+                            isMobile: isMobile,
                           ),
 
                           // Col 2: GSTIN / Type
                           _buildTableCell(
                             Text(
                               cust.gstin,
-                              style: const TextStyle(
-                                fontSize: 12,
+                              style: TextStyle(
+                                fontSize: isMobile ? 10.5 : 12,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: const Color(0xFF0F172A),
                               ),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                             ),
+                            isMobile: isMobile,
                           ),
 
                           // Col 3: Credit Limit
                           _buildTableCell(
                             Text(
                               cust.creditLimit > 0 ? '₹${cust.creditLimit.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d+?)(?=(\d\d)+(\d)(?!\d))'), (m) => '${m[1]},')}' : '₹0',
-                              style: const TextStyle(
-                                fontSize: 12.5,
+                              style: TextStyle(
+                                fontSize: isMobile ? 11 : 12.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: const Color(0xFF0F172A),
                               ),
                             ),
+                            isMobile: isMobile,
                           ),
 
                           // Col 4: Outstanding
                           _buildTableCell(
                             Text(
                               '₹${cust.outstanding.toStringAsFixed(0)}',
-                              style: const TextStyle(
-                                fontSize: 12.5,
+                              style: TextStyle(
+                                fontSize: isMobile ? 11 : 12.5,
                                 fontWeight: FontWeight.w700,
-                                color: Color(0xFF0F172A),
+                                color: const Color(0xFF0F172A),
                               ),
                             ),
+                            isMobile: isMobile,
                           ),
 
                           // Col 5: Loyalty Pts / View Ledger Button (Image 2)
@@ -1683,31 +2093,32 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                               alignment: Alignment.centerLeft,
                               child: ElevatedButton.icon(
                                 onPressed: () => _openLedgerModal(cust),
-                                icon: const Icon(LucideIcons.fileText, size: 12, color: Color(0xFF7C3AED)),
-                                label: const Text(
+                                icon: Icon(LucideIcons.fileText, size: isMobile ? 10 : 12, color: const Color(0xFF7C3AED)),
+                                label: Text(
                                   'View Ledger',
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: isMobile ? 9.5 : 11,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF7C3AED),
+                                    color: const Color(0xFF7C3AED),
                                   ),
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0xFFF3E8FF),
                                   foregroundColor: const Color(0xFF7C3AED),
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                  padding: EdgeInsets.symmetric(horizontal: isMobile ? 7 : 10, vertical: isMobile ? 4 : 6),
                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(7)),
                                 ),
                               ),
                             ),
+                            isMobile: isMobile,
                           ),
 
                           // Col 6: More Actions Menu (⋯)
                           _buildTableCell(
                             Center(
                               child: PopupMenuButton<String>(
-                                icon: const Icon(LucideIcons.ellipsis, size: 16, color: Color(0xFF64748B)),
+                                icon: Icon(LucideIcons.ellipsis, size: isMobile ? 13 : 16, color: const Color(0xFF64748B)),
                                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                 itemBuilder: (ctx) => [
                                   const PopupMenuItem(value: 'ledger', child: Text('View Ledger & Udhaar', style: TextStyle(fontSize: 12))),
@@ -1735,6 +2146,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
                               ),
                             ),
                             alignment: Alignment.center,
+                            isMobile: isMobile,
                           ),
                         ],
                       );
@@ -1749,14 +2161,304 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     );
   }
 
-  Widget _buildTableHeaderCell(String text, {Alignment alignment = Alignment.centerLeft}) {
+  Widget _buildMobileCustomersCardList(List<_CustomerRecord> items) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+        ),
+        child: Column(
+          children: const [
+            Icon(LucideIcons.users, size: 36, color: Color(0xFF94A3B8)),
+            SizedBox(height: 8),
+            Text(
+              'No customers found',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: items.length,
+      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final cust = items[index];
+
+        return Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE5E7EB)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Top Row: Avatar + Name/Code/Status + PopupMenu
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 17,
+                    backgroundColor: cust.avatarBg,
+                    child: Text(
+                      cust.avatarLetter,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: cust.avatarFg,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cust.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13.5,
+                            color: Color(0xFF0F172A),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
+                        ),
+                        const SizedBox(height: 2),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 2,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              cust.code != null ? 'Code: ${cust.code}' : 'Code: -',
+                              style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                              decoration: BoxDecoration(
+                                color: cust.statusBg,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                cust.statusText,
+                                style: TextStyle(
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  color: cust.statusFg,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<String>(
+                    icon: const Icon(LucideIcons.ellipsis, size: 16, color: Color(0xFF64748B)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    itemBuilder: (ctx) => [
+                      const PopupMenuItem(value: 'ledger', child: Text('View Ledger & Udhaar', style: TextStyle(fontSize: 12))),
+                      const PopupMenuItem(value: 'payment', child: Text('Record Payment', style: TextStyle(fontSize: 12))),
+                      const PopupMenuItem(value: 'credit', child: Text('Adjust Credit Limit', style: TextStyle(fontSize: 12))),
+                      const PopupMenuItem(value: 'whatsapp', child: Text('Send WhatsApp Statement', style: TextStyle(fontSize: 12))),
+                      const PopupMenuItem(value: 'delete', child: Text('Delete Customer', style: TextStyle(fontSize: 12, color: Colors.red))),
+                    ],
+                    onSelected: (val) {
+                      if (val == 'ledger') {
+                        _openLedgerModal(cust);
+                      } else if (val == 'payment') {
+                        AppSnackbar.show(context, 'Payment record dialog for ${cust.name}.', type: SnackType.info);
+                      } else if (val == 'credit') {
+                        AppSnackbar.show(context, 'Credit limit editor for ${cust.name}.', type: SnackType.info);
+                      } else if (val == 'whatsapp') {
+                        AppSnackbar.show(context, 'WhatsApp statement sent to ${cust.name}.', type: SnackType.success);
+                      } else if (val == 'delete') {
+                        setState(() {
+                          _customers.removeWhere((c) => c.id == cust.id);
+                        });
+                        AppSnackbar.show(context, 'Customer removed from ledger.', type: SnackType.info);
+                      }
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+
+              // Business / Email / Phone
+              Text(
+                cust.business,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                  color: Color(0xFF0F172A),
+                ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
+              const SizedBox(height: 2),
+              Row(
+                children: [
+                  const Icon(LucideIcons.mail, size: 11, color: Color(0xFF2563EB)),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      cust.email,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF2563EB)),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ),
+                ],
+              ),
+              if (cust.phone != null) ...[
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    const Icon(LucideIcons.phone, size: 11, color: Color(0xFF64748B)),
+                    const SizedBox(width: 4),
+                    Text(
+                      cust.phone!,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ],
+                ),
+              ],
+              if (cust.connectionRequest != null) ...[
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    cust.connectionRequest!,
+                    style: const TextStyle(
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF4F46E5),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+
+              // Financial stats row
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('GSTIN / TYPE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          Text(
+                            cust.gstin,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text('CREDIT LIMIT', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          Text(
+                            cust.creditLimit > 0 ? '₹${cust.creditLimit.toStringAsFixed(0)}' : '₹0',
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text('OUTSTANDING', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF64748B)), maxLines: 1, overflow: TextOverflow.ellipsis),
+                          const SizedBox(height: 2),
+                          Text(
+                            '₹${cust.outstanding.toStringAsFixed(0)}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: cust.outstanding > 0 ? const Color(0xFFDC2626) : const Color(0xFF15803D),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+
+              // View Ledger Button
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: () => _openLedgerModal(cust),
+                  icon: const Icon(LucideIcons.fileText, size: 12, color: Color(0xFF7C3AED)),
+                  label: const Text(
+                    'View Ledger',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF7C3AED),
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF3E8FF),
+                    foregroundColor: const Color(0xFF7C3AED),
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTableHeaderCell(String text, {Alignment alignment = Alignment.centerLeft, bool isMobile = false}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 20, vertical: isMobile ? 8 : 16),
       child: Text(
         text,
         style: GoogleFonts.inter(
-          fontSize: 13,
+          fontSize: isMobile ? 11 : 13,
           fontWeight: FontWeight.w700,
           color: const Color(0xFF1E293B),
           letterSpacing: 0.3,
@@ -1765,10 +2467,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     );
   }
 
-  Widget _buildTableCell(Widget child, {Alignment alignment = Alignment.centerLeft}) {
+  Widget _buildTableCell(Widget child, {Alignment alignment = Alignment.centerLeft, bool isMobile = false}) {
     return Container(
       alignment: alignment,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 20, vertical: isMobile ? 7 : 16),
       child: ClipRect(child: child),
     );
   }
@@ -1783,10 +2485,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
         // Card 1: Outstanding Receivables Ledger (Image 3)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(isMobile ? 14 : 20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: const [
               BoxShadow(
@@ -1800,45 +2502,57 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(LucideIcons.alertTriangle, color: Color(0xFFEA580C), size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Outstanding Receivables Ledger',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                children: [
+                  Icon(LucideIcons.alertTriangle, color: const Color(0xFFEA580C), size: isMobile ? 16 : 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Outstanding Receivables Ledger',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: isMobile ? 12 : 20),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
+                padding: EdgeInsets.all(isMobile ? 12 : 16),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                child: const Text(
-                  'No overdue receivables logged. All customer accounts are settled and in good standing.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(LucideIcons.circleCheck, color: const Color(0xFF16A34A), size: isMobile ? 16 : 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'No overdue receivables logged. All customer accounts are settled and in good standing.',
+                        style: TextStyle(fontSize: isMobile ? 11 : 12, color: const Color(0xFF64748B), height: 1.4),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: isMobile ? 12 : 18),
 
         // Card 2: Outstanding Aging Reports (Image 3)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.all(isMobile ? 14 : 20),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: const [
               BoxShadow(
@@ -1852,77 +2566,57 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(LucideIcons.clock, color: Color(0xFF0D9488), size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Outstanding Aging Reports',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                children: [
+                  Icon(LucideIcons.clock, color: const Color(0xFF0D9488), size: isMobile ? 16 : 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Outstanding Aging Reports',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              // 3 Aging stat boxes (Responsive on mobile)
-              if (isMobile)
-                Column(
-                  children: [
-                    _buildAgingPill(
+              SizedBox(height: isMobile ? 12 : 18),
+              // 3 Equal-width Aging stat boxes perfectly aligned
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildAgingPill(
                       label: '0 - 15 Days',
                       value: '₹0',
                       textColor: const Color(0xFF0284C7),
                       bgColor: const Color(0xFFE0F2FE),
+                      isCompact: isMobile,
                     ),
-                    const SizedBox(height: 8),
-                    _buildAgingPill(
-                      label: '16 – 30 Days Overdue',
+                  ),
+                  SizedBox(width: isMobile ? 8 : 10),
+                  Expanded(
+                    child: _buildAgingPill(
+                      label: '16 – 30 Days',
                       value: '₹0',
                       textColor: const Color(0xFFD97706),
                       bgColor: const Color(0xFFFEF3C7),
+                      isCompact: isMobile,
                     ),
-                    const SizedBox(height: 8),
-                    _buildAgingPill(
-                      label: '31+ Days Critical',
+                  ),
+                  SizedBox(width: isMobile ? 8 : 10),
+                  Expanded(
+                    child: _buildAgingPill(
+                      label: '31+ Days',
                       value: '₹0',
                       textColor: const Color(0xFFDC2626),
                       bgColor: const Color(0xFFFEE2E2),
+                      isCompact: isMobile,
                     ),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildAgingPill(
-                        label: '0 - 15 Days',
-                        value: '₹0',
-                        textColor: const Color(0xFF0284C7),
-                        bgColor: const Color(0xFFE0F2FE),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildAgingPill(
-                        label: '16 – 30 Days Overdue',
-                        value: '₹0',
-                        textColor: const Color(0xFFD97706),
-                        bgColor: const Color(0xFFFEF3C7),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildAgingPill(
-                        label: '31+ Days Critical',
-                        value: '₹0',
-                        textColor: const Color(0xFFDC2626),
-                        bgColor: const Color(0xFFFEE2E2),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
             ],
           ),
         ),
@@ -1935,76 +2629,10 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
         // Card 1: Collection Efficiency Rate (Image 3)
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.all(isMobile ? 16 : 24),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x04000000),
-                blurRadius: 10,
-                offset: Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              const Text(
-                'Collection Efficiency Rate',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-              const SizedBox(height: 24),
-              // Radial ring gauge with 0% in center (Image 3)
-              Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 90,
-                    height: 90,
-                    child: CircularProgressIndicator(
-                      value: 0.0,
-                      strokeWidth: 8,
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
-                    ),
-                  ),
-                  const Text(
-                    '0%',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF7C3AED),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'Collection efficiency indicates recovered payments out of overall credit sales.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF64748B),
-                  height: 1.3,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 18),
-
-        // Card 2: Top Customer Sales Contribution (Image 3)
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: const [
               BoxShadow(
@@ -2018,27 +2646,110 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                children: const [
-                  Icon(LucideIcons.trendingUp, color: Color(0xFF7C3AED), size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'Top Customer Sales Contribution',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF0F172A),
+                children: [
+                  Icon(LucideIcons.pieChart, color: const Color(0xFF8B5CF6), size: isMobile ? 16 : 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Collection Efficiency Rate',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: isMobile ? 18 : 24),
+              // Radial ring gauge with 0% in center (Image 3)
+              Center(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: isMobile ? 76 : 90,
+                      height: isMobile ? 76 : 90,
+                      child: CircularProgressIndicator(
+                        value: 0.0,
+                        strokeWidth: isMobile ? 7 : 8,
+                        backgroundColor: const Color(0xFFF1F5F9),
+                        valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
+                      ),
+                    ),
+                    Text(
+                      '0%',
+                      style: TextStyle(
+                        fontSize: isMobile ? 16 : 18,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF7C3AED),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: isMobile ? 16 : 24),
+              Center(
+                child: Text(
+                  'Collection efficiency indicates recovered payments out of overall credit sales.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: isMobile ? 10.5 : 11,
+                    color: const Color(0xFF64748B),
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(height: isMobile ? 12 : 18),
+
+        // Card 2: Top Customer Sales Contribution (Image 3)
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isMobile ? 14 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x04000000),
+                blurRadius: 10,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(LucideIcons.trendingUp, color: const Color(0xFF7C3AED), size: isMobile ? 16 : 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Top Customer Sales Contribution',
+                      style: TextStyle(
+                        fontSize: isMobile ? 13 : 14,
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: isMobile ? 12 : 16),
               // 6 Ranked Sales Contribution bars (Image 3)
-              _buildContributionRow('sanjay123', '₹5,90,06,15,376', 1.0, const Color(0xFF8B5CF6)),
-              _buildContributionRow('Varshini', '₹2,36,61,23,372', 0.45, const Color(0xFF06B6D4)),
-              _buildContributionRow('Ravi kumar', '₹2,36,11,03,466', 0.44, const Color(0xFF06B6D4)),
-              _buildContributionRow('ravikumar', '₹5,20,241', 0.08, const Color(0xFFA78BFA)),
-              _buildContributionRow('ravikumar', '₹5,20,241', 0.08, const Color(0xFFA78BFA)),
-              _buildContributionRow('ravikumar', '₹4,65,161', 0.07, const Color(0xFFA78BFA)),
+              _buildContributionRow('sanjay123', '₹5,90,06,15,376', 1.0, const Color(0xFF8B5CF6), isCompact: isMobile),
+              _buildContributionRow('Varshini', '₹2,36,61,23,372', 0.45, const Color(0xFF06B6D4), isCompact: isMobile),
+              _buildContributionRow('Ravi kumar', '₹2,36,11,03,466', 0.44, const Color(0xFF06B6D4), isCompact: isMobile),
+              _buildContributionRow('ravikumar', '₹5,20,241', 0.08, const Color(0xFFA78BFA), isCompact: isMobile),
+              _buildContributionRow('ravikumar', '₹5,20,241', 0.08, const Color(0xFFA78BFA), isCompact: isMobile),
+              _buildContributionRow('ravikumar', '₹4,65,161', 0.07, const Color(0xFFA78BFA), isCompact: isMobile),
             ],
           ),
         ),
@@ -2049,7 +2760,7 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
       return Column(
         children: [
           leftColumn,
-          const SizedBox(height: 18),
+          const SizedBox(height: 14),
           rightColumn,
         ],
       );
@@ -2070,31 +2781,34 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     required String value,
     required Color textColor,
     required Color bgColor,
+    bool isCompact = false,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+      padding: EdgeInsets.symmetric(vertical: isCompact ? 10 : 14, horizontal: 6),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(isCompact ? 8 : 10),
+        border: Border.all(color: textColor.withValues(alpha: 0.15), width: 1),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 9.5,
+            style: TextStyle(
+              fontSize: isCompact ? 9 : 9.5,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF475569),
+              color: const Color(0xFF475569),
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          SizedBox(height: isCompact ? 4 : 6),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: isCompact ? 14 : 16,
               fontWeight: FontWeight.w800,
               color: textColor,
             ),
@@ -2104,39 +2818,43 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     );
   }
 
-  Widget _buildContributionRow(String name, String amount, double progress, Color barColor) {
+  Widget _buildContributionRow(String name, String amount, double progress, Color barColor, {bool isCompact = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.only(bottom: isCompact ? 8 : 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                name,
-                style: const TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+              Expanded(
+                child: Text(
+                  name,
+                  style: TextStyle(
+                    fontSize: isCompact ? 10.5 : 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 amount,
-                style: const TextStyle(
-                  fontSize: 11.5,
+                style: TextStyle(
+                  fontSize: isCompact ? 10.5 : 11.5,
                   fontWeight: FontWeight.w800,
-                  color: Color(0xFF4338CA),
+                  color: const Color(0xFF4338CA),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 5),
+          SizedBox(height: isCompact ? 3 : 5),
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
-              minHeight: 5.5,
+              minHeight: isCompact ? 4.5 : 5.5,
               backgroundColor: const Color(0xFFF1F5F9),
               valueColor: AlwaysStoppedAnimation<Color>(barColor),
             ),
@@ -2144,5 +2862,31 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
         ],
       ),
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STICKY TAB NAV DELEGATE
+// ═══════════════════════════════════════════════════════════════
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }
