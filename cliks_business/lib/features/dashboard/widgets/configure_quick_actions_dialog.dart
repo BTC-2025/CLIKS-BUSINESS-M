@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -286,21 +287,312 @@ class _ConfigureQuickActionsDialogState
     final activeCount = _selectedIds.length;
     final hasSelection = _selectedIds.isNotEmpty;
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isMobile = screenWidth < 600;
+    final isMacOS = !kIsWeb &&
+        (defaultTargetPlatform == TargetPlatform.macOS ||
+            Theme.of(context).platform == TargetPlatform.macOS);
+    final isCompactMobile = isMobile && !isMacOS;
+
+    if (!isCompactMobile) {
+      // ═══════════════════════════════════════════════════════════════════════
+      // macOS DESKTOP LAYOUT (100% UNTOUCHED)
+      // ═══════════════════════════════════════════════════════════════════════
+      return Dialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+        child: SizedBox(
+          width: 480,
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. Header with title & circular close button
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Configure Quick Actions',
+                            style: TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          SizedBox(height: 5),
+                          Text(
+                            'Pin your most frequent workflows straight to the Dashboard overview.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF64748B),
+                              height: 1.3,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: const Icon(
+                          LucideIcons.x,
+                          size: 16,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 18),
+
+                // 2. Active count and Deselect/Select All button row
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          '$activeCount of $total shortcuts active',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF334155),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      InkWell(
+                        onTap: _toggleSelectAll,
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: hasSelection
+                                ? const Color(0xFFFEF2F2)
+                                : const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: hasSelection
+                                  ? const Color(0xFFFECACA)
+                                  : const Color(0xFFBFDBFE),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                hasSelection
+                                    ? LucideIcons.check
+                                    : LucideIcons.plus,
+                                size: 13,
+                                color: hasSelection
+                                    ? const Color(0xFFEF4444)
+                                    : const Color(0xFF2563EB),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                hasSelection ? 'Deselect All' : 'Select All',
+                                style: TextStyle(
+                                  color: hasSelection
+                                      ? const Color(0xFFEF4444)
+                                      : const Color(0xFF2563EB),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 16),
+
+                // 3. Scrollable List of shortcuts
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 380),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: allDashboardShortcuts.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 10),
+                    itemBuilder: (context, index) {
+                      final item = allDashboardShortcuts[index];
+                      final isSelected = _selectedIds.contains(item.id);
+
+                      return InkWell(
+                        onTap: () => _toggleShortcut(item.id),
+                        borderRadius: BorderRadius.circular(16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 150),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? Colors.white
+                                : const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isSelected
+                                  ? item.color
+                                  : const Color(0xFFE2E8F0),
+                              width: isSelected ? 1.8 : 1.0,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              // Icon Box
+                              Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? item.color.withValues(alpha: 0.12)
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  item.icon,
+                                  color: isSelected
+                                      ? item.color
+                                      : const Color(0xFF94A3B8),
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+
+                              // Label
+                              Expanded(
+                                child: Text(
+                                  item.label,
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: isSelected
+                                        ? const Color(0xFF0F172A)
+                                        : const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                              ),
+
+                              // Action Button (Colored circle with 'X' or plus)
+                              Container(
+                                width: 24,
+                                height: 24,
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? item.color
+                                      : const Color(0xFFE2E8F0),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  isSelected
+                                      ? LucideIcons.x
+                                      : LucideIcons.plus,
+                                  size: 12,
+                                  color: isSelected
+                                      ? Colors.white
+                                      : const Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // 4. Save Configuration Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: _saveConfiguration,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF14532D),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      'Save Configuration',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // COMPACT MOBILE LAYOUT (Android & iOS identical, 0 overflow guarantee)
+    // ═══════════════════════════════════════════════════════════════════════
     return Dialog(
       backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
       ),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
       child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 480),
+        constraints: BoxConstraints(
+          maxWidth: 480,
+          maxHeight: (screenHeight * 0.84).clamp(340.0, 620.0),
+        ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header with title & circular close button
+              // 1. Compact Header with title & circular close button
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -311,38 +603,38 @@ class _ConfigureQuickActionsDialogState
                         Text(
                           'Configure Quick Actions',
                           style: TextStyle(
-                            fontSize: 22,
+                            fontSize: 17,
                             fontWeight: FontWeight.w800,
                             color: Color(0xFF0F172A),
                             letterSpacing: -0.3,
                           ),
                         ),
-                        SizedBox(height: 5),
+                        SizedBox(height: 3),
                         Text(
                           'Pin your most frequent workflows straight to the Dashboard overview.',
                           style: TextStyle(
-                            fontSize: 13,
+                            fontSize: 11.5,
                             color: Color(0xFF64748B),
-                            height: 1.3,
+                            height: 1.25,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 8),
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(18),
                     child: Container(
-                      width: 36,
-                      height: 36,
+                      width: 32,
+                      height: 32,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
                       child: const Icon(
                         LucideIcons.x,
-                        size: 16,
+                        size: 15,
                         color: Color(0xFF64748B),
                       ),
                     ),
@@ -350,37 +642,41 @@ class _ConfigureQuickActionsDialogState
                 ],
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
 
-              // 2. Active count and Deselect/Select All button row
+              // 2. Active count and Deselect/Select All button row (No horizontal overflow)
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 10,
+                  horizontal: 10,
+                  vertical: 7,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      '$activeCount of $total shortcuts active',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
+                    Expanded(
+                      child: Text(
+                        '$activeCount of $total active',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF334155),
+                        ),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(width: 8),
                     InkWell(
                       onTap: _toggleSelectAll,
                       borderRadius: BorderRadius.circular(8),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 8,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: hasSelection
@@ -400,7 +696,7 @@ class _ConfigureQuickActionsDialogState
                               hasSelection
                                   ? LucideIcons.check
                                   : LucideIcons.plus,
-                              size: 13,
+                              size: 11,
                               color: hasSelection
                                   ? const Color(0xFFEF4444)
                                   : const Color(0xFF2563EB),
@@ -412,7 +708,7 @@ class _ConfigureQuickActionsDialogState
                                 color: hasSelection
                                     ? const Color(0xFFEF4444)
                                     : const Color(0xFF2563EB),
-                                fontSize: 12,
+                                fontSize: 10.5,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -424,80 +720,82 @@ class _ConfigureQuickActionsDialogState
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
 
-              // 3. Scrollable List of shortcuts
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 380),
+              // 3. Flexible Scrollable List of shortcuts (No vertical overflow)
+              Flexible(
                 child: ListView.separated(
                   shrinkWrap: true,
+                  physics: const BouncingScrollPhysics(),
                   itemCount: allDashboardShortcuts.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
+                  separatorBuilder: (_, _) => const SizedBox(height: 7),
                   itemBuilder: (context, index) {
                     final item = allDashboardShortcuts[index];
                     final isSelected = _selectedIds.contains(item.id);
 
                     return InkWell(
                       onTap: () => _toggleShortcut(item.id),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 150),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                          horizontal: 10,
+                          vertical: 7,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? Colors.white
                               : const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: isSelected
                                 ? item.color
                                 : const Color(0xFFE2E8F0),
-                            width: isSelected ? 1.8 : 1.0,
+                            width: isSelected ? 1.6 : 1.0,
                           ),
                         ),
                         child: Row(
                           children: [
                             // Icon Box
                             Container(
-                              width: 40,
-                              height: 40,
+                              width: 32,
+                              height: 32,
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? item.color.withValues(alpha: 0.12)
                                     : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
                                 item.icon,
                                 color: isSelected
                                     ? item.color
                                     : const Color(0xFF94A3B8),
-                                size: 18,
+                                size: 15,
                               ),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 10),
 
                             // Label
                             Expanded(
                               child: Text(
                                 item.label,
                                 style: TextStyle(
-                                  fontSize: 14.5,
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
                                   color: isSelected
                                       ? const Color(0xFF0F172A)
                                       : const Color(0xFF94A3B8),
                                 ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
 
                             // Action Button (Colored circle with 'X' or plus)
                             Container(
-                              width: 24,
-                              height: 24,
+                              width: 22,
+                              height: 22,
                               decoration: BoxDecoration(
                                 color: isSelected
                                     ? item.color
@@ -508,7 +806,7 @@ class _ConfigureQuickActionsDialogState
                                 isSelected
                                     ? LucideIcons.x
                                     : LucideIcons.plus,
-                                size: 12,
+                                size: 10,
                                 color: isSelected
                                     ? Colors.white
                                     : const Color(0xFF64748B),
@@ -522,12 +820,12 @@ class _ConfigureQuickActionsDialogState
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 10),
 
               // 4. Save Configuration Button
               SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 42,
                 child: ElevatedButton(
                   onPressed: _saveConfiguration,
                   style: ElevatedButton.styleFrom(
@@ -535,13 +833,13 @@ class _ConfigureQuickActionsDialogState
                     foregroundColor: Colors.white,
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(11),
                     ),
                   ),
                   child: const Text(
                     'Save Configuration',
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.2,
                     ),

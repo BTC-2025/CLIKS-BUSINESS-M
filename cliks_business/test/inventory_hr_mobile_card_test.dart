@@ -65,6 +65,32 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('ProductsPage on iOS (390x844): Renders identical mobile cards cleanly without overflow', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
+            home: const Scaffold(
+              body: ProductsPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ProductsPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      expect(find.byIcon(LucideIcons.pencil), findsWidgets);
+      expect(find.byIcon(LucideIcons.trash2), findsWidgets);
+    });
+
     testWidgets('ProductsPage on macOS (1200x800): Preserves original desktop table', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -170,6 +196,30 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('StockPage on iOS (390x844): Renders identical mobile cards cleanly without overflow', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
+            home: const Scaffold(
+              body: StockPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StockPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('StockPage on macOS (1200x800): Preserves desktop tables', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -251,6 +301,30 @@ void main() {
         ProviderScope(
           child: MaterialApp(
             theme: ThemeData(platform: TargetPlatform.android),
+            home: const Scaffold(
+              body: WarehousePage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(WarehousePage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('WarehousePage on iOS (390x844): Renders identical mobile cards cleanly without overflow', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
             home: const Scaffold(
               body: WarehousePage(),
             ),
@@ -368,6 +442,30 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('StaffPage on iOS (390x844): Renders identical mobile cards cleanly without overflow', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
+            home: const Scaffold(
+              body: StaffPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(StaffPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('StaffPage on macOS (1200x800): Preserves desktop tables', (tester) async {
       tester.view.physicalSize = const Size(1200, 800);
       tester.view.devicePixelRatio = 1.0;
@@ -461,6 +559,30 @@ void main() {
         ProviderScope(
           child: MaterialApp(
             theme: ThemeData(platform: TargetPlatform.android),
+            home: const Scaffold(
+              body: PayrollPage(),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(PayrollPage), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('PayrollPage on iOS (390x844): Renders identical mobile cards cleanly without overflow', (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            theme: ThemeData(platform: TargetPlatform.iOS),
             home: const Scaffold(
               body: PayrollPage(),
             ),

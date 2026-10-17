@@ -24,7 +24,7 @@ class BentoHeroBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(isMobile ? 18 : 24),
+      padding: EdgeInsets.all(isMobile ? 12 : 24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
@@ -34,7 +34,7 @@ class BentoHeroBanner extends StatelessWidget {
             Color(0xFF14532D), // Deep Emerald Green
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(isMobile ? 14 : 20),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFF166534).withValues(alpha: 0.22),
@@ -67,15 +67,15 @@ class BentoHeroBanner extends StatelessWidget {
                         Text(
                           title,
                           style: GoogleFonts.inter(
-                            fontSize: isMobile ? 11 : 12,
+                            fontSize: isMobile ? 10.5 : 12,
                             fontWeight: FontWeight.w700,
                             color: Colors.white.withValues(alpha: 0.75),
-                            letterSpacing: 1.2,
+                            letterSpacing: 1.1,
                           ),
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
+                              horizontal: 7, vertical: 2.5),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(12),
@@ -84,8 +84,8 @@ class BentoHeroBanner extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Container(
-                                width: 6,
-                                height: 6,
+                                width: 5,
+                                height: 5,
                                 decoration: const BoxDecoration(
                                   color: Color(0xFF4ADE80), // Bright green dot
                                   shape: BoxShape.circle,
@@ -95,7 +95,7 @@ class BentoHeroBanner extends StatelessWidget {
                               Text(
                                 'LIVE',
                                 style: GoogleFonts.inter(
-                                  fontSize: 9.5,
+                                  fontSize: 9,
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF4ADE80),
                                   letterSpacing: 0.5,
@@ -106,14 +106,14 @@ class BentoHeroBanner extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       netProfitText,
                       style: GoogleFonts.inter(
-                        fontSize: isMobile ? 24 : 32,
+                        fontSize: isMobile ? 20 : 32,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
-                        letterSpacing: -0.6,
+                        letterSpacing: -0.5,
                       ),
                     ),
                   ],
@@ -122,13 +122,13 @@ class BentoHeroBanner extends StatelessWidget {
               if (onCustomiseTap != null)
                 InkWell(
                   onTap: onCustomiseTap,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 8),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 9 : 14, vertical: isMobile ? 5 : 8),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: Colors.white.withValues(alpha: 0.2),
                       ),
@@ -136,15 +136,15 @@ class BentoHeroBanner extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.slidersHorizontal,
-                            size: 14, color: Colors.white),
-                        const SizedBox(width: 6),
+                        Icon(LucideIcons.slidersHorizontal,
+                            size: isMobile ? 12 : 14, color: Colors.white),
+                        const SizedBox(width: 5),
                         Text(
                           'Customise',
                           style: GoogleFonts.inter(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                            fontSize: isMobile ? 11 : 12,
                           ),
                         ),
                       ],
@@ -153,7 +153,7 @@ class BentoHeroBanner extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: isMobile ? 10 : 18),
 
           // Chips Row / Grid
           if (isMobile)
@@ -164,18 +164,18 @@ class BentoHeroBanner extends StatelessWidget {
                     if (chips.isNotEmpty)
                       Expanded(child: _buildChip(chips[0], isMobile)),
                     if (chips.length > 1) ...[
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 8),
                       Expanded(child: _buildChip(chips[1], isMobile)),
                     ],
                   ],
                 ),
                 if (chips.length > 2) ...[
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(child: _buildChip(chips[2], isMobile)),
                       if (chips.length > 3) ...[
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(child: _buildChip(chips[3], isMobile)),
                       ],
                     ],
@@ -206,12 +206,12 @@ class BentoHeroBanner extends StatelessWidget {
   Widget _buildChip(BentoHeroChipData chip, bool isMobile) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 12 : 14,
-        vertical: isMobile ? 10 : 12,
+        horizontal: isMobile ? 9 : 14,
+        vertical: isMobile ? 7 : 12,
       ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
         border: Border.all(
           color: Colors.white.withValues(alpha: 0.15),
           width: 0.8,
@@ -224,8 +224,8 @@ class BentoHeroBanner extends StatelessWidget {
             children: [
               if (chip.icon != null) ...[
                 Icon(chip.icon,
-                    size: 13, color: Colors.white.withValues(alpha: 0.8)),
-                const SizedBox(width: 5),
+                    size: isMobile ? 11.5 : 13, color: Colors.white.withValues(alpha: 0.8)),
+                const SizedBox(width: 4),
               ],
               Flexible(
                 child: Text(
@@ -233,7 +233,7 @@ class BentoHeroBanner extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.inter(
-                    fontSize: isMobile ? 10 : 11,
+                    fontSize: isMobile ? 9.5 : 11,
                     fontWeight: FontWeight.w600,
                     color: Colors.white.withValues(alpha: 0.7),
                   ),
@@ -241,14 +241,14 @@ class BentoHeroBanner extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           FittedBox(
             fit: BoxFit.scaleDown,
             alignment: Alignment.centerLeft,
             child: Text(
               chip.value,
               style: GoogleFonts.inter(
-                fontSize: isMobile ? 16 : 19,
+                fontSize: isMobile ? 13.5 : 19,
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 letterSpacing: -0.3,

@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_spacing.dart';
 import 'bento_card.dart';
 
 /// Modern SaaS Bento Chart Card.
@@ -46,13 +48,17 @@ class _BentoChartCardState extends State<BentoChartCard> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 700 && defaultTargetPlatform != TargetPlatform.macOS;
+
     return BentoCard(
       title: widget.title,
       subtitle: widget.subtitle,
       icon: LucideIcons.lineChart,
       iconColor: widget.lineColor,
       iconBackgroundColor: widget.lineColor.withValues(alpha: 0.1),
-      trailing: widget.trailing ?? _buildPeriodSelector(),
+      padding: EdgeInsets.all(isCompact ? 12 : AppSpacing.xl),
+      trailing: widget.trailing ?? _buildPeriodSelector(isCompact),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -158,11 +164,11 @@ class _BentoChartCardState extends State<BentoChartCard> {
               );
             },
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: isCompact ? 12 : 20),
 
           // Chart Canvas
           SizedBox(
-            height: 180,
+            height: isCompact ? 140 : 180,
             child: Row(
               children: [
                 // Y-Axis Labels
@@ -253,25 +259,30 @@ class _BentoChartCardState extends State<BentoChartCard> {
 
           // X-Axis Labels
           Padding(
-            padding: const EdgeInsets.only(left: 48),
+            padding: EdgeInsets.only(left: isCompact ? 36 : 48),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: widget.xLabels
                   .asMap()
                   .entries
                   .map(
-                    (entry) => Text(
-                      entry.value,
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: _hoveredPointIndex == entry.key
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: _hoveredPointIndex == entry.key
-                            ? AppColors.primaryGreen
-                            : const Color(0xFF6B7280),
-                      ),
-                    ),
+                    (entry) {
+                      final shouldHide = isCompact &&
+                          widget.xLabels.length > 6 &&
+                          entry.key % 2 != 0;
+                      return Text(
+                        shouldHide ? '' : entry.value,
+                        style: GoogleFonts.inter(
+                          fontSize: isCompact ? 9.5 : 10.5,
+                          fontWeight: _hoveredPointIndex == entry.key
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: _hoveredPointIndex == entry.key
+                              ? AppColors.primaryGreen
+                              : const Color(0xFF6B7280),
+                        ),
+                      );
+                    },
                   )
                   .toList(),
             ),
@@ -281,9 +292,9 @@ class _BentoChartCardState extends State<BentoChartCard> {
     );
   }
 
-  Widget _buildPeriodSelector() {
+  Widget _buildPeriodSelector([bool isCompact = false]) {
     return Container(
-      padding: const EdgeInsets.all(2.5),
+      padding: EdgeInsets.all(isCompact ? 2.0 : 2.5),
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(8),
@@ -296,7 +307,10 @@ class _BentoChartCardState extends State<BentoChartCard> {
             onTap: () => setState(() => _selectedPeriodIndex = index),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: EdgeInsets.symmetric(
+                horizontal: isCompact ? 6 : 8,
+                vertical: isCompact ? 2.5 : 4,
+              ),
               decoration: BoxDecoration(
                 color: isSelected ? Colors.white : Colors.transparent,
                 borderRadius: BorderRadius.circular(6),
@@ -313,7 +327,7 @@ class _BentoChartCardState extends State<BentoChartCard> {
               child: Text(
                 _periods[index],
                 style: GoogleFonts.inter(
-                  fontSize: 11,
+                  fontSize: isCompact ? 10 : 11,
                   fontWeight:
                       isSelected ? FontWeight.w700 : FontWeight.w500,
                   color: isSelected

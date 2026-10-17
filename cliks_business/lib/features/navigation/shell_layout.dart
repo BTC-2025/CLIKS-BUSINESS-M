@@ -666,12 +666,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
 
   Widget _buildStylishBottomBar(BuildContext context, WidgetRef ref, NavigationState navigation) {
     final double bottomInset = MediaQuery.of(context).padding.bottom;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isCompact = screenWidth < 700;
     return Container(
       color: Colors.transparent,
       padding: EdgeInsets.only(bottom: bottomInset > 0 ? (bottomInset * 0.35).clamp(2.0, 6.0) : 4.0),
       child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 4),
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+        margin: EdgeInsets.fromLTRB(isCompact ? 12 : 16, 0, isCompact ? 12 : 16, 4),
+        padding: EdgeInsets.symmetric(vertical: isCompact ? 3 : 4, horizontal: isCompact ? 6 : 8),
         decoration: BoxDecoration(
           color: AppColors.cardBackground,
           borderRadius: BorderRadius.circular(32),
@@ -686,17 +688,17 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildBottomTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books'),
-            _buildBottomTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments'),
-            _buildBottomTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social'),
-            _buildBottomTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile'),
+            _buildBottomTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books', isCompact),
+            _buildBottomTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments', isCompact),
+            _buildBottomTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social', isCompact),
+            _buildBottomTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile', isCompact),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildBottomTab(WidgetRef ref, NavigationState navigation, AppModule module, IconData icon, String label) {
+  Widget _buildBottomTab(WidgetRef ref, NavigationState navigation, AppModule module, IconData icon, String label, [bool isCompact = false]) {
     final isActive = navigation.currentModule == module;
     return GestureDetector(
       onTap: () => _switchToModule(ref, module),
@@ -704,7 +706,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: isCompact ? 12 : 16,
+          vertical: isCompact ? 6 : 10,
+        ),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primaryGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(24),
@@ -715,7 +720,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             Icon(
               icon,
               color: isActive ? Colors.white : AppColors.secondaryText,
-              size: 20,
+              size: isCompact ? 17 : 20,
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 500),
@@ -724,13 +729,13 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isActive) ...[
-                    const SizedBox(width: 8),
+                    SizedBox(width: isCompact ? 5 : 8),
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: 13,
+                        fontSize: isCompact ? 11.5 : 13,
                       ),
                     ),
                   ],

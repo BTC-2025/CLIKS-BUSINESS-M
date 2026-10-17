@@ -107,7 +107,32 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
   }
 
   void setRoute(AppRoute route) {
-    state = state.copyWith(currentRoute: route);
+    AppModule module = state.currentModule;
+    switch (route) {
+      case AppRoute.people:
+      case AppRoute.wallet:
+      case AppRoute.transaction:
+      case AppRoute.segregation:
+      case AppRoute.splitCollect:
+      case AppRoute.referral:
+        module = AppModule.payments;
+        break;
+      case AppRoute.meetup:
+      case AppRoute.betaClub:
+      case AppRoute.rewards:
+        module = AppModule.social;
+        break;
+      case AppRoute.profile:
+      case AppRoute.settings:
+      case AppRoute.manageAccount:
+      case AppRoute.storage:
+        module = AppModule.profile;
+        break;
+      default:
+        module = AppModule.books;
+        break;
+    }
+    state = state.copyWith(currentRoute: route, currentModule: module);
   }
 
   void setModuleAndRoute(AppModule module, AppRoute route) {
