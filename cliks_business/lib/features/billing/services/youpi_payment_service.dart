@@ -14,7 +14,7 @@ class YoupiPaymentService {
   static final YoupiPaymentService instance = YoupiPaymentService._();
 
   /// Configured payee UPI ID requested by merchant.
-  static const String configuredPayeeVpa = 'divyachannnn1234-1@okhdfcbank';
+  static const String configuredPayeeVpa = 'merchant@upi';
 
   /// Payee display name for NPCI UPI specification.
   static const String configuredPayeeName = 'Cliks Business';

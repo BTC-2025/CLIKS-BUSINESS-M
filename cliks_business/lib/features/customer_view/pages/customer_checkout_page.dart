@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 import '../providers/customer_view_provider.dart';
 import 'customer_order_confirmation_page.dart';
 
@@ -78,9 +77,6 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
     final notifier = ref.read(customerViewProvider.notifier);
     final settings = state.settings;
     final primaryColor = Color(settings.primaryColorValue);
-
-    final upiPayload =
-        'upi://pay?pa=cliks.merchant@okhdfcbank&pn=${Uri.encodeComponent(settings.businessName)}&am=${state.cartTotal.toStringAsFixed(2)}&cu=INR&tn=Kiosk%20Order';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -335,11 +331,11 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                         ),
                       ),
 
-                      // If UPI QR is selected, display instant interactive QR
+                      // If UPI is selected, display instant checkout info (no QR, no account)
                       if (state.selectedPaymentMode == 'UPI QR Code') ...[
                         const SizedBox(height: 16),
                         Container(
-                          padding: const EdgeInsets.all(20),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
@@ -355,47 +351,46 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                           child: Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.all(8),
+                                width: 50,
+                                height: 50,
                                 decoration: BoxDecoration(
-                                  color: Colors.white,
+                                  color: const Color(0xFFEEF2FF),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                                  border: Border.all(color: const Color(0xFFC7D2FE)),
                                 ),
-                                child: QrImageView(
-                                  data: upiPayload,
-                                  version: QrVersions.auto,
-                                  size: 130.0,
+                                child: const Center(
+                                  child: Icon(LucideIcons.smartphone, size: 26, color: Color(0xFF4F46E5)),
                                 ),
                               ),
-                              const SizedBox(width: 20),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(LucideIcons.sparkles, size: 16, color: Color(0xFF6366F1)),
+                                        const Icon(LucideIcons.sparkles, size: 15, color: Color(0xFF6366F1)),
                                         const SizedBox(width: 6),
                                         Text(
-                                          'Scan & Pay Instantly',
+                                          'UPI Payment Selected',
                                           style: GoogleFonts.inter(
-                                            fontSize: 14.5,
+                                            fontSize: 14,
                                             fontWeight: FontWeight.w800,
                                             color: const Color(0xFF1E1B4B),
                                           ),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 6),
+                                    const SizedBox(height: 4),
                                     Text(
-                                      'Open any UPI app on your phone (GPay, PhonePe, Paytm, Cred) and point your camera at this QR code.',
+                                      'Click "Place Order & Pay" below to confirm your order and complete your payment.',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
                                         color: const Color(0xFF4B5563),
                                         height: 1.35,
                                       ),
                                     ),
-                                    const SizedBox(height: 10),
+                                    const SizedBox(height: 8),
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
@@ -405,8 +400,8 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                       child: Text(
                                         'Amount: ₹${state.cartTotal.toStringAsFixed(2)}',
                                         style: GoogleFonts.inter(
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w900,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w800,
                                           color: const Color(0xFF4338CA),
                                         ),
                                       ),

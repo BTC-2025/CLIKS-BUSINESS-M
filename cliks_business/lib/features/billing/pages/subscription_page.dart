@@ -2270,7 +2270,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Test real UPI payment for ₹1.00 via dynamic QR or mobile intent without affecting current tier numbers.',
+                  'Test real payment for ₹1.00 via payment gateway without affecting current tier numbers.',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     color: const Color(0xFF475569),
@@ -2338,7 +2338,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              'Payee: $vpa',
+                              'Payment Gateway Ready',
                               style: GoogleFonts.inter(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w700,
@@ -2350,7 +2350,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        'Test genuine 1 Rupee (₹1.00) live UPI transaction via dynamic QR without affecting official subscription tiers.',
+                        'Test genuine 1 Rupee (₹1.00) live transaction via payment gateway without affecting official subscription tiers.',
                         style: GoogleFonts.inter(
                           fontSize: 12,
                           color: const Color(0xFF475569),
@@ -2402,8 +2402,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       billingCycleText: 'Single test transaction of ₹1',
       billingSubtext: 'Test Mode',
       features: const [
-        'Live dynamic UPI QR generation',
-        'Direct payee: divyachannnn1234-1@okhdfcbank',
+        'Secure payment gateway checkout',
+        'Instant plan activation',
         'Authoritative banking verification test',
       ],
     );

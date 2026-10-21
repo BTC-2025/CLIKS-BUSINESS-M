@@ -242,14 +242,14 @@ void main() {
         planName: 'Test Plan (₹1 Verification)',
       );
 
-      expect(uri, contains('pa=divyachannnn1234-1@okhdfcbank'));
+      expect(uri, contains('pa=merchant@upi'));
       expect(uri, contains('pn=Cliks%20Business'));
       expect(uri, contains('am=1.00'));
 
       service.testClient = MockClient((request) async {
         final body = jsonDecode(request.body);
         expect(body['amount'], '1.00');
-        expect(body['metadata']['payeeVpa'], 'divyachannnn1234-1@okhdfcbank');
+        expect(body['metadata']['payeeVpa'], 'merchant@upi');
 
         return http.Response(
           jsonEncode({
@@ -275,8 +275,8 @@ void main() {
       );
 
       expect(session.amount, '1.00');
-      expect(session.payeeVpa, 'divyachannnn1234-1@okhdfcbank');
-      expect(session.upiUri, contains('pa=divyachannnn1234-1@okhdfcbank'));
+      expect(session.payeeVpa, 'merchant@upi');
+      expect(session.upiUri, contains('pa=merchant@upi'));
     });
   });
 
