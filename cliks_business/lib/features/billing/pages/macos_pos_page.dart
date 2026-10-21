@@ -50,6 +50,13 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
   String _selectedCategory = 'All';
   String _selectedWarehouse = 'Warehouse';
 
+  // Filter & Sort state matching screenshot features
+  String _sortMode = 'none'; // 'none', 'alphabetAZ', 'alphabetZA', 'codeAsc', 'codeDesc'
+  String _searchField = 'all'; // 'all', 'name', 'code'
+  String _selectedLetter = 'All'; // 'All', 'A' ... 'Z'
+  final LayerLink _filterLayerLink = LayerLink();
+  OverlayEntry? _filterOverlayEntry;
+
   // Customer state
   bool _hasCustomer = true;
   final String _customerName = 'Varshini';
@@ -168,21 +175,95 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
         price: 1899.00,
         stock: 20,
       ),
+      _PosProductItem(
+        id: '13',
+        name: 'curd aarokya',
+        sku: 'SKU: wijdhedh',
+        category: 'Electronics',
+        price: 45.00,
+        stock: 45,
+      ),
+      _PosProductItem(
+        id: '14',
+        name: 'gulob jamun',
+        sku: 'SKU: GUL-01',
+        category: 'Food',
+        price: 120.00,
+        stock: 50,
+      ),
+      _PosProductItem(
+        id: '15',
+        name: 'orange juice',
+        sku: 'SKU: BEV-03',
+        category: 'Food',
+        price: 90.00,
+        stock: 30,
+      ),
+      _PosProductItem(
+        id: '16',
+        name: 'pizza',
+        sku: 'SKU: PIZ-01',
+        category: 'Food',
+        price: 299.00,
+        stock: 25,
+      ),
+      _PosProductItem(
+        id: '17',
+        name: 'redmi note',
+        sku: 'SKU: MOB-88',
+        category: 'Electronics',
+        price: 14999.00,
+        stock: 40,
+      ),
+      _PosProductItem(
+        id: '18',
+        name: 'samsung s24',
+        sku: 'SKU: SAM-24',
+        category: 'Electronics',
+        price: 79999.00,
+        stock: 18,
+      ),
+      _PosProductItem(
+        id: '19',
+        name: 'tomato',
+        sku: 'SKU: VEG-02',
+        category: 'General',
+        price: 40.00,
+        stock: 200,
+      ),
+      _PosProductItem(
+        id: '20',
+        name: 'usb cable',
+        sku: 'SKU: ACC-10',
+        category: 'Electronics',
+        price: 199.00,
+        stock: 95,
+      ),
+      _PosProductItem(
+        id: '21',
+        name: 'vanilla ice cream',
+        sku: 'SKU: DES-05',
+        category: 'Food',
+        price: 80.00,
+        stock: 60,
+      ),
+      _PosProductItem(
+        id: '22',
+        name: 'wireless mouse',
+        sku: 'SKU: ACC-55',
+        category: 'Electronics',
+        price: 699.00,
+        stock: 42,
+      ),
     ];
 
-    // Initial Cart items matching reference screenshot:
-    // 1. esrdfg (qty: 1, ₹5,465)
-    // 2. car (qty: 1, ₹545)
-    // 3. BMW car (qty: 2, ₹1,60,000)
-    _cart = [
-      _PosCartLine(product: _products[6], quantity: 1),
-      _PosCartLine(product: _products[3], quantity: 1),
-      _PosCartLine(product: _products[2], quantity: 2),
-    ];
+    // Initial Cart items (starts empty matching screenshot)
+    _cart = [];
   }
 
   @override
   void dispose() {
+    _closeFilterPopup();
     _searchController.dispose();
     super.dispose();
   }
@@ -937,18 +1018,76 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
   double get _roundOff => (_rawTotal.roundToDouble() - _rawTotal);
   double get _payableAmount => _rawTotal.roundToDouble();
 
-  List<_PosProductItem> get _filteredProducts {
-    return _products.where((prod) {
-      final matchesSearch = _searchQuery.isEmpty ||
-          prod.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          prod.sku.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          prod.category.toLowerCase().contains(_searchQuery.toLowerCase());
+  bool get _isFilterActive =>
+      _sortMode != 'none' ||
+      _searchField != 'all' ||
+      _selectedLetter != 'All' ||
+      _searchQuery.isNotEmpty ||
+      _selectedCategory != 'All';
 
+  List<_PosProductItem> get _filteredProducts {
+    var list = _products.where((prod) {
+      // 1. Search Query with Field Scope
+      bool matchesSearch = true;
+      if (_searchQuery.isNotEmpty) {
+        final q = _searchQuery.toLowerCase().trim();
+        switch (_searchField) {
+          case 'name':
+            matchesSearch = prod.name.toLowerCase().contains(q);
+            break;
+          case 'code':
+            matchesSearch = prod.sku.toLowerCase().contains(q);
+            break;
+          default:
+            matchesSearch = prod.name.toLowerCase().contains(q) ||
+                prod.sku.toLowerCase().contains(q) ||
+                prod.category.toLowerCase().contains(q);
+        }
+      }
+
+      // 2. Category Filter
       final matchesCategory = _selectedCategory == 'All' ||
           prod.category.toLowerCase() == _selectedCategory.toLowerCase();
 
-      return matchesSearch && matchesCategory;
+      // 3. Alphabet Letter Filter
+      bool matchesLetter = true;
+      if (_selectedLetter != 'All') {
+        final firstChar = prod.name.trim().isNotEmpty
+            ? prod.name.trim()[0].toUpperCase()
+            : '';
+        matchesLetter = (firstChar == _selectedLetter);
+      }
+
+      return matchesSearch && matchesCategory && matchesLetter;
     }).toList();
+
+    // 4. Sorting logic matching screenshot options
+    switch (_sortMode) {
+      case 'alphabetAZ':
+        list.sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
+        break;
+      case 'alphabetZA':
+        list.sort((a, b) => b.name.toLowerCase().compareTo(a.name.toLowerCase()));
+        break;
+      case 'codeAsc':
+        list.sort((a, b) {
+          final codeA = a.sku.replaceAll(RegExp(r'^SKU:\s*', caseSensitive: false), '').trim();
+          final codeB = b.sku.replaceAll(RegExp(r'^SKU:\s*', caseSensitive: false), '').trim();
+          return codeA.compareTo(codeB);
+        });
+        break;
+      case 'codeDesc':
+        list.sort((a, b) {
+          final codeA = a.sku.replaceAll(RegExp(r'^SKU:\s*', caseSensitive: false), '').trim();
+          final codeB = b.sku.replaceAll(RegExp(r'^SKU:\s*', caseSensitive: false), '').trim();
+          return codeB.compareTo(codeA);
+        });
+        break;
+      default:
+        break;
+    }
+
+    return list;
   }
 
   String _formatIndianCurrency(double amount) {
@@ -1510,108 +1649,786 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
   // ═══════════════════════════════════════════════════════════════
   // 2. SEARCH & CURVY CATEGORY FILTERS ROW
   // ═══════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════
+  // 2. SEARCH & ADVANCED FILTER / SORT TOOLBAR
+  // ═══════════════════════════════════════════════════════════════
   Widget _buildSearchAndFilters() {
-    final categories = ['All', 'General', 'Electronics', 'vehicles', 'Footwear'];
+    final filtered = _filteredProducts;
 
-    return Row(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Pill-shaped Warehouse Dropdown (near left of the search icon)
-        _buildWarehouseDropdown(),
+        // Main Row: Warehouse, Search Bar, Alphabet/Code Filter Button, Categories Dropdown
+        Row(
+          children: [
+            // 1. Warehouse Dropdown
+            _buildWarehouseDropdown(),
+            const SizedBox(width: 10),
 
-        const SizedBox(width: 10),
-
-        // Pill-shaped Search bar
-        Expanded(
-          flex: 4,
-          child: Container(
-            height: 40,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+            // 2. Pill-shaped Search bar
+            Expanded(
+              flex: 4,
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.search, size: 15, color: Color(0xFF9CA3AF)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        controller: _searchController,
+                        style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF111827)),
+                        decoration: InputDecoration(
+                          hintText: _searchField == 'code'
+                              ? 'Search by barcode...'
+                              : (_searchField == 'name'
+                                  ? 'Search by product name...'
+                                  : 'Search item name...'),
+                          hintStyle: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF9CA3AF)),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 11),
+                        ),
+                        onChanged: (val) {
+                          setState(() {
+                            _searchQuery = val;
+                          });
+                        },
+                      ),
+                    ),
+                    if (_searchQuery.isNotEmpty)
+                      InkWell(
+                        onTap: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                        child: const Icon(LucideIcons.x, size: 14, color: Color(0xFF9CA3AF)),
+                      ),
+                  ],
+                ),
+              ),
             ),
+            const SizedBox(width: 10),
+
+            // 3. Alphabet / Code Filter & Sort Button
+            CompositedTransformTarget(
+              link: _filterLayerLink,
+              child: _buildAlphabetCodeFilterButton(),
+            ),
+            const SizedBox(width: 10),
+
+            // 4. Curvy Categories Dropdown
+            _buildCategoryDropdown(),
+          ],
+        ),
+
+        // 5. Alphabet Jump Bar (Visible when Alphabet sorting or letter filter is active)
+        if (_sortMode == 'alphabetAZ' || _sortMode == 'alphabetZA' || _selectedLetter != 'All') ...[
+          _buildAlphabetJumpBar(),
+        ],
+
+        // 6. Active Filter Indicator Banner (Visible when any filter or sort is active)
+        if (_isFilterActive) ...[
+          _buildActiveFilterBanner(filtered.length),
+        ],
+      ],
+    );
+  }
+
+  // Alphabet / Code Filter & Sort Button (Matching Screenshot)
+  Widget _buildAlphabetCodeFilterButton() {
+    final bool isAlphabetActive = _sortMode == 'alphabetAZ' || _sortMode == 'alphabetZA';
+    final bool isCodeActive = _sortMode == 'codeAsc' || _sortMode == 'codeDesc' || _searchField == 'code';
+    final bool isFilterActive = isAlphabetActive || isCodeActive || _sortMode != 'none' || _searchField != 'all';
+
+    String label = 'Alphabet / Code';
+    IconData icon = LucideIcons.slidersHorizontal;
+
+    if (_sortMode == 'alphabetAZ') {
+      label = 'Alphabet (A-Z)';
+      icon = LucideIcons.arrowDownUp;
+    } else if (_sortMode == 'alphabetZA') {
+      label = 'Alphabet (Z-A)';
+      icon = LucideIcons.arrowDownUp;
+    } else if (isCodeActive) {
+      label = 'Code Filter';
+      icon = LucideIcons.slidersHorizontal;
+    } else if (_searchField == 'name') {
+      label = 'Name Filter';
+      icon = LucideIcons.arrowDownUp;
+    }
+
+    return Container(
+      height: 40,
+      decoration: BoxDecoration(
+        color: isFilterActive ? const Color(0xFFF0FDF4) : Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isFilterActive ? const Color(0xFF16A34A) : const Color(0xFFE5E7EB),
+          width: isFilterActive ? 1.5 : 1.0,
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _toggleFilterPopup,
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14),
             child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(LucideIcons.search, size: 15, color: Color(0xFF9CA3AF)),
+                Icon(
+                  icon,
+                  size: 14,
+                  color: isFilterActive ? const Color(0xFF16A34A) : const Color(0xFF1E293B),
+                ),
                 const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    style: const TextStyle(fontSize: 12.5, color: Color(0xFF111827)),
-                    decoration: const InputDecoration(
-                      hintText: 'Search item name, category or barcode S',
-                      hintStyle: TextStyle(fontSize: 12.5, color: Color(0xFF9CA3AF)),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(vertical: 11),
-                    ),
-                    onChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w700,
+                    color: isFilterActive ? const Color(0xFF166534) : const Color(0xFF1E293B),
                   ),
                 ),
-                if (_searchQuery.isNotEmpty)
+                if (isFilterActive) ...[
+                  const SizedBox(width: 6),
                   InkWell(
                     onTap: () {
-                      _searchController.clear();
-                      setState(() => _searchQuery = '');
+                      setState(() {
+                        _sortMode = 'none';
+                        _searchField = 'all';
+                        _selectedLetter = 'All';
+                      });
+                      _closeFilterPopup();
                     },
-                    child: const Icon(LucideIcons.x, size: 14, color: Color(0xFF9CA3AF)),
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.all(2),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFDCFCE7),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.x, size: 11, color: Color(0xFF166534)),
+                    ),
                   ),
+                ],
+                const SizedBox(width: 6),
+                Icon(
+                  LucideIcons.chevronDown,
+                  size: 13,
+                  color: isFilterActive ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+                ),
               ],
             ),
           ),
         ),
+      ),
+    );
+  }
 
-        const SizedBox(width: 12),
+  // Curvy Category Dropdown (Replacing old horizontal list)
+  Widget _buildCategoryDropdown() {
+    final categories = ['All Categories', 'General', 'Electronics', 'vehicles', 'Footwear', 'Food'];
+    final displayLabel = _selectedCategory == 'All' ? 'All Categories' : _selectedCategory;
+    final bool isSelected = _selectedCategory != 'All';
 
-        // Curvy Category Pills
-        Expanded(
-          flex: 5,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: categories.map((cat) {
-                final isSelected = _selectedCategory.toLowerCase() == cat.toLowerCase();
+    return PopupMenuButton<String>(
+      onSelected: (val) {
+        setState(() {
+          _selectedCategory = val == 'All Categories' ? 'All' : val;
+        });
+      },
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      elevation: 8,
+      itemBuilder: (context) => categories.map((cat) {
+        final isItemActive = (_selectedCategory == 'All' && cat == 'All Categories') ||
+            _selectedCategory.toLowerCase() == cat.toLowerCase();
+        return PopupMenuItem<String>(
+          value: cat,
+          height: 38,
+          child: Row(
+            children: [
+              Icon(
+                LucideIcons.tag,
+                size: 13,
+                color: isItemActive ? const Color(0xFF16A34A) : const Color(0xFF9CA3AF),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                cat,
+                style: GoogleFonts.inter(
+                  fontSize: 12.5,
+                  fontWeight: isItemActive ? FontWeight.w700 : FontWeight.w500,
+                  color: isItemActive ? const Color(0xFF166534) : const Color(0xFF1F2937),
+                ),
+              ),
+              if (isItemActive) ...[
+                const Spacer(),
+                const Icon(LucideIcons.check, size: 14, color: Color(0xFF16A34A)),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+      child: Container(
+        height: 40,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE5E7EB),
+            width: isSelected ? 1.5 : 1.0,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              LucideIcons.tag,
+              size: 14,
+              color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 6),
+            Text(
+              displayLabel,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? const Color(0xFF166534) : const Color(0xFF1E293B),
+              ),
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              LucideIcons.chevronDown,
+              size: 13,
+              color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF64748B),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        _selectedCategory = cat;
-                      });
+  // Filter popup overlay methods
+  void _toggleFilterPopup() {
+    if (_filterOverlayEntry != null) {
+      _closeFilterPopup();
+    } else {
+      _openFilterPopup();
+    }
+  }
+
+  void _closeFilterPopup() {
+    _filterOverlayEntry?.remove();
+    _filterOverlayEntry = null;
+  }
+
+  void _openFilterPopup() {
+    _closeFilterPopup();
+
+    _filterOverlayEntry = OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _closeFilterPopup,
+                child: const SizedBox.expand(),
+              ),
+            ),
+            Positioned(
+              width: 350,
+              child: CompositedTransformFollower(
+                link: _filterLayerLink,
+                showWhenUnlinked: false,
+                offset: const Offset(0, 46),
+                child: Material(
+                  elevation: 16,
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  shadowColor: Colors.black.withValues(alpha: 0.15),
+                  child: StatefulBuilder(
+                    builder: (context, setPopupState) {
+                      return _buildFilterPopupContent(setPopupState);
                     },
-                    borderRadius: BorderRadius.circular(20),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFFF0FDF4) : Colors.white,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(
-                          color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE5E7EB),
-                          width: isSelected ? 1.5 : 1.0,
-                        ),
-                      ),
-                      child: Text(
-                        cat,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          color: isSelected ? const Color(0xFF166534) : const Color(0xFF4B5563),
-                        ),
-                      ),
-                    ),
                   ),
-                );
-              }).toList(),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    Overlay.of(context).insert(_filterOverlayEntry!);
+  }
+
+  // The actual popup menu content matching Screenshot 2
+  Widget _buildFilterPopupContent(StateSetter setPopupState) {
+    return Container(
+      width: 350,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Text(
+            'PRODUCT LIST FILTER & SORT',
+            style: GoogleFonts.inter(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // Subheader: VIEW PRODUCT LIST IN:
+          Text(
+            'VIEW PRODUCT LIST IN:',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF94A3B8),
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // 1. Alphabet Wise (A -> Z)
+          _buildPopupOptionCard(
+            title: 'Alphabet Wise (A → Z)',
+            subtitle: 'Sort products by name A to Z',
+            icon: LucideIcons.arrowDownUp,
+            isSelected: _sortMode == 'alphabetAZ',
+            onTap: () {
+              setPopupState(() {
+                _sortMode = 'alphabetAZ';
+                _selectedLetter = 'All';
+              });
+              setState(() {
+                _sortMode = 'alphabetAZ';
+                _selectedLetter = 'All';
+              });
+              _closeFilterPopup();
+            },
+          ),
+
+          // 2. Alphabet Wise (Z -> A)
+          _buildPopupOptionCard(
+            title: 'Alphabet Wise (Z → A)',
+            subtitle: 'Sort products by name Z to A',
+            icon: LucideIcons.arrowDownUp,
+            isSelected: _sortMode == 'alphabetZA',
+            onTap: () {
+              setPopupState(() {
+                _sortMode = 'alphabetZA';
+                _selectedLetter = 'All';
+              });
+              setState(() {
+                _sortMode = 'alphabetZA';
+                _selectedLetter = 'All';
+              });
+              _closeFilterPopup();
+            },
+          ),
+
+          // 3. Code Wise (0 -> 9 / A -> Z)
+          _buildPopupOptionCard(
+            title: 'Code Wise (0 → 9 / A → Z)',
+            subtitle: 'Sort by SKU / Barcode / Code',
+            icon: LucideIcons.barcode,
+            isSelected: _sortMode == 'codeAsc',
+            onTap: () {
+              setPopupState(() {
+                _sortMode = 'codeAsc';
+              });
+              setState(() {
+                _sortMode = 'codeAsc';
+              });
+              _closeFilterPopup();
+            },
+          ),
+
+          // 4. Code Wise (9 -> 0 / Z -> A)
+          _buildPopupOptionCard(
+            title: 'Code Wise (9 → 0 / Z → A)',
+            subtitle: 'Reverse code sequence',
+            icon: LucideIcons.barcode,
+            isSelected: _sortMode == 'codeDesc',
+            onTap: () {
+              setPopupState(() {
+                _sortMode = 'codeDesc';
+              });
+              setState(() {
+                _sortMode = 'codeDesc';
+              });
+              _closeFilterPopup();
+            },
+          ),
+
+          const SizedBox(height: 16),
+
+          // Subheader: SEARCH IN FIELD:
+          Text(
+            'SEARCH IN FIELD:',
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF94A3B8),
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+
+          // 3 Pill buttons: [All Fields], [Name (A-Z)], [Code / SKU]
+          Row(
+            children: [
+              Expanded(
+                child: _buildSearchFieldPill(
+                  label: 'All Fields',
+                  field: 'all',
+                  setPopupState: setPopupState,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSearchFieldPill(
+                  label: 'Name (A-Z)',
+                  field: 'name',
+                  setPopupState: setPopupState,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildSearchFieldPill(
+                  label: 'Code / SKU',
+                  field: 'code',
+                  setPopupState: setPopupState,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Single option item in popup menu
+  Widget _buildPopupOptionCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: isSelected ? const Color(0xFFF0FDF4) : const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+                width: isSelected ? 1.5 : 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 16,
+                  color: isSelected ? const Color(0xFF16A34A) : const Color(0xFF475569),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: isSelected ? const Color(0xFF166534) : const Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 1),
+                      Text(
+                        subtitle,
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(LucideIcons.check, size: 14, color: Color(0xFF16A34A)),
+              ],
             ),
           ),
         ),
-      ],
+      ),
+    );
+  }
+
+  // Pill toggle button in popup menu
+  Widget _buildSearchFieldPill({
+    required String label,
+    required String field,
+    required StateSetter setPopupState,
+  }) {
+    final isSelected = _searchField == field;
+
+    return Material(
+      color: isSelected ? const Color(0xFFE8F5E9) : Colors.white,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: () {
+          setPopupState(() {
+            _searchField = field;
+          });
+          setState(() {
+            _searchField = field;
+          });
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 7),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+              color: isSelected ? const Color(0xFF166534) : const Color(0xFF475569),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Alphabet Jump Bar (Matching Screenshot 3)
+  Widget _buildAlphabetJumpBar() {
+    final letters = [
+      'All', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
+      'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+    ];
+
+    return Container(
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'JUMP TO:',
+            style: GoogleFonts.inter(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                children: letters.map((letter) {
+                  final isSelected = _selectedLetter == letter;
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 3),
+                    child: InkWell(
+                      onTap: () {
+                        setState(() {
+                          _selectedLetter = letter;
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(6),
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: letter == 'All' ? 10 : 7,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF16A34A)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          letter,
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                            color: isSelected ? Colors.white : const Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Active Filter Banner (Matching Screenshot 3 & 4)
+  Widget _buildActiveFilterBanner(int count) {
+    String badgeText;
+    IconData badgeIcon = LucideIcons.slidersHorizontal;
+
+    if (_selectedLetter != 'All') {
+      badgeText = 'Alphabet (A-Z) • Starts with: $_selectedLetter';
+      badgeIcon = LucideIcons.arrowDownAZ;
+    } else if (_sortMode == 'alphabetAZ') {
+      badgeText = 'Alphabet (A-Z)';
+      badgeIcon = LucideIcons.arrowDownAZ;
+    } else if (_sortMode == 'alphabetZA') {
+      badgeText = 'Alphabet (Z-A)';
+      badgeIcon = LucideIcons.arrowUpZA;
+    } else if (_sortMode == 'codeAsc') {
+      badgeText = 'Code Wise (0-9 / A-Z)';
+      badgeIcon = LucideIcons.barcode;
+    } else if (_sortMode == 'codeDesc') {
+      badgeText = 'Code Wise (9-0 / Z-A)';
+      badgeIcon = LucideIcons.barcode;
+    } else if (_searchField == 'code') {
+      badgeText = 'Search: Code/SKU Only';
+      badgeIcon = LucideIcons.barcode;
+    } else if (_searchField == 'name') {
+      badgeText = 'Search: Name Only';
+      badgeIcon = LucideIcons.arrowDownUp;
+    } else if (_selectedCategory != 'All') {
+      badgeText = 'Category: $_selectedCategory';
+      badgeIcon = LucideIcons.tag;
+    } else if (_searchQuery.isNotEmpty) {
+      badgeText = 'Search: "$_searchQuery"';
+      badgeIcon = LucideIcons.search;
+    } else {
+      badgeText = 'Active Filter';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFBBF7D0)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Active Filter:',
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF166534),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFF86EFAC)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(badgeIcon, size: 12, color: const Color(0xFF16A34A)),
+                const SizedBox(width: 5),
+                Text(
+                  badgeText,
+                  style: GoogleFonts.inter(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF166534),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '($count items found)',
+            style: GoogleFonts.inter(
+              fontSize: 11.5,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF15803D),
+            ),
+          ),
+          const Spacer(),
+          InkWell(
+            onTap: () {
+              setState(() {
+                _sortMode = 'none';
+                _searchField = 'all';
+                _selectedLetter = 'All';
+                _selectedCategory = 'All';
+                _searchQuery = '';
+                _searchController.clear();
+              });
+              _closeFilterPopup();
+            },
+            borderRadius: BorderRadius.circular(4),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                'Reset All',
+                style: GoogleFonts.inter(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF16A34A),
+                  decoration: TextDecoration.underline,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
