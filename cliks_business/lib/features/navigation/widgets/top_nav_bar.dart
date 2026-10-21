@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/modals/finance_modals.dart';
 import '../../billing/providers/expenses_provider.dart';
+import '../../billing/providers/mobile_pos_header_provider.dart';
 import 'macos_right_utility_rail.dart';
 import 'macos_account_menu_card.dart';
 
@@ -32,6 +33,10 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final isProfileModule = navigation.currentModule == AppModule.profile;
+    final headerColor = (!isDesktop && isProfileModule)
+        ? AppColors.primaryGreen
+        : AppColors.headerBackground;
 
     if (isMacOS) {
       return _buildMacOSNavBar(context, ref, isDesktop, navigation);
@@ -41,7 +46,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       return Container(
         height: 64,
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        decoration: const BoxDecoration(color: AppColors.headerBackground),
+        decoration: BoxDecoration(color: headerColor),
         child: Row(
           children: [
             IconButton(
@@ -112,7 +117,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         left: isDesktop ? 16 : 8,
         right: isDesktop ? 0 : 4,
       ),
-      decoration: const BoxDecoration(color: AppColors.headerBackground),
+      decoration: BoxDecoration(color: headerColor),
       child: Row(
         children: [
           // Logo and Menu section
@@ -194,92 +199,158 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                           ),
                           const SizedBox(width: 6),
                         ],
-                        Flexible(
-                          child: Text(
-                            () {
-                              switch (navigation.currentRoute) {
-                                case AppRoute.people:
-                                  return 'People';
-                                case AppRoute.wallet:
-                                  return 'Wallet';
-                                case AppRoute.transaction:
-                                  return 'Transaction';
-                                case AppRoute.segregation:
-                                  return 'Segregation';
-                                case AppRoute.splitCollect:
-                                  return 'Split and Collect';
-                                case AppRoute.planner:
-                                  return 'Planner';
-                                case AppRoute.accounting:
-                                  return 'Accounting';
-                                case AppRoute.expenses:
-                                  return 'Expenses';
-                                case AppRoute.gst:
-                                  return 'GST Compliance';
-                                case AppRoute.billing:
-                                  return 'Sales Invoice';
-                                case AppRoute.simpleBilling:
-                                  return 'Simple Billing';
-                                case AppRoute.sales:
-                                  return 'Sales Orders';
-                                case AppRoute.customers:
-                                  return 'Customers';
-                                case AppRoute.returns:
-                                  return 'Returns';
-                                case AppRoute.purchase:
-                                  return 'Purchase Invoice';
-                                case AppRoute.suppliers:
-                                  return 'Suppliers';
-                                case AppRoute.products:
-                                  return 'Products';
-                                case AppRoute.stock:
-                                  return 'Stock & Inventory';
-                                case AppRoute.warehouse:
-                                  return 'Warehouse';
-                                case AppRoute.inventory:
-                                  return 'Inventory';
-                                case AppRoute.pos:
-                                  return 'Point of Sale (POS)';
-                                case AppRoute.reports:
-                                  return 'Reports & Analytics';
-                                case AppRoute.marketing:
-                                  return 'Marketing Hub';
-                                case AppRoute.barcodeGen:
-                                  return 'Barcode Generator';
-                                case AppRoute.auditHub:
-                                  return 'Audit Hub';
-                                case AppRoute.fintech:
-                                  return 'Fintech';
-                                case AppRoute.payroll:
-                                case AppRoute.allocateEmployeeLoan:
-                                case AppRoute.processMonthlyPayroll:
-                                  return 'Payroll';
-                                case AppRoute.attendance:
-                                case AppRoute.manualPunchEntry:
-                                case AppRoute.regularizeMissedPunch:
-                                  return 'Attendance';
-                                case AppRoute.staff:
-                                  return 'Staff';
-                                case AppRoute.hr:
-                                  return 'Human Resources';
-                                case AppRoute.betaClub:
-                                  return 'Partner Launch Desk';
-                                case AppRoute.storage:
-                                  return 'Storage';
-                                default:
-                                  return 'Cliks Business';
-                              }
-                            }(),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: isDesktop ? 20 : 16.5,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: -0.5,
+                        if (!isDesktop && navigation.currentRoute == AppRoute.pos)
+                          Flexible(
+                            child: InkWell(
+                              onTap: () {
+                                final posHeader =
+                                    ref.read(mobilePosHeaderProvider);
+                                posHeader.onOpenWarehousePicker?.call();
+                              },
+                              borderRadius: BorderRadius.circular(6),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Text(
+                                    'Point of Sale (POS)',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: -0.4,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 4,
+                                      vertical: 1,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          Colors.white.withValues(alpha: 0.18),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            ref
+                                                .watch(mobilePosHeaderProvider)
+                                                .selectedWarehouse,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        const Icon(
+                                          LucideIcons.chevronDown,
+                                          size: 10,
+                                          color: Colors.white,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        else
+                          Flexible(
+                            child: Text(
+                              () {
+                                switch (navigation.currentRoute) {
+                                  case AppRoute.people:
+                                    return 'People';
+                                  case AppRoute.wallet:
+                                    return 'Wallet';
+                                  case AppRoute.transaction:
+                                    return 'Transaction';
+                                  case AppRoute.segregation:
+                                    return 'Segregation';
+                                  case AppRoute.splitCollect:
+                                    return 'Split and Collect';
+                                  case AppRoute.planner:
+                                    return 'Planner';
+                                  case AppRoute.accounting:
+                                    return 'Accounting';
+                                  case AppRoute.expenses:
+                                    return 'Expenses';
+                                  case AppRoute.gst:
+                                    return 'GST Compliance';
+                                  case AppRoute.billing:
+                                    return 'Sales Invoice';
+                                  case AppRoute.simpleBilling:
+                                    return 'Simple Billing';
+                                  case AppRoute.sales:
+                                    return 'Sales Orders';
+                                  case AppRoute.customers:
+                                    return 'Customers';
+                                  case AppRoute.returns:
+                                    return 'Returns';
+                                  case AppRoute.purchase:
+                                    return 'Purchase Invoice';
+                                  case AppRoute.suppliers:
+                                    return 'Suppliers';
+                                  case AppRoute.products:
+                                    return 'Products';
+                                  case AppRoute.stock:
+                                    return 'Stock & Inventory';
+                                  case AppRoute.warehouse:
+                                    return 'Warehouse';
+                                  case AppRoute.inventory:
+                                    return 'Inventory';
+                                  case AppRoute.pos:
+                                    return 'Point of Sale (POS)';
+                                  case AppRoute.reports:
+                                    return 'Reports & Analytics';
+                                  case AppRoute.marketing:
+                                    return 'Marketing Hub';
+                                  case AppRoute.barcodeGen:
+                                    return 'Barcode Generator';
+                                  case AppRoute.auditHub:
+                                    return 'Audit Hub';
+                                  case AppRoute.fintech:
+                                    return 'Fintech';
+                                  case AppRoute.payroll:
+                                  case AppRoute.allocateEmployeeLoan:
+                                  case AppRoute.processMonthlyPayroll:
+                                    return 'Payroll';
+                                  case AppRoute.attendance:
+                                  case AppRoute.manualPunchEntry:
+                                  case AppRoute.regularizeMissedPunch:
+                                    return 'Attendance';
+                                  case AppRoute.staff:
+                                    return 'Staff';
+                                  case AppRoute.hr:
+                                    return 'Human Resources';
+                                  case AppRoute.betaClub:
+                                    return 'Partner Launch Desk';
+                                  case AppRoute.storage:
+                                    return 'Storage';
+                                  default:
+                                    return 'Cliks Business';
+                                }
+                              }(),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isDesktop ? 20 : 16.5,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: -0.5,
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -462,22 +533,25 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   ],
                   if (isDesktop) const _PointsChip(),
                   if (isDesktop) const SizedBox(width: 8),
-                  IconButton(
-                    visualDensity: isDesktop
-                        ? VisualDensity.standard
-                        : VisualDensity.compact,
-                    padding: EdgeInsets.all(isDesktop ? 8 : 4),
-                    constraints: isDesktop
-                        ? const BoxConstraints()
-                        : const BoxConstraints(minWidth: 34, minHeight: 34),
-                    icon: Icon(
-                      LucideIcons.search,
-                      color: Colors.white,
-                      size: isDesktop ? 22 : 20,
+                  if (!isDesktop && navigation.currentRoute == AppRoute.pos)
+                    _buildPosMobileHeaderActions(ref)
+                  else
+                    IconButton(
+                      visualDensity: isDesktop
+                          ? VisualDensity.standard
+                          : VisualDensity.compact,
+                      padding: EdgeInsets.all(isDesktop ? 8 : 4),
+                      constraints: isDesktop
+                          ? const BoxConstraints()
+                          : const BoxConstraints(minWidth: 34, minHeight: 34),
+                      icon: Icon(
+                        LucideIcons.search,
+                        color: Colors.white,
+                        size: isDesktop ? 22 : 20,
+                      ),
+                      onPressed: () => setState(() => _isSearchExpanded = true),
+                      tooltip: 'Search',
                     ),
-                    onPressed: () => setState(() => _isSearchExpanded = true),
-                    tooltip: 'Search',
-                  ),
                 ],
                 const SizedBox(width: 2),
                 // Notification Button (Hidden on specific Finance/Sales/Inventory pages)
@@ -968,14 +1042,14 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       borderRadius: BorderRadius.circular(25),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFF0F4622) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
           border: isActive
               ? Border.all(
                   color: Colors.white.withValues(alpha: 0.25),
-                  width: 1,
+                  width: 1.2,
                 )
               : null,
         ),
@@ -983,8 +1057,9 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           label,
           style: TextStyle(
             color: isActive ? Colors.white : Colors.white70,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 13.5,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 15,
+            letterSpacing: 0.2,
           ),
         ),
       ),
@@ -1139,6 +1214,219 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       ),
     );
   }
+
+  Widget _buildPosMobileHeaderActions(WidgetRef ref) {
+    final posHeader = ref.watch(mobilePosHeaderProvider);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // 1. Settings Button
+        InkWell(
+          onTap: () => posHeader.onOpenSettings?.call(),
+          borderRadius: BorderRadius.circular(8),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  LucideIcons.settings,
+                  size: 13,
+                  color: Colors.white,
+                ),
+                SizedBox(width: 4),
+                Text(
+                  'Settings',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 5),
+
+        // 2. 3-Dot Icon with the 4 POS Actions
+        PopupMenuButton<String>(
+          tooltip: 'POS Menu',
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          color: Colors.white,
+          elevation: 8,
+          position: PopupMenuPosition.under,
+          child: Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                const Icon(
+                  LucideIcons.ellipsisVertical,
+                  size: 16,
+                  color: Colors.white,
+                ),
+                if (posHeader.heldCartsCount > 0)
+                  Positioned(
+                    top: -3,
+                    right: -3,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF59E0B),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          onSelected: (val) {
+            switch (val) {
+              case 'warehouse':
+                posHeader.onOpenWarehousePicker?.call();
+                break;
+              case 'hold_carts':
+                posHeader.onOpenHeldCarts?.call();
+                break;
+              case 'history':
+                posHeader.onOpenHistory?.call();
+                break;
+              case 'quick_add':
+                posHeader.onQuickAddProduct?.call();
+                break;
+            }
+          },
+          itemBuilder: (ctx) => [
+            // 1. Select POS Warehouse
+            const PopupMenuItem<String>(
+              value: 'warehouse',
+              height: 40,
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.warehouse,
+                    size: 15,
+                    color: Color(0xFF166534),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Select POS Warehouse',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 2. Hold Carts
+            PopupMenuItem<String>(
+              value: 'hold_carts',
+              height: 40,
+              child: Row(
+                children: [
+                  const Icon(
+                    LucideIcons.pauseCircle,
+                    size: 15,
+                    color: Color(0xFFEA580C),
+                  ),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'Hold Carts',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                  ),
+                  if (posHeader.heldCartsCount > 0)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 1.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEA580C),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Text(
+                        '${posHeader.heldCartsCount}',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // 3. Sales History
+            const PopupMenuItem<String>(
+              value: 'history',
+              height: 40,
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.history,
+                    size: 15,
+                    color: Color(0xFF2563EB),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Sales History',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // 4. Quick Add Product
+            const PopupMenuItem<String>(
+              value: 'quick_add',
+              height: 40,
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.plusCircle,
+                    size: 15,
+                    color: Color(0xFF166534),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Quick Add Product',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
 }
 
 class _ModulePill extends StatelessWidget {
@@ -1158,7 +1446,7 @@ class _ModulePill extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primaryGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
@@ -1167,8 +1455,9 @@ class _ModulePill extends StatelessWidget {
           label,
           style: TextStyle(
             color: isActive ? Colors.white : Colors.white70,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 14,
+            fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
+            fontSize: 15,
+            letterSpacing: 0.2,
           ),
         ),
       ),

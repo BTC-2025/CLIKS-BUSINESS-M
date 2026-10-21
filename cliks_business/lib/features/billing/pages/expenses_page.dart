@@ -556,17 +556,7 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Expenses & Budget Control',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),

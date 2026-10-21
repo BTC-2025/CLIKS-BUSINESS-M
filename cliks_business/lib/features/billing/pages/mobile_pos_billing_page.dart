@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/navigation/navigation_provider.dart';
 import '../models/mobile_pos_models.dart';
 import '../widgets/mobile_pos/mobile_pos_utils.dart';
-import '../widgets/mobile_pos/mobile_pos_header.dart';
+import '../providers/mobile_pos_header_provider.dart';
 import '../widgets/mobile_pos/mobile_customer_bar.dart';
 import '../widgets/mobile_pos/mobile_product_card.dart';
 import '../widgets/mobile_pos/mobile_cart_sheet.dart';
@@ -64,8 +63,12 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
   final double _ptsRedeemed = 0.0;
   final double _ptsEarned = 0.0;
 
-  // Held Carts
+  // Hold Carts
   final List<MobileHeldCart> _heldCarts = [];
+
+  // POS Settings
+  bool _autoPrintReceipt = true;
+  bool _scanAudioBeep = true;
 
   // Sales History Register
   late List<MobilePosSale> _salesHistory;
@@ -307,6 +310,148 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
         time: '09:50 AM',
       ),
     ];
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _syncHeaderProvider();
+      }
+    });
+  }
+
+  void _syncHeaderProvider() {
+    ref.read(mobilePosHeaderProvider.notifier).registerCallbacks(
+          onOpenWarehousePicker: _showWarehousePicker,
+          onOpenHeldCarts: _openHeldCarts,
+          onOpenHistory: _openSalesHistory,
+          onQuickAddProduct: _openQuickAddProduct,
+          onOpenSettings: _openPosSettings,
+          selectedWarehouse: _selectedWarehouse,
+          warehouses: _warehouses,
+          heldCartsCount: _heldCarts.length,
+        );
+  }
+
+  void _showWarehousePicker() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          16,
+          20,
+          20 + MediaQuery.of(ctx).padding.bottom,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCBD5E1),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                const Icon(
+                  LucideIcons.warehouse,
+                  size: 18,
+                  color: MobilePosColors.primaryGreen,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Select POS Warehouse',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: MobilePosColors.textPrimary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: MobilePosColors.border),
+            const SizedBox(height: 8),
+            ..._warehouses.map((wh) {
+              final isSelected = wh == _selectedWarehouse;
+              return InkWell(
+                onTap: () {
+                  Navigator.pop(ctx);
+                  setState(() {
+                    _selectedWarehouse = wh;
+                  });
+                  _syncHeaderProvider();
+                },
+                borderRadius: BorderRadius.circular(10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? MobilePosColors.lightGreen
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: isSelected
+                          ? MobilePosColors.accentGreen.withValues(alpha: 0.3)
+                          : Colors.transparent,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            LucideIcons.store,
+                            size: 16,
+                            color: isSelected
+                                ? MobilePosColors.primaryGreen
+                                : MobilePosColors.textSecondary,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            wh,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? MobilePosColors.primaryGreen
+                                  : MobilePosColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (isSelected)
+                        const Icon(
+                          LucideIcons.check,
+                          size: 18,
+                          color: MobilePosColors.accentGreen,
+                        ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -435,11 +580,12 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
       _heldCarts.add(held);
       _cart.clear();
     });
+    _syncHeaderProvider();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Order marked as ON HOLD (${_heldCarts.length} held orders)',
+          'Order marked as ON HOLD (${_heldCarts.length} hold orders)',
           style: GoogleFonts.inter(),
         ),
         behavior: SnackBarBehavior.floating,
@@ -454,11 +600,12 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
       _cart = List.from(held.items);
       _heldCarts.remove(held);
     });
+    _syncHeaderProvider();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Held cart restored to active checkout.',
+          'Hold cart restored to active checkout.',
           style: GoogleFonts.inter(),
         ),
         behavior: SnackBarBehavior.floating,
@@ -591,7 +738,10 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
       builder: (ctx) => MobileHeldCartsSheet(
         heldCarts: _heldCarts,
         onRestoreCart: _restoreHeldCart,
-        onDiscardCart: (held) => setState(() => _heldCarts.remove(held)),
+        onDiscardCart: (held) {
+          setState(() => _heldCarts.remove(held));
+          _syncHeaderProvider();
+        },
       ),
     );
   }
@@ -600,6 +750,202 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
     showDialog(
       context: context,
       builder: (context) => const QuickRegisterItemDialog(),
+    );
+  }
+
+  void _openPosSettings() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSheetState) {
+          return Container(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              20 + MediaQuery.of(ctx).padding.bottom,
+            ),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFCBD5E1),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(7),
+                          decoration: BoxDecoration(
+                            color: MobilePosColors.primaryGreen
+                                .withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(
+                            LucideIcons.settings,
+                            size: 18,
+                            color: MobilePosColors.primaryGreen,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Text(
+                          'POS Settings',
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: MobilePosColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    IconButton(
+                      icon: const Icon(LucideIcons.x, size: 20),
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildSettingsTile(
+                  icon: LucideIcons.printer,
+                  title: 'Auto-Print Receipt',
+                  subtitle: 'Automatically print receipt after payment',
+                  value: _autoPrintReceipt,
+                  onChanged: (val) {
+                    setSheetState(() => _autoPrintReceipt = val);
+                    setState(() => _autoPrintReceipt = val);
+                  },
+                ),
+                const Divider(height: 16, color: MobilePosColors.border),
+                _buildSettingsTile(
+                  icon: LucideIcons.volume2,
+                  title: 'Scan Audio Beep',
+                  subtitle: 'Play sound when item is scanned or added',
+                  value: _scanAudioBeep,
+                  onChanged: (val) {
+                    setSheetState(() => _scanAudioBeep = val);
+                    setState(() => _scanAudioBeep = val);
+                  },
+                ),
+                const Divider(height: 16, color: MobilePosColors.border),
+                _buildSettingsTile(
+                  icon: LucideIcons.percent,
+                  title: 'GST / Tax Inclusive',
+                  subtitle: 'Standard CGST (9%) + SGST (9%) calculation',
+                  value: true,
+                  onChanged: null,
+                ),
+                const Divider(height: 16, color: MobilePosColors.border),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: MobilePosColors.border),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Active Warehouse',
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              color: MobilePosColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _selectedWarehouse,
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: MobilePosColors.textPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      TextButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          _showWarehousePicker();
+                        },
+                        icon: const Icon(LucideIcons.arrowRight, size: 14),
+                        label: const Text('Change'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: MobilePosColors.primaryGreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSettingsTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool>? onChanged,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: MobilePosColors.textSecondary),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w600,
+                  color: MobilePosColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 1),
+              Text(
+                subtitle,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  color: MobilePosColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Switch.adaptive(
+          value: value,
+          activeColor: MobilePosColors.primaryGreen,
+          onChanged: onChanged,
+        ),
+      ],
     );
   }
 
@@ -868,6 +1214,15 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
   Widget build(BuildContext context) {
     final bottomInset = MediaQuery.of(context).padding.bottom;
 
+    final headerState = ref.watch(mobilePosHeaderProvider);
+    if (headerState.selectedWarehouse != _selectedWarehouse ||
+        headerState.heldCartsCount != _heldCarts.length ||
+        headerState.onOpenWarehousePicker == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _syncHeaderProvider();
+      });
+    }
+
     return Scaffold(
       backgroundColor: MobilePosColors.surfaceBg,
       body: SafeArea(
@@ -876,24 +1231,7 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
           children: [
             Column(
               children: [
-                // 1. Compact POS Header
-                MobilePosHeader(
-                  selectedWarehouse: _selectedWarehouse,
-                  warehouses: _warehouses,
-                  onWarehouseSelected: (wh) =>
-                      setState(() => _selectedWarehouse = wh),
-                  onOpenHistory: _openSalesHistory,
-                  onOpenHeldCarts: _openHeldCarts,
-                  heldCartsCount: _heldCarts.length,
-                  onQuickAddProduct: _openQuickAddProduct,
-                  onBack: () {
-                    ref
-                        .read(navigationProvider.notifier)
-                        .setModuleAndRoute(AppModule.books, AppRoute.dashboard);
-                  },
-                ),
-
-                // 2. Customer Summary / Selector Bar
+                // 1. Customer Summary / Selector Bar
                 MobileCustomerBar(
                   currentCustomer: _selectedCustomer,
                   customers: _customers,
@@ -907,134 +1245,187 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
                   },
                 ),
 
-                // 3. Search & Category Filters Bar
+                // 2. Search & Compact Category Selector Row
                 Container(
                   color: Colors.white,
-                  padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
+                  padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+                  child: Row(
                     children: [
-                      // Search input
-                      Container(
-                        height: 40,
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        decoration: BoxDecoration(
-                          color: MobilePosColors.surfaceBg,
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: MobilePosColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(
-                              LucideIcons.search,
-                              size: 16,
-                              color: MobilePosColors.textSecondary,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: TextField(
-                                controller: _searchCtrl,
-                                onChanged: (val) =>
-                                    setState(() => _searchQuery = val),
-                                style: GoogleFonts.inter(fontSize: 12.5),
-                                decoration: InputDecoration(
-                                  hintText:
-                                      'Search product by name, SKU or category...',
-                                  hintStyle: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    color: MobilePosColors.textMuted,
+                      // Reduced length search bar
+                      Expanded(
+                        child: Container(
+                          height: 38,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: MobilePosColors.surfaceBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: MobilePosColors.border),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                LucideIcons.search,
+                                size: 15,
+                                color: MobilePosColors.textSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: TextField(
+                                  controller: _searchCtrl,
+                                  onChanged: (val) =>
+                                      setState(() => _searchQuery = val),
+                                  style: GoogleFonts.inter(fontSize: 12),
+                                  decoration: InputDecoration(
+                                    hintText: 'Search product or SKU...',
+                                    hintStyle: GoogleFonts.inter(
+                                      fontSize: 11.5,
+                                      color: MobilePosColors.textMuted,
+                                    ),
+                                    border: InputBorder.none,
+                                    isDense: true,
+                                    contentPadding: EdgeInsets.zero,
                                   ),
-                                  border: InputBorder.none,
-                                  isDense: true,
                                 ),
                               ),
-                            ),
-                            if (_searchQuery.isNotEmpty)
-                              InkWell(
-                                onTap: () => setState(() {
-                                  _searchCtrl.clear();
-                                  _searchQuery = '';
-                                }),
-                                child: const Icon(
-                                  LucideIcons.xCircle,
-                                  size: 16,
-                                  color: MobilePosColors.textSecondary,
+                              if (_searchQuery.isNotEmpty)
+                                InkWell(
+                                  onTap: () => setState(() {
+                                    _searchCtrl.clear();
+                                    _searchQuery = '';
+                                  }),
+                                  child: const Icon(
+                                    LucideIcons.xCircle,
+                                    size: 15,
+                                    color: MobilePosColors.textSecondary,
+                                  ),
                                 ),
-                              ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(width: 8),
 
-                      // Horizontal Categories List
-                      SizedBox(
-                        height: 28,
-                        child: ListView.separated(
-                          scrollDirection: Axis.horizontal,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _categories.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(width: 6),
-                          itemBuilder: (context, idx) {
-                            final cat = _categories[idx];
-                            final isSel = _selectedCategory == cat;
-
-                            return InkWell(
-                              onTap: () =>
-                                  setState(() => _selectedCategory = cat),
-                              borderRadius: BorderRadius.circular(16),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 150),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 3.5,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: isSel
-                                      ? MobilePosColors.primaryGreen
-                                      : MobilePosColors.surfaceBg,
-                                  borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(
-                                    color: isSel
-                                        ? MobilePosColors.primaryGreen
-                                        : MobilePosColors.border,
+                      // Category icon button to the right of search bar
+                      PopupMenuButton<String>(
+                        tooltip: 'Filter Category',
+                        initialValue: _selectedCategory,
+                        position: PopupMenuPosition.under,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        color: Colors.white,
+                        elevation: 6,
+                        onSelected: (cat) =>
+                            setState(() => _selectedCategory = cat),
+                        child: Container(
+                          height: 38,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          decoration: BoxDecoration(
+                            color: _selectedCategory != 'All'
+                                ? MobilePosColors.lightGreen
+                                : MobilePosColors.surfaceBg,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _selectedCategory != 'All'
+                                  ? MobilePosColors.primaryGreen
+                                  : MobilePosColors.border,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                LucideIcons.layoutGrid,
+                                size: 16,
+                                color: _selectedCategory != 'All'
+                                    ? MobilePosColors.primaryGreen
+                                    : MobilePosColors.textSecondary,
+                              ),
+                              if (_selectedCategory != 'All') ...[
+                                const SizedBox(width: 4),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 80),
+                                  child: Text(
+                                    _selectedCategory,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: MobilePosColors.primaryGreen,
+                                    ),
                                   ),
                                 ),
-                                child: Center(
+                              ],
+                              const SizedBox(width: 2),
+                              Icon(
+                                LucideIcons.chevronDown,
+                                size: 12,
+                                color: _selectedCategory != 'All'
+                                    ? MobilePosColors.primaryGreen
+                                    : MobilePosColors.textSecondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                        itemBuilder: (ctx) => _categories.map((cat) {
+                          final isSel = _selectedCategory == cat;
+                          return PopupMenuItem<String>(
+                            value: cat,
+                            height: 38,
+                            child: Row(
+                              children: [
+                                Icon(
+                                  cat == 'All'
+                                      ? LucideIcons.layers
+                                      : LucideIcons.tag,
+                                  size: 14,
+                                  color: isSel
+                                      ? MobilePosColors.primaryGreen
+                                      : MobilePosColors.textSecondary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
                                   child: Text(
                                     cat,
                                     style: GoogleFonts.inter(
-                                      fontSize: 11,
+                                      fontSize: 12.5,
                                       fontWeight: isSel
                                           ? FontWeight.bold
                                           : FontWeight.w500,
                                       color: isSel
-                                          ? Colors.white
+                                          ? MobilePosColors.primaryGreen
                                           : MobilePosColors.textPrimary,
                                     ),
                                   ),
                                 ),
-                              ),
-                            );
-                          },
-                        ),
+                                if (isSel)
+                                  const Icon(
+                                    LucideIcons.check,
+                                    size: 15,
+                                    color: MobilePosColors.primaryGreen,
+                                  ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
                       ),
                     ],
                   ),
                 ),
 
-                // 4. Products Catalogue Grid
+                // 3. Products Catalogue Grid (3 in a row on mobile phones)
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final width = constraints.maxWidth;
-                      // 1 column on narrow width < 340, 3 columns on tablet >= 600, 2 columns on phones
-                      final crossAxisCount = width < 340
-                          ? 1
-                          : (width >= 600 ? 3 : 2);
-                      final childAspectRatio = crossAxisCount == 1
-                          ? 1.85
-                          : (width < 380 ? 0.77 : 0.82);
+                      final crossAxisCount = width >= 800
+                          ? 5
+                          : (width >= 600 ? 4 : 3);
+                      final childAspectRatio = width < 360
+                          ? 0.68
+                          : (width < 420 ? 0.71 : 0.75);
 
                       if (_filteredProducts.isEmpty) {
                         return Center(
@@ -1075,17 +1466,17 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
                       return GridView.builder(
                         physics: const BouncingScrollPhysics(),
                         padding: EdgeInsets.fromLTRB(
-                          14,
-                          12,
-                          14,
+                          10,
+                          8,
+                          10,
                           _cart.isNotEmpty
                               ? (154 + bottomBarOffset)
                               : (80 + bottomBarOffset),
                         ),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: crossAxisCount,
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
+                          crossAxisSpacing: 8,
+                          mainAxisSpacing: 8,
                           childAspectRatio: childAspectRatio,
                         ),
                         itemCount: _filteredProducts.length,

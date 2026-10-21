@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/theme/app_colors.dart';
@@ -78,6 +79,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
     final isSplitCalculator = !isMacOS && !isDesktop && ref.watch(mobileCalculatorSplitScreenProvider);
+    final isProfileModule = navigation.currentModule == AppModule.profile;
+    final headerColor = (!isDesktop && isProfileModule)
+        ? AppColors.primaryGreen
+        : AppColors.headerBackground;
 
     ref.listen(navigationProvider, (prev, next) {
       if (prev != next && ref.read(macosAccountMenuVisibleProvider)) {
@@ -135,8 +140,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         navigation.currentRoute == AppRoute.manualPunchEntry ||
         navigation.currentRoute == AppRoute.regularizeMissedPunch;
 
-    return PopScope(
-      canPop: (navigation.currentModule == AppModule.books && navigation.currentRoute == AppRoute.dashboard) && !isOverlay && !isSplitCalculator,
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: headerColor,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: PopScope(
+        canPop: (navigation.currentModule == AppModule.books && navigation.currentRoute == AppRoute.dashboard) && !isOverlay && !isSplitCalculator,
       onPopInvoked: (didPop) {
         if (didPop) return;
         
@@ -237,6 +248,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       child: Scaffold(
           body: Stack(
             children: [
+              // Seamless header & status bar background filler for mobile
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: MediaQuery.of(context).padding.top + 64,
+                child: ColoredBox(color: headerColor),
+              ),
               // Main Body Content
               SafeArea(
                 bottom: false,
@@ -455,7 +474,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
           ),
           drawer: (isDesktop || navigation.currentModule == AppModule.profile) ? null : const Drawer(child: Sidebar()),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildMobileSplitCalculator(
@@ -625,10 +645,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primaryGreen : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(22),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -636,7 +656,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             Icon(
               icon,
               color: isActive ? Colors.white : AppColors.secondaryText,
-              size: 15,
+              size: 17,
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 300),
@@ -645,13 +665,13 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                   ? Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
                         Text(
                           label,
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
-                            fontSize: 11,
+                            fontSize: 13,
                           ),
                         ),
                       ],
@@ -707,8 +727,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOutCubic,
         padding: EdgeInsets.symmetric(
-          horizontal: isCompact ? 12 : 16,
-          vertical: isCompact ? 6 : 10,
+          horizontal: isCompact ? 14 : 18,
+          vertical: isCompact ? 8 : 10,
         ),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primaryGreen : Colors.transparent,
@@ -720,7 +740,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             Icon(
               icon,
               color: isActive ? Colors.white : AppColors.secondaryText,
-              size: isCompact ? 17 : 20,
+              size: isCompact ? 18 : 21,
             ),
             AnimatedSize(
               duration: const Duration(milliseconds: 500),
@@ -729,13 +749,13 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (isActive) ...[
-                    SizedBox(width: isCompact ? 5 : 8),
+                    SizedBox(width: isCompact ? 6 : 8),
                     Text(
                       label,
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: isCompact ? 11.5 : 13,
+                        fontSize: isCompact ? 12.5 : 14,
                       ),
                     ),
                   ],

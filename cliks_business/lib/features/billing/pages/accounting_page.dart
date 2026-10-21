@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -256,12 +257,21 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     // Initialize Day Book records matching Image 3 exactly
     _dayBookRecords = [
       _DayBookItem(
+        id: 'db-0',
+        date: '2026-10-14',
+        category: 'Rent',
+        mode: 'UPI / Razorpay',
+        type: 'EXPENSE',
+        amount: 10000.0,
+      ),
+      _DayBookItem(
         id: 'db-1',
         date: '2026-09-29',
         category: 'oeirhfb',
         mode: 'UPI / Razorpay',
         type: 'EXPENSE',
         amount: 200.0,
+        isSpecialHighlight: true, // Soft pink row tint in Image 3
       ),
       _DayBookItem(
         id: 'db-2',
@@ -286,7 +296,6 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         mode: 'Cash in Hand',
         type: 'INCOME',
         amount: 1000.0,
-        isSpecialHighlight: true, // Soft pink row tint in Image 3
       ),
       _DayBookItem(
         id: 'db-5',
@@ -554,17 +563,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Accounting & Financial Hub',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.2,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           // Horizontal scrollable KPI chips
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -666,10 +665,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       const _AccountingTabItem('P & L', LucideIcons.lineChart),
       const _AccountingTabItem('Balance Sheet', LucideIcons.scale),
       const _AccountingTabItem('Receivables & Payables', LucideIcons.arrowLeftRight),
-      const _AccountingTabItem('Cash & Bank', LucideIcons.wallet),
-      const _AccountingTabItem('Day Book', LucideIcons.bookOpen),
       const _AccountingTabItem('Expenses', LucideIcons.trendingDown),
+      const _AccountingTabItem('Cash & Bank', LucideIcons.wallet),
       const _AccountingTabItem('GST', LucideIcons.percent),
+      const _AccountingTabItem('Day Book', LucideIcons.bookOpen),
     ];
 
     return SizedBox(
@@ -757,10 +756,10 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       _AccountingTabItem('P & L', LucideIcons.lineChart),
       _AccountingTabItem('Balance Sheet', LucideIcons.scale),
       _AccountingTabItem('Receivables & Payables', LucideIcons.arrowLeftRight),
-      _AccountingTabItem('Cash & Bank', LucideIcons.wallet),
-      _AccountingTabItem('Day Book', LucideIcons.bookOpen),
       _AccountingTabItem('Expenses', LucideIcons.trendingDown),
+      _AccountingTabItem('Cash & Bank', LucideIcons.wallet),
       _AccountingTabItem('GST', LucideIcons.percent),
+      _AccountingTabItem('Day Book', LucideIcons.bookOpen),
     ];
 
     final hasPrev = currentIndex > 0;
@@ -1382,27 +1381,6 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // 4. CONTENT ROUTER
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildActiveTabContent(bool isMobile, double screenWidth) {
-    if (!isMobile) {
-      switch (_activeTab) {
-        case 0:
-          return _buildPLTab(isMobile, screenWidth);
-        case 1:
-          return _buildBalanceSheetTab(isMobile, screenWidth);
-        case 2:
-          return _buildReceivablesPayablesTab(isMobile, screenWidth);
-        case 3:
-          return _buildExpensesTab(isMobile);
-        case 4:
-          return _buildCashBankTab(isMobile, screenWidth);
-        case 5:
-          return _buildGSTTab(isMobile, screenWidth);
-        case 6:
-          return _buildDayBookTab(isMobile, screenWidth);
-        default:
-          return _buildPLTab(isMobile, screenWidth);
-      }
-    }
-
     Widget content;
     switch (_activeTab) {
       case 0:
@@ -1415,20 +1393,24 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         content = _buildReceivablesPayablesTab(isMobile, screenWidth);
         break;
       case 3:
-        content = _buildCashBankTab(isMobile, screenWidth);
-        break;
-      case 4:
-        content = _buildDayBookTab(isMobile, screenWidth);
-        break;
-      case 5:
         content = _buildExpensesTab(isMobile);
         break;
-      case 6:
+      case 4:
+        content = _buildCashBankTab(isMobile, screenWidth);
+        break;
+      case 5:
         content = _buildGSTTab(isMobile, screenWidth);
+        break;
+      case 6:
+        content = _buildDayBookTab(isMobile, screenWidth);
         break;
       default:
         content = _buildPLTab(isMobile, screenWidth);
         break;
+    }
+
+    if (!isMobile) {
+      return content;
     }
 
     return Column(
@@ -2170,10 +2152,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // TAB 6: DAY BOOK TABLE (IMAGE 3)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildDayBookTab(bool isMobile, double screenWidth) {
-    if (isMobile) {
-      return _buildMobileDayBookCardList();
-    }
-    return Container(
+    final tableWidget = Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -2188,17 +2167,24 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           physics: const BouncingScrollPhysics(),
           child: ConstrainedBox(
             constraints: BoxConstraints(
-              minWidth: screenWidth >= 900
-                  ? screenWidth - (isMobile ? 28 : 56)
-                  : (isMobile ? 500 : 750),
+              minWidth: math.max(
+                screenWidth - (isMobile ? 24 : 56),
+                isMobile ? 620 : 750,
+              ),
             ),
             child: DataTable(
               headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-              dataRowMinHeight: isMobile ? 36 : 48,
-              dataRowMaxHeight: isMobile ? 40 : 52,
-              headingRowHeight: isMobile ? 36 : 44,
-              horizontalMargin: isMobile ? 10 : 20,
-              columnSpacing: isMobile ? 12 : 24,
+              dataRowMinHeight: isMobile ? 48 : 50,
+              dataRowMaxHeight: isMobile ? 52 : 54,
+              headingRowHeight: isMobile ? 42 : 46,
+              horizontalMargin: isMobile ? 14 : 20,
+              columnSpacing: isMobile ? 18 : 28,
+              border: const TableBorder(
+                horizontalInside: BorderSide(
+                  color: Color(0xFFF1F5F9),
+                  width: 1.0,
+                ),
+              ),
               columns: [
                 DataColumn(
                   label: _buildSortableHeader('DATE', 'date'),
@@ -2238,7 +2224,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       Text(
                         item.date,
                         style: TextStyle(
-                          fontSize: isMobile ? 11 : 12.5,
+                          fontSize: isMobile ? 12 : 12.5,
+                          fontWeight: FontWeight.w500,
                           color: const Color(0xFF475569),
                         ),
                       ),
@@ -2249,7 +2236,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       Text(
                         item.category,
                         style: TextStyle(
-                          fontSize: isMobile ? 11.5 : 13,
+                          fontSize: isMobile ? 12.5 : 13,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF0F172A),
                         ),
@@ -2260,8 +2247,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     DataCell(
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 6 : 10,
-                          vertical: isMobile ? 2 : 4,
+                          horizontal: isMobile ? 8 : 10,
+                          vertical: isMobile ? 3 : 4,
                         ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
@@ -2270,7 +2257,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         child: Text(
                           item.mode,
                           style: TextStyle(
-                            fontSize: isMobile ? 9.5 : 11,
+                            fontSize: isMobile ? 10.5 : 11,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF475569),
                           ),
@@ -2282,8 +2269,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     DataCell(
                       Container(
                         padding: EdgeInsets.symmetric(
-                          horizontal: isMobile ? 6 : 10,
-                          vertical: isMobile ? 2 : 4,
+                          horizontal: isMobile ? 8 : 10,
+                          vertical: isMobile ? 3 : 4,
                         ),
                         decoration: BoxDecoration(
                           color: isExpense
@@ -2297,7 +2284,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                             Text(
                               isExpense ? '↘ ' : '↗ ',
                               style: TextStyle(
-                                fontSize: isMobile ? 9.5 : 11,
+                                fontSize: isMobile ? 10.5 : 11,
                                 fontWeight: FontWeight.bold,
                                 color: isExpense
                                     ? const Color(0xFFDC2626)
@@ -2307,7 +2294,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                             Text(
                               item.type,
                               style: TextStyle(
-                                fontSize: isMobile ? 9.5 : 10.5,
+                                fontSize: isMobile ? 10 : 10.5,
                                 fontWeight: FontWeight.w800,
                                 color: isExpense
                                     ? const Color(0xFFDC2626)
@@ -2325,11 +2312,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          item.amount.truncateToDouble() == item.amount
-                              ? item.amount.toInt().toString()
-                              : item.amount.toStringAsFixed(2),
+                          '₹${_formatIndianCurrency(item.amount)}',
                           style: TextStyle(
-                            fontSize: isMobile ? 12 : 13.5,
+                            fontSize: isMobile ? 12.5 : 13.5,
                             fontWeight: FontWeight.w800,
                             color: isExpense
                                 ? const Color(0xFFDC2626)
@@ -2345,6 +2330,54 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           ),
         ),
       ),
+    );
+
+    if (!isMobile) {
+      return tableWidget;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8, left: 2, right: 2),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(LucideIcons.arrowLeftRight, size: 12, color: Color(0xFF64748B)),
+                  SizedBox(width: 5),
+                  Text(
+                    'Swipe horizontally to view all columns',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '${_dayBookRecords.length} records',
+                  style: const TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        tableWidget,
+      ],
     );
   }
 
@@ -2598,23 +2631,32 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
         Text(
           title,
           style: GoogleFonts.inter(
-            fontSize: 13,
+            fontSize: 11.5,
             fontWeight: FontWeight.w700,
             color: isSelected
-                ? const Color(0xFF166534)
-                : const Color(0xFF1E293B),
-            letterSpacing: 0.3,
+                ? const Color(0xFF1E293B)
+                : const Color(0xFF64748B),
+            letterSpacing: 0.5,
           ),
         ),
         const SizedBox(width: 4),
-        Icon(
-          isSelected
-              ? (_sortAscending ? LucideIcons.arrowUp : LucideIcons.arrowDown)
-              : LucideIcons.chevronsUpDown,
-          size: 13,
-          color: isSelected
-              ? const Color(0xFF0F172A)
-              : const Color(0xFF94A3B8),
+        Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFFE2E8F0) : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(
+              color: isSelected ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0),
+              width: 0.8,
+            ),
+          ),
+          child: Icon(
+            isSelected
+                ? (_sortAscending ? LucideIcons.arrowUp : LucideIcons.arrowDown)
+                : LucideIcons.chevronDown,
+            size: 10,
+            color: isSelected ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
+          ),
         ),
       ],
     );

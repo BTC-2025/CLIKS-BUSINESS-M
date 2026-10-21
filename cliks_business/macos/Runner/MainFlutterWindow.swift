@@ -27,5 +27,6 @@ class MainFlutterWindow: NSWindow {
     }
 
     super.awakeFromNib()
+    self.title = "Cliks Business"
   }
 }

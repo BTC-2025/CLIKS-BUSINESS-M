@@ -561,17 +561,7 @@ class _StaffPageState extends ConsumerState<StaffPage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'HR Staff & Employees Database',
-            style: TextStyle(
-              fontSize: isMobile ? 20 : 24,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           // Quick Action Buttons
           Wrap(
             spacing: 8,

@@ -15,7 +15,7 @@ enum AppRoute {
   billing,
   simpleBilling,
   people,
-  accounting,
+  accounting, 
   expenses,
   gst,
   sales,

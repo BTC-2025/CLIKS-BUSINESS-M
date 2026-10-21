@@ -638,17 +638,7 @@ class _GstPageState extends ConsumerState<GstPage> {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'GST Returns & Tax Liability',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.3,
-            ),
-          ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),

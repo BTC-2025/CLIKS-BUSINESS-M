@@ -65,7 +65,7 @@ class MobileHeldCartsSheet extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Held Carts (${heldCarts.length})',
+                    'Hold Carts (${heldCarts.length})',
                     style: GoogleFonts.inter(
                       fontSize: 17,
                       fontWeight: FontWeight.bold,
@@ -102,7 +102,7 @@ class MobileHeldCartsSheet extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'No held carts found',
+                          'No hold carts found',
                           style: GoogleFonts.inter(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,

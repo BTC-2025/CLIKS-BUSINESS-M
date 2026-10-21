@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../models/mobile_pos_models.dart';
 import 'mobile_pos_utils.dart';
+import 'mobile_receipt_modal.dart';
 
 class MobilePaymentSheet extends StatefulWidget {
   final double payableAmount;
@@ -109,7 +110,11 @@ class _MobilePaymentSheetState extends State<MobilePaymentSheet> {
 
     Navigator.pop(context); // close payment sheet
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
-    _showReceiptDialog(sale);
+    widget.onPaymentCompleted(sale);
+    MobilePosReceiptModal.show(
+      context: context,
+      sale: sale,
+    );
   }
 
   void _showReceiptDialog(MobilePosSale sale) {

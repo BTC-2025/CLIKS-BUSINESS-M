@@ -73,290 +73,301 @@ class MobileProductCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onAddToCart,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.all(9),
+          padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
             color: isOutOfStock ? const Color(0xFFF9FAFB) : Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: cartQuantity > 0
                   ? MobilePosColors.accentGreen
                   : const Color(0xFFE5E7EB),
-              width: cartQuantity > 0 ? 1.5 : 1,
+              width: cartQuantity > 0 ? 1.5 : 0.8,
             ),
             boxShadow: [
               BoxShadow(
                 color: cartQuantity > 0
                     ? MobilePosColors.accentGreen.withValues(alpha: 0.08)
                     : Colors.black.withValues(alpha: 0.02),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
+                blurRadius: 4,
+                offset: const Offset(0, 1.5),
               ),
             ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Top Row: Category pill (quite short) + 3-Dot Overflow Menu
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              // Top Section: Category & Actions, Name, SKU, Stock
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Category Pill (compact & uppercase)
-                  Flexible(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: catBg,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        product.category.toUpperCase(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.inter(
-                          fontSize: 8.5,
-                          fontWeight: FontWeight.w700,
-                          color: catColor,
-                          letterSpacing: 0.3,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-
-                  // 3-Dot Overflow Menu (Product Actions)
-                  _buildOverflowMenu(context),
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              // Product Name (2 lines max)
-              Expanded(
-                child: Text(
-                  product.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.bold,
-                    color: isOutOfStock
-                        ? MobilePosColors.textMuted
-                        : MobilePosColors.textPrimary,
-                    height: 1.25,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 2),
-
-              // SKU + In-Cart Badge Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      product.sku,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 9.5,
-                        color: MobilePosColors.textMuted,
-                      ),
-                    ),
-                  ),
-                  if (cartQuantity > 0) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 1.5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEA580C),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        '$cartQuantity in cart',
-                        style: GoogleFonts.inter(
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 4),
-
-              // Stock Status (PCS clearly visible)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isOutOfStock
-                        ? MobilePosColors.dangerLight
-                        : (availableStock <= 5
-                            ? const Color(0xFFFFFBEB)
-                            : const Color(0xFFF0FDF4)),
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    isOutOfStock
-                        ? 'Out of Stock'
-                        : (cartQuantity > 0
-                            ? '$availableStock PCS left'
-                            : '$availableStock PCS in stock'),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      fontWeight: FontWeight.bold,
-                      color: isOutOfStock
-                          ? MobilePosColors.danger
-                          : (availableStock <= 5
-                              ? const Color(0xFFD97706)
-                              : MobilePosColors.darkGreen),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              // Bottom Row: Price & Stepper / Add button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        FittedBox(
-                          fit: BoxFit.scaleDown,
-                          alignment: Alignment.centerLeft,
+                  // Row 1: Category pill + 3-Dot Overflow Menu
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Flexible(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1.5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: catBg,
+                            borderRadius: BorderRadius.circular(3.5),
+                          ),
                           child: Text(
-                            '₹${formatIndianCurrency(product.price)}',
+                            product.category.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: isOutOfStock
-                                  ? MobilePosColors.textMuted
-                                  : MobilePosColors.primaryGreen,
-                              letterSpacing: -0.3,
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.w700,
+                              color: catColor,
+                              letterSpacing: 0.2,
                             ),
                           ),
                         ),
-                        Text(
-                          'per ${product.unit}',
+                      ),
+                      const SizedBox(width: 2),
+                      _buildOverflowMenu(context),
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+
+                  // Row 2: Product Name (compact 2 lines)
+                  SizedBox(
+                    height: 27,
+                    child: Text(
+                      product.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.bold,
+                        color: isOutOfStock
+                            ? MobilePosColors.textMuted
+                            : MobilePosColors.textPrimary,
+                        height: 1.2,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+
+                  // Row 3: SKU & Cart badge (if any)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          product.sku,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
-                            fontSize: 9,
-                            color: MobilePosColors.textSecondary,
+                            fontSize: 8.5,
+                            color: MobilePosColors.textMuted,
+                          ),
+                        ),
+                      ),
+                      if (cartQuantity > 0) ...[
+                        const SizedBox(width: 2),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 3.5,
+                            vertical: 1,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEA580C),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            '$cartQuantity',
+                            style: GoogleFonts.inter(
+                              fontSize: 7.5,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(height: 2.5),
 
-                  // Actions: If in cart, show mini stepper; otherwise show "+" button
-                  if (cartQuantity > 0 &&
-                      onIncrement != null &&
-                      onDecrement != null)
-                    Container(
-                      height: 28,
+                  // Row 4: Stock Status Pill
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 4,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
-                        color: MobilePosColors.lightGreen,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: MobilePosColors.accentGreen.withValues(
-                            alpha: 0.3,
-                          ),
+                        color: isOutOfStock
+                            ? MobilePosColors.dangerLight
+                            : (availableStock <= 5
+                                ? const Color(0xFFFFFBEB)
+                                : const Color(0xFFF0FDF4)),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isOutOfStock
+                            ? 'Out of Stock'
+                            : (cartQuantity > 0
+                                ? '$availableStock left'
+                                : '$availableStock in stock'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.inter(
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          color: isOutOfStock
+                              ? MobilePosColors.danger
+                              : (availableStock <= 5
+                                  ? const Color(0xFFD97706)
+                                  : MobilePosColors.darkGreen),
                         ),
                       ),
-                      child: Row(
+                    ),
+                  ),
+                ],
+              ),
+
+              // Bottom Section: Price & Stepper / Add button
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          InkWell(
-                            onTap: onDecrement,
-                            borderRadius: BorderRadius.circular(6),
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
-                              ),
-                              child: Icon(
-                                LucideIcons.minus,
-                                size: 12,
-                                color: MobilePosColors.primaryGreen,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            alignment: Alignment.centerLeft,
                             child: Text(
-                              '$cartQuantity',
+                              '₹${formatIndianCurrency(product.price)}',
                               style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                                color: MobilePosColors.primaryGreen,
-                              ),
-                            ),
-                          ),
-                          InkWell(
-                            onTap: isOutOfStock
-                                ? () => onIncrement?.call()
-                                : onIncrement,
-                            borderRadius: BorderRadius.circular(6),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 4,
-                              ),
-                              child: Icon(
-                                LucideIcons.plus,
-                                size: 12,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w800,
                                 color: isOutOfStock
                                     ? MobilePosColors.textMuted
                                     : MobilePosColors.primaryGreen,
+                                letterSpacing: -0.3,
                               ),
+                            ),
+                          ),
+                          Text(
+                            'per ${product.unit}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.inter(
+                              fontSize: 8,
+                              color: MobilePosColors.textSecondary,
                             ),
                           ),
                         ],
                       ),
-                    )
-                  else
-                    InkWell(
-                      onTap: onAddToCart,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Container(
-                        width: 28,
-                        height: 28,
+                    ),
+                    const SizedBox(width: 2),
+
+                    // Actions: If in cart, show mini stepper; otherwise show "+" button
+                    if (cartQuantity > 0 &&
+                        onIncrement != null &&
+                        onDecrement != null)
+                      Container(
+                        height: 24,
                         decoration: BoxDecoration(
-                          color: isOutOfStock
-                              ? const Color(0xFFE5E7EB)
-                              : MobilePosColors.primaryGreen,
-                          borderRadius: BorderRadius.circular(8),
+                          color: MobilePosColors.lightGreen,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: MobilePosColors.accentGreen.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
                         ),
-                        child: Icon(
-                          LucideIcons.plus,
-                          size: 15,
-                          color: isOutOfStock
-                              ? MobilePosColors.textMuted
-                              : Colors.white,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            InkWell(
+                              onTap: onDecrement,
+                              borderRadius: BorderRadius.circular(5),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: 3.5,
+                                  vertical: 2,
+                                ),
+                                child: Icon(
+                                  LucideIcons.minus,
+                                  size: 11,
+                                  color: MobilePosColors.primaryGreen,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 1.5),
+                              child: Text(
+                                '$cartQuantity',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                  color: MobilePosColors.primaryGreen,
+                                ),
+                              ),
+                            ),
+                            InkWell(
+                              onTap: isOutOfStock
+                                  ? () => onIncrement?.call()
+                                  : onIncrement,
+                              borderRadius: BorderRadius.circular(5),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 3.5,
+                                  vertical: 2,
+                                ),
+                                child: Icon(
+                                  LucideIcons.plus,
+                                  size: 11,
+                                  color: isOutOfStock
+                                      ? MobilePosColors.textMuted
+                                      : MobilePosColors.primaryGreen,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      InkWell(
+                        onTap: onAddToCart,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            color: isOutOfStock
+                                ? const Color(0xFFE5E7EB)
+                                : MobilePosColors.primaryGreen,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Icon(
+                            LucideIcons.plus,
+                            size: 13,
+                            color: isOutOfStock
+                                ? MobilePosColors.textMuted
+                                : Colors.white,
+                          ),
                         ),
                       ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -370,22 +381,22 @@ class MobileProductCard extends StatelessWidget {
       padding: EdgeInsets.zero,
       tooltip: 'Product Actions',
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
       ),
       color: Colors.white,
       elevation: 6,
       position: PopupMenuPosition.under,
       child: Container(
-        width: 22,
-        height: 22,
+        width: 19,
+        height: 19,
         alignment: Alignment.center,
         decoration: BoxDecoration(
           color: const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(4),
         ),
         child: const Icon(
           LucideIcons.ellipsisVertical,
-          size: 13,
+          size: 11,
           color: Color(0xFF475569),
         ),
       ),

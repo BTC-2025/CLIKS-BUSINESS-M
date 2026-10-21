@@ -539,17 +539,7 @@ class _PayrollPageState extends ConsumerState<PayrollPage> {
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Workforce Payroll Engine',
-            style: TextStyle(
-              fontSize: isMobile ? 20 : 24,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-              letterSpacing: -0.5,
-            ),
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           // Quick Action Buttons
           Wrap(
             spacing: 8,

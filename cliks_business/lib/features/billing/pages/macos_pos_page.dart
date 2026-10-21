@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../widgets/quick_register_item_dialog.dart';
+import '../../customer_view/pages/customer_home_page.dart';
 
 class _PosProductItem {
   final String id;
@@ -1121,6 +1122,17 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
     );
   }
 
+  void _launchCustomerSelfOrderingMode() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const CustomerHomePage(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+      ),
+    );
+  }
+
   void _showSalesHistoryDialog() {
     showDialog(
       context: context,
@@ -1391,11 +1403,11 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
 
           // Stats Pill: TODAY ORDERS & TOTAL SALES
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
             decoration: BoxDecoration(
               color: const Color(0xFFF0FDF4),
               border: Border.all(color: const Color(0xFFBBF7D0)),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
               children: [
@@ -1405,7 +1417,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     Text(
                       'TODAY ORDERS',
                       style: TextStyle(
-                        fontSize: 8.5,
+                        fontSize: 8,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF166534),
                         letterSpacing: 0.5,
@@ -1415,21 +1427,21 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     Text(
                       '1',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 14,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF166534),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(width: 18),
+                const SizedBox(width: 12),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
                       'TOTAL SALES',
                       style: TextStyle(
-                        fontSize: 8.5,
+                        fontSize: 8,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF166534),
                         letterSpacing: 0.5,
@@ -1439,7 +1451,7 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
                     Text(
                       '₹2,36,00,10,382',
                       style: const TextStyle(
-                        fontSize: 14,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF166534),
                       ),
@@ -1450,19 +1462,44 @@ class _MacOsPosPageState extends ConsumerState<MacOsPosPage> {
             ),
           ),
 
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
 
           // History Button
           OutlinedButton.icon(
             onPressed: _showSalesHistoryDialog,
             icon: const Icon(LucideIcons.history, size: 13, color: Color(0xFF4B5563)),
-            label: const Text('History', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600)),
+            label: const Text('History', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600)),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF374151),
               side: const BorderSide(color: Color(0xFFE5E7EB)),
               backgroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(9)),
+            ),
+          ),
+
+          const SizedBox(width: 8),
+
+          // Small Sleek Icon: Launch Customer Self-Ordering Mode (macOS Kiosk)
+          Tooltip(
+            message: 'Launch Customer Self-Ordering Kiosk',
+            child: InkWell(
+              onTap: _launchCustomerSelfOrderingMode,
+              borderRadius: BorderRadius.circular(9),
+              child: Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  border: Border.all(color: const Color(0xFF86EFAC)),
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: const Icon(
+                  LucideIcons.monitorSmartphone,
+                  size: 16,
+                  color: Color(0xFF16A34A),
+                ),
+              ),
             ),
           ),
         ],

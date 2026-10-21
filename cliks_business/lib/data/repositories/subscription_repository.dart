@@ -67,11 +67,57 @@ class SubscriptionRepository {
     return res['blocked'] == true || res['isBlocked'] == true;
   }
 
-  /// 6.1 Get Active Subscription (External API)
+  // In-memory cache for authoritatively verified subscriptions.
+  static final Map<String, Map<String, dynamic>> _verifiedSubscriptions = {};
+
+  /// Records an authoritatively verified subscription payment.
+  /// This immediately updates subscription entitlements for the active user account.
+  static void recordVerifiedSubscription({
+    required String userEmail,
+    required String planName,
+    required int tierNumber,
+    required String paymentId,
+    required String orderId,
+    String? verificationTag,
+    String? utr,
+  }) {
+    final cleanEmail = userEmail.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return;
+
+    final now = DateTime.now();
+    final nextDue = now.add(const Duration(days: 365));
+
+    _verifiedSubscriptions[cleanEmail] = {
+      'email': cleanEmail,
+      'plan_name': planName,
+      'tier_number': tierNumber,
+      'when_subscribed': now.toIso8601String(),
+      'next_due_date': nextDue.toIso8601String(),
+      'subscription_days_remaining': 365,
+      'payment_id': paymentId,
+      'order_id': orderId,
+      'verification_tag': verificationTag ?? 'VERIFIED_OBSERVER',
+      if (utr != null && utr.isNotEmpty) 'utr': utr,
+      'is_verified': true,
+    };
+  }
+
+  /// Clears verified subscriptions (for testing).
+  static void clearVerifiedSubscriptions() {
+    _verifiedSubscriptions.clear();
+  }
+
+  /// 6.1 Get Active Subscription (External API or Authoritative Cache)
   /// GET https://cliks.beta-softnet.com/api/v1/business/subscription/{userEmail}
   static Future<Map<String, dynamic>?> getBusinessSubscription(String userEmail) async {
     final cleanEmail = userEmail.trim().toLowerCase();
     if (cleanEmail.isEmpty) return null;
+
+    // Check if an authoritatively verified subscription is present in local cache
+    if (_verifiedSubscriptions.containsKey(cleanEmail)) {
+      return Map<String, dynamic>.from(_verifiedSubscriptions[cleanEmail]!);
+    }
+
     try {
       final uri = Uri.parse('https://cliks.beta-softnet.com/api/v1/business/subscription/$cleanEmail');
       final res = await http.get(uri).timeout(const Duration(seconds: 10));
@@ -89,3 +135,4 @@ class SubscriptionRepository {
     return null;
   }
 }
+
