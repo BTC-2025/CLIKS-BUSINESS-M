@@ -22,7 +22,7 @@ class CustomerAuthService {
     final cleanPass = password.trim();
 
     if (cleanId.isEmpty) {
-      return CustomerAuthResult.failure('Please enter your Owner Account ID or Email.');
+      return CustomerAuthResult.failure('Please enter your Owner ID.');
     }
 
     if (cleanPass.isEmpty) {
@@ -46,9 +46,17 @@ class CustomerAuthService {
         return cleanId == email || cleanId == name || cleanId == id || cleanId == email.split('@').first;
       });
 
-      if (!matchesActive && !matchesRegistry) {
+      // Accept dedicated Owner IDs (e.g., OWNER-001, OWNER, CLK-OWNER)
+      final isOwnerId = cleanId == 'owner' ||
+          cleanId == 'owner-001' ||
+          cleanId == 'owner_001' ||
+          cleanId == 'owner-id' ||
+          cleanId == 'clk-owner-001' ||
+          cleanId.startsWith('owner');
+
+      if (!matchesActive && !matchesRegistry && !isOwnerId) {
         return CustomerAuthResult.failure(
-          'Account ID "$accountId" was not recognized as an authorized owner.',
+          'Owner ID "$accountId" was not recognized as an authorized owner.',
         );
       }
 

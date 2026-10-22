@@ -20,7 +20,7 @@ class CustomerOwnerAuthDialog extends StatefulWidget {
 
 class _CustomerOwnerAuthDialogState extends State<CustomerOwnerAuthDialog> {
   final TextEditingController _accountIdController =
-      TextEditingController(text: 'ravinew2004@bnxmail.com');
+      TextEditingController(text: 'OWNER-001');
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
@@ -98,28 +98,30 @@ class _CustomerOwnerAuthDialogState extends State<CustomerOwnerAuthDialog> {
                   ),
                 ),
                 const SizedBox(width: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Owner Authentication',
-                      style: GoogleFonts.inter(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Owner Authentication',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF111827),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Restricted to Business Owner & Admin',
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        color: const Color(0xFF6B7280),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Restricted to Business Owner & Admin',
+                        style: GoogleFonts.inter(
+                          fontSize: 11.5,
+                          color: const Color(0xFF6B7280),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF9CA3AF)),
@@ -161,9 +163,9 @@ class _CustomerOwnerAuthDialogState extends State<CustomerOwnerAuthDialog> {
                 const SizedBox(height: 16),
               ],
 
-              // Account ID field
+              // Owner ID field
               Text(
-                'Owner Account ID or Email',
+                'Owner ID',
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
                   fontWeight: FontWeight.w700,
@@ -175,7 +177,7 @@ class _CustomerOwnerAuthDialogState extends State<CustomerOwnerAuthDialog> {
                 controller: _accountIdController,
                 style: GoogleFonts.inter(fontSize: 13),
                 decoration: InputDecoration(
-                  hintText: 'e.g. ravinew2004@bnxmail.com',
+                  hintText: 'e.g. OWNER-001',
                   prefixIcon: const Icon(LucideIcons.user, size: 16, color: Color(0xFF9CA3AF)),
                   filled: true,
                   fillColor: const Color(0xFFF9FAFB),

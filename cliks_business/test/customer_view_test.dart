@@ -1,10 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:clicks_business_frontend/features/customer_view/models/customer_product_model.dart';
 import 'package:clicks_business_frontend/features/customer_view/models/customer_cart_item.dart';
 import 'package:clicks_business_frontend/features/customer_view/models/customer_order_model.dart';
 import 'package:clicks_business_frontend/features/customer_view/models/customer_view_settings_model.dart';
 import 'package:clicks_business_frontend/features/customer_view/services/customer_auth_service.dart';
 import 'package:clicks_business_frontend/features/customer_view/providers/customer_view_provider.dart';
+import 'package:clicks_business_frontend/features/customer_view/widgets/customer_owner_auth_dialog.dart';
 
 void main() {
   group('Customer View Models & Pricing Calculation Tests', () {
@@ -101,6 +103,34 @@ void main() {
       );
       expect(successResult.isSuccess, true);
       expect(successResult.errorMessage, isNull);
+    });
+
+    test('Authenticates with Owner ID format (e.g. OWNER-001)', () async {
+      final successResult = await CustomerAuthService.authenticateOwner(
+        accountId: 'OWNER-001',
+        password: 'ownerPassword123',
+      );
+      expect(successResult.isSuccess, true);
+      expect(successResult.errorMessage, isNull);
+    });
+
+    testWidgets('CustomerOwnerAuthDialog displays Owner ID and does not show ravinew2004@bnxmail.com', (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: CustomerOwnerAuthDialog(
+              onExitToOwnerPos: () {},
+              onOpenSettings: () {},
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Owner ID'), findsOneWidget);
+      expect(find.text('OWNER-001'), findsOneWidget);
+      expect(find.text('ravinew2004@bnxmail.com'), findsNothing);
+      expect(find.text('Owner Account ID or Email'), findsNothing);
     });
   });
 
