@@ -717,9 +717,10 @@ class CustomerViewNotifier extends StateNotifier<CustomerViewState> {
     await _saveConfig();
   }
 
-  Future<void> toggleProductVisibility(String productId, bool isVisible) async {
+  Future<void> toggleProductVisibility(String productId, [bool? isVisible]) async {
     final updatedHidden = List<String>.from(state.hiddenProductIds);
-    if (!isVisible) {
+    final targetVisible = isVisible ?? updatedHidden.contains(productId);
+    if (!targetVisible) {
       if (!updatedHidden.contains(productId)) updatedHidden.add(productId);
     } else {
       updatedHidden.remove(productId);
@@ -740,6 +741,13 @@ class CustomerViewNotifier extends StateNotifier<CustomerViewState> {
     state = state.copyWith(featuredProductIds: updatedFeatured);
     await _saveConfig();
   }
+
+  Future<void> toggleFeaturedProduct(String productId) async {
+    final isCurrentlyFeatured = state.featuredProductIds.contains(productId);
+    await toggleProductFeatured(productId, !isCurrentlyFeatured);
+  }
+
+  Future<void> resetProductImage(String productId) => removeProductCustomImage(productId);
 
   Future<void> _saveConfig() async {
     await _storage.saveConfiguration(

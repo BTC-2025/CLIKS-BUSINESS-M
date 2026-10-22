@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../models/customer_cart_item.dart';
 import '../models/customer_view_settings_model.dart';
+import '../utils/customer_theme_helper.dart';
 
 class CustomerCartPanel extends StatelessWidget {
   final List<CustomerCartItem> cart;
@@ -72,15 +72,22 @@ class CustomerCartPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final totalItems = cart.fold(0, (sum, i) => sum + i.quantity);
+    final isDark = settings.isDarkMode;
+    final panelBg = isDark ? const Color(0xFF1E293B) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF111827);
+    final subtextColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280);
+    final radius = Radius.circular(settings.borderRadius);
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        color: panelBg,
+        borderRadius: BorderRadius.all(radius),
+        border: Border.all(
+          color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -112,25 +119,27 @@ class CustomerCartPanel extends StatelessWidget {
                     const SizedBox(width: 10),
                     Text(
                       'My Tray',
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
+                        color: textColor,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
                         '$totalItems items',
-                        style: GoogleFonts.inter(
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF4B5563),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B5563),
                         ),
                       ),
                     ),
@@ -142,7 +151,8 @@ class CustomerCartPanel extends StatelessWidget {
                     icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
                     label: Text(
                       'Clear',
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFFEF4444),
@@ -153,7 +163,7 @@ class CustomerCartPanel extends StatelessWidget {
             ),
           ),
 
-          const Divider(height: 1, color: Color(0xFFF3F4F6)),
+          Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6)),
 
           // ─── 2. ITEMS LIST OR EMPTY STATE ───
           Expanded(
@@ -168,32 +178,33 @@ class CustomerCartPanel extends StatelessWidget {
                             width: 72,
                             height: 72,
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF3F4F6),
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6),
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
+                            child: Icon(
                               LucideIcons.utensilsCrossed,
                               size: 32,
-                              color: Color(0xFF9CA3AF),
+                              color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
                             ),
                           ),
                           const SizedBox(height: 16),
                           Text(
                             'Your tray is empty',
-                            style: GoogleFonts.inter(
+                            style: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1F2937),
+                              color: textColor,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            'Select mouth-watering items from the catalog to build your order.',
+                            'Select delicious items from the catalog to build your order.',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.inter(
-                              fontSize: 12.5,
-                              color: const Color(0xFF6B7280),
-                              height: 1.35,
+                            style: CustomerThemeHelper.font(
+                              settings,
+                              fontSize: 12,
+                              color: subtextColor,
                             ),
                           ),
                         ],
@@ -203,17 +214,20 @@ class CustomerCartPanel extends StatelessWidget {
                 : ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     itemCount: cart.length,
-                    separatorBuilder: (ctx, i) => const Divider(
+                    separatorBuilder: (ctx, i) => Divider(
                       height: 16,
-                      color: Color(0xFFF3F4F6),
+                      color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6),
                     ),
                     itemBuilder: (context, index) {
                       final item = cart[index];
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          // Item Thumbnail
                           _buildItemThumbnail(item),
                           const SizedBox(width: 12),
+
+                          // Title, Variant, Unit Price
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,97 +236,77 @@ class CustomerCartPanel extends StatelessWidget {
                                   item.product.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.inter(
+                                  style: CustomerThemeHelper.font(
+                                    settings,
                                     fontSize: 13,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF111827),
+                                    color: textColor,
                                   ),
                                 ),
-                                if (item.selectedVariant != null) ...[
-                                  const SizedBox(height: 2),
+                                if (item.selectedVariant != null)
                                   Text(
                                     item.selectedVariant!,
-                                    style: GoogleFonts.inter(
+                                    style: CustomerThemeHelper.font(
+                                      settings,
                                       fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: primaryColor,
+                                      color: subtextColor,
                                     ),
                                   ),
-                                ],
-                                if (item.specialInstructions.isNotEmpty) ...[
-                                  const SizedBox(height: 1),
-                                  Text(
-                                    'Note: ${item.specialInstructions}',
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10.5,
-                                      fontStyle: FontStyle.italic,
-                                      color: const Color(0xFF6B7280),
-                                    ),
-                                  ),
-                                ],
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 2),
                                 Text(
-                                  '₹${item.unitPrice.toStringAsFixed(0)} × ${item.quantity} = ₹${item.lineTotal.toStringAsFixed(0)}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: const Color(0xFF4B5563),
+                                  CustomerThemeHelper.formatPrice(settings, item.lineTotal),
+                                  style: CustomerThemeHelper.font(
+                                    settings,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                    color: primaryColor,
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
 
-                          // Quantity Stepper
+                          // Quantity Controls (- QTY +)
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF9FAFB),
+                              color: isDark ? const Color(0xFF334155) : const Color(0xFFF9FAFB),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFE5E7EB)),
+                              border: Border.all(
+                                color: isDark ? const Color(0xFF475569) : const Color(0xFFE5E7EB),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 InkWell(
                                   onTap: () => onDecrement(index),
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(5),
-                                    child: Icon(LucideIcons.minus, size: 13, color: Color(0xFF4B5563)),
+                                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(8)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(5),
+                                    child: Icon(LucideIcons.minus, size: 13, color: subtextColor),
                                   ),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                                  padding: const EdgeInsets.symmetric(horizontal: 8),
                                   child: Text(
                                     '${item.quantity}',
-                                    style: GoogleFonts.inter(
+                                    style: CustomerThemeHelper.font(
+                                      settings,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w800,
-                                      color: const Color(0xFF111827),
+                                      color: textColor,
                                     ),
                                   ),
                                 ),
                                 InkWell(
                                   onTap: () => onIncrement(index),
-                                  borderRadius: BorderRadius.circular(6),
-                                  child: const Padding(
-                                    padding: EdgeInsets.all(5),
-                                    child: Icon(LucideIcons.plus, size: 13, color: Color(0xFF4B5563)),
+                                  borderRadius: const BorderRadius.horizontal(right: Radius.circular(8)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(5),
+                                    child: Icon(LucideIcons.plus, size: 13, color: primaryColor),
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
-
-                          const SizedBox(width: 6),
-                          InkWell(
-                            onTap: () => onRemove(index),
-                            child: const Padding(
-                              padding: EdgeInsets.all(4),
-                              child: Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
                             ),
                           ),
                         ],
@@ -325,10 +319,14 @@ class CustomerCartPanel extends StatelessWidget {
           if (cart.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(20)),
-                border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.vertical(bottom: radius),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                  ),
+                ),
               ),
               child: Column(
                 children: [
@@ -337,47 +335,85 @@ class CustomerCartPanel extends StatelessWidget {
                     children: [
                       Text(
                         'Subtotal',
-                        style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF6B7280)),
+                        style: CustomerThemeHelper.font(settings, fontSize: 12.5, color: subtextColor),
                       ),
                       Text(
-                        '₹${subtotal.toStringAsFixed(2)}',
-                        style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
+                        CustomerThemeHelper.formatPrice(settings, subtotal),
+                        style: CustomerThemeHelper.font(
+                          settings,
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: textColor,
+                        ),
                       ),
                     ],
                   ),
-                  if (settings.showGstBreakdown) ...[
+                  if (settings.taxDisplayMode == 'breakdown') ...[
                     const SizedBox(height: 6),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'Estimated GST (18%)',
-                          style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF6B7280)),
+                          style: CustomerThemeHelper.font(settings, fontSize: 12.5, color: subtextColor),
                         ),
                         Text(
-                          '₹${gst.toStringAsFixed(2)}',
-                          style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600, color: const Color(0xFF374151)),
+                          CustomerThemeHelper.formatPrice(settings, gst),
+                          style: CustomerThemeHelper.font(
+                            settings,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else if (settings.taxDisplayMode == 'inclusive') ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Taxes & Duties',
+                          style: CustomerThemeHelper.font(settings, fontSize: 12.5, color: subtextColor),
+                        ),
+                        Text(
+                          'Inclusive in Price',
+                          style: CustomerThemeHelper.font(
+                            settings,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF16A34A),
+                          ),
                         ),
                       ],
                     ),
                   ],
                   const SizedBox(height: 10),
-                  const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                  Divider(
+                    height: 1,
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                  ),
                   const SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
                         'Total Payable',
-                        style: GoogleFonts.inter(
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
+                          color: textColor,
                         ),
                       ),
                       Text(
-                        '₹${total.toStringAsFixed(2)}',
-                        style: GoogleFonts.inter(
+                        CustomerThemeHelper.formatPrice(
+                          settings,
+                          settings.taxDisplayMode == 'inclusive' ? subtotal : total,
+                        ),
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 20,
                           fontWeight: FontWeight.w900,
                           color: primaryColor,
@@ -398,7 +434,7 @@ class CustomerCartPanel extends StatelessWidget {
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.all(radius),
                         ),
                       ),
                       child: Row(
@@ -408,7 +444,8 @@ class CustomerCartPanel extends StatelessWidget {
                           const SizedBox(width: 8),
                           Text(
                             'Proceed to Checkout',
-                            style: GoogleFonts.inter(
+                            style: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 14.5,
                               fontWeight: FontWeight.w800,
                             ),

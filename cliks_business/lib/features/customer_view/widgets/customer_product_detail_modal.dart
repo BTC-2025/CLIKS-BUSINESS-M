@@ -1,9 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../models/customer_product_model.dart';
 import '../models/customer_view_settings_model.dart';
+import '../utils/customer_theme_helper.dart';
 
 class CustomerProductDetailModal extends StatefulWidget {
   final CustomerProduct product;
@@ -126,7 +126,12 @@ class _CustomerProductDetailModalState
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Color(widget.settings.primaryColorValue);
+    final settings = widget.settings;
+    final primaryColor = Color(settings.primaryColorValue);
+    final isDark = settings.isDarkMode;
+    final modalRadius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 24);
+    final buttonRadius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 14);
+    final chipRadius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 10);
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -135,11 +140,11 @@ class _CustomerProductDetailModalState
         width: 580,
         constraints: const BoxConstraints(maxHeight: 700),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(modalRadius),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.15),
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
               blurRadius: 30,
               offset: const Offset(0, 10),
             ),
@@ -161,7 +166,7 @@ class _CustomerProductDetailModalState
                     child: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.9),
+                        color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.9),
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -170,7 +175,11 @@ class _CustomerProductDetailModalState
                           ),
                         ],
                       ),
-                      child: const Icon(LucideIcons.x, size: 18, color: Color(0xFF374151)),
+                      child: Icon(
+                        LucideIcons.x,
+                        size: 18,
+                        color: isDark ? Colors.white : const Color(0xFF374151),
+                      ),
                     ),
                   ),
                 ),
@@ -185,7 +194,8 @@ class _CustomerProductDetailModalState
                     ),
                     child: Text(
                       widget.product.category,
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
@@ -212,17 +222,19 @@ class _CustomerProductDetailModalState
                         Expanded(
                           child: Text(
                             widget.product.name,
-                            style: GoogleFonts.inter(
+                            style: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF111827),
+                              color: isDark ? Colors.white : const Color(0xFF111827),
                             ),
                           ),
                         ),
                         const SizedBox(width: 14),
                         Text(
-                          '₹${_computedUnitPrice.toStringAsFixed(0)}',
-                          style: GoogleFonts.inter(
+                          CustomerThemeHelper.formatPrice(settings, _computedUnitPrice),
+                          style: CustomerThemeHelper.font(
+                            settings,
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
                             color: primaryColor,
@@ -235,9 +247,10 @@ class _CustomerProductDetailModalState
                       const SizedBox(height: 8),
                       Text(
                         widget.product.description,
-                        style: GoogleFonts.inter(
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 13,
-                          color: const Color(0xFF6B7280),
+                          color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
                           height: 1.4,
                         ),
                       ),
@@ -249,10 +262,11 @@ class _CustomerProductDetailModalState
                     if (widget.product.availableVariants.isNotEmpty) ...[
                       Text(
                         'Select Size / Option',
-                        style: GoogleFonts.inter(
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF374151),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -269,18 +283,19 @@ class _CustomerProductDetailModalState
                                 setState(() => _selectedVariant = v);
                               }
                             },
-                            selectedColor: primaryColor.withValues(alpha: 0.15),
-                            backgroundColor: const Color(0xFFF9FAFB),
-                            labelStyle: GoogleFonts.inter(
+                            selectedColor: primaryColor.withValues(alpha: isDark ? 0.3 : 0.15),
+                            backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
+                            labelStyle: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                              color: isSelected ? primaryColor : const Color(0xFF4B5563),
+                              color: isSelected ? primaryColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                             ),
                             side: BorderSide(
-                              color: isSelected ? primaryColor : const Color(0xFFE5E7EB),
+                              color: isSelected ? primaryColor : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(chipRadius),
                             ),
                           );
                         }).toList(),
@@ -291,11 +306,12 @@ class _CustomerProductDetailModalState
                     // Add-ons
                     if (widget.product.availableAddOns.isNotEmpty) ...[
                       Text(
-                        'Add-ons & Extras (+₹25 each)',
-                        style: GoogleFonts.inter(
+                        'Add-ons & Extras (+${settings.currencySymbol}25 each)',
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
-                          color: const Color(0xFF374151),
+                          color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -316,18 +332,19 @@ class _CustomerProductDetailModalState
                                 }
                               });
                             },
-                            selectedColor: primaryColor.withValues(alpha: 0.15),
-                            backgroundColor: const Color(0xFFF9FAFB),
-                            labelStyle: GoogleFonts.inter(
+                            selectedColor: primaryColor.withValues(alpha: isDark ? 0.3 : 0.15),
+                            backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
+                            labelStyle: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 12,
                               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                              color: isSelected ? primaryColor : const Color(0xFF4B5563),
+                              color: isSelected ? primaryColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                             ),
                             side: BorderSide(
-                              color: isSelected ? primaryColor : const Color(0xFFE5E7EB),
+                              color: isSelected ? primaryColor : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
+                              borderRadius: BorderRadius.circular(chipRadius),
                             ),
                           );
                         }).toList(),
@@ -338,31 +355,40 @@ class _CustomerProductDetailModalState
                     // Special instructions text field
                     Text(
                       'Special Request / Custom Note',
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: const Color(0xFF374151),
+                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151),
                       ),
                     ),
                     const SizedBox(height: 8),
                     TextField(
                       controller: _instructionsController,
-                      style: GoogleFonts.inter(fontSize: 12.5),
+                      style: CustomerThemeHelper.font(
+                        settings,
+                        fontSize: 12.5,
+                        color: isDark ? Colors.white : Colors.black,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'e.g., Less spicy, no mayo, extra ice, gift pack...',
-                        hintStyle: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF9CA3AF)),
+                        hintStyle: CustomerThemeHelper.font(
+                          settings,
+                          fontSize: 12,
+                          color: isDark ? const Color(0xFF64748B) : const Color(0xFF9CA3AF),
+                        ),
                         filled: true,
-                        fillColor: const Color(0xFFF9FAFB),
+                        fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(chipRadius),
+                          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(chipRadius),
+                          borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(chipRadius),
                           borderSide: BorderSide(color: primaryColor),
                         ),
                         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -376,18 +402,24 @@ class _CustomerProductDetailModalState
             // ─── 3. BOTTOM FOOTER WITH QUANTITY & ADD BUTTON ───
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
-              decoration: const BoxDecoration(
-                color: Color(0xFFF9FAFB),
-                border: Border(top: BorderSide(color: Color(0xFFE5E7EB))),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
+                border: Border(
+                  top: BorderSide(
+                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                  ),
+                ),
               ),
               child: Row(
                 children: [
                   // Quantity Stepper
                   Container(
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: const Color(0xFFD1D5DB)),
+                      border: Border.all(
+                        color: isDark ? const Color(0xFF334155) : const Color(0xFFD1D5DB),
+                      ),
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                     child: Row(
@@ -404,10 +436,11 @@ class _CustomerProductDetailModalState
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
                             '$_quantity',
-                            style: GoogleFonts.inter(
+                            style: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: const Color(0xFF111827),
+                              color: isDark ? Colors.white : const Color(0xFF111827),
                             ),
                           ),
                         ),
@@ -443,7 +476,7 @@ class _CustomerProductDetailModalState
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(buttonRadius),
                           ),
                         ),
                         child: Row(
@@ -452,10 +485,12 @@ class _CustomerProductDetailModalState
                             const Icon(LucideIcons.shoppingBag, size: 17),
                             const SizedBox(width: 8),
                             Text(
-                              'Add to Tray • ₹${_computedTotalPrice.toStringAsFixed(0)}',
-                              style: GoogleFonts.inter(
+                              'Add to Tray • ${CustomerThemeHelper.formatPrice(settings, _computedTotalPrice)}',
+                              style: CustomerThemeHelper.font(
+                                settings,
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
+                                color: Colors.white,
                               ),
                             ),
                           ],

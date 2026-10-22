@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../providers/customer_view_provider.dart';
+import '../utils/customer_theme_helper.dart';
 import 'customer_order_confirmation_page.dart';
 
 class CustomerCheckoutPage extends ConsumerStatefulWidget {
@@ -54,6 +54,16 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
       return;
     }
 
+    if (state.selectedOrderType == 'Dine In' &&
+        state.settings.showTableNumberInput &&
+        state.settings.requireTableNumber &&
+        _tableController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your table number to proceed.')),
+      );
+      return;
+    }
+
     setState(() => _isSubmitting = true);
 
     notifier.setCustomerInfo(
@@ -77,28 +87,33 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
     final notifier = ref.read(customerViewProvider.notifier);
     final settings = state.settings;
     final primaryColor = Color(settings.primaryColorValue);
+    final isDark = settings.isDarkMode;
+    final cardRadius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 16);
+    final buttonRadius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 14);
+    final inputRadius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 10);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: CustomerThemeHelper.surfaceBackground(settings),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF111827)),
+          icon: Icon(LucideIcons.arrowLeft, color: isDark ? Colors.white : const Color(0xFF111827)),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           'Checkout & Confirm Order',
-          style: GoogleFonts.inter(
+          style: CustomerThemeHelper.font(
+            settings,
             fontSize: 16,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF111827),
+            color: isDark ? Colors.white : const Color(0xFF111827),
           ),
         ),
         centerTitle: false,
-        bottom: const PreferredSize(
-          preferredSize: Size.fromHeight(1),
-          child: Divider(height: 1, color: Color(0xFFE5E7EB)),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
         ),
       ),
       body: SingleChildScrollView(
@@ -119,10 +134,11 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                       if (settings.allowOrderTypeSelection) ...[
                         Text(
                           '1. Dining Preference',
-                          style: GoogleFonts.inter(
+                          style: CustomerThemeHelper.font(
+                            settings,
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF111827),
+                            color: isDark ? Colors.white : const Color(0xFF111827),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -132,15 +148,19 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                             return Expanded(
                               child: InkWell(
                                 onTap: () => notifier.setOrderType(type),
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(buttonRadius),
                                 child: Container(
                                   margin: EdgeInsets.only(right: type == 'Dine In' ? 12 : 0),
                                   padding: const EdgeInsets.symmetric(vertical: 14),
                                   decoration: BoxDecoration(
-                                    color: isSelected ? primaryColor.withValues(alpha: 0.08) : Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
+                                    color: isSelected
+                                        ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.08)
+                                        : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                                    borderRadius: BorderRadius.circular(buttonRadius),
                                     border: Border.all(
-                                      color: isSelected ? primaryColor : const Color(0xFFE5E7EB),
+                                      color: isSelected
+                                          ? primaryColor
+                                          : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                                       width: isSelected ? 2 : 1,
                                     ),
                                   ),
@@ -150,15 +170,16 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                       Icon(
                                         type == 'Dine In' ? LucideIcons.utensils : LucideIcons.packageOpen,
                                         size: 18,
-                                        color: isSelected ? primaryColor : const Color(0xFF6B7280),
+                                        color: isSelected ? primaryColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
                                         type,
-                                        style: GoogleFonts.inter(
+                                        style: CustomerThemeHelper.font(
+                                          settings,
                                           fontSize: 13.5,
                                           fontWeight: FontWeight.w800,
-                                          color: isSelected ? primaryColor : const Color(0xFF374151),
+                                          color: isSelected ? primaryColor : (isDark ? const Color(0xFFCBD5E1) : const Color(0xFF374151)),
                                         ),
                                       ),
                                     ],
@@ -175,34 +196,44 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                       if (settings.collectCustomerDetails) ...[
                         Text(
                           '2. Customer Details',
-                          style: GoogleFonts.inter(
+                          style: CustomerThemeHelper.font(
+                            settings,
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
-                            color: const Color(0xFF111827),
+                            color: isDark ? Colors.white : const Color(0xFF111827),
                           ),
                         ),
                         const SizedBox(height: 10),
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            borderRadius: BorderRadius.circular(cardRadius),
+                            border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                           ),
                           child: Column(
                             children: [
                               TextField(
                                 controller: _nameController,
-                                style: GoogleFonts.inter(fontSize: 13),
+                                style: CustomerThemeHelper.font(
+                                  settings,
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
                                 decoration: InputDecoration(
                                   labelText: 'Customer Name (Optional)',
                                   hintText: 'e.g. John Doe',
+                                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                                   prefixIcon: const Icon(LucideIcons.user, size: 16),
                                   filled: true,
-                                  fillColor: const Color(0xFFF9FAFB),
+                                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                    borderRadius: BorderRadius.circular(inputRadius),
+                                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(inputRadius),
+                                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                                   ),
                                 ),
                               ),
@@ -210,33 +241,51 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                               TextField(
                                 controller: _phoneController,
                                 keyboardType: TextInputType.phone,
-                                style: GoogleFonts.inter(fontSize: 13),
+                                style: CustomerThemeHelper.font(
+                                  settings,
+                                  fontSize: 13,
+                                  color: isDark ? Colors.white : Colors.black,
+                                ),
                                 decoration: InputDecoration(
                                   labelText: settings.requireCustomerPhone ? 'Phone Number (Required)' : 'Phone Number (For SMS updates)',
                                   hintText: 'e.g. +91 98765 43210',
+                                  labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                                   prefixIcon: const Icon(LucideIcons.phone, size: 16),
                                   filled: true,
-                                  fillColor: const Color(0xFFF9FAFB),
+                                  fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
                                   border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                    borderRadius: BorderRadius.circular(inputRadius),
+                                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(inputRadius),
+                                    borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                                   ),
                                 ),
                               ),
-                              if (state.selectedOrderType == 'Dine In') ...[
+                              if (state.selectedOrderType == 'Dine In' && settings.showTableNumberInput) ...[
                                 const SizedBox(height: 12),
                                 TextField(
                                   controller: _tableController,
-                                  style: GoogleFonts.inter(fontSize: 13),
+                                  style: CustomerThemeHelper.font(
+                                    settings,
+                                    fontSize: 13,
+                                    color: isDark ? Colors.white : Colors.black,
+                                  ),
                                   decoration: InputDecoration(
-                                    labelText: 'Table Number (Optional)',
+                                    labelText: settings.requireTableNumber ? 'Table Number (Required)' : 'Table Number (Optional)',
                                     hintText: 'e.g. Table 4',
+                                    labelStyle: TextStyle(color: isDark ? const Color(0xFF94A3B8) : null),
                                     prefixIcon: const Icon(LucideIcons.mapPin, size: 16),
                                     filled: true,
-                                    fillColor: const Color(0xFFF9FAFB),
+                                    fillColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
                                     border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10),
-                                      borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                                      borderRadius: BorderRadius.circular(inputRadius),
+                                      borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(inputRadius),
+                                      borderSide: BorderSide(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                                     ),
                                   ),
                                 ),
@@ -250,19 +299,20 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                       // Payment Method
                       Text(
                         '3. Payment Method',
-                        style: GoogleFonts.inter(
+                        style: CustomerThemeHelper.font(
+                          settings,
                           fontSize: 14,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
+                          color: isDark ? Colors.white : const Color(0xFF111827),
                         ),
                       ),
                       const SizedBox(height: 10),
                       Container(
                         padding: const EdgeInsets.all(18),
                         decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                          borderRadius: BorderRadius.circular(cardRadius),
+                          border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                         ),
                         child: Column(
                           children: settings.enabledPaymentModes.map((mode) {
@@ -278,16 +328,24 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                 margin: const EdgeInsets.only(bottom: 10),
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? primaryColor.withValues(alpha: 0.08) : const Color(0xFFF9FAFB),
+                                  color: isSelected
+                                      ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.08)
+                                      : (isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB)),
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isSelected ? primaryColor : const Color(0xFFE5E7EB),
+                                    color: isSelected
+                                        ? primaryColor
+                                        : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                                     width: isSelected ? 2 : 1,
                                   ),
                                 ),
                                 child: Row(
                                   children: [
-                                    Icon(icon, size: 20, color: isSelected ? primaryColor : const Color(0xFF6B7280)),
+                                    Icon(
+                                      icon,
+                                      size: 20,
+                                      color: isSelected ? primaryColor : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280)),
+                                    ),
                                     const SizedBox(width: 14),
                                     Expanded(
                                       child: Column(
@@ -295,21 +353,23 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                         children: [
                                           Text(
                                             mode,
-                                            style: GoogleFonts.inter(
+                                            style: CustomerThemeHelper.font(
+                                              settings,
                                               fontSize: 13.5,
                                               fontWeight: FontWeight.w700,
-                                              color: const Color(0xFF111827),
+                                              color: isDark ? Colors.white : const Color(0xFF111827),
                                             ),
                                           ),
                                           Text(
                                             mode == 'UPI QR Code'
-                                                ? 'Scan QR with Google Pay, PhonePe, Paytm, BHIM'
+                                                ? 'Instant UPI confirmation directly on kiosk'
                                                 : (mode == 'Pay at Counter'
                                                     ? 'Pay cash or card directly to the cashier when collecting'
                                                     : 'Tap your contactless credit or debit card at the counter terminal'),
-                                            style: GoogleFonts.inter(
+                                            style: CustomerThemeHelper.font(
+                                              settings,
                                               fontSize: 11,
-                                              color: const Color(0xFF6B7280),
+                                              color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
                                             ),
                                           ),
                                         ],
@@ -331,14 +391,14 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                         ),
                       ),
 
-                      // If UPI is selected, display instant checkout info (no QR, no account)
+                      // If UPI is selected, display instant checkout info
                       if (state.selectedPaymentMode == 'UPI QR Code') ...[
                         const SizedBox(height: 16),
                         Container(
                           padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            borderRadius: BorderRadius.circular(cardRadius),
                             border: Border.all(color: const Color(0xFF818CF8)),
                             boxShadow: [
                               BoxShadow(
@@ -373,20 +433,22 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                         const SizedBox(width: 6),
                                         Text(
                                           'UPI Payment Selected',
-                                          style: GoogleFonts.inter(
+                                          style: CustomerThemeHelper.font(
+                                            settings,
                                             fontSize: 14,
                                             fontWeight: FontWeight.w800,
-                                            color: const Color(0xFF1E1B4B),
+                                            color: isDark ? Colors.white : const Color(0xFF1E1B4B),
                                           ),
                                         ),
                                       ],
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Click "Place Order & Pay" below to confirm your order and complete your payment.',
-                                      style: GoogleFonts.inter(
+                                      'Click "Place Order Now" below to confirm and generate your order token.',
+                                      style: CustomerThemeHelper.font(
+                                        settings,
                                         fontSize: 12,
-                                        color: const Color(0xFF4B5563),
+                                        color: isDark ? const Color(0xFFCBD5E1) : const Color(0xFF4B5563),
                                         height: 1.35,
                                       ),
                                     ),
@@ -394,15 +456,16 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: const Color(0xFFEEF2FF),
+                                        color: isDark ? const Color(0xFF312E81) : const Color(0xFFEEF2FF),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
-                                        'Amount: ₹${state.cartTotal.toStringAsFixed(2)}',
-                                        style: GoogleFonts.inter(
+                                        'Amount: ${CustomerThemeHelper.formatPrice(settings, state.cartTotal)}',
+                                        style: CustomerThemeHelper.font(
+                                          settings,
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w800,
-                                          color: const Color(0xFF4338CA),
+                                          color: isDark ? const Color(0xFFA5B4FC) : const Color(0xFF4338CA),
                                         ),
                                       ),
                                     ),
@@ -425,12 +488,12 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                   child: Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                      color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                      borderRadius: BorderRadius.circular(cardRadius),
+                      border: Border.all(color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
+                          color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.04),
                           blurRadius: 16,
                           offset: const Offset(0, 4),
                         ),
@@ -441,21 +504,22 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                       children: [
                         Row(
                           children: [
-                            const Icon(LucideIcons.receipt, size: 18, color: Color(0xFF111827)),
+                            Icon(LucideIcons.receipt, size: 18, color: isDark ? Colors.white : const Color(0xFF111827)),
                             const SizedBox(width: 8),
                             Text(
                               'Order Summary',
-                              style: GoogleFonts.inter(
+                              style: CustomerThemeHelper.font(
+                                settings,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF111827),
+                                color: isDark ? Colors.white : const Color(0xFF111827),
                               ),
                             ),
                           ],
                         ),
 
                         const SizedBox(height: 14),
-                        const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                        Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFF3F4F6)),
                         const SizedBox(height: 14),
 
                         // Itemized list
@@ -467,7 +531,8 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                               children: [
                                 Text(
                                   '${item.quantity}×',
-                                  style: GoogleFonts.inter(
+                                  style: CustomerThemeHelper.font(
+                                    settings,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w800,
                                     color: primaryColor,
@@ -480,29 +545,32 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                     children: [
                                       Text(
                                         item.product.name,
-                                        style: GoogleFonts.inter(
+                                        style: CustomerThemeHelper.font(
+                                          settings,
                                           fontSize: 12.5,
                                           fontWeight: FontWeight.w600,
-                                          color: const Color(0xFF1F2937),
+                                          color: isDark ? Colors.white : const Color(0xFF1F2937),
                                         ),
                                       ),
                                       if (item.selectedVariant != null)
                                         Text(
                                           item.selectedVariant!,
-                                          style: GoogleFonts.inter(
+                                          style: CustomerThemeHelper.font(
+                                            settings,
                                             fontSize: 11,
-                                            color: const Color(0xFF6B7280),
+                                            color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
                                           ),
                                         ),
                                     ],
                                   ),
                                 ),
                                 Text(
-                                  '₹${item.lineTotal.toStringAsFixed(0)}',
-                                  style: GoogleFonts.inter(
+                                  CustomerThemeHelper.formatPrice(settings, item.lineTotal),
+                                  style: CustomerThemeHelper.font(
+                                    settings,
                                     fontSize: 12.5,
                                     fontWeight: FontWeight.w700,
-                                    color: const Color(0xFF111827),
+                                    color: isDark ? Colors.white : const Color(0xFF111827),
                                   ),
                                 ),
                               ],
@@ -511,31 +579,86 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                         }),
 
                         const SizedBox(height: 12),
-                        const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                        Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                         const SizedBox(height: 12),
 
                         // Subtotal
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Subtotal', style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF6B7280))),
-                            Text('₹${state.cartSubtotal.toStringAsFixed(2)}', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                            Text(
+                              'Subtotal',
+                              style: CustomerThemeHelper.font(
+                                settings,
+                                fontSize: 12.5,
+                                color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                              ),
+                            ),
+                            Text(
+                              CustomerThemeHelper.formatPrice(settings, state.cartSubtotal),
+                              style: CustomerThemeHelper.font(
+                                settings,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : const Color(0xFF111827),
+                              ),
+                            ),
                           ],
                         ),
 
-                        if (settings.showGstBreakdown) ...[
+                        // Taxes
+                        if (settings.taxDisplayMode == 'breakdown' || (settings.taxDisplayMode == 'default' && settings.showGstBreakdown)) ...[
                           const SizedBox(height: 6),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('GST (18%)', style: GoogleFonts.inter(fontSize: 12.5, color: const Color(0xFF6B7280))),
-                              Text('₹${state.cartGst.toStringAsFixed(2)}', style: GoogleFonts.inter(fontSize: 12.5, fontWeight: FontWeight.w600)),
+                              Text(
+                                'Tax / GST (18%)',
+                                style: CustomerThemeHelper.font(
+                                  settings,
+                                  fontSize: 12.5,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                                ),
+                              ),
+                              Text(
+                                CustomerThemeHelper.formatPrice(settings, state.cartGst),
+                                style: CustomerThemeHelper.font(
+                                  settings,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: isDark ? Colors.white : const Color(0xFF111827),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ] else if (settings.taxDisplayMode == 'inclusive') ...[
+                          const SizedBox(height: 6),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Tax',
+                                style: CustomerThemeHelper.font(
+                                  settings,
+                                  fontSize: 12.5,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                                ),
+                              ),
+                              Text(
+                                'Taxes Included',
+                                style: CustomerThemeHelper.font(
+                                  settings,
+                                  fontSize: 12,
+                                  fontStyle: FontStyle.italic,
+                                  color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
+                                ),
+                              ),
                             ],
                           ),
                         ],
 
                         const SizedBox(height: 12),
-                        const Divider(height: 1, color: Color(0xFFE5E7EB)),
+                        Divider(height: 1, color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                         const SizedBox(height: 12),
 
                         // Total Payable
@@ -544,15 +667,17 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                           children: [
                             Text(
                               'Total Amount',
-                              style: GoogleFonts.inter(
+                              style: CustomerThemeHelper.font(
+                                settings,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF111827),
+                                color: isDark ? Colors.white : const Color(0xFF111827),
                               ),
                             ),
                             Text(
-                              '₹${state.cartTotal.toStringAsFixed(2)}',
-                              style: GoogleFonts.inter(
+                              CustomerThemeHelper.formatPrice(settings, state.cartTotal),
+                              style: CustomerThemeHelper.font(
+                                settings,
                                 fontSize: 22,
                                 fontWeight: FontWeight.w900,
                                 color: primaryColor,
@@ -574,7 +699,7 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(buttonRadius),
                               ),
                             ),
                             child: _isSubmitting
@@ -593,9 +718,11 @@ class _CustomerCheckoutPageState extends ConsumerState<CustomerCheckoutPage> {
                                       const SizedBox(width: 8),
                                       Text(
                                         'Place Order Now',
-                                        style: GoogleFonts.inter(
+                                        style: CustomerThemeHelper.font(
+                                          settings,
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
+                                          color: Colors.white,
                                         ),
                                       ),
                                     ],

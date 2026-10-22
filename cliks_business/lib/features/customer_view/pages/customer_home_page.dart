@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../providers/customer_view_provider.dart';
 import '../models/customer_product_model.dart';
@@ -12,6 +11,7 @@ import '../widgets/customer_category_navigation.dart';
 import '../widgets/customer_cart_panel.dart';
 import '../widgets/customer_product_detail_modal.dart';
 import '../widgets/customer_owner_auth_dialog.dart';
+import '../utils/customer_theme_helper.dart';
 import 'customer_checkout_page.dart';
 import 'customer_view_settings_page.dart';
 
@@ -135,21 +135,50 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
   Widget _buildPromoBanner(CustomerViewSettings settings, Color primaryColor, Color accentColor) {
     if (!settings.showPromoBanner || _promoBannerDismissed) return const SizedBox.shrink();
 
+    List<Color> gradientColors;
+    switch (settings.promoBannerStyle) {
+      case 'gold':
+        gradientColors = [
+          const Color(0xFFB45309),
+          const Color(0xFFD97706),
+          const Color(0xFFF59E0B),
+        ];
+        break;
+      case 'indigo':
+        gradientColors = [
+          const Color(0xFF3730A3),
+          const Color(0xFF4F46E5),
+          const Color(0xFF6366F1),
+        ];
+        break;
+      case 'emerald':
+        gradientColors = [
+          const Color(0xFF065F46),
+          const Color(0xFF059669),
+          const Color(0xFF10B981),
+        ];
+        break;
+      case 'fire':
+      default:
+        gradientColors = [
+          primaryColor,
+          primaryColor.withValues(alpha: 0.88),
+          accentColor.withValues(alpha: 0.95),
+        ];
+        break;
+    }
+
+    final radius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 14);
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 10, 20, 4),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primaryColor,
-            primaryColor.withValues(alpha: 0.88),
-            accentColor.withValues(alpha: 0.95),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
+        gradient: LinearGradient(colors: gradientColors),
+        borderRadius: BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
-            color: primaryColor.withValues(alpha: 0.22),
+            color: gradientColors.first.withValues(alpha: 0.22),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -173,7 +202,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
               children: [
                 Text(
                   settings.promoBannerTitle,
-                  style: GoogleFonts.inter(
+                  style: CustomerThemeHelper.font(
+                    settings,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w900,
                     color: Colors.white,
@@ -183,7 +213,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                 const SizedBox(height: 1),
                 Text(
                   settings.promoBannerSubtitle,
-                  style: GoogleFonts.inter(
+                  style: CustomerThemeHelper.font(
+                    settings,
                     fontSize: 11,
                     fontWeight: FontWeight.w500,
                     color: Colors.white.withValues(alpha: 0.9),
@@ -201,10 +232,11 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
             ),
             child: Text(
               'SPECIAL OFFER',
-              style: GoogleFonts.inter(
+              style: CustomerThemeHelper.font(
+                settings,
                 fontSize: 10,
                 fontWeight: FontWeight.w900,
-                color: primaryColor,
+                color: gradientColors.first,
                 letterSpacing: 0.5,
               ),
             ),
@@ -233,6 +265,7 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
     Color primaryColor,
     Color accentColor,
     bool isDark,
+    CustomerViewSettings settings,
   ) {
     final filters = [
       {'key': 'All', 'label': 'All Items', 'icon': LucideIcons.utensilsCrossed},
@@ -240,6 +273,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
       {'key': 'Non-Veg', 'label': '🍗 Non-Veg', 'icon': LucideIcons.drumstick},
       {'key': 'Specials', 'label': "★ Chef's Specials", 'icon': LucideIcons.sparkles},
     ];
+
+    final radius = CustomerThemeHelper.borderRadius(settings, defaultRadius: 10);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
@@ -250,7 +285,7 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
             padding: const EdgeInsets.only(right: 8),
             child: InkWell(
               onTap: () => notifier.setDietaryFilter(f['key'] as String),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(radius),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -258,7 +293,7 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                   color: isSelected
                       ? primaryColor.withValues(alpha: isDark ? 0.25 : 0.12)
                       : (isDark ? const Color(0xFF1E293B) : Colors.white),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(radius),
                   border: Border.all(
                     color: isSelected
                         ? primaryColor
@@ -277,7 +312,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                     const SizedBox(width: 5),
                     Text(
                       f['label'] as String,
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 11.5,
                         fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                         color: isSelected
@@ -376,7 +412,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                     Text(
                       settings.businessName,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
                         color: Colors.white,
@@ -386,21 +423,24 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                     const SizedBox(height: 10),
 
                     Text(
-                      settings.welcomeSubtitle,
+                      settings.attractSubtitle.isNotEmpty
+                          ? settings.attractSubtitle
+                          : settings.welcomeSubtitle,
                       textAlign: TextAlign.center,
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 14.5,
                         color: const Color(0xFFCBD5E1),
                       ),
                     ),
                     const SizedBox(height: 36),
 
-                    // Pulsing Action Button
+                    // Action Button
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(colors: [accentColor, accentColor.withValues(alpha: 0.9)]),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(CustomerThemeHelper.borderRadius(settings, defaultRadius: 16)),
                         boxShadow: [
                           BoxShadow(
                             color: accentColor.withValues(alpha: 0.45),
@@ -416,7 +456,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                           const SizedBox(width: 10),
                           Text(
                             settings.attractHeadline,
-                            style: GoogleFonts.inter(
+                            style: CustomerThemeHelper.font(
+                              settings,
                               fontSize: 15,
                               fontWeight: FontWeight.w900,
                               color: Colors.white,
@@ -430,7 +471,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
 
                     Text(
                       'Tap anywhere on screen to begin order',
-                      style: GoogleFonts.inter(
+                      style: CustomerThemeHelper.font(
+                        settings,
                         fontSize: 12,
                         color: Colors.white54,
                       ),
@@ -469,20 +511,37 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
           child: Stack(
             children: [
               Scaffold(
-                backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8F9FA),
+                backgroundColor: CustomerThemeHelper.surfaceBackground(settings),
                 body: SafeArea(
                   child: Column(
                     children: [
                       // ─── 1. KIOSK HEADER ───
                       Container(
+                        margin: settings.headerStyle == 'pill'
+                            ? const EdgeInsets.fromLTRB(16, 10, 16, 4)
+                            : EdgeInsets.zero,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
                         decoration: BoxDecoration(
                           color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                          border: Border(
-                            bottom: BorderSide(
-                              color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
-                            ),
-                          ),
+                          borderRadius: settings.headerStyle == 'pill'
+                              ? BorderRadius.circular(CustomerThemeHelper.borderRadius(settings, defaultRadius: 16))
+                              : null,
+                          border: settings.headerStyle == 'minimal'
+                              ? null
+                              : Border(
+                                  bottom: BorderSide(
+                                    color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                          boxShadow: settings.headerStyle == 'pill'
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Row(
                           children: [
@@ -495,7 +554,9 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                   gradient: LinearGradient(
                                     colors: [primaryColor, accentColor],
                                   ),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    CustomerThemeHelper.borderRadius(settings, defaultRadius: 12),
+                                  ),
                                   boxShadow: [
                                     BoxShadow(
                                       color: primaryColor.withValues(alpha: 0.3),
@@ -522,7 +583,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                 if (settings.showBusinessName)
                                   Text(
                                     settings.businessName,
-                                    style: GoogleFonts.inter(
+                                    style: CustomerThemeHelper.font(
+                                      settings,
                                       fontSize: 17,
                                       fontWeight: FontWeight.w900,
                                       color: isDark ? Colors.white : const Color(0xFF111827),
@@ -532,7 +594,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                 if (settings.showWelcomeMessage)
                                   Text(
                                     settings.welcomeHeadline,
-                                    style: GoogleFonts.inter(
+                                    style: CustomerThemeHelper.font(
+                                      settings,
                                       fontSize: 11.5,
                                       color: isDark ? const Color(0xFF94A3B8) : const Color(0xFF6B7280),
                                       fontWeight: FontWeight.w500,
@@ -549,7 +612,9 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                 padding: const EdgeInsets.all(3),
                                 decoration: BoxDecoration(
                                   color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(
+                                    CustomerThemeHelper.borderRadius(settings, defaultRadius: 12),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -557,14 +622,18 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                     final isSelected = customerState.selectedOrderType == type;
                                     return InkWell(
                                       onTap: () => notifier.setOrderType(type),
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius: BorderRadius.circular(
+                                        CustomerThemeHelper.borderRadius(settings, defaultRadius: 10),
+                                      ),
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                                         decoration: BoxDecoration(
                                           color: isSelected
                                               ? (isDark ? const Color(0xFF334155) : Colors.white)
                                               : Colors.transparent,
-                                          borderRadius: BorderRadius.circular(10),
+                                          borderRadius: BorderRadius.circular(
+                                            CustomerThemeHelper.borderRadius(settings, defaultRadius: 10),
+                                          ),
                                           boxShadow: isSelected
                                               ? [
                                                   BoxShadow(
@@ -586,7 +655,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                             const SizedBox(width: 6),
                                             Text(
                                               type,
-                                              style: GoogleFonts.inter(
+                                              style: CustomerThemeHelper.font(
+                                                settings,
                                                 fontSize: 12,
                                                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                                                 color: isSelected
@@ -610,7 +680,9 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                               height: 38,
                               decoration: BoxDecoration(
                                 color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF9FAFB),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                  CustomerThemeHelper.borderRadius(settings, defaultRadius: 10),
+                                ),
                                 border: Border.all(
                                   color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
                                 ),
@@ -624,7 +696,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                     child: TextField(
                                       controller: _searchController,
                                       onChanged: notifier.setSearchQuery,
-                                      style: GoogleFonts.inter(
+                                      style: CustomerThemeHelper.font(
+                                        settings,
                                         fontSize: 12.5,
                                         color: isDark ? Colors.white : Colors.black,
                                       ),
@@ -658,12 +731,16 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                               message: 'Owner Exit & Settings (Cmd+Shift+E)',
                               child: InkWell(
                                 onTap: _showOwnerAuthDialog,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(
+                                  CustomerThemeHelper.borderRadius(settings, defaultRadius: 10),
+                                ),
                                 child: Container(
                                   padding: const EdgeInsets.all(9),
                                   decoration: BoxDecoration(
                                     color: isDark ? const Color(0xFF0F172A) : const Color(0xFFF3F4F6),
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(
+                                      CustomerThemeHelper.borderRadius(settings, defaultRadius: 10),
+                                    ),
                                     border: Border.all(
                                       color: isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB),
                                     ),
@@ -691,6 +768,7 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                           selectedCategory: customerState.selectedCategory,
                           onSelectCategory: notifier.setSelectedCategory,
                           primaryColor: primaryColor,
+                          settings: settings,
                         ),
                       ],
 
@@ -702,6 +780,7 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                           primaryColor,
                           accentColor,
                           isDark,
+                          settings,
                         ),
 
                       const SizedBox(height: 8),
@@ -739,7 +818,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                               const SizedBox(height: 14),
                                               Text(
                                                 'No items found',
-                                                style: GoogleFonts.inter(
+                                                style: CustomerThemeHelper.font(
+                                                  settings,
                                                   fontSize: 15,
                                                   fontWeight: FontWeight.w700,
                                                   color: isDark ? Colors.white : const Color(0xFF374151),
@@ -748,7 +828,8 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                                               const SizedBox(height: 4),
                                               Text(
                                                 'Try searching with another keyword or pick another category.',
-                                                style: GoogleFonts.inter(
+                                                style: CustomerThemeHelper.font(
+                                                  settings,
                                                   fontSize: 12.5,
                                                   color: const Color(0xFF6B7280),
                                                 ),
@@ -844,17 +925,21 @@ class _CustomerHomePageState extends ConsumerState<CustomerHomePage> {
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(
+                                CustomerThemeHelper.borderRadius(settings, defaultRadius: 14),
+                              ),
                             ),
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                'View Tray (${customerState.cartItemCount} items) • ₹${customerState.cartTotal.toStringAsFixed(0)}',
-                                style: GoogleFonts.inter(
+                                'View Tray (${customerState.cartItemCount} items) • ${CustomerThemeHelper.formatPrice(settings, customerState.cartTotal)}',
+                                style: CustomerThemeHelper.font(
+                                  settings,
                                   fontSize: 14.5,
                                   fontWeight: FontWeight.w800,
+                                  color: Colors.white,
                                 ),
                               ),
                               const SizedBox(width: 8),

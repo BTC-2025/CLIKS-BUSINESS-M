@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../models/customer_view_settings_model.dart';
+import '../utils/customer_theme_helper.dart';
 
 class CustomerCategoryNavigation extends StatelessWidget {
   final List<String> categories;
   final String selectedCategory;
   final ValueChanged<String> onSelectCategory;
   final Color primaryColor;
+  final CustomerViewSettings? settings;
 
   const CustomerCategoryNavigation({
     super.key,
@@ -14,6 +16,7 @@ class CustomerCategoryNavigation extends StatelessWidget {
     required this.selectedCategory,
     required this.onSelectCategory,
     required this.primaryColor,
+    this.settings,
   });
 
   IconData _getIconForCategory(String name) {
@@ -36,6 +39,10 @@ class CustomerCategoryNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = settings ?? const CustomerViewSettings();
+    final radius = Radius.circular(s.borderRadius * 0.85);
+    final isDark = s.isDarkMode;
+
     return SizedBox(
       height: 48,
       child: ListView.separated(
@@ -51,18 +58,20 @@ class CustomerCategoryNavigation extends StatelessWidget {
 
           return InkWell(
             onTap: () => onSelectCategory(cat),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.all(radius),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? primaryColor : Colors.white,
-                borderRadius: BorderRadius.circular(14),
+                color: isSelected
+                    ? primaryColor
+                    : (isDark ? const Color(0xFF1E293B) : Colors.white),
+                borderRadius: BorderRadius.all(radius),
                 border: Border.all(
                   color: isSelected
                       ? primaryColor
-                      : const Color(0xFFE5E7EB),
+                      : (isDark ? const Color(0xFF334155) : const Color(0xFFE5E7EB)),
                   width: isSelected ? 1.5 : 1.0,
                 ),
                 boxShadow: [
@@ -74,7 +83,7 @@ class CustomerCategoryNavigation extends StatelessWidget {
                     )
                   else
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.02),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -86,15 +95,20 @@ class CustomerCategoryNavigation extends StatelessWidget {
                   Icon(
                     icon,
                     size: 16,
-                    color: isSelected ? Colors.white : const Color(0xFF4B5563),
+                    color: isSelected
+                        ? Colors.white
+                        : (isDark ? const Color(0xFF94A3B8) : const Color(0xFF4B5563)),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     cat,
-                    style: GoogleFonts.inter(
+                    style: CustomerThemeHelper.font(
+                      s,
                       fontSize: 13,
                       fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                      color: isSelected ? Colors.white : const Color(0xFF374151),
+                      color: isSelected
+                          ? Colors.white
+                          : (isDark ? const Color(0xFFF1F5F9) : const Color(0xFF374151)),
                     ),
                   ),
                 ],

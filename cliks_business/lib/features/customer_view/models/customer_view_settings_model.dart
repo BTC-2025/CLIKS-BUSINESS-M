@@ -1,5 +1,5 @@
 class CustomerViewSettings {
-  // Display settings
+  // Display & Branding
   final String businessName;
   final String welcomeHeadline;
   final String welcomeSubtitle;
@@ -19,14 +19,31 @@ class CustomerViewSettings {
   final bool showOrderNumber;
   final bool showCartSummary;
 
+  // Typography & Fonts
+  final String fontFamily; // 'Inter', 'Poppins', 'Roboto', 'Outfit', 'Montserrat', 'Plus Jakarta Sans', 'Playfair Display', 'DM Sans'
+  final double fontSizeScale; // 0.9, 1.0, 1.1, 1.2
+  final String fontWeightPreset; // 'Light', 'Standard', 'Bold'
+
+  // Appearance & Themes
+  final String themePreset; // 'emerald_gourmet', 'tokyo_amber', 'cyber_indigo', 'ruby_velvet', 'sunset_gold', 'midnight_luxury', 'custom'
+  final int primaryColorValue;
+  final int accentColorValue;
+  final bool isDarkMode;
+  final String productCardStyle; // 'modern', 'bordered', 'compact', 'minimal'
+  final double borderRadius; // 8.0, 14.0, 20.0, 28.0
+  final String headerStyle; // 'clean', 'gradient', 'brand'
+  final String surfaceTint; // 'default', 'cream', 'frost', 'slate'
+
   // Advanced Promotional Banner
   final bool showPromoBanner;
   final String promoBannerTitle;
   final String promoBannerSubtitle;
+  final String promoBannerStyle; // 'fire', 'gold', 'indigo', 'emerald'
 
   // Attract Screen & Idle Kiosk Mode
   final bool enableAttractScreen;
   final String attractHeadline;
+  final String attractSubtitle;
   final int idleTimeoutSeconds;
 
   // Ordering & Timer Settings
@@ -39,12 +56,13 @@ class CustomerViewSettings {
   final String kitchenSlipMode;
   final bool enableSoundEffects;
 
-  // Appearance & Themes
-  final String themePreset; // 'emerald_gourmet', 'tokyo_amber', 'cyber_indigo', 'ruby_velvet', 'sunset_gold', 'midnight_luxury'
-  final int primaryColorValue;
-  final int accentColorValue;
-  final bool isDarkMode;
-  final String productCardStyle; // 'modern', 'bordered', 'compact'
+  // Currency, Taxes & Badges
+  final String currencySymbol; // '₹', '$', '€', '£', 'AED'
+  final String taxDisplayMode; // 'breakdown', 'inclusive', 'hidden'
+  final bool showCalories;
+  final bool showPrepTimeBadge;
+  final bool showTableNumberInput;
+  final bool requireTableNumber;
 
   const CustomerViewSettings({
     this.businessName = 'Cliks Express & Gourmet Dining',
@@ -65,11 +83,24 @@ class CustomerViewSettings {
     this.showPreparationTimer = true,
     this.showOrderNumber = true,
     this.showCartSummary = true,
+    this.fontFamily = 'Inter',
+    this.fontSizeScale = 1.0,
+    this.fontWeightPreset = 'Standard',
+    this.themePreset = 'emerald_gourmet',
+    this.primaryColorValue = 0xFF059669, // Emerald Gourmet
+    this.accentColorValue = 0xFFF59E0B,  // Amber Gold
+    this.isDarkMode = false,
+    this.productCardStyle = 'modern',
+    this.borderRadius = 16.0,
+    this.headerStyle = 'clean',
+    this.surfaceTint = 'default',
     this.showPromoBanner = true,
     this.promoBannerTitle = '🔥 TODAY SPECIAL: GET 50% OFF ALL BEVERAGES WITH ANY GOURMET COMBO!',
     this.promoBannerSubtitle = 'Freshly crafted to order. Tap any meal to customize with favorite dips & sides.',
+    this.promoBannerStyle = 'fire',
     this.enableAttractScreen = false,
     this.attractHeadline = 'Touch Anywhere on Screen to Start Ordering',
+    this.attractSubtitle = 'Explore our handcrafted gourmet menu, customize & checkout in seconds',
     this.idleTimeoutSeconds = 90,
     this.enableSelfOrdering = true,
     this.enableCart = true,
@@ -83,11 +114,12 @@ class CustomerViewSettings {
     this.enableUpsellRecommendations = true,
     this.kitchenSlipMode = 'Digital Token Only',
     this.enableSoundEffects = true,
-    this.themePreset = 'emerald_gourmet',
-    this.primaryColorValue = 0xFF059669, // Emerald Gourmet
-    this.accentColorValue = 0xFFF59E0B,  // Amber Gold
-    this.isDarkMode = false,
-    this.productCardStyle = 'modern',
+    this.currencySymbol = '₹',
+    this.taxDisplayMode = 'breakdown',
+    this.showCalories = true,
+    this.showPrepTimeBadge = true,
+    this.showTableNumberInput = true,
+    this.requireTableNumber = false,
   });
 
   CustomerViewSettings copyWith({
@@ -109,11 +141,24 @@ class CustomerViewSettings {
     bool? showPreparationTimer,
     bool? showOrderNumber,
     bool? showCartSummary,
+    String? fontFamily,
+    double? fontSizeScale,
+    String? fontWeightPreset,
+    String? themePreset,
+    int? primaryColorValue,
+    int? accentColorValue,
+    bool? isDarkMode,
+    String? productCardStyle,
+    double? borderRadius,
+    String? headerStyle,
+    String? surfaceTint,
     bool? showPromoBanner,
     String? promoBannerTitle,
     String? promoBannerSubtitle,
+    String? promoBannerStyle,
     bool? enableAttractScreen,
     String? attractHeadline,
+    String? attractSubtitle,
     int? idleTimeoutSeconds,
     bool? enableSelfOrdering,
     bool? enableCart,
@@ -123,11 +168,12 @@ class CustomerViewSettings {
     bool? enableUpsellRecommendations,
     String? kitchenSlipMode,
     bool? enableSoundEffects,
-    String? themePreset,
-    int? primaryColorValue,
-    int? accentColorValue,
-    bool? isDarkMode,
-    String? productCardStyle,
+    String? currencySymbol,
+    String? taxDisplayMode,
+    bool? showCalories,
+    bool? showPrepTimeBadge,
+    bool? showTableNumberInput,
+    bool? requireTableNumber,
   }) {
     return CustomerViewSettings(
       businessName: businessName ?? this.businessName,
@@ -153,11 +199,24 @@ class CustomerViewSettings {
       showPreparationTimer: showPreparationTimer ?? this.showPreparationTimer,
       showOrderNumber: showOrderNumber ?? this.showOrderNumber,
       showCartSummary: showCartSummary ?? this.showCartSummary,
+      fontFamily: fontFamily ?? this.fontFamily,
+      fontSizeScale: fontSizeScale ?? this.fontSizeScale,
+      fontWeightPreset: fontWeightPreset ?? this.fontWeightPreset,
+      themePreset: themePreset ?? this.themePreset,
+      primaryColorValue: primaryColorValue ?? this.primaryColorValue,
+      accentColorValue: accentColorValue ?? this.accentColorValue,
+      isDarkMode: isDarkMode ?? this.isDarkMode,
+      productCardStyle: productCardStyle ?? this.productCardStyle,
+      borderRadius: borderRadius ?? this.borderRadius,
+      headerStyle: headerStyle ?? this.headerStyle,
+      surfaceTint: surfaceTint ?? this.surfaceTint,
       showPromoBanner: showPromoBanner ?? this.showPromoBanner,
       promoBannerTitle: promoBannerTitle ?? this.promoBannerTitle,
       promoBannerSubtitle: promoBannerSubtitle ?? this.promoBannerSubtitle,
+      promoBannerStyle: promoBannerStyle ?? this.promoBannerStyle,
       enableAttractScreen: enableAttractScreen ?? this.enableAttractScreen,
       attractHeadline: attractHeadline ?? this.attractHeadline,
+      attractSubtitle: attractSubtitle ?? this.attractSubtitle,
       idleTimeoutSeconds: idleTimeoutSeconds ?? this.idleTimeoutSeconds,
       enableSelfOrdering: enableSelfOrdering ?? this.enableSelfOrdering,
       enableCart: enableCart ?? this.enableCart,
@@ -169,11 +228,12 @@ class CustomerViewSettings {
           enableUpsellRecommendations ?? this.enableUpsellRecommendations,
       kitchenSlipMode: kitchenSlipMode ?? this.kitchenSlipMode,
       enableSoundEffects: enableSoundEffects ?? this.enableSoundEffects,
-      themePreset: themePreset ?? this.themePreset,
-      primaryColorValue: primaryColorValue ?? this.primaryColorValue,
-      accentColorValue: accentColorValue ?? this.accentColorValue,
-      isDarkMode: isDarkMode ?? this.isDarkMode,
-      productCardStyle: productCardStyle ?? this.productCardStyle,
+      currencySymbol: currencySymbol ?? this.currencySymbol,
+      taxDisplayMode: taxDisplayMode ?? this.taxDisplayMode,
+      showCalories: showCalories ?? this.showCalories,
+      showPrepTimeBadge: showPrepTimeBadge ?? this.showPrepTimeBadge,
+      showTableNumberInput: showTableNumberInput ?? this.showTableNumberInput,
+      requireTableNumber: requireTableNumber ?? this.requireTableNumber,
     );
   }
 
@@ -197,11 +257,24 @@ class CustomerViewSettings {
       'showPreparationTimer': showPreparationTimer,
       'showOrderNumber': showOrderNumber,
       'showCartSummary': showCartSummary,
+      'fontFamily': fontFamily,
+      'fontSizeScale': fontSizeScale,
+      'fontWeightPreset': fontWeightPreset,
+      'themePreset': themePreset,
+      'primaryColorValue': primaryColorValue,
+      'accentColorValue': accentColorValue,
+      'isDarkMode': isDarkMode,
+      'productCardStyle': productCardStyle,
+      'borderRadius': borderRadius,
+      'headerStyle': headerStyle,
+      'surfaceTint': surfaceTint,
       'showPromoBanner': showPromoBanner,
       'promoBannerTitle': promoBannerTitle,
       'promoBannerSubtitle': promoBannerSubtitle,
+      'promoBannerStyle': promoBannerStyle,
       'enableAttractScreen': enableAttractScreen,
       'attractHeadline': attractHeadline,
+      'attractSubtitle': attractSubtitle,
       'idleTimeoutSeconds': idleTimeoutSeconds,
       'enableSelfOrdering': enableSelfOrdering,
       'enableCart': enableCart,
@@ -211,11 +284,12 @@ class CustomerViewSettings {
       'enableUpsellRecommendations': enableUpsellRecommendations,
       'kitchenSlipMode': kitchenSlipMode,
       'enableSoundEffects': enableSoundEffects,
-      'themePreset': themePreset,
-      'primaryColorValue': primaryColorValue,
-      'accentColorValue': accentColorValue,
-      'isDarkMode': isDarkMode,
-      'productCardStyle': productCardStyle,
+      'currencySymbol': currencySymbol,
+      'taxDisplayMode': taxDisplayMode,
+      'showCalories': showCalories,
+      'showPrepTimeBadge': showPrepTimeBadge,
+      'showTableNumberInput': showTableNumberInput,
+      'requireTableNumber': requireTableNumber,
     };
   }
 
@@ -242,14 +316,30 @@ class CustomerViewSettings {
       showPreparationTimer: json['showPreparationTimer'] ?? true,
       showOrderNumber: json['showOrderNumber'] ?? true,
       showCartSummary: json['showCartSummary'] ?? true,
+      fontFamily: json['fontFamily']?.toString() ?? 'Inter',
+      fontSizeScale: (json['fontSizeScale'] as num?)?.toDouble() ?? 1.0,
+      fontWeightPreset: json['fontWeightPreset']?.toString() ?? 'Standard',
+      themePreset: json['themePreset']?.toString() ?? 'emerald_gourmet',
+      primaryColorValue:
+          (json['primaryColorValue'] as num?)?.toInt() ?? 0xFF059669,
+      accentColorValue:
+          (json['accentColorValue'] as num?)?.toInt() ?? 0xFFF59E0B,
+      isDarkMode: json['isDarkMode'] ?? false,
+      productCardStyle: json['productCardStyle']?.toString() ?? 'modern',
+      borderRadius: (json['borderRadius'] as num?)?.toDouble() ?? 16.0,
+      headerStyle: json['headerStyle']?.toString() ?? 'clean',
+      surfaceTint: json['surfaceTint']?.toString() ?? 'default',
       showPromoBanner: json['showPromoBanner'] ?? true,
       promoBannerTitle: json['promoBannerTitle']?.toString() ??
           '🔥 TODAY SPECIAL: GET 50% OFF ALL BEVERAGES WITH ANY GOURMET COMBO!',
       promoBannerSubtitle: json['promoBannerSubtitle']?.toString() ??
           'Freshly crafted to order. Tap any meal to customize with favorite dips & sides.',
+      promoBannerStyle: json['promoBannerStyle']?.toString() ?? 'fire',
       enableAttractScreen: json['enableAttractScreen'] ?? false,
       attractHeadline: json['attractHeadline']?.toString() ??
           'Touch Anywhere on Screen to Start Ordering',
+      attractSubtitle: json['attractSubtitle']?.toString() ??
+          'Explore our handcrafted gourmet menu, customize & checkout in seconds',
       idleTimeoutSeconds:
           (json['idleTimeoutSeconds'] as num?)?.toInt() ?? 90,
       enableSelfOrdering: json['enableSelfOrdering'] ?? true,
@@ -266,13 +356,12 @@ class CustomerViewSettings {
       kitchenSlipMode:
           json['kitchenSlipMode']?.toString() ?? 'Digital Token Only',
       enableSoundEffects: json['enableSoundEffects'] ?? true,
-      themePreset: json['themePreset']?.toString() ?? 'emerald_gourmet',
-      primaryColorValue:
-          (json['primaryColorValue'] as num?)?.toInt() ?? 0xFF059669,
-      accentColorValue:
-          (json['accentColorValue'] as num?)?.toInt() ?? 0xFFF59E0B,
-      isDarkMode: json['isDarkMode'] ?? false,
-      productCardStyle: json['productCardStyle']?.toString() ?? 'modern',
+      currencySymbol: json['currencySymbol']?.toString() ?? '₹',
+      taxDisplayMode: json['taxDisplayMode']?.toString() ?? 'breakdown',
+      showCalories: json['showCalories'] ?? true,
+      showPrepTimeBadge: json['showPrepTimeBadge'] ?? true,
+      showTableNumberInput: json['showTableNumberInput'] ?? true,
+      requireTableNumber: json['requireTableNumber'] ?? false,
     );
   }
 }
