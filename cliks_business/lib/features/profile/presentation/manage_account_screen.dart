@@ -1597,12 +1597,9 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                 InkWell(
                   onTap: () {
                     Navigator.pop(context);
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Account switching is available in the profile menu.',
-                        ),
-                        backgroundColor: Color(0xFF195BAC),
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(),
                       ),
                     );
                   },
@@ -1963,7 +1960,41 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 960),
-          child: _buildActiveTabContent(account, isDark, isMobile),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildActiveTabContent(account, isDark, isMobile),
+              if (isMobile) ...[
+                const SizedBox(height: 36),
+                Divider(
+                  color: isDark ? const Color(0xFF3C4043) : const Color(0xFFE8EAED),
+                ),
+                const SizedBox(height: 20),
+                Center(
+                  child: OutlinedButton.icon(
+                    onPressed: _handleSignOut,
+                    icon: const Icon(Icons.logout_rounded, size: 18, color: Colors.redAccent),
+                    label: const Text(
+                      'Sign out of account',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.redAccent,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Colors.redAccent),
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 48),
+              ],
+            ],
+          ),
         ),
       ),
     );

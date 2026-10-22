@@ -716,31 +716,43 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final double bottomInset = MediaQuery.of(context).padding.bottom;
     final screenWidth = MediaQuery.of(context).size.width;
     final isCompact = screenWidth < 700;
-    return Container(
-      color: Colors.transparent,
-      padding: EdgeInsets.only(bottom: bottomInset > 0 ? (bottomInset * 0.35).clamp(2.0, 6.0) : 4.0),
+    return SafeArea(
+      top: false,
       child: Container(
-        margin: EdgeInsets.fromLTRB(isCompact ? 12 : 16, 0, isCompact ? 12 : 16, 4),
-        padding: EdgeInsets.symmetric(vertical: isCompact ? 3 : 4, horizontal: isCompact ? 6 : 8),
-        decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(32),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 16,
-              offset: const Offset(0, 4),
-            ),
-          ],
+        color: Colors.transparent,
+        padding: EdgeInsets.only(
+          bottom: bottomInset > 0 ? (bottomInset * 0.4).clamp(4.0, 10.0) : 12.0,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildBottomTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books', isCompact),
-            _buildBottomTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments', isCompact),
-            _buildBottomTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social', isCompact),
-            _buildBottomTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile', isCompact),
-          ],
+        alignment: Alignment.bottomCenter,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: isCompact ? 330 : 440,
+          ),
+          margin: EdgeInsets.symmetric(horizontal: isCompact ? 24 : 32),
+          padding: EdgeInsets.symmetric(
+            vertical: isCompact ? 8 : 10,
+            horizontal: isCompact ? 8 : 12,
+          ),
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(36),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 18,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildBottomTab(ref, navigation, AppModule.books, LucideIcons.bookOpen, 'Books', isCompact),
+              _buildBottomTab(ref, navigation, AppModule.payments, LucideIcons.wallet, 'Payments', isCompact),
+              _buildBottomTab(ref, navigation, AppModule.social, LucideIcons.messageCircle, 'Social', isCompact),
+              _buildBottomTab(ref, navigation, AppModule.profile, LucideIcons.user, 'Profile', isCompact),
+            ],
+          ),
         ),
       ),
     );
@@ -752,15 +764,15 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
       onTap: () => _switchToModule(ref, module),
       behavior: HitTestBehavior.opaque,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 500),
+        duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOutCubic,
         padding: EdgeInsets.symmetric(
           horizontal: isCompact ? 14 : 18,
-          vertical: isCompact ? 8 : 10,
+          vertical: isCompact ? 9 : 11,
         ),
         decoration: BoxDecoration(
           color: isActive ? AppColors.primaryGreen : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(26),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -768,10 +780,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
             Icon(
               icon,
               color: isActive ? Colors.white : AppColors.secondaryText,
-              size: isCompact ? 18 : 21,
+              size: isCompact ? 20 : 22,
             ),
             AnimatedSize(
-              duration: const Duration(milliseconds: 500),
+              duration: const Duration(milliseconds: 350),
               curve: Curves.easeInOutCubic,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -783,7 +795,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                       style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
-                        fontSize: isCompact ? 12.5 : 14,
+                        fontSize: isCompact ? 13 : 14,
                       ),
                     ),
                   ],

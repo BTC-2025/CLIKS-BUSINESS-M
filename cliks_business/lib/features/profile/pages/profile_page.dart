@@ -7,6 +7,11 @@ import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/bento/bento.dart';
+import '../../../data/account_provider.dart';
+import '../../../models/account_model.dart';
+import '../../auth/notifiers/auth_notifier.dart';
+import '../../auth/pages/login_screen.dart';
+import '../../auth/pages/register_account_type_screen.dart';
 import '../presentation/manage_account_screen.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
@@ -26,86 +31,72 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   String _currentEmail = 'ravikumarlaptop@bnxmail.com';
 
   bool _isExpanded = false;
-  late List<Map<String, dynamic>> _accounts;
-
-  @override
-  void initState() {
-    super.initState();
-    _accounts = [
-      {'username': _currentUsername, 'email': _currentEmail, 'icon': LucideIcons.user, 'color': const Color(0xFF1565C0)},
-      {'username': 'cliks_admin', 'email': 'admin@cliks.business', 'icon': LucideIcons.userCheck, 'color': AppColors.primaryGreen},
-    ];
-  }
 
   void _showAddAccountDialog() {
-    final usernameController = TextEditingController();
-    final emailController = TextEditingController();
-
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Add Multiple Account'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: usernameController,
-              decoration: const InputDecoration(
-                labelText: 'Username',
-                hintText: 'Enter new account username',
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Add or Switch Account',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email Address',
-                hintText: 'Enter email associated with account',
+              const SizedBox(height: 6),
+              const Text(
+                'Sign in to an existing BNX account or create a brand new account for mobile.',
+                style: TextStyle(fontSize: 13, color: AppColors.secondaryText),
               ),
-            ),
-          ],
+              const SizedBox(height: 20),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.logIn, color: AppColors.primaryGreen, size: 20),
+                ),
+                title: const Text('Sign in with existing account', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: const Text('Log in with your existing BNX Mail credentials', style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 16),
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF195BAC).withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(LucideIcons.userPlus, color: Color(0xFF195BAC), size: 20),
+                ),
+                title: const Text('Create a new account', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                subtitle: const Text('Register for personal, child, or business BNX Mail', style: TextStyle(fontSize: 12)),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RegisterAccountTypeScreen()),
+                  );
+                },
+              ),
+            ],
+          ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              final newUsername = usernameController.text.trim();
-              final newEmail = emailController.text.trim();
-              if (newUsername.isNotEmpty && newEmail.isNotEmpty) {
-                setState(() {
-                  _currentUsername = newUsername;
-                  _currentEmail = newEmail;
-                  _isExpanded = false; // Collapse after adding
-                  // Add it if it doesn't exist
-                  if (!_accounts.any((a) => a['username'] == newUsername)) {
-                    _accounts.add({
-                      'username': newUsername,
-                      'email': newEmail,
-                      'icon': LucideIcons.user,
-                      'color': Colors.purple,
-                    });
-                  }
-                });
-                Navigator.pop(ctx);
-                AppSnackbar.show(
-                  context,
-                  "Account '$newUsername' added and set as active.",
-                  type: SnackType.success,
-                );
-              } else {
-                AppSnackbar.show(
-                  context,
-                  "Please enter both username and email.",
-                  type: SnackType.error,
-                );
-              }
-            },
-            child: const Text('Add & Switch'),
-          ),
-        ],
       ),
     );
   }
@@ -453,13 +444,18 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             (w) => w.animate().fadeIn(duration: 450.ms, delay: 450.ms),
                           ),
 
-                          const SizedBox(height: 24),
+                          const SizedBox(height: 16),
+
+                          // Dedicated Sign Out Action for Mobile UI
+                          maybeAnim(_buildSignOutTile(context), (w) => w.animate().fadeIn(duration: 450.ms, delay: 475.ms)),
+
+                          const SizedBox(height: 12),
 
                           // Terminate Secure Session Button
                           maybeAnim(_buildTerminateButton(context), (w) => w.animate().fadeIn(duration: 500.ms, delay: 500.ms)),
                         ],
 
-                        const SizedBox(height: 32),
+                        const SizedBox(height: 24),
 
                         // Footer Version Label
                         maybeAnim(
@@ -475,7 +471,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                           ),
                           (w) => w.animate().fadeIn(duration: 500.ms, delay: 450.ms),
                         ),
-                        const SizedBox(height: 32),
+                        SizedBox(height: isMobile ? 110 : 36),
                       ],
                     ),
                   ),
@@ -492,20 +488,34 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   // MACOS SOFT UI BENTO HERO
   // ═══════════════════════════════════════════════════════════════
   Widget _buildMacOsProfileHero(bool isMobile) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final allAccounts = ref.watch(accountsProvider);
+    final currentUsername = activeAccount.name.isNotEmpty
+        ? activeAccount.name
+        : (activeAccount.email.isNotEmpty
+            ? activeAccount.email.split('@').first
+            : _currentUsername);
+    final currentEmail = activeAccount.email.isNotEmpty
+        ? activeAccount.email
+        : _currentEmail;
+    final List<AccountModel> displayAccounts = allAccounts.where((a) => a.id != 'loading').isNotEmpty
+        ? allAccounts.where((a) => a.id != 'loading').toList()
+        : [activeAccount];
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         MacOsSoftUiBentoHero(
           title: 'Identity & Access Control',
-          mainValue: _currentUsername,
-          subtitle: _currentEmail,
+          mainValue: currentUsername,
+          subtitle: currentEmail,
           badgeText: 'SUPER ADMIN',
           badgeIcon: LucideIcons.shieldCheck,
           isMobile: isMobile,
           chips: [
             MacOsBentoHeroChip(
               label: 'Linked Profiles',
-              value: '${_accounts.length} Active',
+              value: '${displayAccounts.length} Active',
               icon: LucideIcons.users,
               accentColor: const Color(0xFF166534),
               onTap: () => setState(() => _isExpanded = !_isExpanded),
@@ -523,8 +533,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
               accentColor: const Color(0xFFD97706),
             ),
           ],
-          trailingAction: Row(
-            mainAxisSize: MainAxisSize.min,
+          trailingAction: Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               OutlinedButton.icon(
                 onPressed: () {
@@ -544,7 +555,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(width: 8),
               OutlinedButton.icon(
                 onPressed: () => setState(() => _isExpanded = !_isExpanded),
                 icon: Icon(_isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown, size: 13),
@@ -556,7 +566,6 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
               ),
-              const SizedBox(width: 8),
               ElevatedButton.icon(
                 onPressed: _showAddAccountDialog,
                 icon: const Icon(LucideIcons.userPlus, size: 13),
@@ -601,20 +610,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                   ],
                 ),
                 const SizedBox(height: 10),
-                ..._accounts.map((acc) {
-                  final isSelected = acc['username'] == _currentUsername;
+                ...displayAccounts.map((acc) {
+                  final isSelected = acc.id == activeAccount.id || acc.email == activeAccount.email;
+                  final accountName = acc.name.isNotEmpty
+                      ? acc.name
+                      : (acc.email.isNotEmpty ? acc.email.split('@').first : 'User');
+                  final accountEmail = acc.email.isNotEmpty ? acc.email : 'user@bnxmail.com';
+
                   return InkWell(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
-                        _currentUsername = acc['username'] as String;
-                        _currentEmail = acc['email'] as String;
+                        _currentUsername = accountName;
+                        _currentEmail = accountEmail;
                         _isExpanded = false;
                       });
-                      AppSnackbar.show(
-                        context,
-                        "Switched to profile '${acc['username']}'.",
-                        type: SnackType.success,
-                      );
+                      await ref.read(accountsProvider.notifier).switchAccount(acc.id, ref);
+                      if (context.mounted) {
+                        AppSnackbar.show(
+                          context,
+                          "Switched to profile '$accountName'.",
+                          type: SnackType.success,
+                        );
+                      }
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
@@ -633,7 +650,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             radius: 15,
                             backgroundColor: isSelected ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
                             child: Icon(
-                              acc['icon'] as IconData,
+                              LucideIcons.user,
                               size: 15,
                               color: isSelected ? Colors.white : const Color(0xFF64748B),
                             ),
@@ -644,16 +661,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  acc['username'] as String,
+                                  accountName,
                                   style: TextStyle(
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                     fontSize: 13,
                                     color: isSelected ? const Color(0xFF166534) : const Color(0xFF0F172A),
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                                 Text(
-                                  acc['email'] as String,
+                                  accountEmail,
                                   style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ],
                             ),
@@ -677,6 +698,20 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   }
 
   Widget _buildProfileHeader(bool isMobile) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final allAccounts = ref.watch(accountsProvider);
+    final currentUsername = activeAccount.name.isNotEmpty
+        ? activeAccount.name
+        : (activeAccount.email.isNotEmpty
+            ? activeAccount.email.split('@').first
+            : _currentUsername);
+    final currentEmail = activeAccount.email.isNotEmpty
+        ? activeAccount.email
+        : _currentEmail;
+    final List<AccountModel> displayAccounts = allAccounts.where((a) => a.id != 'loading').isNotEmpty
+        ? allAccounts.where((a) => a.id != 'loading').toList()
+        : [activeAccount];
+
     return Container(
       width: double.infinity,
       padding: EdgeInsets.fromLTRB(
@@ -716,9 +751,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    _currentUsername,
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  Flexible(
+                    child: Text(
+                      currentUsername,
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                   const SizedBox(width: 4),
                   AnimatedRotation(
@@ -732,8 +771,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           ),
           const SizedBox(height: 4),
           Text(
-            _currentEmail,
+            currentEmail,
             style: const TextStyle(color: Colors.white70, fontSize: 12),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
           
           // Inline expandable account switcher
@@ -749,20 +790,28 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                 Divider(color: Colors.white.withValues(alpha: 0.2), height: 1),
                 const SizedBox(height: 12),
                 // Account list cards/rows
-                ..._accounts.map((acc) {
-                  final isSelected = acc['username'] == _currentUsername;
+                ...displayAccounts.map((acc) {
+                  final isSelected = acc.id == activeAccount.id || acc.email == activeAccount.email;
+                  final accountName = acc.name.isNotEmpty
+                      ? acc.name
+                      : (acc.email.isNotEmpty ? acc.email.split('@').first : 'User');
+                  final accountEmail = acc.email.isNotEmpty ? acc.email : 'user@bnxmail.com';
+
                   return GestureDetector(
-                    onTap: () {
+                    onTap: () async {
                       setState(() {
-                        _currentUsername = acc['username'] as String;
-                        _currentEmail = acc['email'] as String;
+                        _currentUsername = accountName;
+                        _currentEmail = accountEmail;
                         _isExpanded = false;
                       });
-                      AppSnackbar.show(
-                        context,
-                        "Switched to account '${acc['username']}'.",
-                        type: SnackType.success,
-                      );
+                      await ref.read(accountsProvider.notifier).switchAccount(acc.id, ref);
+                      if (context.mounted) {
+                        AppSnackbar.show(
+                          context,
+                          "Switched to account '$accountName'.",
+                          type: SnackType.success,
+                        );
+                      }
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 8),
@@ -784,7 +833,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                             radius: 16,
                             backgroundColor: isSelected ? Colors.white : Colors.white24,
                             child: Icon(
-                              acc['icon'] as IconData,
+                              LucideIcons.user,
                               size: 16,
                               color: isSelected ? AppColors.primaryGreen : Colors.white,
                             ),
@@ -795,19 +844,23 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  acc['username'] as String,
+                                  accountName,
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                     fontSize: 13,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                                 Text(
-                                  acc['email'] as String,
+                                  accountEmail,
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.65),
                                     fontSize: 11,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                 ),
                               ],
                             ),
@@ -1080,6 +1133,51 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
     );
   }
 
+  Widget _buildSignOutTile(BuildContext context) {
+    return _buildCardTile(
+      icon: LucideIcons.logOut,
+      title: 'Sign Out',
+      subtitle: 'Sign out of your active corporate session',
+      onTap: () {
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Sign Out'),
+            content: const Text('Are you sure you want to sign out of this account?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                onPressed: () async {
+                  Navigator.pop(ctx);
+                  try {
+                    await ref.read(authProvider.notifier).logout();
+                  } catch (_) {}
+                  ref.read(accountsProvider.notifier).clear();
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                    AppSnackbar.show(
+                      context,
+                      "Signed out successfully.",
+                      type: SnackType.success,
+                    );
+                  }
+                },
+                child: const Text('Sign Out', style: TextStyle(color: Colors.red)),
+              ),
+            ],
+          ),
+        );
+      },
+      trailing: const Icon(LucideIcons.chevronRight, size: 16, color: AppColors.secondaryText),
+    );
+  }
+
   Widget _buildTerminateButton(BuildContext context) {
     return SizedBox(
       width: double.infinity,
@@ -1090,20 +1188,30 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
             context: context,
             builder: (ctx) => AlertDialog(
               title: const Text('Terminate Session?'),
-              content: const Text('Are you sure you want to disconnect from the active business session?'),
+              content: const Text('Are you sure you want to disconnect from the active business session? You will be signed out.'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancel'),
                 ),
                 TextButton(
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.pop(ctx);
-                    AppSnackbar.show(
-                      context,
-                      "Session terminated successfully.",
-                      type: SnackType.success,
-                    );
+                    try {
+                      await ref.read(authProvider.notifier).logout();
+                    } catch (_) {}
+                    ref.read(accountsProvider.notifier).clear();
+                    if (context.mounted) {
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
+                      AppSnackbar.show(
+                        context,
+                        "Session terminated successfully.",
+                        type: SnackType.success,
+                      );
+                    }
                   },
                   child: const Text('Terminate', style: TextStyle(color: Colors.red)),
                 ),
