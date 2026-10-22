@@ -361,6 +361,828 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   double get _combinedBalance => _totalAvailableFunds;
 
   // ══════════════════════════════════════════════════════════════════════════
+  // MODERNIZED MACOS DESKTOP ACCOUNTING DASHBOARD UI
+  // ══════════════════════════════════════════════════════════════════════════
+
+  Widget _buildMacOsLayout(BuildContext context, double screenWidth) {
+    final double horizontalPadding = screenWidth >= 1440
+        ? 36.0
+        : (screenWidth >= 1100 ? 30.0 : 22.0);
+    final double verticalPadding = screenWidth >= 1440 ? 30.0 : 22.0;
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FB),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            horizontalPadding,
+            verticalPadding,
+            horizontalPadding,
+            44,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildMacOsPageHeader(context),
+              const SizedBox(height: 22),
+              _buildMacOsTopMetrics(screenWidth),
+              const SizedBox(height: 24),
+              _buildMacOsTabNavigation(),
+              const SizedBox(height: 20),
+              _buildMacOsActiveTabContent(screenWidth),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacOsPageHeader(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE11D48), // Rose/Magenta
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x28E11D48),
+                      blurRadius: 10,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: const Icon(
+                  LucideIcons.fileText,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Text(
+                      'Accounting',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.6,
+                        height: 1.2,
+                      ),
+                    ),
+                    SizedBox(height: 3),
+                    Text(
+                      'Compliance-ready financial management and GST reporting.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF64748B),
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 20),
+        ElevatedButton.icon(
+          onPressed: () => _openRecordEntryModal(context),
+          icon: const Icon(LucideIcons.plus, size: 16),
+          label: const Text(
+            'Record Entry',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              letterSpacing: -0.2,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF2563EB),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9),
+            ),
+            shadowColor: const Color(0x332563EB),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacOsTopMetrics(double screenWidth) {
+    final card1 = _buildMacOsKpiCard(
+      label: 'GROSS REVENUE',
+      formattedValue: '₹${_formatNumber(_grossRevenue)}',
+      accentColor: const Color(0xFF8B5CF6), // Purple
+      iconBgColor: const Color(0xFFF3E8FF),
+      iconWidget: const Icon(
+        LucideIcons.trendingUp,
+        color: Color(0xFF8B5CF6),
+        size: 17,
+      ),
+    );
+
+    final card2 = _buildMacOsKpiCard(
+      label: 'TOTAL EXPENSES',
+      formattedValue: '₹${_formatNumber(_totalExpenses)}',
+      accentColor: const Color(0xFFEF4444), // Red
+      iconBgColor: const Color(0xFFFEE2E2),
+      iconWidget: const Icon(
+        LucideIcons.trendingDown,
+        color: Color(0xFFEF4444),
+        size: 17,
+      ),
+    );
+
+    final card3 = _buildMacOsKpiCard(
+      label: 'NET PROFIT',
+      formattedValue: '₹${_formatNumber(_netProfit)}',
+      accentColor: const Color(0xFF0EA5E9), // Cyan / Sky
+      iconBgColor: const Color(0xFFE0F2FE),
+      iconWidget: const Text(
+        '₹',
+        style: TextStyle(
+          color: Color(0xFF0284C7),
+          fontSize: 16,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+
+    final card4 = _buildMacOsKpiCard(
+      label: 'GST PAYABLE',
+      formattedValue: '₹${_formatNumber(_gstPayable)}',
+      accentColor: const Color(0xFF10B981), // Mint / Green
+      iconBgColor: const Color(0xFFDCFCE7),
+      iconWidget: const Icon(
+        LucideIcons.shieldCheck,
+        color: Color(0xFF10B981),
+        size: 17,
+      ),
+      onTap: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.gst),
+    );
+
+    if (screenWidth >= 1050) {
+      return Row(
+        children: [
+          Expanded(child: card1),
+          const SizedBox(width: 16),
+          Expanded(child: card2),
+          const SizedBox(width: 16),
+          Expanded(child: card3),
+          const SizedBox(width: 16),
+          Expanded(child: card4),
+        ],
+      );
+    }
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(child: card1),
+            const SizedBox(width: 14),
+            Expanded(child: card2),
+          ],
+        ),
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            Expanded(child: card3),
+            const SizedBox(width: 14),
+            Expanded(child: card4),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMacOsKpiCard({
+    required String label,
+    required String formattedValue,
+    required Color accentColor,
+    required Color iconBgColor,
+    required Widget iconWidget,
+    VoidCallback? onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        height: 126,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x06000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Top accent indicator bar
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Container(height: 3.5, color: accentColor),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Top Row: Label and Icon Badge
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.7,
+                        ),
+                      ),
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: iconBgColor,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Center(child: iconWidget),
+                      ),
+                    ],
+                  ),
+                  // Financial Amount Value
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      formattedValue,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.6,
+                        fontFeatures: [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                  // Bottom Live Position Badge
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: accentColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'LIVE POSITION',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF64748B),
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacOsTabNavigation() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 6,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(4),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: List.generate(_tabLabels.length, (index) {
+            final isSelected = _activeTab == index;
+
+            Color selectedBg;
+            if (index == 0) {
+              selectedBg = const Color(0xFF4F46E5); // Indigo for P & L
+            } else if (index == 1) {
+              selectedBg = const Color(0xFF2563EB); // Blue for Balance Sheet
+            } else if (index == 2) {
+              selectedBg = const Color(0xFF7C3AED); // Purple for Receivables & Payables
+            } else if (index == 3) {
+              selectedBg = const Color(0xFFEF4444); // Red for Expenses
+            } else if (index == 4) {
+              selectedBg = const Color(0xFFF59E0B); // Amber for Cash & Bank
+            } else if (index == 5) {
+              selectedBg = const Color(0xFF059669); // Emerald for GST
+            } else if (index == 6) {
+              selectedBg = const Color(0xFF3B5998); // Slate for Day Book
+            } else {
+              selectedBg = const Color(0xFF166534);
+            }
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: InkWell(
+                onTap: () => setState(() => _activeTab = index),
+                borderRadius: BorderRadius.circular(8),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isSelected ? selectedBg : Colors.transparent,
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: selectedBg.withValues(alpha: 0.28),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      _tabLabels[index],
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        color: isSelected ? Colors.white : const Color(0xFF475569),
+                        letterSpacing: -0.1,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacOsActiveTabContent(double screenWidth) {
+    switch (_activeTab) {
+      case 0:
+        if (screenWidth >= 1050) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: _buildMacOsRevenueBreakdown()),
+              const SizedBox(width: 20),
+              Expanded(flex: 6, child: _buildMacOsExpenseBreakdown()),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            _buildMacOsRevenueBreakdown(),
+            const SizedBox(height: 20),
+            _buildMacOsExpenseBreakdown(),
+          ],
+        );
+      case 1:
+        return _buildBalanceSheetTab(false, screenWidth);
+      case 2:
+        return _buildReceivablesPayablesTab(false, screenWidth);
+      case 3:
+        return _buildExpensesTab(false);
+      case 4:
+        return _buildCashBankTab(false, screenWidth);
+      case 5:
+        return _buildGSTTab(false, screenWidth);
+      case 6:
+        return _buildDayBookTab(false, screenWidth);
+      default:
+        if (screenWidth >= 1050) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(flex: 5, child: _buildMacOsRevenueBreakdown()),
+              const SizedBox(width: 20),
+              Expanded(flex: 6, child: _buildMacOsExpenseBreakdown()),
+            ],
+          );
+        }
+        return Column(
+          children: [
+            _buildMacOsRevenueBreakdown(),
+            const SizedBox(height: 20),
+            _buildMacOsExpenseBreakdown(),
+          ],
+        );
+    }
+  }
+
+  Widget _buildMacOsRevenueBreakdown() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFECFDF5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.arrowUpRight,
+                      color: Color(0xFF10B981),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Revenue Breakdown',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '3 Sources',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 16),
+          _buildMacOsRevenueItem(
+            label: 'Sales Revenue',
+            amount: '₹10,00,00,07,06,880',
+            pct: '100%',
+          ),
+          _buildMacOsRevenueItem(
+            label: 'Service Income',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsRevenueItem(
+            label: 'Other Income',
+            amount: '₹0',
+            pct: '0%',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacOsRevenueItem({
+    required String label,
+    required String amount,
+    required String pct,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                  fontFeatures: [FontFeature.tabularFigures()],
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: pct == '0%' ? const Color(0xFFF1F5F9) : const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  pct,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: pct == '0%' ? const Color(0xFF64748B) : const Color(0xFF15803D),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacOsExpenseBreakdown() {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      LucideIcons.arrowDownRight,
+                      color: Color(0xFFEF4444),
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'Expense Breakdown',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '13 Categories',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          const Divider(height: 1, thickness: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 16),
+          _buildMacOsExpenseItem(
+            label: 'Office Expenses',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Rent & Utilities',
+            amount: '₹30,000',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Salary & Wages',
+            amount: '₹65,200',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Marketing & Advertising',
+            amount: '₹50,000',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Travel & Meals',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Vehicle Expenses',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Software & Subscription',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Repairs & Maintenance',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Bank Charges',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Taxes & Government Fees',
+            amount: '₹2,02,821.4',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Insurance',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Inventory Purchase',
+            amount: '₹0',
+            pct: '0%',
+          ),
+          _buildMacOsExpenseItem(
+            label: 'Miscellaneous',
+            amount: '₹9,85,18,696',
+            pct: '100%',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMacOsExpenseItem({
+    required String label,
+    required String amount,
+    required String pct,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: const Color(0xFFFEE2E2)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF991B1B),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                  fontFeatures: [FontFeature.tabularFigures()],
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: pct == '0%' ? const Color(0xFFFDE8E8) : const Color(0xFFFECDD3),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Text(
+                  pct,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
   // MAIN BUILD
   // ══════════════════════════════════════════════════════════════════════════
   @override
@@ -369,29 +1191,9 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     final isMobile = screenWidth < 900;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
-    // Preserve exact macOS desktop UI untouched
+    // Modernized macOS Desktop Finance Dashboard
     if (isMacOS) {
-      return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FB),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(28, 24, 28, 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildPageHeader(false),
-                const SizedBox(height: 20),
-                _buildTopMetrics(screenWidth),
-                const SizedBox(height: 22),
-                _buildTabPills(false),
-                const SizedBox(height: 20),
-                _buildActiveTabContent(false, screenWidth),
-              ],
-            ),
-          ),
-        ),
-      );
+      return _buildMacOsLayout(context, screenWidth);
     }
 
     // ─── MOBILE OS REDESIGNED VIEW (Matching Reports / Barcode / Marketing) ───
