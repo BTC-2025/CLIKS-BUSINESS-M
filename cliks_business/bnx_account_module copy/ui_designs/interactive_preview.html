@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BNX Mail - Account System UI & Workflow Interactive Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --card-border: #334155;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #6366f1;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 20px;
+    }
+    .brand-badge {
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      color: white;
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+    .nav-tabs {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+    }
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+    .nav-btn:hover, .nav-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+      box-shadow: 0 4px 14px rgba(59, 130, 246, 0.3);
+    }
+    main {
+      flex: 1;
+      padding: 32px 20px;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .screen-wrapper {
+      width: 100%;
+      max-width: 540px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      position: relative;
+    }
+    .screen-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .screen-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #cbd5e1;
+    }
+    .form-control {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      padding: 12px 14px;
+      border-radius: 10px;
+      color: white;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+    }
+    .row {
+      display: flex;
+      gap: 12px;
+    }
+    .btn-primary {
+      width: 100%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+    .btn-secondary {
+      width: 100%;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--card-border);
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    .btn-secondary:hover {
+      background: #334155;
+      color: white;
+    }
+    .type-card {
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .type-card:hover {
+      background: #253349;
+    }
+    .type-card.selected {
+      border-color: var(--primary);
+      background: rgba(59, 130, 246, 0.1);
+      box-shadow: 0 0 0 2px var(--primary);
+    }
+    .type-icon {
+      font-size: 28px;
+      background: #0f172a;
+      padding: 12px;
+      border-radius: 12px;
+    }
+    .otp-inputs {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin: 24px 0 16px;
+    }
+    .otp-box {
+      width: 50px;
+      height: 60px;
+      background: #0f172a;
+      border: 2px solid var(--card-border);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: white;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+      transition: border 0.2s;
+    }
+    .otp-box:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    .resend-container {
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+    .resend-link {
+      color: var(--primary);
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+    .badge-chip {
+      background: #334155;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-block;
+      margin-right: 6px;
+      margin-top: 6px;
+    }
+    .badge-chip:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .checklist {
+      list-style: none;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin: 12px 0;
+    }
+    .checklist li {
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .checklist li.valid {
+      color: var(--success);
+    }
+    .step-pill {
+      font-size: 11px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--primary);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      display: block;
+    }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span>✉️ Bnx mail</span>
+      <span class="brand-badge">Account Suite</span>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-btn active" onclick="showScreen('screen-type')">1. Account Type</button>
+      <button class="nav-btn" onclick="showScreen('screen-myself-details')">2. Myself Info</button>
+      <button class="nav-btn" onclick="showScreen('screen-myself-handle')">3. Handle Choice</button>
+      <button class="nav-btn" onclick="showScreen('screen-myself-otp')">4. Mobile OTP</button>
+      <button class="nav-btn" onclick="showScreen('screen-myself-pass')">5. Password</button>
+      <button class="nav-btn" onclick="showScreen('screen-child')">Child Flow</button>
+      <button class="nav-btn" onclick="showScreen('screen-business')">Business Flow</button>
+      <button class="nav-btn" onclick="showScreen('screen-onboarding')">Business Onboarding</button>
+      <button class="nav-btn" onclick="showScreen('screen-login')">Login & Switcher</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. ACCOUNT TYPE SELECTION -->
+    <div id="screen-type" class="screen-wrapper">
+      <span class="step-pill">Step 1 of 5</span>
+      <h1 class="screen-title">Create your BNX Account</h1>
+      <p class="screen-subtitle">Choose the account type that best suits your communication and security needs.</p>
+
+      <div class="type-card selected" onclick="selectType(this, 'myself')">
+        <div class="type-icon">👤</div>
+        <div>
+          <h3 style="font-size:16px; margin-bottom:4px;">For Myself</h3>
+          <p style="font-size:13px; color:var(--text-muted)">Personal secure email with end-to-end encryption & 15GB vault.</p>
+        </div>
+      </div>
+
+      <div class="type-card" onclick="selectType(this, 'child')">
+        <div class="type-icon">👶</div>
+        <div>
+          <h3 style="font-size:16px; margin-bottom:4px;">For My Child</h3>
+          <p style="font-size:13px; color:var(--text-muted)">Parentally supervised account with guardian verification OTP.</p>
+        </div>
+      </div>
+
+      <div class="type-card" onclick="selectType(this, 'business')">
+        <div class="type-icon">🏢</div>
+        <div>
+          <h3 style="font-size:16px; margin-bottom:4px;">For My Business</h3>
+          <p style="font-size:13px; color:var(--text-muted)">Enterprise domains, GSTIN & CIN compliance, branch IDs.</p>
+        </div>
+      </div>
+
+      <button class="btn-primary" onclick="showScreen('screen-myself-details')">Continue →</button>
+    </div>
+
+    <!-- 2. MYSELF DETAILS -->
+    <div id="screen-myself-details" class="screen-wrapper hidden">
+      <span class="step-pill">Step 2 of 5</span>
+      <h1 class="screen-title">Personal Details</h1>
+      <p class="screen-subtitle">Enter your legal name, birthday, and gender.</p>
+
+      <div class="row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">First Name *</label>
+          <input type="text" class="form-control" placeholder="e.g. Siva" value="Siva">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Last Name *</label>
+          <input type="text" class="form-control" placeholder="e.g. Kumar" value="Kumar">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Date of Birth *</label>
+        <input type="date" class="form-control" value="1998-05-15">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <select class="form-control">
+          <option>Male</option>
+          <option>Female</option>
+          <option>Rather not say</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="showScreen('screen-myself-handle')">Next: Choose Handle →</button>
+      <button class="btn-secondary" onclick="showScreen('screen-type')">← Back</button>
+    </div>
+
+    <!-- 3. MYSELF HANDLE SELECTION -->
+    <div id="screen-myself-handle" class="screen-wrapper hidden">
+      <span class="step-pill">Step 3 of 5</span>
+      <h1 class="screen-title">Choose your Handle</h1>
+      <p class="screen-subtitle">Personal handles must follow the 10-character rule (7 letters + 3 digits).</p>
+
+      <div class="form-group">
+        <label class="form-label">Mailbox Handle (@bnxmail.com)</label>
+        <div style="position:relative;">
+          <input id="handle-input" type="text" class="form-control" value="sivakum123" style="padding-right: 120px; font-family:'JetBrains Mono', monospace; font-weight:600;">
+          <span style="position:absolute; right:12px; top:12px; color:var(--text-muted); font-size:13px; font-weight:500;">@bnxmail.com</span>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <span style="font-size:12px; color:var(--text-muted);">Suggestions based on your name:</span><br>
+        <span class="badge-chip" onclick="applyHandle('sivakum402')">sivakum402</span>
+        <span class="badge-chip" onclick="applyHandle('kumarsi789')">kumarsi789</span>
+        <span class="badge-chip" onclick="applyHandle('sivakuu101')">sivakuu101</span>
+      </div>
+
+      <button class="btn-primary" onclick="showScreen('screen-myself-otp')">Next: Verify Mobile OTP →</button>
+      <button class="btn-secondary" onclick="showScreen('screen-myself-details')">← Back</button>
+    </div>
+
+    <!-- 4. MOBILE OTP VERIFICATION -->
+    <div id="screen-myself-otp" class="screen-wrapper hidden">
+      <span class="step-pill">Step 4 of 5</span>
+      <h1 class="screen-title">Verify Phone Number</h1>
+      <p class="screen-subtitle">We sent a 6-digit verification code to <strong>+91 98765 43210</strong></p>
+
+      <div class="otp-inputs">
+        <input type="text" maxlength="1" class="otp-box" value="1" oninput="moveNext(this, 1)">
+        <input type="text" maxlength="1" class="otp-box" value="2" oninput="moveNext(this, 2)">
+        <input type="text" maxlength="1" class="otp-box" value="3" oninput="moveNext(this, 3)">
+        <input type="text" maxlength="1" class="otp-box" value="4" oninput="moveNext(this, 4)">
+        <input type="text" maxlength="1" class="otp-box" value="5" oninput="moveNext(this, 5)">
+        <input type="text" maxlength="1" class="otp-box" value="6" oninput="moveNext(this, 6)">
+      </div>
+
+      <div class="resend-container">
+        Didn't receive the code? <span id="countdown-text">Resend in <strong id="timer-val">0:45</strong></span>
+        <span id="resend-btn" class="resend-link hidden" onclick="restartTimer()">Resend OTP</span>
+      </div>
+
+      <div style="background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:8px; padding:10px; margin-top:20px; font-size:12px; color:#93c5fd; text-align:center;">
+        💡 Dev/Testing Master OTP is <strong>123456</strong>
+      </div>
+
+      <button class="btn-primary" onclick="showScreen('screen-myself-pass')">Verify & Continue →</button>
+      <button class="btn-secondary" onclick="showScreen('screen-myself-handle')">← Back</button>
+    </div>
+
+    <!-- 5. PASSWORD CREATION -->
+    <div id="screen-myself-pass" class="screen-wrapper hidden">
+      <span class="step-pill">Step 5 of 5</span>
+      <h1 class="screen-title">Create Password</h1>
+      <p class="screen-subtitle">Choose a strong password to protect your mail and encrypted storage.</p>
+
+      <div class="form-group">
+        <label class="form-label">Password *</label>
+        <input type="password" class="form-control" value="SecurePass@2026">
+      </div>
+
+      <ul class="checklist">
+        <li class="valid">✓ At least 8 characters</li>
+        <li class="valid">✓ At least one uppercase letter (A-Z)</li>
+        <li class="valid">✓ At least one lowercase letter (a-z)</li>
+        <li class="valid">✓ At least one number (0-9)</li>
+        <li class="valid">✓ At least one special symbol (!@#$%^&*)</li>
+      </ul>
+
+      <div class="form-group">
+        <label class="form-label">Confirm Password *</label>
+        <input type="password" class="form-control" value="SecurePass@2026">
+      </div>
+
+      <button class="btn-primary" onclick="alert('Account created successfully! Mailbox provisioned with tokens.')">Complete Account Setup 🎉</button>
+      <button class="btn-secondary" onclick="showScreen('screen-myself-otp')">← Back</button>
+    </div>
+
+    <!-- CHILD FLOW -->
+    <div id="screen-child" class="screen-wrapper hidden">
+      <span class="step-pill">Child Account Workflow</span>
+      <h1 class="screen-title">Parent Supervised Account</h1>
+      <p class="screen-subtitle">Minors require parental consent via SMS or email OTP.</p>
+
+      <div class="form-group">
+        <label class="form-label">Child Name</label>
+        <input type="text" class="form-control" value="Aarav Ramesh">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parent Mobile Number / Email</label>
+        <input type="text" class="form-control" value="+91 9876543210">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Parent Consent 6-Digit OTP</label>
+        <input type="text" class="form-control" placeholder="Enter 6-digit OTP" value="123456" style="letter-spacing:4px; font-weight:700;">
+      </div>
+      <button class="btn-primary" onclick="alert('Parent consent verified!')">Verify Parent Consent →</button>
+    </div>
+
+    <!-- BUSINESS FLOW -->
+    <div id="screen-business" class="screen-wrapper hidden">
+      <span class="step-pill">Business Registration Workflow</span>
+      <h1 class="screen-title">Business Account Setup</h1>
+      <p class="screen-subtitle">Register enterprise workspaces with tax and statutory compliance.</p>
+
+      <div class="form-group">
+        <label class="form-label">Organization Legal Name</label>
+        <input type="text" class="form-control" value="BNX Global Technologies Pvt Ltd">
+      </div>
+      <div class="row">
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">Company CIN</label>
+          <input type="text" class="form-control" value="U72900KA2024PTC123456">
+        </div>
+        <div class="form-group" style="flex:1;">
+          <label class="form-label">GSTIN</label>
+          <input type="text" class="form-control" value="29AAACB1234K1Z5">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="showScreen('screen-onboarding')">Continue to Onboarding →</button>
+    </div>
+
+    <!-- BUSINESS ONBOARDING WIZARD -->
+    <div id="screen-onboarding" class="screen-wrapper hidden">
+      <span class="step-pill">First-Time Setup (Shown Once)</span>
+      <h1 class="screen-title">Business Profile & Branding</h1>
+      <p class="screen-subtitle">Step 1 of 2: Setup your business profile.</p>
+
+      <div class="form-group">
+        <label class="form-label">Industry Sector</label>
+        <input type="text" class="form-control" value="Cloud Software & Telecommunications">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Company Website</label>
+        <input type="text" class="form-control" value="https://bnxmail.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Support Email</label>
+        <input type="text" class="form-control" value="support@bnxmail.com">
+      </div>
+      <button class="btn-primary" onclick="alert('Business onboarding saved! You will not see this form again.')">Save Business Profile</button>
+    </div>
+
+    <!-- LOGIN & SWITCHER -->
+    <div id="screen-login" class="screen-wrapper hidden">
+      <span class="step-pill">Authentication</span>
+      <h1 class="screen-title">Sign in to Bnx mail</h1>
+      <p class="screen-subtitle">Enter your account credentials or switch between profiles.</p>
+
+      <div class="form-group">
+        <label class="form-label">Username / Handle</label>
+        <input type="text" class="form-control" value="sivakum123@bnxmail.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" class="form-control" value="••••••••••••">
+      </div>
+      <button class="btn-primary" onclick="alert('Logged in!')">Sign In →</button>
+
+      <div style="margin-top:24px; padding-top:16px; border-top:1px solid var(--card-border);">
+        <span style="font-size:12px; color:var(--text-muted)">SWITCH SAVED ACCOUNTS:</span>
+        <div style="display:flex; align-items:center; gap:10px; margin-top:10px; background:#0f172a; padding:10px; border-radius:10px;">
+          <div style="background:#3b82f6; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700;">S</div>
+          <div style="flex:1;">
+            <div style="font-size:13px; font-weight:600;">Siva Kumar (Personal)</div>
+            <div style="font-size:12px; color:var(--text-muted)">sivakum123@bnxmail.com</div>
+          </div>
+          <span style="color:var(--success);">✓</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    function showScreen(screenId) {
+      document.querySelectorAll('.screen-wrapper').forEach(el => el.classList.add('hidden'));
+      document.getElementById(screenId).classList.remove('hidden');
+      
+      document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.nav-btn')).find(b => b.getAttribute('onclick')?.includes(screenId));
+      if (activeBtn) activeBtn.classList.add('active');
+    }
+
+    function selectType(el, type) {
+      document.querySelectorAll('.type-card').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+    }
+
+    function applyHandle(handle) {
+      document.getElementById('handle-input').value = handle;
+    }
+
+    function moveNext(current, index) {
+      if (current.value.length === 1) {
+        const next = current.nextElementSibling;
+        if (next && next.classList.contains('otp-box')) {
+          next.focus();
+        }
+      }
+    }
+
+    let timeLeft = 45;
+    let timerInterval = setInterval(() => {
+      timeLeft--;
+      if (timeLeft > 0) {
+        document.getElementById('timer-val').innerText = `0:${timeLeft < 10 ? '0' : ''}${timeLeft}`;
+      } else {
+        clearInterval(timerInterval);
+        document.getElementById('countdown-text').classList.add('hidden');
+        document.getElementById('resend-btn').classList.remove('hidden');
+      }
+    }, 1000);
+
+    function restartTimer() {
+      timeLeft = 60;
+      document.getElementById('countdown-text').classList.remove('hidden');
+      document.getElementById('resend-btn').classList.add('hidden');
+      alert('New OTP sent: 123456');
+    }
+  </script>
+</body>
+</html>

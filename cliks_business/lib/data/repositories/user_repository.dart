@@ -107,6 +107,91 @@ class UserRepository {
     }
   }
 
+  /// Checks whether a business account has already completed onboarding either locally or remotely.
+  static Future<bool> isBusinessAccountOnboarded(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return false;
+
+    // 1. Check local persistent store
+    if (await TokenService.isBusinessOnboardingCompleted(cleanEmail)) {
+      return true;
+    }
+
+    final altEmail = cleanEmail.contains('@')
+        ? cleanEmail.split('@').first
+        : '$cleanEmail@bnxmail.com';
+
+    if (await TokenService.isBusinessOnboardingCompleted(altEmail)) {
+      await TokenService.setBusinessOnboardingCompleted(cleanEmail, completed: true);
+      return true;
+    }
+
+    // 2. Check remote API status endpoint (/api/business/status)
+    try {
+      final username = cleanEmail.contains('@') ? cleanEmail.split('@').first : cleanEmail;
+      final statusRes = await ApiClient.get('/api/business/status?username=$username');
+      final data = statusRes['data'];
+      if (data is Map && (data['isCompleted'] == true || data['shouldShowOnboarding'] == false)) {
+        await TokenService.setBusinessOnboardingCompleted(cleanEmail, completed: true);
+        await TokenService.setBusinessOnboardingCompleted(altEmail, completed: true);
+        return true;
+      }
+    } catch (_) {}
+
+    // 3. Check remote/local merged profile data
+    try {
+      final profile = await getProfileData(email: cleanEmail);
+      if (profile != null) {
+        if (profile['businessOnboarded'] == true ||
+            profile['businessOnboardingCompleted'] == true ||
+            profile['business_onboarded'] == true) {
+          await TokenService.setBusinessOnboardingCompleted(cleanEmail, completed: true);
+          await TokenService.setBusinessOnboardingCompleted(altEmail, completed: true);
+          return true;
+        }
+        final bType = profile['businessType']?.toString();
+        final ind = profile['industry']?.toString();
+        final cSize = profile['companySize']?.toString();
+        final bAddr = profile['businessAddress']?.toString() ?? profile['workAddress']?.toString();
+        if ((bType != null && bType.isNotEmpty) ||
+            (ind != null && ind.isNotEmpty) ||
+            (cSize != null && cSize.isNotEmpty) ||
+            (bAddr != null && bAddr.isNotEmpty)) {
+          await TokenService.setBusinessOnboardingCompleted(cleanEmail, completed: true);
+          await TokenService.setBusinessOnboardingCompleted(altEmail, completed: true);
+          return true;
+        }
+      }
+    } catch (_) {}
+
+    return false;
+  }
+
+  /// Submits business onboarding details to POST /api/business/onboarding
+  static Future<Map<String, dynamic>?> saveBusinessOnboarding(
+    Map<String, dynamic> data, {
+    String? email,
+  }) async {
+    final cleanEmail = (email ?? await TokenService.getUserEmail() ?? '').trim().toLowerCase();
+    try {
+      final payload = Map<String, dynamic>.from(data);
+      if (!payload.containsKey('username') && cleanEmail.isNotEmpty) {
+        payload['username'] = cleanEmail.contains('@') ? cleanEmail.split('@').first : cleanEmail;
+      }
+      final res = await ApiClient.post('/api/business/onboarding', body: payload);
+      if (cleanEmail.isNotEmpty) {
+        await TokenService.setBusinessOnboardingCompleted(cleanEmail, completed: true);
+      }
+      return (res['data'] as Map<String, dynamic>?) ?? (res is Map<String, dynamic> ? res : null);
+    } catch (e) {
+      print('[BUSINESS ONBOARDING SAVE ERROR] $e');
+      if (cleanEmail.isNotEmpty) {
+        await TokenService.setBusinessOnboardingCompleted(cleanEmail, completed: true);
+      }
+      return null;
+    }
+  }
+
   static Future<void> updateProfile(
     Map<String, dynamic> fields, {
     String? email,
@@ -591,6 +676,41 @@ class UserRepository {
     } catch (e) {
       print('[LIST SUB-IDS ERROR] $e');
       return [];
+    }
+  }
+
+  /// 5.2 Update Sub-ID Branch Assignment (PUT /api/subid/{subId}/branch)
+  static Future<bool> updateSubIdBranch({
+    required dynamic subId,
+    required int branchId,
+    required String branchName,
+  }) async {
+    try {
+      final res = await ApiClient.put(
+        '/api/subid/$subId/branch',
+        body: {'branchId': branchId, 'branchName': branchName},
+      );
+      return res['success'] == true;
+    } catch (e) {
+      print('[UPDATE SUBID BRANCH ERROR] $e');
+      return false;
+    }
+  }
+
+  /// 5.3 Update Sub-ID Permissions (PUT /api/subid/{subId}/permissions)
+  static Future<bool> updateSubIdPermissions({
+    required dynamic subId,
+    required List<int> permissions,
+  }) async {
+    try {
+      final res = await ApiClient.put(
+        '/api/subid/$subId/permissions',
+        body: permissions,
+      );
+      return res['success'] == true;
+    } catch (e) {
+      print('[UPDATE SUBID PERMISSIONS ERROR] $e');
+      return false;
     }
   }
 

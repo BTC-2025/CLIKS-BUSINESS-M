@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/navigation/navigation_provider.dart';
+import '../../../data/account_provider.dart';
+import '../../../data/repositories/auth_repository.dart';
+import '../../auth/notifiers/auth_notifier.dart';
+import '../../auth/pages/login_screen.dart';
 import '../../profile/presentation/manage_account_screen.dart';
 
 final macosAccountMenuVisibleProvider = StateProvider<bool>((ref) => false);
@@ -10,10 +15,17 @@ class MacOSAccountMenuCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final email = activeAccount.email.trim().isNotEmpty
+        ? activeAccount.email.trim()
+        : 'ravinew2004@bnxmail.com';
+    final username = email.contains('@') ? email.split('@').first : 'ravinew2004';
+    final initialLetter = username.isNotEmpty ? username[0].toUpperCase() : 'R';
+
     return Material(
       color: Colors.transparent,
       child: Container(
-        width: 300,
+        width: 320,
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
@@ -29,9 +41,12 @@ class MacOSAccountMenuCard extends ConsumerWidget {
         clipBehavior: Clip.antiAlias,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+          child: SizedBox(
+            width: double.infinity,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
               // Avatar with camera badge
               Stack(
                 alignment: Alignment.bottomRight,
@@ -44,9 +59,9 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                       shape: BoxShape.circle,
                     ),
                     alignment: Alignment.center,
-                    child: const Text(
-                      'R',
-                      style: TextStyle(
+                    child: Text(
+                      initialLetter,
+                      style: const TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -80,18 +95,18 @@ class MacOSAccountMenuCard extends ConsumerWidget {
               const SizedBox(height: 12),
 
               // Username & Email
-              const Text(
-                'ravinew2004',
-                style: TextStyle(
+              Text(
+                username,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF111827),
                 ),
               ),
               const SizedBox(height: 2),
-              const Text(
-                'ravinew2004@bnxmail.com',
-                style: TextStyle(
+              Text(
+                email,
+                style: const TextStyle(
                   fontSize: 12.5,
                   color: Color(0xFF6B7280),
                 ),
@@ -103,7 +118,7 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Account is already set as Primary.'),
+                      content: Text('Account is set as Primary.'),
                       duration: Duration(seconds: 1),
                     ),
                   );
@@ -141,13 +156,13 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => const ManageAccountScreen(),
+                      builder: (_) => const ManageAccountScreen(initialTab: 0),
                     ),
                   );
                 },
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6.5),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
@@ -161,11 +176,11 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                         size: 13,
                         color: Color(0xFF374151),
                       ),
-                      SizedBox(width: 7),
+                      SizedBox(width: 6),
                       Text(
                         'Manage your account',
                         style: TextStyle(
-                          fontSize: 12.5,
+                          fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: Color(0xFF374151),
                         ),
@@ -179,54 +194,89 @@ class MacOSAccountMenuCard extends ConsumerWidget {
               const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
               const SizedBox(height: 8),
 
-              // Add another account
+              // 1. Manage Branches
+              _buildMenuItem(
+                icon: LucideIcons.building2,
+                title: 'Manage Branches',
+                onTap: () {
+                  ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+                  ref.read(navigationProvider.notifier).setModuleAndRoute(
+                        AppModule.books,
+                        AppRoute.warehouse,
+                      );
+                },
+              ),
+
+              // 2. Manage SubIDs
+              _buildMenuItem(
+                icon: LucideIcons.users,
+                title: 'Manage SubIDs',
+                onTap: () {
+                  ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const ManageAccountScreen(initialTab: 3),
+                    ),
+                  );
+                },
+              ),
+
+              // 3. Add another account
               _buildMenuItem(
                 icon: LucideIcons.userPlus,
                 title: 'Add another account',
                 onTap: () {
                   ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Add account dialog initiated.'),
-                      duration: Duration(seconds: 2),
-                    ),
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
                   );
                 },
               ),
 
-              // Sign out of all accounts
+              // 4. Sign out of all accounts
               _buildMenuItem(
                 icon: LucideIcons.logOut,
                 title: 'Sign out of all accounts',
-                onTap: () {
+                onTap: () async {
                   ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('All accounts signed out.'),
-                      backgroundColor: Color(0xFFDC2626),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  try {
+                    await ref.read(authProvider.notifier).logout();
+                  } catch (_) {}
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
               ),
 
               const SizedBox(height: 12),
 
-              // Sign out button
+              // Sign out button (centered pill with subtle outline)
               InkWell(
-                onTap: () {
+                onTap: () async {
                   ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Signed out of ravinew2004.'),
-                      backgroundColor: Color(0xFFDC2626),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  try {
+                    await ref.read(authProvider.notifier).logout();
+                    await AuthRepository.logoutSpecificAccount(email);
+                  } catch (_) {}
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                      (route) => false,
+                    );
+                  }
                 },
                 borderRadius: BorderRadius.circular(10),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFE5E7EB), width: 1.1),
+                  ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: const [
@@ -235,7 +285,7 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                         size: 15,
                         color: Color(0xFFDC2626),
                       ),
-                      SizedBox(width: 6),
+                      SizedBox(width: 8),
                       Text(
                         'Sign out',
                         style: TextStyle(
@@ -253,7 +303,8 @@ class MacOSAccountMenuCard extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildMenuItem({
@@ -275,12 +326,14 @@ class MacOSAccountMenuCard extends ConsumerWidget {
               color: const Color(0xFF4B5563),
             ),
             const SizedBox(width: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF374151),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF374151),
+                ),
               ),
             ),
           ],

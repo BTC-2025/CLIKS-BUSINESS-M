@@ -16,11 +16,15 @@ class Sidebar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final navigation = ref.watch(navigationProvider);
-    final isMacOS =
+    final isDesktopSidebar =
         Theme.of(context).platform == TargetPlatform.macOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        Theme.of(context).platform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        (kIsWeb && MediaQuery.of(context).size.width >= 1100);
 
-    if (isMacOS) {
+    if (isDesktopSidebar) {
       return _buildMacOSSidebar(context, ref, navigation);
     }
 
@@ -707,24 +711,27 @@ class Sidebar extends ConsumerWidget {
                           color: const Color(0xFF166534),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              LucideIcons.plus,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Generate Invoice',
-                              style: TextStyle(
+                        child: const FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                LucideIcons.plus,
+                                size: 16,
                                 color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
                               ),
-                            ),
-                          ],
+                              SizedBox(width: 8),
+                              Text(
+                                'Generate Invoice',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -1172,12 +1179,16 @@ class Sidebar extends ConsumerWidget {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  final isMacOS =
+                  final isDesktopStorage =
                       Theme.of(context).platform == TargetPlatform.macOS ||
-                      defaultTargetPlatform == TargetPlatform.macOS;
+                      defaultTargetPlatform == TargetPlatform.macOS ||
+                      Theme.of(context).platform == TargetPlatform.windows ||
+                      defaultTargetPlatform == TargetPlatform.windows ||
+                      defaultTargetPlatform == TargetPlatform.linux ||
+                      (kIsWeb && MediaQuery.of(context).size.width >= 1100);
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => isMacOS
+                      builder: (context) => isDesktopStorage
                           ? const MacOsStoragePage()
                           : const MobileStoragePage(),
                     ),
@@ -1990,10 +2001,14 @@ class _SidebarBottomFixed extends ConsumerWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: () {
-          final isMacOS =
+          final isDesktopStorage =
               Theme.of(context).platform == TargetPlatform.macOS ||
-              defaultTargetPlatform == TargetPlatform.macOS;
-          if (isMacOS) {
+              defaultTargetPlatform == TargetPlatform.macOS ||
+              Theme.of(context).platform == TargetPlatform.windows ||
+              defaultTargetPlatform == TargetPlatform.windows ||
+              defaultTargetPlatform == TargetPlatform.linux ||
+              (kIsWeb && MediaQuery.of(context).size.width >= 1100);
+          if (isDesktopStorage) {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => const MacOsStoragePage(),

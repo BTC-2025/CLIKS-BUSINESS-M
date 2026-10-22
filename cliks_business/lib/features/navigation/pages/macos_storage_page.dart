@@ -5,8 +5,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../data/account_provider.dart';
+import '../../auth/notifiers/auth_notifier.dart';
+import '../../auth/pages/login_screen.dart';
 import '../../profile/presentation/manage_account_screen.dart';
 import '../widgets/macos_right_utility_rail.dart';
+import '../widgets/macos_account_menu_card.dart';
 
 enum _StorageTab {
   home,
@@ -144,7 +148,14 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 height: double.infinity,
               ),
             ),
-            Positioned(top: 58, right: 28, child: _buildAccountDropdownCard()),
+            Positioned(
+              top: 58,
+              right: 28,
+              child: GestureDetector(
+                onTap: () => setState(() => _isAccountMenuOpen = false),
+                child: const MacOSAccountMenuCard(),
+              ),
+            ),
           ],
         ],
       ),
@@ -377,15 +388,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 color: const Color(0xFF334155),
                 onTap: () {
                   setState(() => _isAccountMenuOpen = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Add account dialog initiated.',
-                        style: GoogleFonts.inter(),
-                      ),
-                      backgroundColor: const Color(0xFF334155),
-                      behavior: SnackBarBehavior.floating,
-                      width: 340,
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const LoginScreen(),
                     ),
                   );
                 },
@@ -394,38 +399,50 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 icon: LucideIcons.logOut,
                 title: 'Sign out of this account',
                 color: const Color(0xFF334155),
-                onTap: () {
+                onTap: () async {
                   setState(() => _isAccountMenuOpen = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Signed out of ravinew2004.',
-                        style: GoogleFonts.inter(),
-                      ),
-                      backgroundColor: const Color(0xFF334155),
-                      behavior: SnackBarBehavior.floating,
-                      width: 340,
-                    ),
-                  );
+                  final activeAccount = ref.read(activeAccountProvider);
+                  final activeEmail = activeAccount.email.isNotEmpty
+                      ? activeAccount.email
+                      : activeAccount.id;
+                  await ref
+                      .read(accountsProvider.notifier)
+                      .signOutSingleAccount(
+                        targetEmail: activeEmail,
+                        ref: ref,
+                        context: context,
+                      );
                 },
               ),
               _buildAccountMenuItem(
                 icon: LucideIcons.logOut,
                 title: 'Sign out of all accounts',
                 color: const Color(0xFFEF4444),
-                onTap: () {
+                onTap: () async {
                   setState(() => _isAccountMenuOpen = false);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'All accounts signed out.',
-                        style: GoogleFonts.inter(),
+                  try {
+                    await ref.read(authProvider.notifier).logout();
+                  } catch (_) {}
+                  ref.read(accountsProvider.notifier).clear();
+                  if (context.mounted) {
+                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                        builder: (_) => const LoginScreen(),
                       ),
-                      backgroundColor: const Color(0xFFDC2626),
-                      behavior: SnackBarBehavior.floating,
-                      width: 340,
-                    ),
-                  );
+                      (route) => false,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'All accounts signed out.',
+                          style: GoogleFonts.inter(),
+                        ),
+                        backgroundColor: const Color(0xFFDC2626),
+                        behavior: SnackBarBehavior.floating,
+                        width: 340,
+                      ),
+                    );
+                  }
                 },
               ),
             ],

@@ -17,6 +17,8 @@ import '../../../data/repositories/user_repository.dart';
 import '../../../data/settings_provider.dart';
 import '../../../models/account_model.dart';
 import '../../../models/two_factor_model.dart';
+import '../../auth/notifiers/auth_notifier.dart';
+import '../../auth/pages/login_screen.dart';
 
 class ManageAccountScreen extends ConsumerStatefulWidget {
   final int initialTab;
@@ -1286,12 +1288,16 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   // BUILD ENTRY POINT
   // ═══════════════════════════════════════════════════════════════════════════
   void _navigateToStoragePage() {
-    final isMacOS =
+    final isDesktopStorage =
         Theme.of(context).platform == TargetPlatform.macOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
+        defaultTargetPlatform == TargetPlatform.macOS ||
+        Theme.of(context).platform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        (kIsWeb && MediaQuery.of(context).size.width >= 1100);
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (context) => isMacOS
+        builder: (context) => isDesktopStorage
             ? const MacOsStoragePage()
             : const MobileStoragePage(),
       ),
@@ -1634,9 +1640,17 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
                 // Action 2: Sign out of all accounts
                 InkWell(
-                  onTap: () {
+                  onTap: () async {
                     Navigator.pop(context);
-                    _handleSignOut();
+                    try {
+                      await ref.read(authProvider.notifier).logout();
+                    } catch (_) {}
+                    if (context.mounted) {
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    }
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(

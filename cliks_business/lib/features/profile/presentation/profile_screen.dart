@@ -10,7 +10,8 @@ import '../../../core/theme/neumorphic.dart';
 import '../../../core/widgets/avatar_widget.dart';
 import '../../../data/app_state_provider.dart';
 import '../../../data/account_provider.dart';
-import '../../../data/repositories/auth_repository.dart';
+import '../../auth/notifiers/auth_notifier.dart';
+import '../../auth/pages/login_screen.dart';
 import 'manage_account_screen.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -480,7 +481,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       title: 'Add another account',
                       isDark: isDark,
                       onTap: () {
-                        Navigator.of(context).maybePop();
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const LoginScreen(),
+                          ),
+                        );
                       },
                     ),
 
@@ -512,12 +517,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       isDark: isDark,
                       onTap: () async {
                         // Wipe all session tokens & saved account registries completely
-                        await AuthRepository.logout();
-
+                        try {
+                          await ref.read(authProvider.notifier).logout();
+                        } catch (_) {}
                         ref.read(accountsProvider.notifier).clear();
 
                         if (context.mounted) {
-                          Navigator.of(context).maybePop();
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (_) => const LoginScreen(),
+                            ),
+                            (route) => false,
+                          );
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(

@@ -1,0 +1,234 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "BNX Mail Account & Auth API Specification",
+    "description": "Standardized OpenAPI 3.0 specification for BNX Account Generation, Registration, OTP Verification, Mailbox Provisioning, Authentication, and Business Onboarding.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Local Development / Mock Server"
+    },
+    {
+      "url": "https://api.bnxmail.com/api",
+      "description": "Production API Server"
+    }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "summary": "Step 1: Register User Account Credentials",
+        "description": "Validates user details, creates the credentials, and returns a temporary token (tempToken) required for Step 2 mailbox provisioning.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password", "firstName", "phoneNumber", "dob", "mode"],
+                "properties": {
+                  "username": { "type": "string", "example": "johnram123" },
+                  "password": { "type": "string", "example": "Password123!" },
+                  "firstName": { "type": "string", "example": "John" },
+                  "lastName": { "type": "string", "example": "Ramesh" },
+                  "phoneNumber": { "type": "string", "example": "+919876543210" },
+                  "dob": { "type": "string", "format": "date", "example": "1998-05-15" },
+                  "mode": { "type": "string", "enum": ["PERSONAL", "BUSINESS", "CHILD"], "example": "PERSONAL" },
+                  "gender": { "type": "string", "example": "Male" },
+                  "businessName": { "type": "string", "example": "Acme Corp" },
+                  "companyCin": { "type": "string", "example": "U72900KA2024PTC123456" },
+                  "companyPan": { "type": "string", "example": "AAACB1234K" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean", "example": true },
+                    "message": { "type": "string", "example": "User registered successfully" },
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "userId": { "type": "integer", "example": 42 },
+                        "username": { "type": "string", "example": "johnram123" },
+                        "accountType": { "type": "string", "example": "PUBLIC" },
+                        "tempToken": { "type": "string", "example": "eyJhbGciOiJIUzI1Ni..." }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/send-mobile-otp": {
+      "post": {
+        "summary": "Send 6-Digit Mobile Verification OTP",
+        "description": "Sends an SMS verification code with 60s cooldown.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phoneNumber"],
+                "properties": {
+                  "phoneNumber": { "type": "string", "example": "9876543210" },
+                  "countryCode": { "type": "string", "example": "+91" },
+                  "type": { "type": "string", "example": "registration" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully"
+          }
+        }
+      }
+    },
+    "/auth/verify-mobile-otp": {
+      "post": {
+        "summary": "Verify 6-Digit Mobile OTP",
+        "description": "Validates the user's entered OTP code.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["phoneNumber", "otp"],
+                "properties": {
+                  "phoneNumber": { "type": "string", "example": "9876543210" },
+                  "countryCode": { "type": "string", "example": "+91" },
+                  "otp": { "type": "string", "example": "123456" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Phone verified successfully"
+          }
+        }
+      }
+    },
+    "/emails/create": {
+      "post": {
+        "summary": "Step 2: Provision Mailbox & Finalize Account",
+        "description": "Called using Authorization: Bearer <tempToken> to allocate mailbox and receive full JWT tokens.",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["emailName", "password"],
+                "properties": {
+                  "emailName": { "type": "string", "example": "johnram123" },
+                  "password": { "type": "string", "example": "Password123!" },
+                  "isPrimary": { "type": "boolean", "example": true }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mailbox allocated and user authenticated"
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Authenticate User / Login",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": { "type": "string", "example": "johnram123" },
+                  "password": { "type": "string", "example": "Password123!" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful"
+          }
+        }
+      }
+    },
+    "/business/onboarding": {
+      "post": {
+        "summary": "Submit Business Onboarding Profile (Shown Once)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "businessName": { "type": "string", "example": "BNX Tech" },
+                  "legalName": { "type": "string", "example": "BNX Global Technologies Pvt Ltd" },
+                  "industry": { "type": "string", "example": "Software" },
+                  "companySize": { "type": "string", "example": "11-50" },
+                  "website": { "type": "string", "example": "https://bnxmail.com" },
+                  "supportEmail": { "type": "string", "example": "support@bnxmail.com" },
+                  "brandColor": { "type": "string", "example": "#3B82F6" },
+                  "tagLine": { "type": "string", "example": "Ultra Secure Communication" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Business onboarding persisted"
+          }
+        }
+      }
+    },
+    "/business/status": {
+      "get": {
+        "summary": "Check Business Onboarding Status",
+        "parameters": [
+          { "name": "username", "in": "query", "required": false, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Onboarding status returned"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

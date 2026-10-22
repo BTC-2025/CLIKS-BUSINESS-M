@@ -22,6 +22,7 @@ dependencies:
   image_picker: ^1.1.2
   package_info_plus: ^8.0.0
   http: ^1.6.0
+  http_parser: ^4.1.2
   file_picker: ^11.0.3
   url_launcher: ^6.3.3
   qr_flutter: ^4.1.0
@@ -51,4 +52,7 @@ flutter:
   assets:
     - assets/images/
     - assets/bit_tool_logo.png
+    - assets/bnx_mail_logo.png
+    - assets/cliks_business_img.png
+    - assets/cliks_logo.png
     - "assets/icons_images_reference /"

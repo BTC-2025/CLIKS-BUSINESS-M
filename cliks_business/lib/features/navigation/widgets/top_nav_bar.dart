@@ -9,6 +9,8 @@ import '../../billing/providers/expenses_provider.dart';
 import '../../billing/providers/mobile_pos_header_provider.dart';
 import 'macos_right_utility_rail.dart';
 import 'macos_account_menu_card.dart';
+import 'macos_showroom_menu_card.dart';
+import '../../../data/account_provider.dart';
 
 class TopNavBar extends ConsumerStatefulWidget {
   const TopNavBar({super.key});
@@ -33,12 +35,16 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
+    final isWindows = !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+    final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
+    final isDesktopPlatform =
+        isMacOS || isWindows || isLinux || (kIsWeb && isDesktop);
     final isProfileModule = navigation.currentModule == AppModule.profile;
     final headerColor = (!isDesktop && isProfileModule)
         ? AppColors.primaryGreen
         : AppColors.headerBackground;
 
-    if (isMacOS) {
+    if (isDesktopPlatform) {
       return _buildMacOSNavBar(context, ref, isDesktop, navigation);
     }
 
@@ -663,6 +669,13 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     bool isDesktop,
     NavigationState navigation,
   ) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final userEmail = activeAccount.email.trim().isNotEmpty
+        ? activeAccount.email.trim()
+        : 'ravinew2004@bnxmail.com';
+    final userDisplayName =
+        userEmail.contains('@') ? userEmail.split('@').first : 'ravinew2004';
+
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -708,6 +721,82 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     ),
                   ],
                 ),
+              ),
+
+              // Showroom selector dropdown pill matching reference screenshot
+              const SizedBox(width: 14),
+              Consumer(
+                builder: (context, ref, _) {
+                  final isShowroomMenuOpen =
+                      ref.watch(macosShowroomMenuVisibleProvider);
+                  final selectedScope =
+                      ref.watch(selectedShowroomScopeProvider);
+                  final label = selectedScope == 'All Showrooms'
+                      ? 'All Showrooms (Consoli...'
+                      : '$selectedScope (MAIN-01)';
+
+                  return MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () {
+                        ref.read(macosBetaAppsVisibleProvider.notifier).state =
+                            false;
+                        ref.read(macosAccountMenuVisibleProvider.notifier).state =
+                            false;
+                        ref
+                            .read(macosShowroomMenuVisibleProvider.notifier)
+                            .update((v) => !v);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        constraints: const BoxConstraints(maxWidth: 195),
+                        decoration: BoxDecoration(
+                          color: isShowroomMenuOpen
+                              ? Colors.white.withValues(alpha: 0.22)
+                              : Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(
+                            color: isShowroomMenuOpen
+                                ? Colors.white.withValues(alpha: 0.35)
+                                : Colors.white.withValues(alpha: 0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.circle,
+                              size: 8,
+                              color: Color(0xFF34D399),
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                            Icon(
+                              isShowroomMenuOpen
+                                  ? LucideIcons.chevronUp
+                                  : LucideIcons.chevronDown,
+                              color: Colors.white70,
+                              size: 13,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
 
               const Spacer(),
@@ -801,6 +890,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     onTap: () {
                       ref.read(macosBetaAppsVisibleProvider.notifier).state =
                           false;
+                      ref.read(macosShowroomMenuVisibleProvider.notifier).state =
+                          false;
                       ref
                           .read(macosAccountMenuVisibleProvider.notifier)
                           .update((v) => !v);
@@ -814,9 +905,9 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                           size: 18,
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'ravinew2004',
-                          style: TextStyle(
+                        Text(
+                          userDisplayName,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
@@ -844,6 +935,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     isActive: ref.watch(macosBetaAppsVisibleProvider),
                     onTap: () {
                       ref.read(macosAccountMenuVisibleProvider.notifier).state =
+                          false;
+                      ref.read(macosShowroomMenuVisibleProvider.notifier).state =
                           false;
                       ref
                           .read(macosBetaAppsVisibleProvider.notifier)
@@ -1042,7 +1135,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       borderRadius: BorderRadius.circular(25),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 9),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFF0F4622) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
@@ -1058,7 +1151,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           style: TextStyle(
             color: isActive ? Colors.white : Colors.white70,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 15,
+            fontSize: 13,
             letterSpacing: 0.2,
           ),
         ),

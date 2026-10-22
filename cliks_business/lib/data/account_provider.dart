@@ -5,6 +5,8 @@ import '../models/account_model.dart';
 import 'repositories/user_repository.dart';
 import 'repositories/auth_repository.dart';
 import '../core/network/token_service.dart';
+import '../features/auth/notifiers/auth_notifier.dart';
+import '../features/auth/pages/login_screen.dart';
 import 'app_state_provider.dart';
 import 'settings_provider.dart';
 
@@ -262,10 +264,12 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
       }
     } else {
       clear();
+      ref.read(authProvider.notifier).logout();
       if (context.mounted) {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Signed out of $cleanTarget'),

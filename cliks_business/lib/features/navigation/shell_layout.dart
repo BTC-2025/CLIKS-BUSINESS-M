@@ -12,6 +12,7 @@ import 'widgets/sidebar.dart';
 import 'widgets/top_nav_bar.dart';
 import 'widgets/macos_right_utility_rail.dart';
 import 'widgets/macos_account_menu_card.dart';
+import 'widgets/macos_showroom_menu_card.dart';
 import '../billing/pages/billing_page.dart';
 import '../billing/pages/simple_billing_page.dart';
 import '../people/pages/people_page.dart';
@@ -78,15 +79,24 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
     final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
-    final isSplitCalculator = !isMacOS && !isDesktop && ref.watch(mobileCalculatorSplitScreenProvider);
+    final isWindows = !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
+    final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
+    final isDesktopPlatform =
+        isMacOS || isWindows || isLinux || (kIsWeb && isDesktop);
+    final isSplitCalculator = !isDesktopPlatform && !isDesktop && ref.watch(mobileCalculatorSplitScreenProvider);
     final isProfileModule = navigation.currentModule == AppModule.profile;
     final headerColor = (!isDesktop && isProfileModule)
         ? AppColors.primaryGreen
         : AppColors.headerBackground;
 
     ref.listen(navigationProvider, (prev, next) {
-      if (prev != next && ref.read(macosAccountMenuVisibleProvider)) {
-        ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+      if (prev != next) {
+        if (ref.read(macosAccountMenuVisibleProvider)) {
+          ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+        }
+        if (ref.read(macosShowroomMenuVisibleProvider)) {
+          ref.read(macosShowroomMenuVisibleProvider.notifier).state = false;
+        }
       }
     });
 
@@ -369,7 +379,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                     return _getPage(navigation.currentRoute);
                                   }();
 
-                                  final renderedPage = isMacOS
+                                  final renderedPage = isDesktopPlatform
                                       ? KeyedSubtree(
                                           key: ValueKey('${navigation.currentRoute}_$_refreshKey'),
                                           child: content,
@@ -435,7 +445,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                               ),
                             ),
                           ),
-                          if (isMacOS && isDesktop && navigation.currentModule != AppModule.profile && ref.watch(macosBetaAppsVisibleProvider))
+                          if (isDesktopPlatform && isDesktop && navigation.currentModule != AppModule.profile && ref.watch(macosBetaAppsVisibleProvider))
                             const MacOSRightUtilityRail(),
                         ],
                       ),
@@ -453,8 +463,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                   child: _buildStylishBottomBar(context, ref, navigation),
                 ),
 
-              // macOS Top-Right Account Dropdown Menu Overlay
-              if (isMacOS && ref.watch(macosAccountMenuVisibleProvider)) ...[
+              // macOS and Windows Top-Right Account Dropdown Menu Overlay
+              if (isDesktopPlatform && ref.watch(macosAccountMenuVisibleProvider)) ...[
                 Positioned.fill(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -466,8 +476,26 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 ),
                 Positioned(
                   top: 68 + MediaQuery.of(context).padding.top,
-                  right: 50,
+                  right: 24,
                   child: const MacOSAccountMenuCard(),
+                ),
+              ],
+
+              // macOS and Windows Branch / Showroom Scope Dropdown Menu Overlay
+              if (isDesktopPlatform && ref.watch(macosShowroomMenuVisibleProvider)) ...[
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      ref.read(macosShowroomMenuVisibleProvider.notifier).state = false;
+                    },
+                    child: const ColoredBox(color: Colors.transparent),
+                  ),
+                ),
+                Positioned(
+                  top: 68 + MediaQuery.of(context).padding.top,
+                  left: 172,
+                  child: const MacOSShowroomMenuCard(),
                 ),
               ],
             ],

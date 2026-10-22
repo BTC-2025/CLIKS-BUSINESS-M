@@ -75,6 +75,78 @@ class TokenService {
     },
   ];
 
+  static String? _refreshToken;
+  static final Set<String> _onboardedBusinessEmails = {'ravinew2004@bnxmail.com'};
+
+  static Future<void> saveTokens({
+    required String accessToken,
+    required String refreshToken,
+  }) async {
+    cachedAccessToken = accessToken;
+    _refreshToken = refreshToken;
+  }
+
+  static Future<String?> getAccessToken() async {
+    return cachedAccessToken;
+  }
+
+  static Future<String?> getRefreshToken() async {
+    return _refreshToken;
+  }
+
+  static Future<void> clearTokens() async {
+    cachedAccessToken = null;
+    _refreshToken = null;
+  }
+
+  static Future<void> clearAll() async {
+    cachedAccessToken = null;
+    _refreshToken = null;
+    _activeEmail = '';
+    _activeName = '';
+  }
+
+  static Future<bool> isLoggedIn() async {
+    return cachedAccessToken != null && cachedAccessToken!.isNotEmpty;
+  }
+
+  static Future<void> setBusinessOnboardingCompleted(
+    String email, {
+    bool completed = true,
+  }) async {
+    final clean = email.trim().toLowerCase();
+    if (completed) {
+      _onboardedBusinessEmails.add(clean);
+    } else {
+      _onboardedBusinessEmails.remove(clean);
+    }
+  }
+
+  static Future<bool> isBusinessOnboardingCompleted(String email) async {
+    final clean = email.trim().toLowerCase();
+    return _onboardedBusinessEmails.contains(clean);
+  }
+
+  static Future<void> removeAccountFromRegistry(String email) async {
+    final clean = email.trim().toLowerCase();
+    _registry.removeWhere(
+      (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
+    );
+  }
+
+  static Future<void> saveAccountToRegistry(Map<String, dynamic> account) async {
+    final email = (account['email']?.toString() ?? '').trim().toLowerCase();
+    if (email.isEmpty) return;
+    final idx = _registry.indexWhere(
+      (a) => (a['email']?.toString() ?? '').toLowerCase() == email,
+    );
+    if (idx >= 0) {
+      _registry[idx] = {..._registry[idx], ...account};
+    } else {
+      _registry.add(account);
+    }
+  }
+
   static Future<String?> getUserEmail() async {
     return _activeEmail;
   }
