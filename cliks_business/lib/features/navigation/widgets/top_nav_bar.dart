@@ -672,9 +672,10 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     final activeAccount = ref.watch(activeAccountProvider);
     final userEmail = activeAccount.email.trim().isNotEmpty
         ? activeAccount.email.trim()
-        : 'ravinew2004@bnxmail.com';
-    final userDisplayName =
-        userEmail.contains('@') ? userEmail.split('@').first : 'ravinew2004';
+        : '';
+    final userDisplayName = userEmail.contains('@')
+        ? userEmail.split('@').first
+        : (activeAccount.name.isNotEmpty ? activeAccount.name : 'User');
 
     return Container(
       height: 64,

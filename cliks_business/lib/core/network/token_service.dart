@@ -1,204 +1,346 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'package:flutter/foundation.dart';
 
+/// Secure token and session persistence service.
+/// Uses resilient local persistent storage on desktop/web platforms (.bnx_local_store.json)
+/// without hardcoded values, reflecting active authenticated user credentials.
 class TokenService {
-  static String? cachedAccessToken = 'mock_cliks_business_session_token_12345';
-  static String _activeEmail = 'ravinew2004@bnxmail.com';
-  static String _activeName = 'Ravi Kumar C';
+  static const _kAccess = 'bnx_access_token';
+  static const _kRefresh = 'bnx_refresh_token';
+  static const _kEmail = 'bnx_user_email';
+  static const _kName = 'bnx_user_name';
+  static const _kGlobalAvatar = 'bnx_user_avatar_global';
+  static const _kSavedAccountsRegistry = 'bnx_saved_accounts_registry';
 
-  static final Map<String, String> _avatars = {};
-  static final Map<String, Map<String, dynamic>> _userSettings = {
-    'ravinew2004@bnxmail.com': {
-      'name': 'Ravi Kumar C',
-      'email': 'ravinew2004@bnxmail.com',
-      'firstName': 'Ravi Kumar',
-      'lastName': 'C',
-      'username': 'ravinew2004',
-      'jobTitle': 'Executive Director',
-      'location': 'Bengaluru, India',
-      'phoneNumber': '+91 98765 43210',
-      'recoveryEmail': 'ravi.backup@gmail.com',
-      'backupPhone': '+91 98765 01234',
-      'storageLimit': 16106127360, // 15 GB
-      'storageUsed': 2362232012,  // 2.2 GB
-      'language': 'English (US)',
-      'spellingCheckEnabled': true,
-      'grammarCheckEnabled': true,
-      'autoCorrectEnabled': true,
-      'smartComposeEnabled': true,
-      'twoFactorEnabled': false,
-    },
-    'sales.ravinew2004@bnxmail.com': {
-      'name': 'Sales Desk',
-      'email': 'sales.ravinew2004@bnxmail.com',
-      'username': 'sales.ravinew2004',
-      'jobTitle': 'Sales Operations',
-      'location': 'Bengaluru, India',
-      'phoneNumber': '+91 98765 43210',
-      'storageLimit': 16106127360,
-      'storageUsed': 1048576000,
-    },
-    'admin@cliks.business': {
-      'name': 'Cliks Admin',
-      'email': 'admin@cliks.business',
-      'username': 'cliks_admin',
-      'jobTitle': 'Enterprise Administrator',
-      'location': 'Bengaluru, India',
-      'storageLimit': 53687091200, // 50 GB
-      'storageUsed': 8589934592,
-    },
-  };
+  static String? _cachedAccessToken;
+  static String? get cachedAccessToken {
+    _ensureFallbackLoaded();
+    return _cachedAccessToken;
+  }
+  static set cachedAccessToken(String? val) {
+    _cachedAccessToken = val;
+  }
+  static final Map<String, String> _memoryFallback = {};
+  static bool _fallbackLoaded = false;
 
-  static final List<Map<String, dynamic>> _registry = [
-    {
-      'id': 'ravinew2004@bnxmail.com',
-      'name': 'Ravi Kumar C',
-      'email': 'ravinew2004@bnxmail.com',
-      'isPrimary': true,
-      'accountType': 'BUSINESS',
-      'role': 'Owner / Executive',
-    },
-    {
-      'id': 'sales.ravinew2004@bnxmail.com',
-      'name': 'Sales Desk',
-      'email': 'sales.ravinew2004@bnxmail.com',
-      'isPrimary': false,
-      'accountType': 'BUSINESS',
-      'role': 'Sub-Account',
-    },
-    {
-      'id': 'admin@cliks.business',
-      'name': 'Cliks Admin',
-      'email': 'admin@cliks.business',
-      'isPrimary': false,
-      'accountType': 'ENTERPRISE',
-      'role': 'Administrator',
-    },
-  ];
+  static String _kSettingsKey(String email) =>
+      'bnx_user_settings_${email.trim().toLowerCase()}';
 
-  static String? _refreshToken;
-  static final Set<String> _onboardedBusinessEmails = {'ravinew2004@bnxmail.com'};
+  static String _kAvatarKey(String email) =>
+      'bnx_user_avatar_${email.trim().toLowerCase()}';
+
+  static String _kBizOnboardedKey(String email) =>
+      'bnx_biz_onboarded_${email.trim().toLowerCase()}';
+
+  static File? _resolveFallbackFile() {
+    try {
+      if (kIsWeb) return null;
+      Directory? baseDir;
+      if (Platform.isMacOS) {
+        final home = Platform.environment['HOME'];
+        if (home != null && home.isNotEmpty) {
+          baseDir = Directory('$home/Library/Application Support/com.bnxmail.app');
+        }
+      } else if (Platform.isLinux) {
+        final home = Platform.environment['HOME'];
+        if (home != null && home.isNotEmpty) {
+          baseDir = Directory('$home/.config/com.bnxmail.app');
+        }
+      } else if (Platform.isWindows) {
+        final appData = Platform.environment['APPDATA'];
+        if (appData != null && appData.isNotEmpty) {
+          baseDir = Directory('$appData/com.bnxmail.app');
+        }
+      }
+      baseDir ??= Directory('${Directory.systemTemp.path}/com.bnxmail.app');
+      if (!baseDir.existsSync()) {
+        baseDir.createSync(recursive: true);
+      }
+      return File('${baseDir.path}/.bnx_local_store.json');
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static void _ensureFallbackLoaded() {
+    if (_fallbackLoaded) return;
+    _fallbackLoaded = true;
+    try {
+      final file = _resolveFallbackFile();
+      if (file != null && file.existsSync()) {
+        final content = file.readAsStringSync();
+        if (content.isNotEmpty) {
+          final decoded = jsonDecode(content);
+          if (decoded is Map) {
+            decoded.forEach((k, v) {
+              if (k != null && v != null) {
+                _memoryFallback[k.toString()] = v.toString();
+              }
+            });
+          }
+        }
+      }
+      if (_memoryFallback.containsKey(_kAccess)) {
+        cachedAccessToken = _memoryFallback[_kAccess];
+      }
+    } catch (e) {
+      debugPrint('[TOKEN SERVICE] Fallback storage read error: $e');
+    }
+  }
+
+  static void _persistFallback() {
+    try {
+      final file = _resolveFallbackFile();
+      if (file != null) {
+        file.writeAsStringSync(jsonEncode(_memoryFallback));
+      }
+    } catch (e) {
+      debugPrint('[TOKEN SERVICE] Fallback storage persist error: $e');
+    }
+  }
+
+  static Future<void> _safeWrite({required String key, required String value}) async {
+    _ensureFallbackLoaded();
+    _memoryFallback[key] = value;
+    _persistFallback();
+  }
+
+  static Future<String?> _safeRead({required String key}) async {
+    _ensureFallbackLoaded();
+    return _memoryFallback[key];
+  }
+
+  static Future<void> _safeDelete({required String key}) async {
+    _ensureFallbackLoaded();
+    _memoryFallback.remove(key);
+    _persistFallback();
+  }
+
+  static Future<void> _safeDeleteAll() async {
+    _ensureFallbackLoaded();
+    final preserved = <String, String>{};
+    _memoryFallback.forEach((k, v) {
+      if (k.startsWith('bnx_biz_onboarded_') ||
+          k.startsWith('bnx_user_settings_') ||
+          k.startsWith('bnx_user_avatar_') ||
+          k == _kSavedAccountsRegistry) {
+        preserved[k] = v;
+      }
+    });
+    _memoryFallback.clear();
+    _memoryFallback.addAll(preserved);
+    _persistFallback();
+  }
+
+  // ── Tokens ─────────────────────────────────────────────────────────────────
 
   static Future<void> saveTokens({
     required String accessToken,
     required String refreshToken,
   }) async {
     cachedAccessToken = accessToken;
-    _refreshToken = refreshToken;
+    await _safeWrite(key: _kAccess, value: accessToken);
+    await _safeWrite(key: _kRefresh, value: refreshToken);
   }
 
   static Future<String?> getAccessToken() async {
+    if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
+      return cachedAccessToken;
+    }
+    _ensureFallbackLoaded();
+    cachedAccessToken = await _safeRead(key: _kAccess);
     return cachedAccessToken;
   }
 
-  static Future<String?> getRefreshToken() async {
-    return _refreshToken;
-  }
+  static Future<String?> getRefreshToken() async =>
+      _safeRead(key: _kRefresh);
 
   static Future<void> clearTokens() async {
     cachedAccessToken = null;
-    _refreshToken = null;
+    await _safeDelete(key: _kAccess);
+    await _safeDelete(key: _kRefresh);
   }
 
   static Future<void> clearAll() async {
     cachedAccessToken = null;
-    _refreshToken = null;
-    _activeEmail = '';
-    _activeName = '';
+    await _safeDeleteAll();
   }
 
   static Future<bool> isLoggedIn() async {
-    return cachedAccessToken != null && cachedAccessToken!.isNotEmpty;
+    final token = await getAccessToken();
+    return token != null && token.isNotEmpty;
   }
+
+  // ── User Info & Active Session ─────────────────────────────────────────────
+
+  static Future<String?> getUserEmail() async {
+    final email = await _safeRead(key: _kEmail);
+    if (email != null && email.isNotEmpty) return email;
+    final registry = await getSavedAccountsFromRegistry();
+    if (registry.isNotEmpty) {
+      final regEmail = registry.first['email']?.toString();
+      if (regEmail != null && regEmail.isNotEmpty) return regEmail;
+    }
+    return null;
+  }
+
+  static Future<String?> getUserName() async {
+    final name = await _safeRead(key: _kName);
+    if (name != null && name.isNotEmpty) return name;
+    final email = await getUserEmail();
+    if (email != null && email.isNotEmpty) {
+      return email.split('@').first;
+    }
+    return null;
+  }
+
+  static Future<void> saveUserInfo({String? email, String? name}) async {
+    if (email != null && email.isNotEmpty) {
+      final cleanEmail = email.trim().toLowerCase();
+      await _safeWrite(key: _kEmail, value: cleanEmail);
+      final token = await getAccessToken();
+      if (token != null && token.isNotEmpty) {
+        await saveAccountToRegistry({
+          'id': cleanEmail,
+          'email': cleanEmail,
+          'name': name ?? cleanEmail.split('@').first,
+          'accessToken': token,
+          'isPrimary': true,
+        });
+      }
+    }
+    if (name != null && name.isNotEmpty) {
+      await _safeWrite(key: _kName, value: name);
+    }
+  }
+
+  // ── User Avatar ────────────────────────────────────────────────────────────
+
+  static Future<String?> getUserAvatar(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isNotEmpty) {
+      final val = await _safeRead(key: _kAvatarKey(cleanEmail));
+      if (val != null && val.isNotEmpty) return val;
+    }
+    final globalVal = await _safeRead(key: _kGlobalAvatar);
+    return (globalVal != null && globalVal.isNotEmpty) ? globalVal : null;
+  }
+
+  static Future<void> saveUserAvatar(String email, String avatar) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (avatar.isNotEmpty) {
+      await _safeWrite(key: _kGlobalAvatar, value: avatar);
+      if (cleanEmail.isNotEmpty) {
+        await _safeWrite(key: _kAvatarKey(cleanEmail), value: avatar);
+      }
+    } else {
+      await _safeDelete(key: _kGlobalAvatar);
+      if (cleanEmail.isNotEmpty) {
+        await _safeDelete(key: _kAvatarKey(cleanEmail));
+      }
+    }
+  }
+
+  // ── User Settings ──────────────────────────────────────────────────────────
+
+  static Future<Map<String, dynamic>?> getUserSettings(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return null;
+    final str = await _safeRead(key: _kSettingsKey(cleanEmail));
+    if (str != null && str.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(str);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  static Future<void> saveUserSettings(String email, Map<String, dynamic> data) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isNotEmpty) {
+      final existing = await getUserSettings(cleanEmail) ?? {};
+      final merged = {...existing, ...data};
+      await _safeWrite(key: _kSettingsKey(cleanEmail), value: jsonEncode(merged));
+    }
+  }
+
+  // ── Multi-Account Registry ─────────────────────────────────────────────────
+
+  static Future<List<Map<String, dynamic>>> getSavedAccountsFromRegistry() async {
+    final raw = await _safeRead(key: _kSavedAccountsRegistry);
+    if (raw == null || raw.isEmpty) return [];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is List) {
+        return decoded.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  static Future<void> saveAccountToRegistry(Map<String, dynamic> account) async {
+    final email = (account['email']?.toString() ?? '').trim().toLowerCase();
+    if (email.isEmpty) return;
+    final existing = await getSavedAccountsFromRegistry();
+    final updated = existing.where((a) => (a['email']?.toString() ?? '').toLowerCase() != email).toList();
+    updated.add({...account, 'email': email, 'id': email});
+    await _safeWrite(key: _kSavedAccountsRegistry, value: jsonEncode(updated));
+  }
+
+  static Future<void> removeAccountFromRegistry(String email) async {
+    final cleanEmail = email.trim().toLowerCase();
+    final existing = await getSavedAccountsFromRegistry();
+    final updated = existing.where((a) => (a['email']?.toString() ?? '').toLowerCase() != cleanEmail).toList();
+    await _safeWrite(key: _kSavedAccountsRegistry, value: jsonEncode(updated));
+  }
+
+  static Future<void> switchActiveAccountSession(String id) async {
+    final clean = id.trim().toLowerCase();
+    final accounts = await getSavedAccountsFromRegistry();
+    final target = accounts.firstWhere(
+      (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
+      orElse: () => {},
+    );
+    if (target.isNotEmpty) {
+      final accessToken = target['accessToken']?.toString() ?? '';
+      final refreshToken = target['refreshToken']?.toString() ?? '';
+      final name = target['name']?.toString() ?? clean.split('@').first;
+      if (accessToken.isNotEmpty) {
+        await saveTokens(accessToken: accessToken, refreshToken: refreshToken);
+      }
+      await _safeWrite(key: _kEmail, value: clean);
+      await _safeWrite(key: _kName, value: name);
+    } else {
+      await _safeWrite(key: _kEmail, value: clean);
+    }
+
+    final updated = accounts.map((acc) {
+      final accEmail = (acc['email']?.toString() ?? '').toLowerCase();
+      return {...acc, 'isPrimary': accEmail == clean};
+    }).toList();
+    await _safeWrite(key: _kSavedAccountsRegistry, value: jsonEncode(updated));
+  }
+
+  // ── Business Onboarding ────────────────────────────────────────────────────
 
   static Future<void> setBusinessOnboardingCompleted(
     String email, {
     bool completed = true,
   }) async {
     final clean = email.trim().toLowerCase();
-    if (completed) {
-      _onboardedBusinessEmails.add(clean);
-    } else {
-      _onboardedBusinessEmails.remove(clean);
+    if (clean.isNotEmpty) {
+      await _safeWrite(key: _kBizOnboardedKey(clean), value: completed ? 'true' : 'false');
     }
   }
 
   static Future<bool> isBusinessOnboardingCompleted(String email) async {
     final clean = email.trim().toLowerCase();
-    return _onboardedBusinessEmails.contains(clean);
-  }
-
-  static Future<void> removeAccountFromRegistry(String email) async {
-    final clean = email.trim().toLowerCase();
-    _registry.removeWhere(
-      (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
-    );
-  }
-
-  static Future<void> saveAccountToRegistry(Map<String, dynamic> account) async {
-    final email = (account['email']?.toString() ?? '').trim().toLowerCase();
-    if (email.isEmpty) return;
-    final idx = _registry.indexWhere(
-      (a) => (a['email']?.toString() ?? '').toLowerCase() == email,
-    );
-    if (idx >= 0) {
-      _registry[idx] = {..._registry[idx], ...account};
-    } else {
-      _registry.add(account);
-    }
-  }
-
-  static Future<String?> getUserEmail() async {
-    return _activeEmail;
-  }
-
-  static Future<String?> getUserName() async {
-    return _activeName;
-  }
-
-  static Future<void> saveUserInfo({String? email, String? name}) async {
-    if (email != null && email.isNotEmpty) _activeEmail = email;
-    if (name != null && name.isNotEmpty) _activeName = name;
-  }
-
-  static Future<String?> getUserAvatar(String email) async {
-    final key = email.trim().toLowerCase();
-    return _avatars[key];
-  }
-
-  static Future<void> saveUserAvatar(String email, String avatar) async {
-    final key = email.trim().toLowerCase();
-    if (avatar.isEmpty) {
-      _avatars.remove(key);
-    } else {
-      _avatars[key] = avatar;
-    }
-  }
-
-  static Future<Map<String, dynamic>?> getUserSettings(String email) async {
-    final key = email.trim().toLowerCase();
-    return _userSettings[key] != null ? Map<String, dynamic>.from(_userSettings[key]!) : null;
-  }
-
-  static Future<void> saveUserSettings(String email, Map<String, dynamic> data) async {
-    final key = email.trim().toLowerCase();
-    final current = _userSettings[key] ?? {};
-    _userSettings[key] = {...current, ...data};
-  }
-
-  static Future<List<Map<String, dynamic>>> getSavedAccountsFromRegistry() async {
-    return List<Map<String, dynamic>>.from(_registry);
-  }
-
-  static Future<void> switchActiveAccountSession(String id) async {
-    final clean = id.trim().toLowerCase();
-    _activeEmail = clean;
-    final found = _registry.firstWhere(
-      (acc) => (acc['email']?.toString() ?? '').toLowerCase() == clean,
-      orElse: () => {'name': clean.split('@').first},
-    );
-    _activeName = found['name']?.toString() ?? clean.split('@').first;
-    for (var reg in _registry) {
-      reg['isPrimary'] = (reg['email']?.toString() ?? '').toLowerCase() == clean;
-    }
+    if (clean.isEmpty) return false;
+    final val = await _safeRead(key: _kBizOnboardedKey(clean));
+    return val == 'true';
   }
 }

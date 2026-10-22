@@ -29,22 +29,7 @@ class ApiClient {
   static const Duration _timeout = Duration(seconds: 15);
 
   /// In-memory mock data stores for offline mode
-  static final List<Map<String, dynamic>> _connectedEmails = [
-    {
-      'id': '1',
-      'email': 'ravinew2004@bnxmail.com',
-      'name': 'Ravi Kumar',
-      'isPrimary': true,
-      'isVerified': true,
-    },
-    {
-      'id': '2',
-      'email': 'sales.ravinew2004@bnxmail.com',
-      'name': 'Sales Team',
-      'isPrimary': false,
-      'isVerified': true,
-    },
-  ];
+  static final List<Map<String, dynamic>> _connectedEmails = [];
 
   static final List<Map<String, dynamic>> _subIds = [
     {
@@ -227,11 +212,11 @@ class ApiClient {
       r = await http.get(uri, headers: headers).timeout(_timeout);
       print('[API RESPONSE] GET $uri | Status: ${r.statusCode}');
     } on SocketException catch (_) {
-      return _getMockResponse(path, queryParams);
+      return await _getMockResponse(path, queryParams);
     } on TimeoutException catch (_) {
-      return _getMockResponse(path, queryParams);
+      return await _getMockResponse(path, queryParams);
     } catch (_) {
-      return _getMockResponse(path, queryParams);
+      return await _getMockResponse(path, queryParams);
     }
 
     if (r.statusCode == 401 && auth && tempToken == null) {
@@ -249,7 +234,7 @@ class ApiClient {
     }
 
     if (r.statusCode == 404 || (r.statusCode == 400 && r.body.trim().isEmpty)) {
-      final mock = _getMockResponse(path, queryParams);
+      final mock = await _getMockResponse(path, queryParams);
       if (mock['success'] == true) {
         return mock;
       }
@@ -282,11 +267,11 @@ class ApiClient {
           .timeout(_timeout);
       print('[API RESPONSE] POST $uri | Status: ${r.statusCode} | Body: ${r.body}');
     } on SocketException catch (_) {
-      return _postMockResponse(path, body, queryParams);
+      return await _postMockResponse(path, body, queryParams);
     } on TimeoutException catch (_) {
-      return _postMockResponse(path, body, queryParams);
+      return await _postMockResponse(path, body, queryParams);
     } catch (_) {
-      return _postMockResponse(path, body, queryParams);
+      return await _postMockResponse(path, body, queryParams);
     }
 
     if (r.statusCode == 401 && auth && tempToken == null) {
@@ -304,7 +289,7 @@ class ApiClient {
     }
 
     if (r.statusCode == 404 || (r.statusCode == 400 && r.body.trim().isEmpty)) {
-      final mock = _postMockResponse(path, body, queryParams);
+      final mock = await _postMockResponse(path, body, queryParams);
       if (mock['success'] == true) {
         return mock;
       }
@@ -546,7 +531,17 @@ class ApiClient {
 
   // ── Offline / Fallback Mock Stores ─────────────────────────────────────────
 
-  static dynamic _getMockResponse(String path, Map<String, String>? queryParams) {
+  static Future<dynamic> _getMockResponse(String path, Map<String, String>? queryParams) async {
+    final activeEmail = await TokenService.getUserEmail() ?? '';
+    final activeName = await TokenService.getUserName() ??
+        (activeEmail.isNotEmpty ? activeEmail.split('@').first : 'User');
+    final activeSettings = activeEmail.isNotEmpty
+        ? await TokenService.getUserSettings(activeEmail) ?? {}
+        : <String, dynamic>{};
+    final activeAvatar = activeEmail.isNotEmpty
+        ? await TokenService.getUserAvatar(activeEmail)
+        : null;
+
     if (path.contains('/emails/check-handle')) {
       final handle = queryParams?['handle'] ?? 'user';
       final isAvailable = !handle.contains('admin') && !handle.contains('support');
@@ -597,38 +592,84 @@ class ApiClient {
       return {
         'success': true,
         'data': {
-          'email': 'ravinew2004@bnxmail.com',
-          'storageLimit': 16106127360,
-          'storageUsed': 2362232012,
-          'storagePercentage': 14.67,
+          'email': activeEmail,
+          'storageLimit': activeSettings['storageLimit'] ?? 16106127360,
+          'storageUsed': activeSettings['storageUsed'] ?? 0,
+          'storagePercentage': activeSettings['storagePercentage'] ?? 0.0,
         },
       };
     }
 
-    if (path.contains('/users/me') || path.contains('/users/settings')) {
+    if (path.contains('/users/me') ||
+        path.contains('/users/settings') ||
+        path.contains('/users/profile')) {
+      final firstName = activeSettings['firstName'] ??
+          (activeName.contains(' ') ? activeName.split(' ').first : activeName);
+      final lastName = activeSettings['lastName'] ??
+          (activeName.contains(' ') ? activeName.split(' ').sublist(1).join(' ') : '');
+      final username = activeSettings['username'] ??
+          (activeEmail.contains('@') ? activeEmail.split('@').first : activeEmail);
+
       return {
         'success': true,
         'data': {
-          'name': 'Ravi Kumar C',
-          'email': 'ravinew2004@bnxmail.com',
-          'firstName': 'Ravi Kumar',
-          'lastName': 'C',
-          'username': 'ravinew2004',
-          'jobTitle': 'Executive Director',
-          'location': 'Bengaluru, India',
-          'phoneNumber': '+91 98765 43210',
-          'recoveryEmail': 'ravi.backup@gmail.com',
-          'backupPhone': '+91 98765 01234',
-          'twoFactorEnabled': false,
-          'language': 'English (US)',
-          'storageLimit': 16106127360,
-          'storageUsed': 2362232012,
+          'name': activeName,
+          'fullName': activeName,
+          'email': activeEmail,
+          'firstName': firstName,
+          'lastName': lastName,
+          'username': username,
+          'nickname': activeSettings['nickname'] ?? '',
+          'displayName': activeSettings['displayName'] ?? activeName,
+          'dob': activeSettings['dob'],
+          'birthday': activeSettings['birthday'] ?? activeSettings['dob'],
+          'gender': activeSettings['gender'],
+          'homeAddress': activeSettings['homeAddress'],
+          'workAddress': activeSettings['workAddress'],
+          'occupation': activeSettings['occupation'],
+          'bio': activeSettings['bio'],
+          'profilePictureUrl': activeAvatar ?? activeSettings['profilePictureUrl'],
+          'avatarUrl': activeAvatar ?? activeSettings['avatarUrl'],
+          'phoneNumber': activeSettings['phoneNumber'] ?? activeSettings['phone'] ?? '',
+          'recoveryEmail': activeSettings['recoveryEmail'] ?? '',
+          'backupPhone': activeSettings['backupPhone'] ?? '',
+          'twoFactorEnabled': activeSettings['twoFactorEnabled'] ?? false,
+          'language': activeSettings['language'] ?? 'English (US)',
+          'storageLimit': activeSettings['storageLimit'] ?? 16106127360,
+          'storageUsed': activeSettings['storageUsed'] ?? 0,
+          ...activeSettings,
         },
       };
     }
 
     if (path.contains('/emails/list')) {
-      return {'success': true, 'data': _connectedEmails};
+      final registry = await TokenService.getSavedAccountsFromRegistry();
+      if (registry.isNotEmpty) {
+        final list = registry.map((acc) {
+          final email = acc['email']?.toString() ?? '';
+          return {
+            'id': acc['id']?.toString() ?? email,
+            'email': email,
+            'name': acc['name']?.toString() ?? email.split('@').first,
+            'isPrimary': acc['isPrimary'] == true || email == activeEmail,
+            'isVerified': true,
+          };
+        }).toList();
+        return {'success': true, 'data': list};
+      }
+      return {
+        'success': true,
+        'data': [
+          if (activeEmail.isNotEmpty)
+            {
+              'id': '1',
+              'email': activeEmail,
+              'name': activeName,
+              'isPrimary': true,
+              'isVerified': true,
+            },
+        ],
+      };
     }
 
     if (path.contains('/subid/list')) {
@@ -681,7 +722,7 @@ class ApiClient {
     return {'success': true, 'data': {}};
   }
 
-  static dynamic _postMockResponse(String path, dynamic body, Map<String, String>? queryParams) {
+  static Future<dynamic> _postMockResponse(String path, dynamic body, Map<String, String>? queryParams) async {
     if (path.contains('/auth/login') && body is Map<String, dynamic>) {
       final email = body['email']?.toString() ?? 'user@bnxmail.com';
       final username = email.contains('@') ? email.split('@').first : email;
@@ -774,11 +815,12 @@ class ApiClient {
     }
 
     if (path.contains('/2fa/setup')) {
+      final email = await TokenService.getUserEmail() ?? 'user@bnxmail.com';
       return {
         'success': true,
         'data': {
           'secret': 'JBSWY3DPEHPK3PXP',
-          'otpauthUrl': 'otpauth://totp/CliksBusiness:ravinew2004@bnxmail.com?secret=JBSWY3DPEHPK3PXP&issuer=CliksBusiness',
+          'otpauthUrl': 'otpauth://totp/CliksBusiness:$email?secret=JBSWY3DPEHPK3PXP&issuer=CliksBusiness',
           'qrCode': '',
         },
       };

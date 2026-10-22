@@ -30,7 +30,15 @@ class UserRepository {
           : user.email.trim().toLowerCase();
       if (cleanEmail.isNotEmpty) {
         final existing = await TokenService.getUserSettings(cleanEmail) ?? {};
-        await TokenService.saveUserSettings(cleanEmail, {...existing, ...data});
+        final merged = <String, dynamic>{...existing};
+        data.forEach((k, v) {
+          if (v != null && (v is! String || v.isNotEmpty)) {
+            merged[k] = v;
+          } else if (!merged.containsKey(k)) {
+            merged[k] = v;
+          }
+        });
+        await TokenService.saveUserSettings(cleanEmail, merged);
       }
       final savedAvatar = await TokenService.getUserAvatar(user.email);
       final loggedInEmail = (await TokenService.getUserEmail() ?? '').trim().toLowerCase();
@@ -72,7 +80,7 @@ class UserRepository {
     }
   }
 
-  /// Retrieves user profile fields (from /api/users/me or /api/users/settings, merged with local storage).
+  /// Retrieves user profile fields (from /api/users/me and /api/users/settings, merged with local storage).
   static Future<Map<String, dynamic>?> getProfileData({
     String? email,
     String? tempToken,
@@ -84,27 +92,36 @@ class UserRepository {
         ? await TokenService.getUserSettings(cleanEmail) ?? {}
         : <String, dynamic>{};
 
+    Map<String, dynamic> remoteData = {};
     try {
       final res = await ApiClient.get('/api/users/me', tempToken: tempToken);
-      final remoteData = (res['data'] as Map<String, dynamic>?) ?? (res is Map<String, dynamic> ? res : <String, dynamic>{});
-      final merged = <String, dynamic>{...localSettings, ...remoteData};
-      if (cleanEmail.isNotEmpty && merged.isNotEmpty) {
-        await TokenService.saveUserSettings(cleanEmail, merged);
-      }
-      return merged.isNotEmpty ? merged : null;
-    } catch (_) {
-      try {
-        final res = await ApiClient.get('/api/users/settings', tempToken: tempToken);
-        final remoteData = (res['data'] as Map<String, dynamic>?) ?? (res is Map<String, dynamic> ? res : <String, dynamic>{});
-        final merged = <String, dynamic>{...localSettings, ...remoteData};
-        if (cleanEmail.isNotEmpty && merged.isNotEmpty) {
-          await TokenService.saveUserSettings(cleanEmail, merged);
+      final meData = (res['data'] as Map<String, dynamic>?) ?? (res is Map<String, dynamic> ? res : <String, dynamic>{});
+      remoteData.addAll(meData);
+    } catch (_) {}
+
+    try {
+      final res = await ApiClient.get('/api/users/settings', tempToken: tempToken);
+      final settingsData = (res['data'] as Map<String, dynamic>?) ?? (res is Map<String, dynamic> ? res : <String, dynamic>{});
+      settingsData.forEach((k, v) {
+        if (!remoteData.containsKey(k) || remoteData[k] == null || (remoteData[k] is String && (remoteData[k] as String).isEmpty)) {
+          remoteData[k] = v;
         }
-        return merged.isNotEmpty ? merged : null;
-      } catch (_) {
-        return localSettings.isNotEmpty ? localSettings : null;
+      });
+    } catch (_) {}
+
+    final merged = <String, dynamic>{...localSettings};
+    remoteData.forEach((k, v) {
+      if (v != null && (v is! String || v.isNotEmpty)) {
+        merged[k] = v;
+      } else if (!merged.containsKey(k)) {
+        merged[k] = v;
       }
+    });
+
+    if (cleanEmail.isNotEmpty && merged.isNotEmpty) {
+      await TokenService.saveUserSettings(cleanEmail, merged);
     }
+    return merged.isNotEmpty ? merged : null;
   }
 
   /// Checks whether a business account has already completed onboarding either locally or remotely.

@@ -15,8 +15,8 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
     : super([
         const AccountModel(
           id: 'loading',
-          name: 'Ravi Kumar C',
-          email: 'ravinew2004@bnxmail.com',
+          name: 'User',
+          email: '',
           avatarColor: Color(0xFF195BAC),
           isActive: true,
         ),
@@ -297,9 +297,13 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
     String? accessibility,
     String? designation,
     DateTime? dob,
+    String? avatarUrl,
   }) async {
+    final cleanId = id.trim().toLowerCase();
     state = state.map((acc) {
-      if (acc.id == id) {
+      final accId = acc.id.trim().toLowerCase();
+      final accEmail = acc.email.trim().toLowerCase();
+      if (accId == cleanId || accEmail == cleanId) {
         return acc.copyWith(
           name: name ?? acc.name,
           recoveryEmail: recoveryEmail ?? acc.recoveryEmail,
@@ -309,13 +313,16 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
           accessibility: accessibility ?? acc.accessibility,
           designation: designation ?? acc.designation,
           dob: dob ?? acc.dob,
+          avatarUrl: avatarUrl ?? acc.avatarUrl,
         );
       }
       return acc;
     }).toList();
 
     final active = state.firstWhere(
-      (a) => a.id == id,
+      (a) =>
+          a.id.trim().toLowerCase() == cleanId ||
+          a.email.trim().toLowerCase() == cleanId,
       orElse: () => activeAccount,
     );
     if (name != null && active.email.isNotEmpty) {
@@ -329,6 +336,11 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
     }
     if (dob != null && active.email.isNotEmpty) {
       await TokenService.saveUserSettings(active.email, {'dob': dob.toIso8601String()});
+    }
+    if (avatarUrl != null && avatarUrl.isNotEmpty && active.email.isNotEmpty) {
+      await TokenService.saveUserAvatar(active.email, avatarUrl);
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
     }
   }
 

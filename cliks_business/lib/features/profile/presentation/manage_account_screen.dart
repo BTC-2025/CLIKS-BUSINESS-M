@@ -9,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../navigation/pages/macos_storage_page.dart';
 import '../../navigation/pages/mobile_storage_page.dart';
 import '../../../core/network/api_exception.dart';
+import '../../../core/network/token_service.dart';
 import '../../../core/widgets/avatar_widget.dart';
 import '../../../data/account_provider.dart';
 import '../../../data/repositories/storage_repository.dart';
@@ -66,10 +67,6 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   List<Map<String, dynamic>> _apiSubIds = [];
   bool _isLoadingSubIds = false;
 
-  // Sub-IDs fallback state
-  final List<Map<String, String>> _subIds = [
-    {'username': 'sales.ravinew2004', 'name': 'ravi kumar', 'type': 'BUSINESS'},
-  ];
 
   final List<_TabItem> _tabs = const [
     _TabItem(
@@ -792,7 +789,12 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
   Future<void> _loadProfileSettings([String? accountEmail]) async {
     try {
-      final email = accountEmail ?? ref.read(activeAccountProvider).email;
+      final activeAcc = ref.read(activeAccountProvider);
+      final email = (accountEmail != null && accountEmail.isNotEmpty)
+          ? accountEmail
+          : (activeAcc.email.isNotEmpty
+              ? activeAcc.email
+              : (await TokenService.getUserEmail() ?? ''));
       final settings = await UserRepository.getProfileData(email: email);
       if (settings != null && mounted) {
         setState(() {
@@ -820,15 +822,15 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
           } else {
             _homeAddress = 'None added';
           }
-          if (settings['workAddress'] != null &&
-              settings['workAddress'].toString().isNotEmpty) {
-            _workAddress = settings['workAddress'].toString();
+          final rawWork = settings['workAddress'] ?? settings['location'];
+          if (rawWork != null && rawWork.toString().isNotEmpty) {
+            _workAddress = rawWork.toString();
           } else {
             _workAddress = 'None added';
           }
-          if (settings['occupation'] != null &&
-              settings['occupation'].toString().isNotEmpty) {
-            _occupation = settings['occupation'].toString();
+          final rawOcc = settings['occupation'] ?? settings['jobTitle'];
+          if (rawOcc != null && rawOcc.toString().isNotEmpty) {
+            _occupation = rawOcc.toString();
           } else {
             _occupation = 'None added';
           }
@@ -841,7 +843,6 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         });
 
         // Also sync active account model fields if returned in settings
-        final activeAcc = ref.read(activeAccountProvider);
         final phone = (settings['phoneNumber'] ?? settings['phone'])
             ?.toString();
         final recEmail = settings['recoveryEmail']?.toString();
@@ -851,10 +852,16 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
           dob = DateTime.tryParse(rawDob.toString());
         }
         final name = (settings['fullName'] ?? settings['name'])?.toString();
+        final avatar = (settings['profilePictureUrl'] ??
+                settings['avatarUrl'] ??
+                settings['profile_picture'])
+            ?.toString();
+
         if ((phone != null && phone.isNotEmpty) ||
             (recEmail != null && recEmail.isNotEmpty) ||
             dob != null ||
-            (name != null && name.isNotEmpty)) {
+            (name != null && name.isNotEmpty) ||
+            (avatar != null && avatar.isNotEmpty)) {
           ref
               .read(accountsProvider.notifier)
               .updateAccountFields(
@@ -863,6 +870,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                 recoveryEmail: recEmail,
                 dob: dob,
                 name: name,
+                avatarUrl: avatar,
               );
         }
       }
@@ -1404,7 +1412,13 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   // TOP BAR (Screenshots 1-5: [B BETA] Account  ...  (?) [:::] [Avatar Ravi v])
   // ═══════════════════════════════════════════════════════════════════════════
   Widget _buildTopAppBar(AccountModel account, bool isDark, bool isMobile) {
-    final displayName = account.name.isNotEmpty ? account.name : 'Ravi Kumar C';
+    final displayName = account.name.isNotEmpty
+        ? account.name
+        : (_displayName != 'Not set' && _displayName.isNotEmpty
+            ? _displayName
+            : (account.email.isNotEmpty
+                ? account.email.split('@').first
+                : 'User'));
 
     return Container(
       height: 64,
@@ -1576,7 +1590,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                 Text(
                   account.email.isNotEmpty
                       ? account.email
-                      : 'ravinew2004@bnxmail.com',
+                      : 'Not signed in',
                   style: TextStyle(
                     fontSize: 12.5,
                     color: isDark ? Colors.white60 : const Color(0xFF5F6368),
@@ -2043,7 +2057,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
     final emailAddress = account.email.isNotEmpty
         ? account.email
-        : 'ravinew2004@bnxmail.com';
+        : 'Not signed in';
 
     // Card 1: Emails & Identities -> Navigates to Screenshot 1 ("Your Email Identities")
     final card1 = _buildHomeCard(
@@ -2220,7 +2234,11 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   }) {
     final firstName = account.name.isNotEmpty
         ? account.name.split(' ').first
-        : 'Ravi';
+        : (_displayName != 'Not set' && _displayName.isNotEmpty
+            ? _displayName.split(' ').first
+            : (account.email.isNotEmpty
+                ? account.email.split('@').first
+                : 'User'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -2276,7 +2294,13 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
         // Large Profile Avatar (Screenshot 1, 2, 3)
         AvatarWidget(
-          name: account.name.isNotEmpty ? account.name : 'Ravi Kumar C',
+          name: account.name.isNotEmpty
+              ? account.name
+              : (_displayName != 'Not set' && _displayName.isNotEmpty
+                  ? _displayName
+                  : (account.email.isNotEmpty
+                      ? account.email.split('@').first
+                      : 'User')),
           avatarUrl: account.avatarUrl,
           size: 84,
           fontSize: 34,
@@ -2321,7 +2345,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   ) {
     final fallbackEmail = account.email.isNotEmpty
         ? account.email
-        : 'ravinew2004@bnxmail.com';
+        : 'Not signed in';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
@@ -3450,9 +3474,19 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   ) {
     final firstName = account.name.isNotEmpty
         ? account.name.split(' ').first
-        : 'Ravi';
+        : (_displayName != 'Not set' && _displayName.isNotEmpty
+            ? _displayName.split(' ').first
+            : (account.email.isNotEmpty
+                ? account.email.split('@').first
+                : 'User'));
 
-    final displayName = account.name.isNotEmpty ? account.name : 'Ravi Kumar C';
+    final displayName = account.name.isNotEmpty
+        ? account.name
+        : (_displayName != 'Not set' && _displayName.isNotEmpty
+            ? _displayName
+            : (account.email.isNotEmpty
+                ? account.email.split('@').first
+                : 'User'));
 
     final dobText = account.dob != null
         ? '${account.dob!.day}/${account.dob!.month}/${account.dob!.year}'
@@ -3460,16 +3494,16 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
 
     final primaryEmail = account.email.isNotEmpty
         ? account.email
-        : 'ravinew2004@bnxmail.com';
+        : 'Not signed in';
 
     final recoveryEmail =
         (account.recoveryEmail != null && account.recoveryEmail!.isNotEmpty)
         ? account.recoveryEmail!
-        : 'chandran123@bnxmail.com';
+        : 'None added';
 
     final phone = (account.phone != null && account.phone!.isNotEmpty)
         ? account.phone!
-        : '8072909876';
+        : 'None added';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -3886,10 +3920,14 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   ) {
     final firstName = account.name.isNotEmpty
         ? account.name.split(' ').first
-        : 'Ravi';
+        : (_displayName != 'Not set' && _displayName.isNotEmpty
+            ? _displayName.split(' ').first
+            : (account.email.isNotEmpty
+                ? account.email.split('@').first
+                : 'User'));
     final billedEmail = account.email.isNotEmpty
         ? account.email
-        : 'ravinew2004@bnxmail.com';
+        : 'Not signed in';
 
     final planName =
         _subscriptionData?['plan_name']?.toString() ??
@@ -3931,7 +3969,13 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       children: [
         // Top Profile Avatar (Image 1)
         AvatarWidget(
-          name: account.name.isNotEmpty ? account.name : 'Ravi Kumar C',
+          name: account.name.isNotEmpty
+              ? account.name
+              : (_displayName != 'Not set' && _displayName.isNotEmpty
+                  ? _displayName
+                  : (account.email.isNotEmpty
+                      ? account.email.split('@').first
+                      : 'User')),
           avatarUrl: account.avatarUrl,
           size: 84,
           fontSize: 34,
@@ -4328,14 +4372,24 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   ) {
     final firstName = account.name.isNotEmpty
         ? account.name.split(' ').first
-        : 'Ravi';
+        : (_displayName != 'Not set' && _displayName.isNotEmpty
+            ? _displayName.split(' ').first
+            : (account.email.isNotEmpty
+                ? account.email.split('@').first
+                : 'User'));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         // Top Avatar circle (Image 2)
         AvatarWidget(
-          name: account.name.isNotEmpty ? account.name : 'Ravi Kumar C',
+          name: account.name.isNotEmpty
+              ? account.name
+              : (_displayName != 'Not set' && _displayName.isNotEmpty
+                  ? _displayName
+                  : (account.email.isNotEmpty
+                      ? account.email.split('@').first
+                      : 'User')),
           avatarUrl: account.avatarUrl,
           size: 84,
           fontSize: 34,
@@ -4572,7 +4626,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                   ),
 
                 // Rows
-                if (!_isLoadingSubIds && _apiSubIds.isEmpty && _subIds.isEmpty)
+                if (!_isLoadingSubIds && _apiSubIds.isEmpty)
                   Padding(
                     padding: const EdgeInsets.all(32),
                     child: Text(
@@ -4586,11 +4640,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                   )
                 else if (!_isLoadingSubIds)
                   ...() {
-                    final activeList = _apiSubIds.isNotEmpty
-                        ? _apiSubIds
-                        : _subIds
-                              .map((e) => Map<String, dynamic>.from(e))
-                              .toList();
+                    final activeList = _apiSubIds;
 
                     return List.generate(activeList.length, (index) {
                       final item = activeList[index];
@@ -5721,7 +5771,7 @@ class _CreateSubIdDialogState extends State<_CreateSubIdDialog> {
     final isDark = widget.isDark;
     final suffixEmail = widget.account.email.isNotEmpty
         ? widget.account.email
-        : 'chandran123@bnxmail.com';
+        : 'bnxmail.com';
 
     final surfaceColor = isDark ? const Color(0xFF23262B) : Colors.white;
     final borderColor = isDark
@@ -6485,11 +6535,11 @@ class _CreateSubIdDialogState extends State<_CreateSubIdDialog> {
 
     final baseEmail = widget.account.email.isNotEmpty
         ? widget.account.email
-        : 'chandran123@bnxmail.com';
+        : '';
 
     final username = prefix.isNotEmpty
-        ? '$prefix.$baseEmail'
-        : 'sales.${baseEmail.split('@').first}';
+        ? (baseEmail.isNotEmpty ? '$prefix.$baseEmail' : prefix)
+        : (baseEmail.isNotEmpty ? 'sales.${baseEmail.split('@').first}' : 'sales');
 
     if (prefix.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(

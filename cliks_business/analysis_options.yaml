@@ -9,6 +9,7 @@ analyzer:
     - linux/**
     - manage_account_export/**
     - bnx_account_module copy/**
+    - manage_account_api_bundle/**
   errors:
     unused_local_variable: ignore
     unused_field: ignore

@@ -257,6 +257,15 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   // ACCOUNT DROPDOWN CARD (Matching Reference Image 2)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildAccountDropdownCard() {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final email = activeAccount.email.trim().isNotEmpty
+        ? activeAccount.email.trim()
+        : '';
+    final username = activeAccount.name.isNotEmpty
+        ? activeAccount.name
+        : (email.contains('@') ? email.split('@').first : 'User');
+    final initialLetter = username.isNotEmpty ? username[0].toUpperCase() : 'U';
+
     return Material(
       color: Colors.transparent,
       child: Container(
@@ -279,7 +288,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Avatar with initial R + camera badge
+              // Avatar with initial + camera badge
               Stack(
                 alignment: Alignment.bottomRight,
                 children: [
@@ -296,7 +305,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                     alignment: Alignment.center,
                     child: Text(
-                      'R',
+                      initialLetter,
                       style: GoogleFonts.inter(
                         fontSize: 30,
                         fontWeight: FontWeight.bold,
@@ -328,7 +337,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
               // Username & Email
               Text(
-                'ravinew2004',
+                username,
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -337,7 +346,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               ),
               const SizedBox(height: 2),
               Text(
-                'ravinew2004@bnxmail.com',
+                email.isNotEmpty ? email : 'Not signed in',
                 style: GoogleFonts.inter(
                   fontSize: 12.5,
                   color: const Color(0xFF64748B),

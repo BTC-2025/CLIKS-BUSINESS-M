@@ -27,8 +27,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   bool _emailSync = true;
   bool _pushNotifications = true;
 
-  String _currentUsername = 'ravikumarlaptop';
-  String _currentEmail = 'ravikumarlaptop@bnxmail.com';
+  String _currentUsername = '';
+  String _currentEmail = '';
 
   bool _isExpanded = false;
 
@@ -494,10 +494,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         ? activeAccount.name
         : (activeAccount.email.isNotEmpty
             ? activeAccount.email.split('@').first
-            : _currentUsername);
+            : (_currentUsername.isNotEmpty ? _currentUsername : 'User'));
     final currentEmail = activeAccount.email.isNotEmpty
         ? activeAccount.email
-        : _currentEmail;
+        : (_currentEmail.isNotEmpty ? _currentEmail : 'Not signed in');
     final List<AccountModel> displayAccounts = allAccounts.where((a) => a.id != 'loading').isNotEmpty
         ? allAccounts.where((a) => a.id != 'loading').toList()
         : [activeAccount];
@@ -704,10 +704,10 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
         ? activeAccount.name
         : (activeAccount.email.isNotEmpty
             ? activeAccount.email.split('@').first
-            : _currentUsername);
+            : (_currentUsername.isNotEmpty ? _currentUsername : 'User'));
     final currentEmail = activeAccount.email.isNotEmpty
         ? activeAccount.email
-        : _currentEmail;
+        : (_currentEmail.isNotEmpty ? _currentEmail : 'Not signed in');
     final List<AccountModel> displayAccounts = allAccounts.where((a) => a.id != 'loading').isNotEmpty
         ? allAccounts.where((a) => a.id != 'loading').toList()
         : [activeAccount];

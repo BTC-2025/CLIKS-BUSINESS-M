@@ -18,9 +18,11 @@ class MacOSAccountMenuCard extends ConsumerWidget {
     final activeAccount = ref.watch(activeAccountProvider);
     final email = activeAccount.email.trim().isNotEmpty
         ? activeAccount.email.trim()
-        : 'ravinew2004@bnxmail.com';
-    final username = email.contains('@') ? email.split('@').first : 'ravinew2004';
-    final initialLetter = username.isNotEmpty ? username[0].toUpperCase() : 'R';
+        : '';
+    final username = email.contains('@')
+        ? email.split('@').first
+        : (activeAccount.name.isNotEmpty ? activeAccount.name : 'User');
+    final initialLetter = username.isNotEmpty ? username[0].toUpperCase() : 'U';
 
     return Material(
       color: Colors.transparent,
