@@ -1361,6 +1361,7 @@ class _RegisterAccountTypeScreenState
                   label: 'First Name',
                   controller: _firstNameController,
                   errorText: _firstNameError,
+                  maxLength: 15,
                   onChanged: (v) {
                     if (_firstNameError != null) {
                       setState(() => _firstNameError = null);
@@ -1374,6 +1375,7 @@ class _RegisterAccountTypeScreenState
                   label: 'Last Name',
                   controller: _lastNameController,
                   errorText: _lastNameError,
+                  maxLength: 15,
                   onChanged: (v) {
                     if (_lastNameError != null) {
                       setState(() => _lastNameError = null);
@@ -1390,6 +1392,7 @@ class _RegisterAccountTypeScreenState
                 label: 'First Name',
                 controller: _firstNameController,
                 errorText: _firstNameError,
+                maxLength: 15,
                 onChanged: (v) {
                   if (_firstNameError != null) {
                     setState(() => _firstNameError = null);
@@ -1401,6 +1404,7 @@ class _RegisterAccountTypeScreenState
                 label: 'Last Name',
                 controller: _lastNameController,
                 errorText: _lastNameError,
+                maxLength: 15,
                 onChanged: (v) {
                   if (_lastNameError != null) {
                     setState(() => _lastNameError = null);
@@ -1565,6 +1569,7 @@ class _RegisterAccountTypeScreenState
               Expanded(
                 child: TextField(
                   controller: _usernameController,
+                  maxLength: 15,
                   onChanged: (v) {
                     if (_usernameError != null) {
                       setState(() => _usernameError = null);
@@ -1572,6 +1577,7 @@ class _RegisterAccountTypeScreenState
                   },
                   style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
                   decoration: const InputDecoration(
+                    counterText: '',
                     border: InputBorder.none,
                     hintText: 'e.g. johndoe123',
                     hintStyle: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
@@ -2106,6 +2112,7 @@ class _RegisterAccountTypeScreenState
                   label: "Child's First Name",
                   controller: _childFirstNameController,
                   errorText: _childFirstNameError,
+                  maxLength: 15,
                   onChanged: (v) {
                     if (_childFirstNameError != null) {
                       setState(() => _childFirstNameError = null);
@@ -2119,6 +2126,7 @@ class _RegisterAccountTypeScreenState
                   label: "Child's Last Name",
                   controller: _childLastNameController,
                   errorText: _childLastNameError,
+                  maxLength: 15,
                   onChanged: (v) {
                     if (_childLastNameError != null) {
                       setState(() => _childLastNameError = null);
@@ -2135,6 +2143,7 @@ class _RegisterAccountTypeScreenState
                 label: "Child's First Name",
                 controller: _childFirstNameController,
                 errorText: _childFirstNameError,
+                maxLength: 15,
                 onChanged: (v) {
                   if (_childFirstNameError != null) {
                     setState(() => _childFirstNameError = null);
@@ -2146,6 +2155,7 @@ class _RegisterAccountTypeScreenState
                 label: "Child's Last Name",
                 controller: _childLastNameController,
                 errorText: _childLastNameError,
+                maxLength: 15,
                 onChanged: (v) {
                   if (_childLastNameError != null) {
                     setState(() => _childLastNameError = null);
@@ -2565,8 +2575,21 @@ class _RegisterAccountTypeScreenState
     final dob = _childDobController.text.trim();
 
     setState(() {
-      _childFirstNameError = fName.isEmpty ? 'First Name is required' : null;
-      _childLastNameError = lName.isEmpty ? 'Last Name is required' : null;
+      if (fName.isEmpty) {
+        _childFirstNameError = 'First Name is required';
+      } else if (fName.length < 6 || fName.length > 15) {
+        _childFirstNameError = 'First Name must be between 6 and 15 characters';
+      } else {
+        _childFirstNameError = null;
+      }
+
+      if (lName.isEmpty) {
+        _childLastNameError = 'Last Name is required';
+      } else if (lName.length < 6 || lName.length > 15) {
+        _childLastNameError = 'Last Name must be between 6 and 15 characters';
+      } else {
+        _childLastNameError = null;
+      }
 
       if (dob.isEmpty) {
         _childDobError = 'Date of Birth is required';
@@ -2801,6 +2824,7 @@ class _RegisterAccountTypeScreenState
               Expanded(
                 child: TextField(
                   controller: _childUsernameController,
+                  maxLength: 15,
                   onChanged: (v) {
                     if (_childUsernameError != null) {
                       setState(() => _childUsernameError = null);
@@ -2808,6 +2832,7 @@ class _RegisterAccountTypeScreenState
                   },
                   style: const TextStyle(fontSize: 14, color: Color(0xFF0F172A)),
                   decoration: const InputDecoration(
+                    counterText: '',
                     border: InputBorder.none,
                     hintText: 'e.g. johndoe123',
                     hintStyle: TextStyle(fontSize: 14, color: Color(0xFF94A3B8)),
@@ -2880,9 +2905,18 @@ class _RegisterAccountTypeScreenState
   }
 
   void _validateAndProceedChildMail() {
-    final uName = _childUsernameController.text.trim();
+    final uName = _childUsernameController.text.trim().toLowerCase();
+    _childUsernameController.text = uName;
     setState(() {
-      _childUsernameError = uName.isEmpty ? 'Username is required' : null;
+      if (uName.isEmpty) {
+        _childUsernameError = 'Username is required';
+      } else if (uName.length < 6 || uName.length > 15) {
+        _childUsernameError = 'Username must be between 6 and 15 characters';
+      } else if (!RegExp(r'^[a-z0-9]+$').hasMatch(uName)) {
+        _childUsernameError = 'Only lowercase letters and numbers are allowed';
+      } else {
+        _childUsernameError = null;
+      }
     });
     if (_childUsernameError == null) {
       _usernameController.text = uName;
@@ -3055,8 +3089,22 @@ class _RegisterAccountTypeScreenState
     final dob = _dobController.text.trim();
 
     setState(() {
-      _firstNameError = fName.isEmpty ? 'First Name is required' : null;
-      _lastNameError = lName.isEmpty ? 'Last Name is required' : null;
+      if (fName.isEmpty) {
+        _firstNameError = 'First Name is required';
+      } else if (fName.length < 6 || fName.length > 15) {
+        _firstNameError = 'First Name must be between 6 and 15 characters';
+      } else {
+        _firstNameError = null;
+      }
+
+      if (lName.isEmpty) {
+        _lastNameError = 'Last Name is required';
+      } else if (lName.length < 6 || lName.length > 15) {
+        _lastNameError = 'Last Name must be between 6 and 15 characters';
+      } else {
+        _lastNameError = null;
+      }
+
       _dobError = validateDob(dob);
     });
 
@@ -3126,12 +3174,8 @@ class _RegisterAccountTypeScreenState
     setState(() {
       if (uName.isEmpty) {
         _usernameError = 'Username is required';
-      } else if (_selectedType == 'business' && uName.length < 10) {
-        _usernameError = 'Business username must be at least 10 characters long';
-      } else if (_selectedType == 'personal' && uName.length != 10) {
-        _usernameError = 'Username must be exactly 10 characters (7 letters + 3 digits)';
-      } else if (uName.length < 6) {
-        _usernameError = 'Username must be at least 6 characters';
+      } else if (uName.length < 6 || uName.length > 15) {
+        _usernameError = 'Username must be between 6 and 15 characters';
       } else if (!RegExp(r'^[a-z0-9]+$').hasMatch(uName)) {
         _usernameError = 'Only lowercase letters and numbers are allowed';
       } else {
@@ -5741,7 +5785,7 @@ class _RegisterAccountTypeScreenState
                 icon: Icons.person_outline,
                 controller: _firstNameController,
                 errorText: _firstNameError,
-                maxLength: 30,
+                maxLength: 15,
                 onChanged: (val) {
                   if (_firstNameError != null) {
                     setState(() => _firstNameError = null);
@@ -5754,7 +5798,7 @@ class _RegisterAccountTypeScreenState
                 icon: Icons.person_outline,
                 controller: _lastNameController,
                 errorText: _lastNameError,
-                maxLength: 30,
+                maxLength: 15,
                 onChanged: (val) {
                   if (_lastNameError != null) {
                     setState(() => _lastNameError = null);
@@ -5907,12 +5951,21 @@ class _RegisterAccountTypeScreenState
                     final dob = _dobController.text.trim();
 
                     setState(() {
-                      _firstNameError = fName.isEmpty
-                          ? 'First Name is required'
-                          : null;
-                      _lastNameError = lName.isEmpty
-                          ? 'Last Name is required'
-                          : null;
+                      if (fName.isEmpty) {
+                        _firstNameError = 'First Name is required';
+                      } else if (fName.length < 6 || fName.length > 15) {
+                        _firstNameError = 'First Name must be between 6 and 15 characters';
+                      } else {
+                        _firstNameError = null;
+                      }
+
+                      if (lName.isEmpty) {
+                        _lastNameError = 'Last Name is required';
+                      } else if (lName.length < 6 || lName.length > 15) {
+                        _lastNameError = 'Last Name must be between 6 and 15 characters';
+                      } else {
+                        _lastNameError = null;
+                      }
 
                       final dobErr = validateDob(dob);
                       if (dobErr != null) {
@@ -6006,7 +6059,7 @@ class _RegisterAccountTypeScreenState
                 icon: Icons.alternate_email,
                 controller: _usernameController,
                 errorText: _usernameError,
-                maxLength: 30,
+                maxLength: 15,
                 suffixIcon: const Padding(
                   padding: EdgeInsets.only(right: 16.0, top: 14.0),
                   child: Text(
@@ -6040,11 +6093,18 @@ class _RegisterAccountTypeScreenState
                     elevation: 0,
                   ),
                   onPressed: () {
-                    final uName = _usernameController.text.trim();
+                    final uName = _usernameController.text.trim().toLowerCase();
+                    _usernameController.text = uName;
                     setState(() {
-                      _usernameError = uName.isEmpty
-                          ? 'Username is required'
-                          : null;
+                      if (uName.isEmpty) {
+                        _usernameError = 'Username is required';
+                      } else if (uName.length < 6 || uName.length > 15) {
+                        _usernameError = 'Username must be between 6 and 15 characters';
+                      } else if (!RegExp(r'^[a-z0-9]+$').hasMatch(uName)) {
+                        _usernameError = 'Only lowercase letters and numbers are allowed';
+                      } else {
+                        _usernameError = null;
+                      }
                     });
                     if (_usernameError == null) {
                       setState(() {
