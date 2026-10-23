@@ -432,25 +432,40 @@ class _StaffPageState extends ConsumerState<StaffPage> {
           child: const Icon(LucideIcons.plus, color: Colors.white, size: 22),
         ),
       ),
-      body: SingleChildScrollView(
+      body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
-            _buildHeroSummary(true)
+        slivers: [
+          // ─── HERO SUMMARY CARD (Accounting/Reports Style Header) ───
+          SliverToBoxAdapter(
+            child: _buildHeroSummary(true)
                 .animate()
                 .fadeIn(duration: 400.ms)
                 .slideY(begin: -0.05, end: 0),
-            const SizedBox(height: 10),
+          ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 6),
+          ),
 
-            // ─── STICKY TAB NAVIGATION BAR ───
-            _buildMobileTabNav(),
-            const SizedBox(height: 10),
+          // ─── STICKY TAB NAVIGATION BAR ───
+          SliverPersistentHeader(
+            pinned: true,
+            delegate: _StickyTabNavDelegate(
+              height: 52,
+              child: Container(
+                color: const Color(0xFFF8F9FB),
+                padding: const EdgeInsets.symmetric(vertical: 2),
+                child: _buildMobileTabNav(),
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 8),
+          ),
 
-            // ─── MAIN CONTENT CONTAINER (Tables & Lists) ───
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 140),
+          // ─── MAIN CONTENT CONTAINER (Tables & Lists) ───
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(14, 0, 14, 140),
+            sliver: SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -465,8 +480,8 @@ class _StaffPageState extends ConsumerState<StaffPage> {
                 ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -4550,5 +4565,31 @@ class _EditStaffEmployeeDialogState extends State<_EditStaffEmployeeDialog> {
         ),
       ],
     );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// STICKY TAB NAV DELEGATE
+// ═══════════════════════════════════════════════════════════════
+class _StickyTabNavDelegate extends SliverPersistentHeaderDelegate {
+  final double height;
+  final Widget child;
+
+  _StickyTabNavDelegate({required this.height, required this.child});
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return child;
+  }
+
+  @override
+  bool shouldRebuild(_StickyTabNavDelegate oldDelegate) {
+    return oldDelegate.height != height || oldDelegate.child != child;
   }
 }

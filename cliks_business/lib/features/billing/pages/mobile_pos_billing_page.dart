@@ -1512,11 +1512,10 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
               ],
             ),
 
-            // 5. Persistent Docked Mobile Cart Bar (Docked gracefully above stylish bottom nav bar)
+            // 5. Compact Floating "View Cart" Action Badge (Docked efficiently on the right side)
             if (_cart.isNotEmpty)
               Positioned(
-                left: 14,
-                right: 14,
+                right: 16,
                 bottom:
                     74 +
                     (bottomInset > 0
@@ -1525,89 +1524,88 @@ class _MobilePosBillingPageState extends ConsumerState<MobilePosBillingPage> {
                 child: Material(
                   elevation: 8,
                   shadowColor: MobilePosColors.primaryGreen.withValues(
-                    alpha: 0.4,
+                    alpha: 0.45,
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(28),
                   color: MobilePosColors.primaryGreen,
                   child: InkWell(
                     onTap: _openCartSheet,
-                    borderRadius: BorderRadius.circular(16),
-                    child: Padding(
+                    borderRadius: BorderRadius.circular(28),
+                    child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
+                        horizontal: 14,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1.2,
+                        ),
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF1E7E44),
+                            Color(0xFF14532D),
+                          ],
+                        ),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          Container(
-                            padding: const EdgeInsets.all(7),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              shape: BoxShape.circle,
+                          Badge(
+                            label: Text(
+                              '$_cartItemCount',
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
                             ),
-                            child: const Icon(
-                              LucideIcons.shoppingBag,
-                              color: Colors.white,
-                              size: 17,
+                            backgroundColor: const Color(0xFFEF4444),
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                LucideIcons.shoppingBag,
+                                color: Colors.white,
+                                size: 16,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  '$_cartItemCount ${_cartItemCount == 1 ? "Item" : "Items"} • Tax Incl.',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 10.5,
-                                    color: Colors.white.withValues(alpha: 0.8),
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '₹${formatIndianCurrency(_payableAmount)}',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  letterSpacing: -0.2,
                                 ),
-                                Text(
-                                  '₹${formatIndianCurrency(_payableAmount)}',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w800,
-                                    color: Colors.white,
-                                    letterSpacing: -0.3,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'View Cart',
+                                style: GoogleFonts.inter(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.85),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'View Cart',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
-                                    color: MobilePosColors.primaryGreen,
-                                  ),
-                                ),
-                                const SizedBox(width: 4),
-                                const Icon(
-                                  LucideIcons.chevronRight,
-                                  size: 14,
-                                  color: MobilePosColors.primaryGreen,
-                                ),
-                              ],
-                            ),
+                          const SizedBox(width: 6),
+                          const Icon(
+                            LucideIcons.chevronRight,
+                            size: 14,
+                            color: Colors.white70,
                           ),
                         ],
                       ),

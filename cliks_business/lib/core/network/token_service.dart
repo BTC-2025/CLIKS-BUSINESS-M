@@ -13,6 +13,7 @@ class TokenService {
   static const _kName = 'bnx_user_name';
   static const _kGlobalAvatar = 'bnx_user_avatar_global';
   static const _kSavedAccountsRegistry = 'bnx_saved_accounts_registry';
+  static const _kExplicitlyLoggedOut = 'bnx_user_explicitly_logged_out';
 
   static String? _cachedAccessToken;
   static String? get cachedAccessToken {
@@ -125,6 +126,7 @@ class TokenService {
       if (k.startsWith('bnx_biz_onboarded_') ||
           k.startsWith('bnx_user_settings_') ||
           k.startsWith('bnx_user_avatar_') ||
+          k == _kExplicitlyLoggedOut ||
           k == _kSavedAccountsRegistry) {
         preserved[k] = v;
       }
@@ -171,6 +173,21 @@ class TokenService {
   static Future<bool> isLoggedIn() async {
     final token = await getAccessToken();
     return token != null && token.isNotEmpty;
+  }
+
+  static Future<bool> isExplicitlyLoggedOut() async {
+    _ensureFallbackLoaded();
+    final val = await _safeRead(key: _kExplicitlyLoggedOut);
+    return val == 'true';
+  }
+
+  static Future<void> setExplicitlyLoggedOut(bool value) async {
+    _ensureFallbackLoaded();
+    if (value) {
+      await _safeWrite(key: _kExplicitlyLoggedOut, value: 'true');
+    } else {
+      await _safeDelete(key: _kExplicitlyLoggedOut);
+    }
   }
 
   // ── User Info & Active Session ─────────────────────────────────────────────

@@ -1200,7 +1200,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.only(bottom: 24),
         child: FloatingActionButton.extended(
           onPressed: () => _openRecordEntryModal(context),
           backgroundColor: const Color(0xFF166534),

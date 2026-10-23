@@ -13,6 +13,9 @@ import '../../auth/notifiers/auth_notifier.dart';
 import '../../auth/pages/login_screen.dart';
 import '../../auth/pages/register_account_type_screen.dart';
 import '../presentation/manage_account_screen.dart';
+import '../../../core/network/token_service.dart';
+import '../../../core/widgets/avatar_widget.dart';
+import '../../../data/repositories/user_repository.dart';
 
 class ProfilePage extends ConsumerStatefulWidget {
   const ProfilePage({super.key});
@@ -31,6 +34,33 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
   String _currentEmail = '';
 
   bool _isExpanded = false;
+  String? _profileAvatar;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileData();
+  }
+
+  Future<void> _loadProfileData() async {
+    try {
+      final email = (await TokenService.getUserEmail() ?? '').trim().toLowerCase();
+      if (email.isNotEmpty) {
+        final avatar = await TokenService.getUserAvatar(email);
+        if (mounted && avatar != null && avatar.isNotEmpty) {
+          setState(() {
+            _profileAvatar = avatar;
+          });
+        }
+      }
+      final profile = await UserRepository.getProfile(email: email.isNotEmpty ? email : null);
+      if (mounted && profile?.avatarUrl != null && profile!.avatarUrl!.isNotEmpty) {
+        setState(() {
+          _profileAvatar = profile.avatarUrl;
+        });
+      }
+    } catch (_) {}
+  }
 
   void _showAddAccountDialog() {
     showModalBottomSheet(
@@ -699,6 +729,9 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
 
   Widget _buildProfileHeader(bool isMobile) {
     final activeAccount = ref.watch(activeAccountProvider);
+    final effectiveAvatar = (_profileAvatar != null && _profileAvatar!.isNotEmpty)
+        ? _profileAvatar
+        : activeAccount.avatarUrl;
     final allAccounts = ref.watch(accountsProvider);
     final currentUsername = activeAccount.name.isNotEmpty
         ? activeAccount.name
@@ -735,10 +768,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
           Container(
             padding: const EdgeInsets.all(4),
             decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
-            child: const CircleAvatar(
-              radius: 32,
-              backgroundColor: Colors.white,
-              child: Icon(LucideIcons.user, size: 32, color: AppColors.primaryGreen),
+            child: AvatarWidget(
+              name: currentUsername,
+              avatarUrl: effectiveAvatar,
+              size: 64,
+              fontSize: 24,
             ),
           ),
           const SizedBox(height: 12),
@@ -829,14 +863,11 @@ class _ProfilePageState extends ConsumerState<ProfilePage> {
                       ),
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 16,
-                            backgroundColor: isSelected ? Colors.white : Colors.white24,
-                            child: Icon(
-                              LucideIcons.user,
-                              size: 16,
-                              color: isSelected ? AppColors.primaryGreen : Colors.white,
-                            ),
+                          AvatarWidget(
+                            name: accountName,
+                            avatarUrl: acc.avatarUrl,
+                            size: 32,
+                            fontSize: 14,
                           ),
                           const SizedBox(width: 12),
                           Expanded(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:clicks_business_frontend/core/widgets/avatar_widget.dart';
 import 'package:clicks_business_frontend/features/profile/pages/profile_page.dart';
 import 'package:clicks_business_frontend/features/profile/presentation/manage_account_screen.dart';
 import 'package:clicks_business_frontend/features/navigation/shell_layout.dart';
@@ -29,8 +30,8 @@ void main() {
         // Check for ProfilePage presence
         expect(find.byType(ProfilePage), findsOneWidget);
 
-        // Verify username/account is present in header
-        expect(find.byIcon(LucideIcons.user), findsWidgets);
+        // Verify profile avatar widget is present in header
+        expect(find.byType(AvatarWidget), findsWidgets);
 
         // Scroll and verify "Sign Out" tile exists on mobile
         final signOutTile = find.text('Sign Out');

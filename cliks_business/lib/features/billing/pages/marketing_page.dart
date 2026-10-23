@@ -110,7 +110,7 @@ class _MarketingPageState extends State<MarketingPage> with SingleTickerProvider
       // Single Floating Action Button for Mobile
       floatingActionButton: isMobile
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
+              padding: const EdgeInsets.only(bottom: 76),
               child: FloatingActionButton.extended(
                 onPressed: _openComposeDialog,
                 backgroundColor: const Color(0xFF166534),

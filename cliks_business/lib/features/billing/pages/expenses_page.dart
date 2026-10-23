@@ -413,19 +413,22 @@ class _ExpensesPageState extends ConsumerState<ExpensesPage> {
     // ─── MOBILE OS REDESIGN (Android & iOS) ───
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      floatingActionButton: FloatingActionButton.extended(
-        heroTag: 'mobile_expenses_record_fab',
-        onPressed: _openRecordExpenseDialog,
-        backgroundColor: const Color(0xFF166534),
-        foregroundColor: Colors.white,
-        elevation: 4,
-        icon: const Icon(LucideIcons.plus, size: 16),
-        label: const Text(
-          'Record Expense',
-          style: TextStyle(
-            fontSize: 12.5,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.1,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 24),
+        child: FloatingActionButton.extended(
+          heroTag: 'mobile_expenses_record_fab',
+          onPressed: _openRecordExpenseDialog,
+          backgroundColor: const Color(0xFF166534),
+          foregroundColor: Colors.white,
+          elevation: 4,
+          icon: const Icon(LucideIcons.plus, size: 16),
+          label: const Text(
+            'Record Expense',
+            style: TextStyle(
+              fontSize: 12.5,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.1,
+            ),
           ),
         ),
       ),

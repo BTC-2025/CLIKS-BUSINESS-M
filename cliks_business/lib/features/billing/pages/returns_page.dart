@@ -48,7 +48,7 @@ class _ReturnsPageState extends ConsumerState<ReturnsPage>
       backgroundColor: const Color(0xFFF8F9FB),
       floatingActionButton: isMobile
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
+              padding: const EdgeInsets.only(bottom: 76),
               child: _ExpandableFab(
                 onNewSupplierReturn: _triggerNewSupplierReturn,
                 onNewCustomerReturn: _triggerNewCustomerReturn,

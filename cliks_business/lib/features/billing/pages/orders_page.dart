@@ -43,7 +43,7 @@ class _OrdersPageState extends ConsumerState<OrdersPage>
       backgroundColor: const Color(0xFFF8F9FB),
       floatingActionButton: isMobile
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
+              padding: const EdgeInsets.only(bottom: 76),
               child: FloatingActionButton.extended(
                 onPressed: _triggerPrimaryAction,
                 backgroundColor: const Color(0xFF166534),

@@ -201,7 +201,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
       // Dropup Expandable FAB for Mobile
       floatingActionButton: isMobile
           ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
+              padding: const EdgeInsets.only(bottom: 76),
               child: _ExpandableFab(
                 onRegularize: _triggerRegularizeMissedPunch,
                 onManualPunch: _triggerManualPunchEntry,
