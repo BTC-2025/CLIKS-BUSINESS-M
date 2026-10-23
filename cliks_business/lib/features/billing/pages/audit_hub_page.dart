@@ -10,6 +10,7 @@ import '../widgets/register_client_dialog.dart';
 import '../widgets/invite_team_dialog.dart';
 import '../widgets/verify_icai_dialog.dart';
 import '../../../widgets/bento/bento.dart';
+import '../models/archived_auditor_roles.dart';
 
 class _TabItem {
   final String label;
@@ -142,14 +143,9 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
     return _icaiChapter;
   }
 
-  final List<String> _auditorRoles = [
-    'Statutory Financial Auditor (ICAI CA)',
-    'Tax Auditor (ICAI CA)',
-    'Internal Auditor (CIA / CA / CMA)',
-    'Cost Auditor (ICMAI CMA)',
-    'Secretarial Auditor (ICSI CS)',
-    'Forensic Auditor (ICAI FAFD / CFE)',
-  ];
+  // Frontend displays strictly "Statutory Financial Auditor" and "Tax Auditor"
+  // Other auditor roles are preserved in `../models/archived_auditor_roles.dart`
+  final List<String> _auditorRoles = List.from(kActiveAuditorRoles);
 
   late final List<_TabItem> _advisoryTabs = [
     _TabItem('Home', LucideIcons.home),
@@ -169,16 +165,13 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
       _selectedAuditorIndex = index;
       _activeAdvisoryTab = 6;
       _activeSubTab = 0;
-      final roleNames = [
-        'Statutory Financial Auditor',
-        'Tax Auditor',
-        'Internal Auditor',
-        'Cost Auditor',
-        'Secretarial Auditor',
-        'Forensic Auditor',
-      ];
-      _advisoryTabs[6] = _TabItem(roleNames[index], LucideIcons.briefcase);
+      final roleName = getAuditorRoleShortName(index);
+      _advisoryTabs[6] = _TabItem(roleName, LucideIcons.briefcase);
     });
+  }
+
+  String _getAuditorRoleDisplayName(int index) {
+    return getAuditorRoleFullName(index);
   }
 
   @override
@@ -270,7 +263,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
     return MacOsSoftUiBentoHero(
       title: 'Auditor & Advisory Workspace',
       mainValue: 'FIN-PRO Compliance Hub',
-      subtitle: 'Statutory, tax, forensic audit modules & ICAI digital workpapers',
+      subtitle: 'Statutory & tax audit modules, and ICAI digital workpapers',
       badgeText: _isIcaiVerified ? 'ICAI VERIFIED' : 'ACTIVE PRACTICE',
       badgeIcon: LucideIcons.shieldCheck,
       isMobile: isMobile,
@@ -5520,7 +5513,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
             ),
             const SizedBox(height: 4),
             Text(
-              'Automated compliance, verification checks and working papers for ${_auditorRoles[_selectedAuditorIndex]}.',
+              'Automated compliance, verification checks and working papers for ${_getAuditorRoleDisplayName(_selectedAuditorIndex)}.',
               style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
             ),
             const SizedBox(height: 12),
@@ -5587,7 +5580,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Automated compliance, verification checks and working papers for ${_auditorRoles[_selectedAuditorIndex]}.',
+                        'Automated compliance, verification checks and working papers for ${_getAuditorRoleDisplayName(_selectedAuditorIndex)}.',
                         style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
                       ),
                     ],
@@ -5714,15 +5707,9 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
         return 'Statutory Financial Audit Suite';
       case 1:
         return 'Tax Audit & Form 3CD Hub';
-      case 2:
-        return 'Internal Audit & Controls Suite';
-      case 3:
-        return 'Cost Audit & Compliance Suite';
-      case 4:
-        return 'Secretarial Audit & Governance Suite';
-      case 5:
-        return 'Forensic Audit & Fraud Investigation Suite';
       default:
+        final archived = getArchivedAuditorRole(_selectedAuditorIndex);
+        if (archived != null) return archived.suiteTitle;
         return 'Statutory Financial Audit Suite';
     }
   }
@@ -5733,15 +5720,9 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
         return 'ICAI CA STANDARD';
       case 1:
         return 'SEC 44AB TAX AUDIT';
-      case 2:
-        return 'CIA / CA / CMA STANDARD';
-      case 3:
-        return 'ICMAI CMA STANDARD';
-      case 4:
-        return 'ICSI CS STANDARD';
-      case 5:
-        return 'ICAI FAFD / CFE STANDARD';
       default:
+        final archived = getArchivedAuditorRole(_selectedAuditorIndex);
+        if (archived != null) return archived.suiteBadge;
         return 'ICAI CA STANDARD';
     }
   }
@@ -5752,15 +5733,9 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
         return "Prove a 'true and fair view' under Section 143 of the Companies Act and Indian Accounting Standards (Ind AS).";
       case 1:
         return 'Verify compliance under Section 44AB and auto-populate Form 3CD.';
-      case 2:
-        return 'Operational risk management, IFC (Internal Financial Controls) and COSO framework matrix.';
-      case 3:
-        return 'Statutory cost compliance under Section 148 of Companies Act 2013 and CRA Rules.';
-      case 4:
-        return 'Corporate governance audit under Section 204 of the Companies Act 2013 and SEBI LODR Regulations.';
-      case 5:
-        return "Digital forensics, Benford's Law distribution analysis, and fund diversion tracking under IBC & EOW norms.";
       default:
+        final archived = getArchivedAuditorRole(_selectedAuditorIndex);
+        if (archived != null) return archived.suiteSubtitle;
         return "Prove a 'true and fair view' under Section 143 of the Companies Act and Indian Accounting Standards (Ind AS).";
     }
   }
@@ -5771,15 +5746,9 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
         return 'Rule 11(g) Audit Trail Certificate & SA 230 Working Paper Bundle';
       case 1:
         return '1-Click Form 3CD Data Extractor (Clauses 21, 34, 44, Sec 43B(h))';
-      case 2:
-        return 'Internal Financial Controls (IFC) Report & Risk-Control Matrix (RCM)';
-      case 3:
-        return 'Form CRA-1 to CRA-4 Cost Audit Report & XBRL Package';
-      case 4:
-        return 'Form MR-3 Secretarial Audit Report & Annual Secretarial Compliance Report';
-      case 5:
-        return 'Forensic Audit Investigation Report & Money Trail Evidentiary Pack';
       default:
+        final archived = getArchivedAuditorRole(_selectedAuditorIndex);
+        if (archived != null) return archived.coreDeliverableText;
         return 'Rule 11(g) Audit Trail Certificate & SA 230 Working Paper Bundle';
     }
   }
@@ -5811,39 +5780,9 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
           'Withholding Taxes, GST Expense Split & Cash Loans',
           'Ratios, Tax Credits, Losses & e-Filing Closures',
         ];
-      case 2:
-        return [
-          'Risk Control Matrix (RCM)',
-          'Entity Level Controls (ELC)',
-          'Process Walkthroughs',
-          'Testing of Operating Effectiveness',
-          'Audit Committee Summary',
-        ];
-      case 3:
-        return [
-          'CRA-1 Cost Records',
-          'CRA-2 Form & Filing',
-          'CRA-3 Cost Audit Report',
-          'CRA-4 Annexures & Reconciliation',
-          'Capacity & Ratio Engine',
-        ];
-      case 4:
-        return [
-          'Form MR-3 Compliance',
-          'Board & Committee Meetings',
-          'MCA Statutory Registers',
-          'SEBI LODR Checklists',
-          'Secretarial Working Papers',
-        ];
-      case 5:
-        return [
-          "Benford's Law Fraud Engine",
-          'Red Flag Transaction Scanner',
-          'Related Party Fund Siphoning',
-          'Journal Entry (JE) Testing',
-          'Evidentiary Dossier',
-        ];
       default:
+        final archived = getArchivedAuditorRole(_selectedAuditorIndex);
+        if (archived != null) return archived.subTabs;
         return [
           'Rule 11(g) Vault & Certificate',
           'Smart Vouching & Sampler',
