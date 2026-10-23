@@ -6,8 +6,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../widgets/bento/bento.dart';
 import '../../../core/network/token_service.dart';
 import '../../../data/repositories/subscription_repository.dart';
-import '../widgets/youpi_payment_sheet.dart';
-import '../services/youpi_payment_service.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -298,15 +296,12 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
               // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
               _buildFourTierCards(isMobile),
-              _buildYoupiTestPlanBanner(isMobile),
             ] else if (_selectedMainTab == 1) ...[
               // ─── FIN-PRO SECTION ───
               _buildFinProSection(isMobile),
-              _buildYoupiTestPlanBanner(isMobile),
             ] else ...[
               // ─── PARTNER LAUNCH DESK SECTION ───
               _buildPartnerLaunchDeskSection(isMobile),
-              _buildYoupiTestPlanBanner(isMobile),
             ],
             const SizedBox(height: 36),
 
@@ -1972,22 +1967,27 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
             backgroundColor: const Color(0xFFF8FAFC),
             disabledForegroundColor: const Color(0xFF94A3B8),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(LucideIcons.ban, size: 13, color: Color(0xFF94A3B8)),
-              const SizedBox(width: 6),
-              Text(
-                'Downgrade Unavailable',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF94A3B8),
+              const SizedBox(width: 5),
+              Flexible(
+                child: Text(
+                  'Downgrade Unavailable',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF94A3B8),
+                  ),
                 ),
               ),
             ],
@@ -2142,7 +2142,21 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           ElevatedButton(
             onPressed: () {
               Navigator.of(ctx).pop();
-              _initiateYoupiUpgrade(tier, onUpgrade);
+              setState(() {
+                _currentBusinessTier = tier.tierNumber;
+              });
+              onUpgrade(tier.tierNumber);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Successfully upgraded to ${tier.name}!',
+                    style: GoogleFonts.inter(),
+                  ),
+                  backgroundColor: const Color(0xFF135029),
+                  behavior: SnackBarBehavior.floating,
+                  width: 420,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF135029),
@@ -2161,254 +2175,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  void _initiateYoupiUpgrade(
-    _SubscriptionTierData tier,
-    ValueChanged<int> onUpgrade,
-  ) async {
-    final rawCleanPrice =
-        tier.fullAnnualPrice.replaceAll(RegExp(r'[^\d.]'), '');
-    final payableAmount = double.tryParse(rawCleanPrice) ?? 0.0;
-
-    final customerEmail =
-        await TokenService.getUserEmail() ?? 'ravinew2004@bnxmail.com';
-    final customerName = await TokenService.getUserName() ?? 'Ravi Kumar C';
-    final userSettings =
-        await TokenService.getUserSettings(customerEmail) ?? {};
-    final customerPhone = userSettings['phoneNumber']?.toString() ??
-        userSettings['phone']?.toString();
-
-    if (!mounted) return;
-
-    YoupiPaymentSheet.show(
-      context: context,
-      tierNumber: tier.tierNumber,
-      planName: tier.name,
-      fullAnnualPrice: tier.fullAnnualPrice,
-      payableAmount: payableAmount,
-      customerEmail: customerEmail,
-      customerName: customerName,
-      customerPhone: customerPhone,
-      onPaymentVerified: (verifiedTier) {
-        setState(() {
-          _currentBusinessTier = verifiedTier;
-        });
-        onUpgrade(verifiedTier);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Successfully upgraded to ${tier.name} via YOUPI PG!',
-              style: GoogleFonts.inter(),
-            ),
-            backgroundColor: const Color(0xFF135029),
-            behavior: SnackBarBehavior.floating,
-            width: 420,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildYoupiTestPlanBanner(bool isMobile) {
-    final vpa = YoupiPaymentService.configuredPayeeVpa;
-    return Container(
-      margin: const EdgeInsets.only(top: 18),
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 16 : 22,
-        vertical: 16,
-      ),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F7FF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A0B63E5),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(7),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0B63E5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        LucideIcons.flaskConical,
-                        color: Colors.white,
-                        size: 15,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'YOUPI PG Gateway Live Test Mode',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0B63E5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Payee: $vpa',
-                  style: GoogleFonts.inter(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF15803D),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Test real payment for ₹1.00 via payment gateway without affecting current tier numbers.',
-                  style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    color: const Color(0xFF475569),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ElevatedButton.icon(
-                  onPressed: _launchOneRupeeTestPlan,
-                  icon: const Icon(LucideIcons.arrowUpRight, size: 14, color: Colors.white),
-                  label: Text(
-                    'Test ₹1 Payment',
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0B63E5),
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                ),
-              ],
-            )
-          : Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0B63E5),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(
-                    LucideIcons.flaskConical,
-                    color: Colors.white,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'YOUPI PG Gateway Live Test Mode',
-                            style: GoogleFonts.inter(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF0B63E5),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFDCFCE7),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'Payment Gateway Ready',
-                              style: GoogleFonts.inter(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF15803D),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Test genuine 1 Rupee (₹1.00) live transaction via payment gateway without affecting official subscription tiers.',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                ElevatedButton.icon(
-                  onPressed: _launchOneRupeeTestPlan,
-                  icon: const Icon(LucideIcons.arrowUpRight, size: 14, color: Colors.white),
-                  label: Text(
-                    'Test ₹1 Payment',
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0B63E5),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    elevation: 0,
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
-
-  void _launchOneRupeeTestPlan() {
-    final testTier = _SubscriptionTierData(
-      tierNumber: 1,
-      topTag: 'TEST VERIFICATION',
-      name: 'Test Plan (₹1 Verification)',
-      headline: 'Live ₹1 UPI payment transaction to verify direct settlement.',
-      originalMonthlyPrice: '₹1',
-      offerMonthlyPrice: '₹1',
-      fullAnnualPrice: '₹1',
-      discountTag: 'Test Mode',
-      icon: LucideIcons.flaskConical,
-      billingCycleText: 'Single test transaction of ₹1',
-      billingSubtext: 'Test Mode',
-      features: const [
-        'Secure payment gateway checkout',
-        'Instant plan activation',
-        'Authoritative banking verification test',
-      ],
-    );
-    _initiateYoupiUpgrade(testTier, (_) {});
-  }
   Widget _buildMainTabSelector([bool isMobile = false]) {
     return Center(
       child: SingleChildScrollView(
