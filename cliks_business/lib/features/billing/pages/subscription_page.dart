@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../widgets/bento/bento.dart';
 import '../../../core/network/token_service.dart';
 import '../../../data/repositories/subscription_repository.dart';
+import '../widgets/customizable_plan_builder_section.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -299,9 +300,16 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ] else if (_selectedMainTab == 1) ...[
               // ─── FIN-PRO SECTION ───
               _buildFinProSection(isMobile),
-            ] else ...[
+            ] else if (_selectedMainTab == 2) ...[
               // ─── PARTNER LAUNCH DESK SECTION ───
               _buildPartnerLaunchDeskSection(isMobile),
+            ] else ...[
+              // ─── 4. CUSTOMIZABLE SUBSCRIPTION & INSTANT ADD-ONS BUILDER ───
+              CustomizablePlanBuilderSection(
+                isMobile: isMobile,
+                onScrollToActivePlan: () => _scrollToSection(_activePlanKey),
+                onScrollToBillingHistory: () => _scrollToSection(_billingHistoryKey),
+              ),
             ],
             const SizedBox(height: 36),
 
@@ -2213,6 +2221,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 activeColor: const Color(0xFF312E81),
                 isMobile: isMobile,
               ),
+              const SizedBox(width: 4),
+              _buildMainTabItem(
+                index: 3,
+                label: '✦ CUSTOMIZABLE',
+                icon: LucideIcons.sliders,
+                activeColor: const Color(0xFF0F5132),
+                activeGradient: const LinearGradient(
+                  colors: [Color(0xFF0F5132), Color(0xFF115E59)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                isMobile: isMobile,
+              ),
             ],
           ),
         ),
@@ -2225,6 +2246,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     required String label,
     required IconData icon,
     required Color activeColor,
+    Gradient? activeGradient,
     bool isMobile = false,
   }) {
     final bool isSelected = _selectedMainTab == index;
@@ -2243,12 +2265,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           vertical: isMobile ? 8 : 10,
         ),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.transparent,
+          color: isSelected
+              ? (activeGradient == null ? activeColor : null)
+              : Colors.transparent,
+          gradient: isSelected ? activeGradient : null,
           borderRadius: BorderRadius.circular(26),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: activeColor.withValues(alpha: 0.35),
+                    color: (activeGradient != null
+                            ? const Color(0xFF0F5132)
+                            : activeColor)
+                        .withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
