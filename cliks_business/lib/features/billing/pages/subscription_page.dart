@@ -60,6 +60,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
   // Section Navigation Tabs (BUSINESS, FIN-PRO, PARTNER LAUNCH DESK)
   int _selectedMainTab = 0; // 0: BUSINESS, 1: FIN-PRO, 2: PARTNER LAUNCH DESK
+  int _selectedBusinessSubTab = 0; // 0: Standard Tiers (4 Plans), 1: ✦ Customizable Plan
   int _selectedPartnerTab = 0; // 0: Investor Club, 1: Products & Ideas
 
   // Tier tracking for Upgrade logic:
@@ -288,28 +289,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             SizedBox(height: isMobile ? 20 : 28),
 
             if (_selectedMainTab == 0) ...[
-              // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
-              Container(
-                key: _upgradeTiersKey,
-                child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
-              ),
-              const SizedBox(height: 18),
-
-              // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
-              _buildFourTierCards(isMobile),
+              // ─── BUSINESS SECTION (Standard Tiers + Customizable Plan Builder) ───
+              _buildBusinessSection(isMobile),
             ] else if (_selectedMainTab == 1) ...[
               // ─── FIN-PRO SECTION ───
               _buildFinProSection(isMobile),
-            ] else if (_selectedMainTab == 2) ...[
+            ] else ...[
               // ─── PARTNER LAUNCH DESK SECTION ───
               _buildPartnerLaunchDeskSection(isMobile),
-            ] else ...[
-              // ─── 4. CUSTOMIZABLE SUBSCRIPTION & INSTANT ADD-ONS BUILDER ───
-              CustomizablePlanBuilderSection(
-                isMobile: isMobile,
-                onScrollToActivePlan: () => _scrollToSection(_activePlanKey),
-                onScrollToBillingHistory: () => _scrollToSection(_billingHistoryKey),
-              ),
             ],
             const SizedBox(height: 36),
 
@@ -2221,19 +2208,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 activeColor: const Color(0xFF312E81),
                 isMobile: isMobile,
               ),
-              const SizedBox(width: 4),
-              _buildMainTabItem(
-                index: 3,
-                label: '✦ CUSTOMIZABLE',
-                icon: LucideIcons.sliders,
-                activeColor: const Color(0xFF0F5132),
-                activeGradient: const LinearGradient(
-                  colors: [Color(0xFF0F5132), Color(0xFF115E59)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                isMobile: isMobile,
-              ),
             ],
           ),
         ),
@@ -2299,6 +2273,130 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 fontWeight: isSelected ? FontWeight.w800 : FontWeight.w700,
                 color: isSelected ? Colors.white : const Color(0xFF1E3A2B),
                 letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BUSINESS SECTION (Standard Tiers + Customizable Plan Builder)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildBusinessSection(bool isMobile) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Sub-selector tabs: [ Standard Tiers (4 Plans) ] [ ✦ Customizable Plan & Add-Ons ]
+        Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildBusinessSubTab(
+                  index: 0,
+                  label: 'Standard Tiers (4 Plans)',
+                  icon: LucideIcons.layers,
+                  isMobile: isMobile,
+                ),
+                SizedBox(width: isMobile ? 8 : 14),
+                _buildBusinessSubTab(
+                  index: 1,
+                  label: '✦ Customizable Plan & Add-Ons',
+                  icon: LucideIcons.sliders,
+                  isMobile: isMobile,
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: isMobile ? 18 : 24),
+
+        if (_selectedBusinessSubTab == 0) ...[
+          // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
+          Container(
+            key: _upgradeTiersKey,
+            child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
+          ),
+          const SizedBox(height: 18),
+
+          // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
+          _buildFourTierCards(isMobile),
+        ] else ...[
+          // ─── 4. CUSTOMIZABLE SUBSCRIPTION & INSTANT ADD-ONS BUILDER ───
+          CustomizablePlanBuilderSection(
+            isMobile: isMobile,
+            onScrollToActivePlan: () => _scrollToSection(_activePlanKey),
+            onScrollToBillingHistory: () => _scrollToSection(_billingHistoryKey),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildBusinessSubTab({
+    required int index,
+    required String label,
+    required IconData icon,
+    bool isMobile = false,
+  }) {
+    final bool isSelected = _selectedBusinessSubTab == index;
+    final Color activeColor = _darkForestGreen;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedBusinessSubTab = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(25),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: isMobile ? 42 : 48,
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 14 : 24,
+          vertical: isMobile ? 6 : 0,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          border: isSelected
+              ? null
+              : Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: isMobile ? 14 : 16,
+              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+            ),
+            SizedBox(width: isMobile ? 6 : 9),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: isMobile ? 12.5 : 14,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : const Color(0xFF1E293B),
               ),
             ),
           ],

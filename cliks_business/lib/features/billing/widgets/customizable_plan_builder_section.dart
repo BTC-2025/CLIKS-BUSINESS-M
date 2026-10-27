@@ -371,9 +371,16 @@ class _CustomizablePlanBuilderSectionState
         child: Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(28),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -423,18 +430,25 @@ class _CustomizablePlanBuilderSectionState
           _activeSubMode = index;
         });
       },
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(26),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
         decoration: BoxDecoration(
-          color: isSelected ? _darkForestGreen : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          gradient: isSelected
+              ? const LinearGradient(
+                  colors: [_darkForestGreen, Color(0xFF166534)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isSelected ? null : Colors.transparent,
+          borderRadius: BorderRadius.circular(26),
           boxShadow: isSelected
               ? [
                   BoxShadow(
                     color: _darkForestGreen.withValues(alpha: 0.3),
-                    blurRadius: 8,
+                    blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
                 ]
@@ -451,11 +465,11 @@ class _CustomizablePlanBuilderSectionState
                 color: isSelected ? Colors.white : const Color(0xFF334155),
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
               decoration: BoxDecoration(
-                color: isSelected ? Colors.white.withValues(alpha: 0.2) : badgeBg,
+                color: isSelected ? Colors.white.withValues(alpha: 0.22) : badgeBg,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
@@ -636,11 +650,18 @@ class _CustomizablePlanBuilderSectionState
 
   Widget _buildAdminSimulatorControl() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFFDE68A)),
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD97706).withValues(alpha: 0.08),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Wrap(
         crossAxisAlignment: WrapCrossAlignment.center,
@@ -650,7 +671,7 @@ class _CustomizablePlanBuilderSectionState
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.flaskConical, size: 12, color: Color(0xFFB45309)),
+              const Icon(LucideIcons.flaskConical, size: 13, color: Color(0xFFB45309)),
               const SizedBox(width: 6),
               Text(
                 'Simulate Admin Approval:',
@@ -732,13 +753,17 @@ class _CustomizablePlanBuilderSectionState
   Widget _buildSectionABaseFoundation() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF0FDF4),
+        gradient: const LinearGradient(
+          colors: [Color(0xFFF0FDF4), Color(0xFFFCFDF9)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _mintBorder, width: 1.5),
+        border: Border.all(color: const Color(0xFFBBF7D0), width: 1.5),
         boxShadow: [
           BoxShadow(
             color: _darkForestGreen.withValues(alpha: 0.04),
-            blurRadius: 10,
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
@@ -751,11 +776,22 @@ class _CustomizablePlanBuilderSectionState
             builder: (context, constraints) {
               final bool isCompact = constraints.maxWidth < 520;
               final iconWidget = Container(
-                width: 42,
-                height: 42,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: _darkForestGreen,
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: const LinearGradient(
+                    colors: [_darkForestGreen, Color(0xFF166534)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _darkForestGreen.withValues(alpha: 0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: const Center(
                   child: Icon(LucideIcons.lock, color: Colors.white, size: 20),
@@ -784,7 +820,7 @@ class _CustomizablePlanBuilderSectionState
                         decoration: BoxDecoration(
                           color: const Color(0xFFDCFCE7),
                           borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFFBBF7D0)),
+                          border: Border.all(color: const Color(0xFF86EFAC)),
                         ),
                         child: Text(
                           'ALWAYS INCLUDED',
@@ -876,7 +912,7 @@ class _CustomizablePlanBuilderSectionState
             },
           ),
           const SizedBox(height: 16),
-          const Divider(color: Color(0xFFD1F2C2), height: 1),
+          const Divider(color: Color(0xFFDCFCE7), height: 1),
           const SizedBox(height: 14),
           Text(
             'Mandatory foundational workspace. Included automatically in every custom plan:',
@@ -886,9 +922,9 @@ class _CustomizablePlanBuilderSectionState
               color: const Color(0xFF334155),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Wrap(
-            spacing: 16,
+            spacing: 10,
             runSpacing: 10,
             children: const [
               _FoundationPill(label: 'Unlimited Accounting & Day Book Logs'),
@@ -1107,11 +1143,25 @@ class _CustomizablePlanBuilderSectionState
     required ValueChanged<double> onChanged,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: calculatedMonthlyPrice > 0
+              ? const Color(0xFFBBF7D0)
+              : const Color(0xFFE2E8F0),
+          width: calculatedMonthlyPrice > 0 ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: calculatedMonthlyPrice > 0
+                ? _darkForestGreen.withValues(alpha: 0.04)
+                : Colors.black.withValues(alpha: 0.015),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1129,8 +1179,15 @@ class _CustomizablePlanBuilderSectionState
           final badgeWidget = Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
-              color: calculatedMonthlyPrice > 0 ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
+              color: calculatedMonthlyPrice > 0
+                  ? const Color(0xFFDCFCE7)
+                  : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: calculatedMonthlyPrice > 0
+                    ? const Color(0xFF86EFAC)
+                    : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Text(
               calculatedMonthlyPrice > 0
@@ -1139,7 +1196,9 @@ class _CustomizablePlanBuilderSectionState
               style: GoogleFonts.inter(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: calculatedMonthlyPrice > 0 ? const Color(0xFF15803D) : const Color(0xFF64748B),
+                color: calculatedMonthlyPrice > 0
+                    ? const Color(0xFF15803D)
+                    : const Color(0xFF64748B),
               ),
             ),
           );
@@ -1151,24 +1210,31 @@ class _CustomizablePlanBuilderSectionState
                 icon: LucideIcons.minus,
                 onTap: currentValue > min ? () => onChanged((currentValue - 1).toDouble()) : null,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: const Color(0xFFCBD5E1)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 3,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
                 ),
                 child: Text(
                   '$currentValue $unit',
                   style: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     fontWeight: FontWeight.w800,
                     color: _darkForestGreen,
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               _buildSmallStepBtn(
                 icon: LucideIcons.plus,
                 onTap: currentValue < max ? () => onChanged((currentValue + 1).toDouble()) : null,
@@ -1182,7 +1248,12 @@ class _CustomizablePlanBuilderSectionState
                 activeTrackColor: _darkForestGreen,
                 inactiveTrackColor: const Color(0xFFE2E8F0),
                 thumbColor: _darkForestGreen,
-                trackHeight: 4,
+                trackHeight: 5,
+                thumbShape: const RoundSliderThumbShape(
+                  enabledThumbRadius: 8,
+                  elevation: 3,
+                ),
+                overlayColor: _darkForestGreen.withValues(alpha: 0.12),
               ),
               child: Slider(
                 value: currentValue.toDouble(),
@@ -1228,14 +1299,14 @@ class _CustomizablePlanBuilderSectionState
                   color: _slateText,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               if (isCompact) ...[
                 stepperWidget,
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     sliderWidget,
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     maxWidget,
                   ],
                 ),
@@ -1243,9 +1314,9 @@ class _CustomizablePlanBuilderSectionState
                 Row(
                   children: [
                     stepperWidget,
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     sliderWidget,
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 8),
                     maxWidget,
                   ],
                 ),
@@ -1265,11 +1336,25 @@ class _CustomizablePlanBuilderSectionState
     required ValueChanged<int> onSelect,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFF1F5F9)),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: (options[selectedIndex]['price'] as int) > 0
+              ? const Color(0xFFBBF7D0)
+              : const Color(0xFFE2E8F0),
+          width: (options[selectedIndex]['price'] as int) > 0 ? 1.5 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (options[selectedIndex]['price'] as int) > 0
+                ? _darkForestGreen.withValues(alpha: 0.04)
+                : Colors.black.withValues(alpha: 0.015),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -1291,6 +1376,11 @@ class _CustomizablePlanBuilderSectionState
                   ? const Color(0xFFDCFCE7)
                   : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: (options[selectedIndex]['price'] as int) > 0
+                    ? const Color(0xFF86EFAC)
+                    : const Color(0xFFE2E8F0),
+              ),
             ),
             child: Text(
               options[selectedIndex]['badge'] as String,
@@ -1338,13 +1428,13 @@ class _CustomizablePlanBuilderSectionState
                   final bool isSelected = selectedIndex == idx;
                   return InkWell(
                     onTap: () => onSelect(idx),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                     child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 150),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      duration: const Duration(milliseconds: 160),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
                       decoration: BoxDecoration(
-                        color: isSelected ? _darkForestGreen : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+                        color: isSelected ? _darkForestGreen : const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: isSelected ? _darkForestGreen : const Color(0xFFCBD5E1),
                           width: isSelected ? 1.5 : 1,
@@ -1352,7 +1442,7 @@ class _CustomizablePlanBuilderSectionState
                         boxShadow: isSelected
                             ? [
                                 BoxShadow(
-                                  color: _darkForestGreen.withValues(alpha: 0.2),
+                                  color: _darkForestGreen.withValues(alpha: 0.25),
                                   blurRadius: 6,
                                   offset: const Offset(0, 2),
                                 ),
@@ -1362,7 +1452,7 @@ class _CustomizablePlanBuilderSectionState
                       child: Wrap(
                         alignment: WrapAlignment.center,
                         crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 4,
+                        spacing: 5,
                         runSpacing: 2,
                         children: [
                           Text(
@@ -1615,31 +1705,31 @@ class _CustomizablePlanBuilderSectionState
           }
         });
       },
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(14),
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: isSelected
-              ? (isGold ? const Color(0xFFFFFBEB) : const Color(0xFFF0FDF4))
+              ? (isGold ? const Color(0xFFFFFDF5) : const Color(0xFFF0FDF4))
               : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? activeBorder : _cardBorderDefault,
-            width: isSelected ? 2 : 1,
+            color: isSelected ? activeBorder : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.75 : 1,
           ),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: activeBorder.withValues(alpha: 0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
+                    color: activeBorder.withValues(alpha: 0.12),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
                   ),
                 ]
               : [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.015),
-                    blurRadius: 4,
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 6,
                     offset: const Offset(0, 2),
                   ),
                 ],
@@ -1651,25 +1741,25 @@ class _CustomizablePlanBuilderSectionState
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 36,
+                  height: 36,
                   decoration: BoxDecoration(
                     color: isSelected
                         ? (isGold ? const Color(0xFFFDE68A) : const Color(0xFFBBF7D0))
                         : const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                   child: Center(
                     child: Icon(
                       mod['icon'] as IconData,
-                      size: 16,
+                      size: 18,
                       color: isSelected
                           ? (isGold ? const Color(0xFF92400E) : const Color(0xFF14532D))
                           : const Color(0xFF475569),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1677,18 +1767,24 @@ class _CustomizablePlanBuilderSectionState
                       Text(
                         mod['title'] as String,
                         style: GoogleFonts.inter(
-                          fontSize: 12.5,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: _darkHeading,
-                          height: 1.2,
+                          height: 1.25,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 5),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                         decoration: BoxDecoration(
                           color: activeBadgeBg,
                           borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: isGold
+                                ? const Color(0xFFFDE68A)
+                                : const Color(0xFF86EFAC).withValues(alpha: 0.6),
+                            width: 0.8,
+                          ),
                         ),
                         child: Text(
                           '+ ₹$price / mo',
@@ -1707,7 +1803,7 @@ class _CustomizablePlanBuilderSectionState
                   activeColor: activeBorder,
                   materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   visualDensity: VisualDensity.compact,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
                   onChanged: (val) {
                     setState(() {
                       if (val == true) {
@@ -1720,13 +1816,13 @@ class _CustomizablePlanBuilderSectionState
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               mod['desc'] as String,
               style: GoogleFonts.inter(
-                fontSize: 11,
+                fontSize: 11.5,
                 color: _slateText,
-                height: 1.3,
+                height: 1.35,
               ),
               maxLines: 3,
               overflow: TextOverflow.ellipsis,
@@ -1734,13 +1830,20 @@ class _CustomizablePlanBuilderSectionState
 
             // If FinPro client pack is selected, show extra client stepper
             if (id == 'finpro_client_pack' && isSelected) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFDE68A), width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFD97706).withValues(alpha: 0.06),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Row(
                   children: [
@@ -1751,7 +1854,7 @@ class _CustomizablePlanBuilderSectionState
                           Text(
                             'Extra Client Ledgers:',
                             style: GoogleFonts.inter(
-                              fontSize: 10.5,
+                              fontSize: 11,
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFF92400E),
                             ),
@@ -1759,7 +1862,7 @@ class _CustomizablePlanBuilderSectionState
                           Text(
                             '+₹25/mo per client',
                             style: GoogleFonts.inter(
-                              fontSize: 9.5,
+                              fontSize: 10,
                               color: _slateText,
                             ),
                           ),
@@ -1777,7 +1880,7 @@ class _CustomizablePlanBuilderSectionState
                       child: Text(
                         '$_finProExtraClients',
                         style: GoogleFonts.inter(
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: FontWeight.w800,
                           color: _darkHeading,
                         ),
@@ -2005,15 +2108,31 @@ class _CustomizablePlanBuilderSectionState
     final bool isSelected = qty > 0;
     final bool isRecurring = addon['isRecurring'] as bool;
 
-    return Container(
-      padding: const EdgeInsets.all(14),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isSelected ? const Color(0xFFFFFBEB) : const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(12),
+        color: isSelected ? const Color(0xFFFFFDF5) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: isSelected ? const Color(0xFFD97706) : const Color(0xFFE2E8F0),
-          width: isSelected ? 1.5 : 1,
+          width: isSelected ? 1.75 : 1,
         ),
+        boxShadow: isSelected
+            ? [
+                BoxShadow(
+                  color: const Color(0xFFD97706).withValues(alpha: 0.12),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2022,21 +2141,21 @@ class _CustomizablePlanBuilderSectionState
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 32,
-                height: 32,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFFFDE68A) : Colors.white,
-                  borderRadius: BorderRadius.circular(8),
+                  color: isSelected ? const Color(0xFFFDE68A) : const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Center(
                   child: Icon(
                     addon['icon'] as IconData,
-                    size: 16,
+                    size: 18,
                     color: isSelected ? const Color(0xFFB45309) : const Color(0xFF475569),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2047,15 +2166,27 @@ class _CustomizablePlanBuilderSectionState
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: _darkHeading,
+                        height: 1.25,
                       ),
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      addon['type'] as String,
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w600,
-                        color: isRecurring ? const Color(0xFF0284C7) : const Color(0xFFB45309),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isRecurring ? const Color(0xFFE0F2FE) : const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: isRecurring ? const Color(0xFFBAE6FD) : const Color(0xFFFDE68A),
+                          width: 0.8,
+                        ),
+                      ),
+                      child: Text(
+                        addon['type'] as String,
+                        style: GoogleFonts.inter(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: isRecurring ? const Color(0xFF0284C7) : const Color(0xFFB45309),
+                        ),
                       ),
                     ),
                   ],
@@ -2063,16 +2194,16 @@ class _CustomizablePlanBuilderSectionState
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             addon['desc'] as String,
             style: GoogleFonts.inter(
-              fontSize: 11,
+              fontSize: 11.5,
               color: _slateText,
-              height: 1.3,
+              height: 1.35,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -2080,7 +2211,7 @@ class _CustomizablePlanBuilderSectionState
                 child: Text(
                   addon['price'] as String,
                   style: GoogleFonts.inter(
-                    fontSize: 12.5,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: _darkForestGreen,
                   ),
@@ -2097,12 +2228,12 @@ class _CustomizablePlanBuilderSectionState
                         : null,
                   ),
                   Container(
-                    width: 32,
+                    width: 34,
                     alignment: Alignment.center,
                     child: Text(
                       '$qty',
                       style: GoogleFonts.inter(
-                        fontSize: 13,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: qty > 0 ? const Color(0xFFB45309) : _slateText,
                       ),
@@ -2374,88 +2505,121 @@ class _CustomizablePlanBuilderSectionState
           const Divider(color: Color(0xFFE2E8F0), height: 1),
           const SizedBox(height: 14),
 
-          // Total Price Display
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      'CUSTOM PLAN TOTAL',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: _slateText,
-                      ),
-                    ),
-                  ),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '₹$_effectiveMonthlyPrice ',
-                          style: GoogleFonts.inter(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: _darkForestGreen,
-                          ),
-                        ),
-                        TextSpan(
-                          text: '/ mo',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: _slateText,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          // Total Price Display in Bento Card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFFF0FDF4), Color(0xFFDCFCE7)],
               ),
-              const SizedBox(height: 3),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      _isAnnualBilling ? 'Annualized (-20%)' : 'Monthly recurring',
-                      style: GoogleFonts.inter(
-                        fontSize: 11,
-                        color: const Color(0xFF15803D),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    'Net: ₹$_netPayableAmount',
-                    style: GoogleFonts.inter(
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      color: _darkHeading,
-                    ),
-                  ),
-                ],
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: const Color(0xFF86EFAC).withValues(alpha: 0.8),
+                width: 1.2,
               ),
-              const SizedBox(height: 2),
-              Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  _isAnnualBilling
-                      ? 'Billed at ₹$_billedAnnualPrice / yr + 18% GST (₹$_gstAmount)'
-                      : '+ 18% GST (₹$_gstAmount)',
-                  style: GoogleFonts.inter(
-                    fontSize: 10.5,
-                    color: _slateText,
-                    fontWeight: FontWeight.w500,
-                  ),
-                  textAlign: TextAlign.right,
-                  softWrap: true,
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF15803D).withValues(alpha: 0.06),
+                  blurRadius: 10,
+                  offset: const Offset(0, 3),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'CUSTOM PLAN TOTAL',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF166534),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: '₹$_effectiveMonthlyPrice ',
+                            style: GoogleFonts.inter(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w900,
+                              color: _darkForestGreen,
+                            ),
+                          ),
+                          TextSpan(
+                            text: '/ mo',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF166534),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                const Divider(color: Color(0xFFBBF7D0), height: 1),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          _isAnnualBilling ? 'Annualized (-20%)' : 'Monthly recurring',
+                          style: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: const Color(0xFF15803D),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Net: ₹$_netPayableAmount',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: _darkHeading,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    _isAnnualBilling
+                        ? 'Billed at ₹$_billedAnnualPrice / yr + 18% GST (₹$_gstAmount)'
+                        : '+ 18% GST (₹$_gstAmount)',
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      color: const Color(0xFF14532D),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.right,
+                    softWrap: true,
+                  ),
+                ),
+              ],
+            ),
           ),
 
           // One-Time Add-On Total line if any
@@ -2820,94 +2984,125 @@ class _CustomizablePlanBuilderSectionState
   Widget _buildPrimaryAdminButton() {
     String label;
     IconData icon;
-    Color bg;
+    List<Color> gradientColors;
+    Color shadowColor;
 
     switch (_adminStatus) {
       case AdminApprovalStatus.idle:
         label = '🚀 Submit Custom Plan to Admin';
         icon = LucideIcons.send;
-        bg = _darkForestGreen;
+        gradientColors = const [Color(0xFF0D5E36), Color(0xFF15803D)];
+        shadowColor = const Color(0xFF0D5E36);
         break;
       case AdminApprovalStatus.pending:
         label = '⏳ Under Review (Admin SLA: 2 Hrs)';
         icon = LucideIcons.clock;
-        bg = const Color(0xFFB45309);
+        gradientColors = const [Color(0xFFB45309), Color(0xFFD97706)];
+        shadowColor = const Color(0xFFB45309);
         break;
       case AdminApprovalStatus.approved:
         label = '🔒 Approved & Ready — Pay ₹$_netPayableAmount';
         icon = LucideIcons.shieldCheck;
-        bg = const Color(0xFF166534);
+        gradientColors = const [Color(0xFF166534), Color(0xFF15803D)];
+        shadowColor = const Color(0xFF166534);
         break;
       case AdminApprovalStatus.rejected:
         label = '🔄 Revise & Resubmit to Admin';
         icon = LucideIcons.refreshCw;
-        bg = const Color(0xFFBE123C);
+        gradientColors = const [Color(0xFF991B1B), Color(0xFFDC2626)];
+        shadowColor = const Color(0xFF991B1B);
         break;
     }
 
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 46,
-      child: ElevatedButton(
-        onPressed: () => _handlePrimaryAction(),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: bg,
-          foregroundColor: Colors.white,
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      height: 48,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: gradientColors,
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handlePrimaryAction(),
+          borderRadius: BorderRadius.circular(12),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 17, color: Colors.white),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    label,
+                    style: GoogleFonts.inter(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildInstantAddonsPayButton() {
-    return SizedBox(
+    return Container(
       width: double.infinity,
-      height: 44,
-      child: OutlinedButton(
-        onPressed: () => _handleInstantAddonPayment(),
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: Color(0xFFD97706), width: 1.5),
-          foregroundColor: const Color(0xFF92400E),
-          backgroundColor: const Color(0xFFFFFBEB),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(LucideIcons.zap, size: 16, color: Color(0xFFD97706)),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                '⚡ Pay & Activate Add-Ons Instantly (₹$_netOneTimePayable)',
-                style: GoogleFonts.inter(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF92400E),
+      height: 46,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBEB),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFD97706), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD97706).withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _handleInstantAddonPayment(),
+          borderRadius: BorderRadius.circular(12),
+          child: Center(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(LucideIcons.zap, size: 16, color: Color(0xFFD97706)),
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    '⚡ Pay & Activate Add-Ons Instantly (₹$_netOneTimePayable)',
+                    style: GoogleFonts.inter(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF92400E),
+                    ),
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );
@@ -3252,16 +3447,27 @@ class _CustomizablePlanBuilderSectionState
   Widget _buildSmallStepBtn({required IconData icon, required VoidCallback? onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        width: 28,
-        height: 28,
+      borderRadius: BorderRadius.circular(8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        width: 30,
+        height: 30,
         decoration: BoxDecoration(
-          color: onTap != null ? Colors.white : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(6),
+          color: onTap != null ? Colors.white : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(
             color: onTap != null ? const Color(0xFFCBD5E1) : const Color(0xFFE2E8F0),
+            width: 1,
           ),
+          boxShadow: onTap != null
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1.5),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Icon(
@@ -3293,13 +3499,18 @@ class _FoundationPill extends StatelessWidget {
           ),
         );
 
-        return Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Container(
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFDCFCE7), width: 1),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
                 width: 16,
                 height: 16,
                 decoration: const BoxDecoration(
@@ -3310,12 +3521,12 @@ class _FoundationPill extends StatelessWidget {
                   child: Icon(LucideIcons.check, size: 10, color: Colors.white),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            constraints.maxWidth.isFinite
-                ? Flexible(child: textWidget)
-                : textWidget,
-          ],
+              const SizedBox(width: 8),
+              constraints.maxWidth.isFinite
+                  ? Flexible(child: textWidget)
+                  : textWidget,
+            ],
+          ),
         );
       },
     );

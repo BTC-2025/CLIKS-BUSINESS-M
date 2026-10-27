@@ -7,7 +7,7 @@ import 'package:clicks_business_frontend/features/billing/widgets/customizable_p
 
 void main() {
   group('Customizable Subscription & Instant Add-Ons Builder', () {
-    testWidgets('Renders 4th pill button ✦ CUSTOMIZABLE and switches to builder view',
+    testWidgets('Renders Business sub-tabs and switches to Customizable builder view',
         (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
       tester.view.physicalSize = const Size(1280, 900);
@@ -30,14 +30,17 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
-        // Verify the 4 tabs are present
+        // Verify the 3 main category tabs are present
         expect(find.text('BUSINESS'), findsOneWidget);
         expect(find.text('FIN-PRO'), findsOneWidget);
         expect(find.text('PARTNER LAUNCH DESK'), findsOneWidget);
-        expect(find.text('✦ CUSTOMIZABLE'), findsOneWidget);
 
-        // Tap the 4th tab ✦ CUSTOMIZABLE
-        await tester.tap(find.text('✦ CUSTOMIZABLE'));
+        // Verify Business sub-tabs are present
+        expect(find.text('Standard Tiers (4 Plans)'), findsOneWidget);
+        expect(find.text('✦ Customizable Plan & Add-Ons'), findsOneWidget);
+
+        // Tap the Customizable sub-tab inside Business
+        await tester.tap(find.text('✦ Customizable Plan & Add-Ons'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
