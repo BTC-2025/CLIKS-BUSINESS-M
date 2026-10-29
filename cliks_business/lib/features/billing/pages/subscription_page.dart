@@ -7,6 +7,7 @@ import '../../../widgets/bento/bento.dart';
 import '../../../core/network/token_service.dart';
 import '../../../data/repositories/subscription_repository.dart';
 import '../widgets/customizable_plan_builder_section.dart';
+import '../widgets/plan_features_comparison_table.dart';
 
 class SubscriptionPage extends StatefulWidget {
   const SubscriptionPage({super.key});
@@ -77,6 +78,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   final GlobalKey _topHeaderKey = GlobalKey();
   final GlobalKey _activePlanKey = GlobalKey();
   final GlobalKey _upgradeTiersKey = GlobalKey();
+  final GlobalKey _featuresComparisonKey = GlobalKey();
   final GlobalKey _billingHistoryKey = GlobalKey();
 
   // 90-Day Promotional Discount Live Countdown Timer
@@ -867,6 +869,34 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ),
                 ),
               ),
+              // Quick Jump to Features Comparison
+              InkWell(
+                onTap: () => _scrollToSection(_featuresComparisonKey),
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.table, size: 10.5, color: Color(0xFF475569)),
+                      const SizedBox(width: 3.5),
+                      Text(
+                        'Compare Plans',
+                        style: GoogleFonts.inter(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: const Color(0xFF475569),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               // Quick Jump to Billing History
               InkWell(
                 onTap: () => _scrollToSection(_billingHistoryKey),
@@ -953,6 +983,34 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     const SizedBox(width: 3.5),
                     Text(
                       'Active Plan',
+                      style: GoogleFonts.inter(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF475569),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Quick Jump to Features Comparison
+            InkWell(
+              onTap: () => _scrollToSection(_featuresComparisonKey),
+              borderRadius: BorderRadius.circular(6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.table, size: 10.5, color: Color(0xFF475569)),
+                    const SizedBox(width: 3.5),
+                    Text(
+                      'Compare Plans',
                       style: GoogleFonts.inter(
                         fontSize: 10.5,
                         fontWeight: FontWeight.w700,
@@ -2325,6 +2383,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
           // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
           _buildFourTierCards(isMobile),
+          SizedBox(height: isMobile ? 26 : 36),
+
+          // ─── 6. PLAN FEATURES COMPARISON TABLE (34 FEATURES x 4 TIERS MATRIX) ───
+          Container(
+            key: _featuresComparisonKey,
+            child: PlanFeaturesComparisonTable(
+              isMobile: isMobile,
+              activeTierNumber: _currentBusinessTier,
+              onUpgrade: (newTier) {
+                setState(() => _currentBusinessTier = newTier);
+              },
+            ),
+          ),
         ] else ...[
           // ─── 4. CUSTOMIZABLE SUBSCRIPTION & INSTANT ADD-ONS BUILDER ───
           CustomizablePlanBuilderSection(
