@@ -24,11 +24,22 @@ class AuthRepository {
       'password': password,
     };
 
-    final res = await ApiClient.post(
-      '/api/auth/login',
-      body: body,
-      auth: false,
-    );
+    dynamic res;
+    try {
+      // 1. Attempt documented endpoint from mobile_payments_api_guide.md
+      res = await ApiClient.post(
+        '/api/v1/auth/login',
+        body: body,
+        auth: false,
+      );
+    } catch (_) {
+      // 2. Fall back to standard BNX Mail auth endpoint
+      res = await ApiClient.post(
+        '/api/auth/login',
+        body: body,
+        auth: false,
+      );
+    }
 
     final data = res is Map<String, dynamic>
         ? (res['data'] as Map<String, dynamic>? ?? res)

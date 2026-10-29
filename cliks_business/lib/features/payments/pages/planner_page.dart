@@ -1,43 +1,73 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/account_provider.dart';
+import '../../../models/account_model.dart';
+import '../../../data/models/payment_models.dart';
+import '../../../data/repositories/payments_repository.dart';
+import '../../navigation/widgets/macos_showroom_menu_card.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../widgets/schedule_payment_dialog.dart';
 
-class PlannerPage extends StatefulWidget {
+class PlannerPage extends ConsumerStatefulWidget {
   const PlannerPage({super.key});
 
   @override
-  State<PlannerPage> createState() => _PlannerPageState();
+  ConsumerState<PlannerPage> createState() => _PlannerPageState();
 }
 
-class _PlannerPageState extends State<PlannerPage> {
+class _PlannerPageState extends ConsumerState<PlannerPage> {
   int _activeFilter = 0; // 0: All, 1: Send, 2: Receive
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
-  // State List of Scheduled Payments matching screenshot defaults
-  final List<Map<String, dynamic>> _schedules = [
-    {
-      'id': 'sched_1',
-      'name': 'rahul',
-      'amount': 1000.0,
-      'isSend': false, // TO RECEIVE
-      'date': '8/7/2026',
-      'status': 'PENDING',
-      'description': 'Freelance settlement',
-    },
-    {
-      'id': 'sched_2',
-      'name': 'Ravi',
-      'amount': 5000.0,
-      'isSend': true, // TO SEND
-      'date': '8/7/2026',
-      'status': 'PENDING',
-      'description': 'Vendor invoice payment',
-    },
-  ];
+  List<Map<String, dynamic>> _schedules = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final planned = await PaymentsRepository.getPlannedPayments();
+      if (mounted) {
+        setState(() {
+          _schedules = planned.map((p) {
+            return {
+              'id': p.id.toString(),
+              'name': p.name,
+              'amount': p.amount,
+              'isSend': p.type.toUpperCase() == 'SEND' || p.type.toUpperCase() == 'OUTWARD',
+              'date': p.dueDate.contains('T') ? p.dueDate.split('T').first : p.dueDate,
+              'status': p.status.toUpperCase(),
+              'description': p.description ?? '',
+              'category': p.category,
+              'frequency': p.frequency,
+            };
+          }).toList();
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -81,6 +111,18 @@ class _PlannerPageState extends State<PlannerPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
+      if (previous?.email != next.email) {
+        _loadData();
+      }
+    });
+
+    ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
+      if (previous != next) {
+        _loadData();
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
@@ -103,16 +145,20 @@ class _PlannerPageState extends State<PlannerPage> {
               ),
             )
           : null,
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          paddingVal,
-          20,
-          paddingVal,
-          isMobile ? 90 : 32,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.primaryGreen,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            paddingVal,
+            20,
+            paddingVal,
+            isMobile ? 90 : 32,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             _buildHeroSummary(
               context,
               isMobile,
@@ -139,8 +185,9 @@ class _PlannerPageState extends State<PlannerPage> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildHeroSummary(BuildContext context, bool isMobile) {
     final scheduleBtn = ElevatedButton.icon(
@@ -432,15 +479,35 @@ class _PlannerPageState extends State<PlannerPage> {
     showDialog(
       context: context,
       builder: (context) => SchedulePaymentDialog(
-        onScheduled: (newItem) {
-          setState(() {
-            _schedules.add(newItem);
-          });
-          AppSnackbar.show(
-            context,
-            "Payment for '${newItem['name']}' scheduled successfully!",
-            type: SnackType.success,
-          );
+        onScheduled: (newItem) async {
+          try {
+            final req = CreatePlannedPaymentRequest(
+              name: newItem['name'] ?? 'Scheduled Payment',
+              amount: (newItem['amount'] as num).toDouble(),
+              dueDate: newItem['date'] ?? DateTime.now().toIso8601String(),
+              type: (newItem['isSend'] == true) ? 'SEND' : 'RECEIVE',
+              description: newItem['description'],
+              category: newItem['category'] ?? (newItem['isSend'] == true ? 'Vendor Payment' : 'Customer Receipt'),
+              frequency: 'ONCE',
+            );
+            await PaymentsRepository.createPlannedPayment(req);
+            await _loadData();
+            if (mounted) {
+              AppSnackbar.show(
+                context,
+                "Payment for '${newItem['name']}' scheduled successfully!",
+                type: SnackType.success,
+              );
+            }
+          } catch (e) {
+            if (mounted) {
+              AppSnackbar.show(
+                context,
+                'Failed to schedule payment: $e',
+                type: SnackType.error,
+              );
+            }
+          }
         },
       ),
     );
@@ -579,21 +646,103 @@ class _PlannerPageState extends State<PlannerPage> {
       context: context,
       builder: (context) => SchedulePaymentDialog(
         initialData: item,
-        onScheduled: (updatedItem) {
-          setState(() {
-            final idx = _schedules.indexWhere((s) => s['id'] == item['id']);
-            if (idx != -1) {
-              _schedules[idx] = updatedItem;
+        onScheduled: (updatedItem) async {
+          try {
+            await PaymentsRepository.updatePlannedPayment(item['id'], {
+              'name': updatedItem['name'],
+              'amount': updatedItem['amount'],
+              'due_date': updatedItem['date'],
+              'description': updatedItem['description'],
+              'type': updatedItem['isSend'] == true ? 'SEND' : 'RECEIVE',
+            });
+            await _loadData();
+            if (mounted) {
+              AppSnackbar.show(
+                context,
+                "Payment for '${updatedItem['name']}' updated successfully!",
+                type: SnackType.success,
+              );
             }
-          });
-          AppSnackbar.show(
-            context,
-            "Payment for '${updatedItem['name']}' updated successfully!",
-            type: SnackType.success,
-          );
+          } catch (e) {
+            if (mounted) {
+              AppSnackbar.show(
+                context,
+                'Failed to update schedule: $e',
+                type: SnackType.error,
+              );
+            }
+          }
         },
       ),
     );
+  }
+
+  Future<void> _toggleStatus(Map<String, dynamic> item) async {
+    try {
+      if (item['status'] == 'PENDING') {
+        await PaymentsRepository.markPlannedPaymentPaid(item['id']);
+      } else {
+        await PaymentsRepository.updatePlannedPayment(item['id'], {'status': 'PENDING'});
+      }
+      await _loadData();
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          item['status'] == 'PENDING'
+              ? "Payment for '${item['name']}' marked as Completed!"
+              : "Payment for '${item['name']}' reset to Pending.",
+          type: SnackType.success,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          'Failed to update status: $e',
+          type: SnackType.error,
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteSchedule(Map<String, dynamic> item) async {
+    final name = item['name'];
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Scheduled Payment'),
+        content: Text("Are you sure you want to delete the schedule for '$name'?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await PaymentsRepository.deletePlannedPayment(item['id']);
+      await _loadData();
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          "Schedule for '$name' deleted.",
+          type: SnackType.info,
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          'Failed to delete schedule: $e',
+          type: SnackType.error,
+        );
+      }
+    }
   }
 
   Widget _buildTabsAndSearchRow(bool isMobile) {
@@ -895,20 +1044,7 @@ class _PlannerPageState extends State<PlannerPage> {
                         Row(
                           children: [
                             InkWell(
-                              onTap: () {
-                                setState(() {
-                                  item['status'] = (item['status'] == 'PENDING')
-                                      ? 'COMPLETED'
-                                      : 'PENDING';
-                                });
-                                AppSnackbar.show(
-                                  context,
-                                  item['status'] == 'COMPLETED'
-                                      ? "Payment for '${item['name']}' marked as Completed!"
-                                      : "Payment for '${item['name']}' reset to Pending.",
-                                  type: SnackType.success,
-                                );
-                              },
+                              onTap: () => _toggleStatus(item),
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -970,19 +1106,7 @@ class _PlannerPageState extends State<PlannerPage> {
                             ),
                             const SizedBox(width: 6),
                             InkWell(
-                              onTap: () {
-                                final name = item['name'];
-                                setState(() {
-                                  _schedules.removeWhere(
-                                    (s) => s['id'] == item['id'],
-                                  );
-                                });
-                                AppSnackbar.show(
-                                  context,
-                                  "Schedule for '$name' deleted.",
-                                  type: SnackType.info,
-                                );
-                              },
+                              onTap: () => _deleteSchedule(item),
                               borderRadius: BorderRadius.circular(8),
                               child: Container(
                                 padding: const EdgeInsets.all(6),
@@ -1138,20 +1262,7 @@ class _PlannerPageState extends State<PlannerPage> {
                               size: 16,
                             ),
                           ),
-                          onPressed: () {
-                            setState(() {
-                              item['status'] = (item['status'] == 'PENDING')
-                                  ? 'COMPLETED'
-                                  : 'PENDING';
-                            });
-                            AppSnackbar.show(
-                              context,
-                              item['status'] == 'COMPLETED'
-                                  ? "Payment for '${item['name']}' marked as Completed!"
-                                  : "Payment for '${item['name']}' reset to Pending.",
-                              type: SnackType.success,
-                            );
-                          },
+                          onPressed: () => _toggleStatus(item),
                         ),
                         const SizedBox(width: 4),
 
@@ -1197,19 +1308,7 @@ class _PlannerPageState extends State<PlannerPage> {
                               size: 16,
                             ),
                           ),
-                          onPressed: () {
-                            final name = item['name'];
-                            setState(() {
-                              _schedules.removeWhere(
-                                (s) => s['id'] == item['id'],
-                              );
-                            });
-                            AppSnackbar.show(
-                              context,
-                              "Schedule for '$name' deleted.",
-                              type: SnackType.info,
-                            );
-                          },
+                          onPressed: () => _deleteSchedule(item),
                         ),
                       ],
                     ),

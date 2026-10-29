@@ -6,6 +6,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/payment_models.dart';
+import '../../../data/repositories/payments_repository.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../widgets/bento/bento.dart';
 
@@ -90,29 +92,39 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     'Day Book',
   ];
 
-  // Bank accounts dataset (Image 1)
-  final List<_BankAccountData> _bankAccounts = [
-    _BankAccountData(
-      id: 'bank-1',
-      name: 'uybwaued',
-      holder: 'Ravi',
-      balance: 5000.0,
-      income: 0.0,
-      expenses: 0.0,
-      lastTxn: 'No transactions yet',
-      isHighlighted: true,
-    ),
-    _BankAccountData(
-      id: 'bank-2',
-      name: 'djwfnwjnfjwnkjs',
-      holder: 'karnataka bank',
-      balance: 500000.0,
-      income: 0.0,
-      expenses: 0.0,
-      lastTxn: 'No transactions yet',
-      isHighlighted: false,
-    ),
-  ];
+  // Bank accounts dataset (fetched dynamically from GET /api/v1/bank-accounts)
+  final List<_BankAccountData> _bankAccounts = [];
+
+  Future<void> _fetchBankAccounts() async {
+    try {
+      final accounts = await PaymentsRepository.getBankAccounts();
+      if (mounted && accounts.isNotEmpty) {
+        setState(() {
+          _bankAccounts.clear();
+          for (int i = 0; i < accounts.length; i++) {
+            final a = accounts[i];
+            _bankAccounts.add(
+              _BankAccountData(
+                id: a.id.toString(),
+                name: a.accountName,
+                holder: a.accountHolder,
+                balance: a.balance,
+                income: 0.0,
+                expenses: 0.0,
+                lastTxn: 'Active',
+                isHighlighted: i == 0,
+                accountNumber: a.accountNumber,
+                ifsc: a.ifsc,
+                branch: a.branch,
+                accountType: a.accountType,
+                status: a.status,
+              ),
+            );
+          }
+        });
+      }
+    } catch (_) {}
+  }
 
   // Day Book dataset (Image 3)
   late List<_DayBookItem> _dayBookRecords;
@@ -250,6 +262,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   @override
   void initState() {
     super.initState();
+    _fetchBankAccounts();
     _rpSearchController.addListener(() => setState(() {}));
     _rpMinController.addListener(() => setState(() {}));
     _rpMaxController.addListener(() => setState(() {}));
@@ -6193,6 +6206,95 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     );
   }
 
+  void _showInvoicePaymentsHistory(BuildContext context, String invId) {
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return FutureBuilder<List<InvoicePayment>>(
+          future: PaymentsRepository.getInvoicePayments(invId),
+          builder: (ctx, snapshot) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 420),
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Payment History - $invId',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(LucideIcons.x, size: 16),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (snapshot.connectionState == ConnectionState.waiting)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                      )
+                    else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty)
+                      const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          child: Text(
+                            'No recorded payments found for this invoice yet.',
+                            style: TextStyle(fontSize: 13, color: Color(0xFF64748B)),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      )
+                    else
+                      Flexible(
+                        child: ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: snapshot.data!.length,
+                          separatorBuilder: (_, _) => const Divider(height: 1),
+                          itemBuilder: (ctx, i) {
+                            final p = snapshot.data![i];
+                            final ref = p.referenceNumber;
+                            final date = p.paymentDate;
+                            return ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              title: Text(
+                                '₹${_formatIndianCurrency(p.amount)} via ${p.paymentMethod}',
+                                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                              ),
+                              subtitle: Text(
+                                (ref != null && ref.isNotEmpty) ? 'Ref: $ref' : 'Payment captured',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                              ),
+                              trailing: Text(
+                                (date != null && date.isNotEmpty)
+                                    ? (date.contains('T') ? date.split('T').first : date)
+                                    : 'Completed',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF166534)),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   void _showRecordPaymentModal(
     BuildContext context,
     Map<String, dynamic> inv,
@@ -6348,7 +6450,26 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          final invId = inv['invNumber'] ?? inv['id'] ?? 'INV';
+                          _showInvoicePaymentsHistory(context, invId.toString());
+                        },
+                        icon: const Icon(LucideIcons.history, size: 14, color: Color(0xFF2563EB)),
+                        label: const Text(
+                          'View Payment History',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     Row(
                       children: [
                         Expanded(
@@ -6366,35 +6487,63 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: () {
+                            onPressed: () async {
                               final paidAmount =
                                   double.tryParse(amtCtrl.text.trim()) ?? 0.0;
-                              setState(() {
-                                final currentPending =
-                                    (inv['pendingAmount'] as num).toDouble();
-                                final newPending =
-                                    (currentPending - paidAmount).clamp(
-                                  0.0,
-                                  double.infinity,
+                              if (paidAmount <= 0) {
+                                AppSnackbar.show(
+                                  context,
+                                  'Please enter a valid payment amount',
+                                  type: SnackType.warning,
                                 );
-                                inv['pendingAmount'] = newPending;
-                                if (newPending == 0.0) {
-                                  inv['status'] = 'Paid';
-                                  _overdueInvoicesCount =
-                                      (_overdueInvoicesCount - 1).clamp(0, 999);
-                                  _overdueAmount =
-                                      (_overdueAmount - paidAmount).clamp(
+                                return;
+                              }
+
+                              try {
+                                final invId = inv['invNumber'] ?? inv['id'] ?? 'INV';
+                                final req = RecordInvoicePaymentRequest(
+                                  amount: paidAmount,
+                                  paymentMode: paymentMode,
+                                  referenceNumber: refCtrl.text.trim().isNotEmpty
+                                      ? refCtrl.text.trim()
+                                      : null,
+                                  notes: 'Invoice payment recorded from Accounting',
+                                );
+                                await PaymentsRepository.recordInvoicePayment(invId, req);
+
+                                setState(() {
+                                  final currentPending =
+                                      (inv['pendingAmount'] as num).toDouble();
+                                  final newPending =
+                                      (currentPending - paidAmount).clamp(
                                     0.0,
                                     double.infinity,
                                   );
-                                }
-                              });
-                              Navigator.pop(ctx);
-                              AppSnackbar.show(
-                                context,
-                                'Payment of ₹${_formatIndianCurrency(paidAmount)} recorded for ${inv['partyName']}',
-                                type: SnackType.success,
-                              );
+                                  inv['pendingAmount'] = newPending;
+                                  if (newPending == 0.0) {
+                                    inv['status'] = 'Paid';
+                                    _overdueInvoicesCount =
+                                        (_overdueInvoicesCount - 1).clamp(0, 999);
+                                    _overdueAmount =
+                                        (_overdueAmount - paidAmount).clamp(
+                                      0.0,
+                                      double.infinity,
+                                    );
+                                  }
+                                });
+                                Navigator.pop(ctx);
+                                AppSnackbar.show(
+                                  context,
+                                  'Payment of ₹${_formatIndianCurrency(paidAmount)} recorded for ${inv['partyName']}',
+                                  type: SnackType.success,
+                                );
+                              } catch (e) {
+                                AppSnackbar.show(
+                                  context,
+                                  'Failed to record invoice payment: $e',
+                                  type: SnackType.error,
+                                );
+                              }
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF2563EB),
@@ -7736,66 +7885,84 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                       const SizedBox(height: 24),
 
                       // Save Bank Account Button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 44,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final bName = bankNameCtrl.text.trim();
-                            final accName = accountNameCtrl.text.trim();
-                            final accNum = accountNumCtrl.text.trim();
-                            final ifsc = ifscCtrl.text.trim();
-                            final branch = branchCtrl.text.trim();
-                            final bal =
-                                double.tryParse(openingBalCtrl.text.trim()) ??
-                                0.0;
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final bName = bankNameCtrl.text.trim();
+                              final accName = accountNameCtrl.text.trim();
+                              final accNum = accountNumCtrl.text.trim();
+                              final ifsc = ifscCtrl.text.trim();
+                              final branch = branchCtrl.text.trim();
+                              final bal =
+                                  double.tryParse(openingBalCtrl.text.trim()) ??
+                                  0.0;
 
-                            if (bName.isEmpty &&
-                                accNum.isEmpty &&
-                                accName.isEmpty) {
-                              AppSnackbar.show(
-                                context,
-                                'Please enter bank details before saving',
-                                type: SnackType.warning,
-                              );
-                              return;
-                            }
+                              if (bName.isEmpty &&
+                                  accNum.isEmpty &&
+                                  accName.isEmpty) {
+                                AppSnackbar.show(
+                                  context,
+                                  'Please enter bank details before saving',
+                                  type: SnackType.warning,
+                                );
+                                return;
+                              }
 
-                            final effectiveHolder =
-                                bName.isNotEmpty ? bName : 'Bank Account';
-                            final effectiveName =
-                                accName.isNotEmpty
-                                    ? accName
-                                    : (bName.isNotEmpty ? bName : 'Account');
+                              final effectiveHolder =
+                                  bName.isNotEmpty ? bName : 'Bank Account';
+                              final effectiveName =
+                                  accName.isNotEmpty
+                                      ? accName
+                                      : (bName.isNotEmpty ? bName : 'Account');
 
-                            setState(() {
-                              _bankAccounts.add(
-                                _BankAccountData(
-                                  id:
-                                      'bank-${DateTime.now().millisecondsSinceEpoch}',
-                                  name: effectiveName,
-                                  holder: effectiveHolder,
-                                  balance: bal,
-                                  income: 0.0,
-                                  expenses: 0.0,
-                                  lastTxn: 'Opening Balance',
-                                  isHighlighted: false,
+                              try {
+                                final req = CreateBankAccountRequest(
+                                  bankName: effectiveName,
+                                  accountHolder: effectiveHolder,
                                   accountNumber: accNum,
                                   ifsc: ifsc,
                                   branch: branch,
+                                  openingBalance: bal,
                                   accountType: selectedAccountType,
-                                  status: selectedStatus,
-                                ),
-                              );
-                            });
+                                );
+                                final created = await PaymentsRepository.createBankAccount(req);
 
-                            Navigator.pop(ctx);
-                            AppSnackbar.show(
-                              context,
-                              'Bank account added successfully',
-                              type: SnackType.success,
-                            );
-                          },
+                                setState(() {
+                                  _bankAccounts.add(
+                                    _BankAccountData(
+                                      id: created.id.toString(),
+                                      name: created.accountName,
+                                      holder: created.accountHolder,
+                                      balance: created.balance,
+                                      income: 0.0,
+                                      expenses: 0.0,
+                                      lastTxn: 'Opening Balance',
+                                      isHighlighted: false,
+                                      accountNumber: created.accountNumber,
+                                      ifsc: created.ifsc,
+                                      branch: created.branch,
+                                      accountType: created.accountType,
+                                      status: created.status,
+                                    ),
+                                  );
+                                });
+
+                                Navigator.pop(ctx);
+                                AppSnackbar.show(
+                                  context,
+                                  'Bank account added successfully',
+                                  type: SnackType.success,
+                                );
+                              } catch (e) {
+                                AppSnackbar.show(
+                                  context,
+                                  'Failed to create bank account: $e',
+                                  type: SnackType.error,
+                                );
+                              }
+                            },
                           style: ElevatedButton.styleFrom(
                             backgroundColor:
                                 hasValues

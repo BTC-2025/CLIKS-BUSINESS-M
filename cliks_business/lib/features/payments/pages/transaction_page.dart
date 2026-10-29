@@ -1,47 +1,82 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/account_provider.dart';
+import '../../../models/account_model.dart';
+import '../../../data/models/payment_models.dart';
+import '../../../data/repositories/payments_repository.dart';
+import '../../navigation/widgets/macos_showroom_menu_card.dart';
 import '../widgets/customer_payment_dialog.dart';
 import '../widgets/supplier_disbursement_dialog.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../widgets/app_ui_kit.dart';
 import '../../../widgets/bento/bento.dart';
 
-class TransactionPage extends StatefulWidget {
+class TransactionPage extends ConsumerStatefulWidget {
   const TransactionPage({super.key});
 
   @override
-  State<TransactionPage> createState() => _TransactionPageState();
+  ConsumerState<TransactionPage> createState() => _TransactionPageState();
 }
 
-class _TransactionPageState extends State<TransactionPage> {
-  int _activeTab = 0; // 0: Receivables, 1: Payables, 2: Registers, 3: Overdue
+class _TransactionPageState extends ConsumerState<TransactionPage> {
+  // 0: Receivables, 1: Payables, 2: Registers, 3: Overdue, 4: Total Inward & Outward
+  int _activeTab = 0;
 
-  final List<Map<String, dynamic>> _transactions = [
-    {
-      'id': 'TXN-2026-001',
-      'date': '12-08-2026',
-      'customer': 'Acme Corp',
-      'invoice': 'INV-101',
-      'total': 15000.0,
-      'paid': 15000.0,
-      'mode': 'UPI',
-      'status': 'Reconciled',
-    },
-    {
-      'id': 'TXN-2026-002',
-      'date': '12-08-2026',
-      'customer': 'Zenith Retail',
-      'invoice': 'INV-102',
-      'total': 8500.0,
-      'paid': 4000.0,
-      'mode': 'Bank Transfer',
-      'status': 'Pending',
-    },
-  ];
+  PaymentReports? _reports;
+  OutstandingStats? _outstandingStats;
+  bool _isLoading = true;
+  String? _errorMessage;
 
-  void _openTransactionSheet(Map<String, dynamic>? item, {bool isSupplier = false}) {
-    final isOutward = item != null ? (item['type'] == 'Outward') : isSupplier;
+  bool _isSearchOpen = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final reports = await PaymentsRepository.getPaymentReports();
+      final stats = await PaymentsRepository.getOutstandingStats();
+
+      if (mounted) {
+        setState(() {
+          _reports = reports;
+          _outstandingStats = stats;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _errorMessage = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _openTransactionSheet(PaymentTransaction? item, {bool isSupplier = false}) {
+    final isOutward = item != null ? (item.type.toLowerCase() == 'pay') : isSupplier;
+    final accounts = _reports?.accounts ?? [];
 
     showModalBottomSheet(
       context: context,
@@ -49,29 +84,35 @@ class _TransactionPageState extends State<TransactionPage> {
       backgroundColor: Colors.transparent,
       builder: (context) {
         if (isOutward) {
+          final supplierOptions = _reports?.payables
+                  .map((p) => p.partyName)
+                  .where((name) => name.isNotEmpty)
+                  .toSet()
+                  .toList() ??
+              [];
+
           return RecordSupplierDisbursementDialog(
             transaction: item,
-            onSave: (data) {
-              setState(() {
-                if (item != null) {
-                  item.addAll(data);
-                } else {
-                  _transactions.insert(0, data);
-                }
-              });
+            accounts: accounts,
+            supplierOptions: supplierOptions,
+            onDisbursementSuccess: () {
+              _loadData();
             },
           );
         } else {
+          final customerOptions = _reports?.receivables
+                  .map((r) => r.partyName)
+                  .where((name) => name.isNotEmpty)
+                  .toSet()
+                  .toList() ??
+              [];
+
           return RecordCustomerPaymentDialog(
             transaction: item,
-            onSave: (data) {
-              setState(() {
-                if (item != null) {
-                  item.addAll(data);
-                } else {
-                  _transactions.insert(0, data);
-                }
-              });
+            accounts: accounts,
+            customerOptions: customerOptions,
+            onPaymentSuccess: () {
+              _loadData();
             },
           );
         }
@@ -79,8 +120,363 @@ class _TransactionPageState extends State<TransactionPage> {
     );
   }
 
+  void _openTransferDialog(BuildContext context) {
+    final accounts = _reports?.accounts ?? [];
+    if (accounts.length < 2) {
+      AppSnackbar.show(
+        context,
+        'At least two accounts (e.g. Bank and Cash Register) are required to perform a transfer.',
+        type: SnackType.warning,
+      );
+      return;
+    }
+
+    PaymentAccount fromAcc = accounts.first;
+    PaymentAccount toAcc = accounts.length > 1 ? accounts[1] : accounts.first;
+    final amountCtrl = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (dialogCtx, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 440),
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(LucideIcons.arrowLeftRight, size: 20, color: Color(0xFF1E40AF)),
+                            SizedBox(width: 8),
+                            Text(
+                              'Internal Account Transfer',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          icon: const Icon(LucideIcons.x, size: 18),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Move funds between registered bank accounts and cash registers.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                    ),
+                    const SizedBox(height: 18),
+
+                    // From Account
+                    const Text(
+                      'From Account (Deducted)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<PaymentAccount>(
+                      value: fromAcc,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      items: accounts.map((a) {
+                        return DropdownMenuItem<PaymentAccount>(
+                          value: a,
+                          child: Text(
+                            '${a.bankAccountName} (Bal: ₹${_formatCurrency(a.currentBalance)})',
+                            style: const TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setModalState(() {
+                            fromAcc = val;
+                            if (toAcc.id == fromAcc.id) {
+                              toAcc = accounts.firstWhere((a) => a.id != fromAcc.id);
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // To Account
+                    const Text(
+                      'To Account (Credited)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    DropdownButtonFormField<PaymentAccount>(
+                      value: toAcc,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                      items: accounts.where((a) => a.id != fromAcc.id).map((a) {
+                        return DropdownMenuItem<PaymentAccount>(
+                          value: a,
+                          child: Text(
+                            '${a.bankAccountName} (Bal: ₹${_formatCurrency(a.currentBalance)})',
+                            style: const TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setModalState(() => toAcc = val);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Amount
+                    const Text(
+                      'Transfer Amount (₹)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: amountCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: '0.00',
+                        hintStyle: const TextStyle(fontSize: 13),
+                        filled: true,
+                        fillColor: const Color(0xFFF8FAFC),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text('Cancel'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: isSubmitting
+                                ? null
+                                : () async {
+                                    final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
+                                    if (amt <= 0) {
+                                      AppSnackbar.show(
+                                        context,
+                                        'Please enter an amount greater than zero',
+                                        type: SnackType.warning,
+                                      );
+                                      return;
+                                    }
+                                    if (amt > fromAcc.currentBalance) {
+                                      AppSnackbar.show(
+                                        context,
+                                        'Amount exceeds available balance of ₹${_formatCurrency(fromAcc.currentBalance)}',
+                                        type: SnackType.warning,
+                                      );
+                                      return;
+                                    }
+                                    setModalState(() => isSubmitting = true);
+                                    try {
+                                      final req = AccountTransferRequest(
+                                        fromAccId: fromAcc.id,
+                                        toAccId: toAcc.id,
+                                        amount: amt,
+                                      );
+                                      final res = await PaymentsRepository.transferFunds(req);
+                                      Navigator.pop(ctx);
+                                      final msg = res['message']?.toString() ?? 'Fund transfer settled successfully';
+                                      AppSnackbar.show(context, msg, type: SnackType.success);
+                                      _loadData();
+                                    } on ApiException catch (e) {
+                                      setModalState(() => isSubmitting = false);
+                                      AppSnackbar.show(context, e.message, type: SnackType.error);
+                                    } catch (e) {
+                                      setModalState(() => isSubmitting = false);
+                                      AppSnackbar.show(context, 'Transfer failed: $e', type: SnackType.error);
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E40AF),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Execute Transfer',
+                                    style: TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ── Calculated Hero Metrics ────────────────────────────────────────────────
+  double get _combinedBalance {
+    if (_reports != null && _reports!.accounts.isNotEmpty) {
+      return _reports!.accounts.fold(0.0, (sum, acc) => sum + acc.currentBalance);
+    }
+    return _outstandingStats?.totalProcessed ?? 0.0;
+  }
+
+  double get _receivablesTotal {
+    if (_outstandingStats != null && _outstandingStats!.receivables > 0) {
+      return _outstandingStats!.receivables;
+    }
+    if (_reports != null && _reports!.receivables.isNotEmpty) {
+      return _reports!.receivables.fold(0.0, (sum, item) => sum + item.pendingAmount);
+    }
+    return 0.0;
+  }
+
+  double get _dailyCollections {
+    if (_outstandingStats != null && _outstandingStats!.totalProcessed > 0) {
+      return _outstandingStats!.totalProcessed;
+    }
+    if (_reports != null && _reports!.receivables.isNotEmpty) {
+      return _reports!.receivables.fold(0.0, (sum, item) => sum + item.paidAmount);
+    }
+    return 0.0;
+  }
+
+  String get _efficiencyRate {
+    final coll = _dailyCollections;
+    final total = _combinedBalance + _receivablesTotal;
+    if (total > 0) {
+      final rate = (coll / total * 100).clamp(0.0, 100.0);
+      return rate.toStringAsFixed(1);
+    }
+    return '100.0';
+  }
+
+  String _formatCurrency(num value) {
+    return value
+        .toInt()
+        .toString()
+        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+  }
+
+  // ── Filtered Records for Active Tab ───────────────────────────────────────
+  List<PaymentTransaction> get _activeTransactions {
+    if (_reports == null) return [];
+
+    List<PaymentTransaction> list = [];
+    if (_activeTab == 0) {
+      list = _reports!.receivables;
+    } else if (_activeTab == 1) {
+      list = _reports!.payables;
+    } else if (_activeTab == 4) {
+      list = [..._reports!.receivables, ..._reports!.payables];
+    } else {
+      return [];
+    }
+
+    if (_searchQuery.trim().isEmpty) return list;
+
+    final q = _searchQuery.toLowerCase();
+    return list.where((t) {
+      return t.partyName.toLowerCase().contains(q) ||
+          t.id.toString().toLowerCase().contains(q) ||
+          t.paymentMode.toLowerCase().contains(q) ||
+          (t.invoiceId?.toLowerCase().contains(q) ?? false) ||
+          (t.purchaseId?.toLowerCase().contains(q) ?? false) ||
+          t.referenceNumber.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  List<OverdueInvoice> get _activeOverdueInvoices {
+    if (_reports == null) return [];
+    final list = _reports!.overdueInvoices;
+    if (_searchQuery.trim().isEmpty) return list;
+
+    final q = _searchQuery.toLowerCase();
+    return list.where((inv) {
+      return inv.clientName.toLowerCase().contains(q) ||
+          inv.invoiceNumber.toLowerCase().contains(q) ||
+          inv.status.toLowerCase().contains(q);
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
+      if (previous?.email != next.email) {
+        setState(() {
+          _reports = null;
+          _outstandingStats = null;
+        });
+        _loadData();
+      }
+    });
+
+    ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
+      if (previous != next) {
+        setState(() {
+          _reports = null;
+          _outstandingStats = null;
+        });
+        _loadData();
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
@@ -88,27 +484,32 @@ class _TransactionPageState extends State<TransactionPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(paddingVal, isMobile ? 12 : 20, paddingVal, isMobile ? 80 : 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero Summary (Gradient Stats & Actions)
-            isMacOS
-                ? _buildMacOsBentoHero(context, isMobile)
-                : _buildHeroSummary(context, isMobile)
-                    .animate()
-                    .fadeIn(duration: 400.ms)
-                    .slideY(begin: -0.05, end: 0),
-            SizedBox(height: isMobile ? 14 : 28),
+      body: RefreshIndicator(
+        onRefresh: _loadData,
+        color: AppColors.primaryGreen,
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(paddingVal, isMobile ? 12 : 20, paddingVal, isMobile ? 80 : 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Hero Summary (Gradient Stats & Actions)
+              isMacOS
+                  ? _buildMacOsBentoHero(context, isMobile)
+                  : _buildHeroSummary(context, isMobile)
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: -0.05, end: 0),
+              SizedBox(height: isMobile ? 14 : 28),
 
-            // Segment Tabs Row
-            _buildTabsRow(isMobile).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-            SizedBox(height: isMobile ? 14 : 20),
+              // Segment Tabs Row
+              _buildTabsRow(isMobile).animate().fadeIn(duration: 400.ms, delay: 100.ms),
+              SizedBox(height: isMobile ? 14 : 20),
 
-            // Records Table Card
-            _buildRecordsCard(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
-          ],
+              // Records Table Card
+              _buildRecordsCard(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
+            ],
+          ),
         ),
       ),
     );
@@ -118,14 +519,10 @@ class _TransactionPageState extends State<TransactionPage> {
   // MACOS SOFT UI BENTO HERO
   // ═══════════════════════════════════════════════════════════════
   Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
-    final double combinedBalance = _transactions.fold(0.0, (sum, item) => sum + (item['total'] as double));
-    final double receivables = _transactions.where((t) => t['status'] != 'Reconciled').fold(0.0, (sum, item) => sum + ((item['total'] as double) - (item['paid'] as double)));
-    final double dailyColl = _transactions.fold(0.0, (sum, item) => sum + (item['paid'] as double));
-    final String efficiency = combinedBalance > 0 ? ((dailyColl / combinedBalance) * 100).toStringAsFixed(1) : '0.0';
-
-    final String combinedFmt = combinedBalance.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-    final String receivablesFmt = receivables.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-    final String dailyCollFmt = dailyColl.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    final combinedFmt = _formatCurrency(_combinedBalance);
+    final receivablesFmt = _formatCurrency(_receivablesTotal);
+    final dailyCollFmt = _formatCurrency(_dailyCollections);
+    final efficiency = _efficiencyRate;
 
     return MacOsSoftUiBentoHero(
       margin: EdgeInsets.zero,
@@ -159,6 +556,18 @@ class _TransactionPageState extends State<TransactionPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           OutlinedButton.icon(
+            onPressed: () => _openTransferDialog(context),
+            icon: const Icon(LucideIcons.arrowLeftRight, size: 13),
+            label: const Text('Transfer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF1E40AF),
+              side: const BorderSide(color: Color(0xFFBFDBFE)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          OutlinedButton.icon(
             onPressed: () => _openTransactionSheet(null, isSupplier: true),
             icon: const Icon(LucideIcons.arrowUpRight, size: 13),
             label: const Text('Pay Supplier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
@@ -188,6 +597,18 @@ class _TransactionPageState extends State<TransactionPage> {
   }
 
   Widget _buildHeroSummary(BuildContext context, bool isMobile) {
+    final transferBtn = OutlinedButton.icon(
+      onPressed: () => _openTransferDialog(context),
+      icon: const Icon(LucideIcons.arrowLeftRight, size: 14),
+      label: const Text('Transfer', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: Colors.white,
+        side: const BorderSide(color: Colors.white70, width: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+
     final paySupplierBtn = OutlinedButton.icon(
       onPressed: () => _openTransactionSheet(null, isSupplier: true),
       icon: const Icon(LucideIcons.arrowUpRight, size: 14),
@@ -213,25 +634,25 @@ class _TransactionPageState extends State<TransactionPage> {
       ),
     );
 
-    final double combinedBalance = _transactions.fold(0.0, (sum, item) => sum + (item['total'] as double));
-    final double receivables = _transactions.where((t) => t['status'] != 'Reconciled').fold(0.0, (sum, item) => sum + ((item['total'] as double) - (item['paid'] as double)));
-    final double dailyColl = _transactions.fold(0.0, (sum, item) => sum + (item['paid'] as double));
-    final String efficiency = combinedBalance > 0 ? ((dailyColl / combinedBalance) * 100).toStringAsFixed(1) : '0.0';
-
-    final String combinedFmt = combinedBalance.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-    final String receivablesFmt = receivables.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-    final String dailyCollFmt = dailyColl.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+    final combinedFmt = _formatCurrency(_combinedBalance);
+    final receivablesFmt = _formatCurrency(_receivablesTotal);
+    final dailyCollFmt = _formatCurrency(_dailyCollections);
+    final efficiency = _efficiencyRate;
 
     final actionsWidget = isMobile
         ? Row(
             children: [
+              Expanded(child: transferBtn),
+              const SizedBox(width: 6),
               Expanded(child: paySupplierBtn),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Expanded(child: receivePaymentBtn),
             ],
           )
         : Row(
             children: [
+              transferBtn,
+              const SizedBox(width: 8),
               paySupplierBtn,
               const SizedBox(width: 8),
               receivePaymentBtn,
@@ -355,73 +776,207 @@ class _TransactionPageState extends State<TransactionPage> {
       {'title': 'Supplier Payables (Outward)', 'icon': LucideIcons.arrowUpRight},
       {'title': 'Bank & Cash Registers', 'icon': LucideIcons.landmark},
       {'title': 'Overdue Collections & Reminders', 'icon': LucideIcons.alertCircle},
+      {'title': 'Total Inward & Outward', 'icon': LucideIcons.arrowLeftRight},
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: List.generate(tabs.length, (index) {
-          final isSelected = _activeTab == index;
-          final tabItem = tabs[index];
-          final icon = tabItem['icon'] as IconData;
-          final title = tabItem['title'] as String;
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: List.generate(tabs.length, (index) {
+                final isSelected = _activeTab == index;
+                final tabItem = tabs[index];
+                final icon = tabItem['icon'] as IconData;
+                final title = tabItem['title'] as String;
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: GestureDetector(
-              onTap: () => setState(() => _activeTab = index),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                padding: EdgeInsets.symmetric(
-                  horizontal: isMobile ? 12 : 18,
-                  vertical: 9,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF166534) : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
-                  ),
-                  boxShadow: isSelected
-                      ? [BoxShadow(color: const Color(0xFF166534).withValues(alpha: 0.2), blurRadius: 8, offset: const Offset(0, 2))]
-                      : [],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      icon,
-                      size: 14,
-                      color: isSelected ? Colors.white : AppColors.secondaryText,
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      title,
-                      style: TextStyle(
-                        color: isSelected ? Colors.white : AppColors.secondaryText,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 12,
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: GestureDetector(
+                    onTap: () => setState(() => _activeTab = index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      curve: Curves.easeOutCubic,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isMobile ? 12 : 18,
+                        vertical: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isSelected ? const Color(0xFF166534) : Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                        ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                )
+                              ]
+                            : [],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            icon,
+                            size: 14,
+                            color: isSelected ? Colors.white : AppColors.secondaryText,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            title,
+                            style: TextStyle(
+                              color: isSelected ? Colors.white : AppColors.secondaryText,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+                );
+              }),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // Search trigger button or search bar
+        if (!_isSearchOpen)
+          IconButton(
+            icon: const Icon(LucideIcons.search, size: 18, color: AppColors.secondaryText),
+            onPressed: () => setState(() => _isSearchOpen = true),
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.all(10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: Color(0xFFE5E7EB)),
+              ),
+            ),
+          )
+        else
+          Container(
+            width: isMobile ? 150 : 220,
+            height: 38,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFF166534)),
+            ),
+            child: TextField(
+              controller: _searchController,
+              autofocus: true,
+              style: const TextStyle(fontSize: 13, color: AppColors.darkText),
+              onChanged: (val) => setState(() => _searchQuery = val),
+              decoration: InputDecoration(
+                hintText: 'Search records...',
+                hintStyle: const TextStyle(fontSize: 12, color: AppColors.secondaryText),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                suffixIcon: IconButton(
+                  icon: const Icon(LucideIcons.x, size: 14, color: AppColors.secondaryText),
+                  onPressed: () {
+                    setState(() {
+                      _isSearchOpen = false;
+                      _searchController.clear();
+                      _searchQuery = '';
+                    });
+                  },
                 ),
               ),
             ),
-          );
-        }),
-      ),
+          ),
+      ],
     );
   }
 
   Widget _buildRecordsCard(bool isMobile) {
+    if (_isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 64),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.tableBorder),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: AppColors.primaryGreen, strokeWidth: 2.5),
+              SizedBox(height: 16),
+              Text(
+                'Loading payments data from server...',
+                style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_errorMessage != null && _reports == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFCA5A5)),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.alertTriangle, size: 36, color: Color(0xFFDC2626)),
+              const SizedBox(height: 12),
+              Text(
+                'Failed to load payment reports',
+                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF991B1B)),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _errorMessage!,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _loadData,
+                icon: const Icon(LucideIcons.rotateCcw, size: 14),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primaryGreen,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     if (_activeTab == 2) {
       return _buildBankRegistersView(isMobile);
     }
 
+    if (_activeTab == 3) {
+      return _buildOverdueInvoicesView(isMobile);
+    }
+
+    final txList = _activeTransactions;
+
     if (isMobile) {
-      return _buildMobileTransactionsList();
+      return _buildMobileTransactionsList(txList);
     }
 
     return Container(
@@ -449,13 +1004,13 @@ class _TransactionPageState extends State<TransactionPage> {
                     columnWidths: const {
                       0: FlexColumnWidth(1.8), // RECEIPT ID
                       1: FlexColumnWidth(1.2), // DATE
-                      2: FlexColumnWidth(2.0), // CUSTOMER
-                      3: FlexColumnWidth(1.4), // INVOICE LINKED
+                      2: FlexColumnWidth(2.0), // PARTY (CUSTOMER / SUPPLIER)
+                      3: FlexColumnWidth(1.4), // INVOICE / PURCHASE LINKED
                       4: FlexColumnWidth(1.5), // TOTAL ORIGINAL
                       5: FlexColumnWidth(1.5), // PAID AMOUNT
                       6: FlexColumnWidth(1.5), // MODE
                       7: FlexColumnWidth(1.6), // RECONCILIATION
-                      8: FlexColumnWidth(1.4), // ACTIONS
+                      8: FlexColumnWidth(1.2), // ACTIONS
                     },
                     children: [
                       TableRow(
@@ -463,30 +1018,56 @@ class _TransactionPageState extends State<TransactionPage> {
                           color: Color(0xFFF8FAFC),
                           border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                         ),
-                        children: const [
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECEIPT ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('CUSTOMER', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('INVOICE LINKED', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('MODE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECONCILIATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('ACTIONS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                        children: [
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECEIPT ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            child: Text(
+                              _activeTab == 1 ? 'SUPPLIER' : 'CUSTOMER',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                            child: Text(
+                              _activeTab == 1 ? 'PURCHASE LINKED' : 'INVOICE LINKED',
+                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText),
+                            ),
+                          ),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('MODE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECONCILIATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('ACTIONS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
                         ],
                       ),
-                      ..._transactions.map((tx) {
+                      ...txList.map((tx) {
+                        final isReconciled = tx.isReconciled;
+                        final totalFmt = _formatCurrency(tx.totalOriginal);
+                        final paidFmt = _formatCurrency(tx.paidAmount);
+
                         return TableRow(
                           decoration: const BoxDecoration(
                             border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
                           ),
                           children: [
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['id'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['date'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['customer'], style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx['invoice'], style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('₹ ${tx['total']}', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('₹ ${tx['paid']}', style: const TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.id.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.formattedDate, style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.partyName, style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.displayReference, style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
+                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('₹ $totalFmt', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                              child: Text(
+                                '₹ $paidFmt',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: tx.type.toLowerCase() == 'pay' ? const Color(0xFFDC2626) : AppColors.primaryGreen,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                               child: Align(
@@ -494,7 +1075,7 @@ class _TransactionPageState extends State<TransactionPage> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
-                                  child: Text(tx['mode'], style: const TextStyle(fontSize: 12, color: AppColors.darkText), overflow: TextOverflow.ellipsis),
+                                  child: Text(tx.paymentMode, style: const TextStyle(fontSize: 12, color: AppColors.darkText), overflow: TextOverflow.ellipsis),
                                 ),
                               ),
                             ),
@@ -505,10 +1086,18 @@ class _TransactionPageState extends State<TransactionPage> {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: tx['status'] == 'Reconciled' ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
+                                    color: isReconciled ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
                                     borderRadius: BorderRadius.circular(6),
                                   ),
-                                  child: Text(tx['status'], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500, color: tx['status'] == 'Reconciled' ? const Color(0xFF065F46) : const Color(0xFF92400E)), overflow: TextOverflow.ellipsis),
+                                  child: Text(
+                                    isReconciled ? 'MATCHED' : tx.status.toUpperCase(),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: isReconciled ? const Color(0xFF065F46) : const Color(0xFF92400E),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ),
                             ),
@@ -517,23 +1106,11 @@ class _TransactionPageState extends State<TransactionPage> {
                               child: FittedBox(
                                 fit: BoxFit.scaleDown,
                                 alignment: Alignment.centerLeft,
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(LucideIcons.pencil, size: 15, color: AppColors.blue),
-                                      onPressed: () => _openTransactionSheet(tx),
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(4),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    IconButton(
-                                      icon: const Icon(LucideIcons.trash2, size: 15, color: Colors.red),
-                                      onPressed: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
-                                      constraints: const BoxConstraints(),
-                                      padding: const EdgeInsets.all(4),
-                                    ),
-                                  ],
+                                child: IconButton(
+                                  icon: const Icon(LucideIcons.pencil, size: 15, color: AppColors.blue),
+                                  onPressed: () => _openTransactionSheet(tx, isSupplier: tx.type.toLowerCase() == 'pay'),
+                                  constraints: const BoxConstraints(),
+                                  padding: const EdgeInsets.all(4),
                                 ),
                               ),
                             ),
@@ -546,15 +1123,35 @@ class _TransactionPageState extends State<TransactionPage> {
               );
             },
           ),
-
-          if (_transactions.isEmpty)
+          if (txList.isEmpty)
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 64),
-              child: const Center(
-                child: Text(
-                  'No transaction matching records found.',
-                  style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF1F5F9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(LucideIcons.receipt, size: 28, color: Color(0xFF94A3B8)),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      _searchQuery.isNotEmpty
+                          ? 'No transactions matching "$_searchQuery".'
+                          : 'No transaction records found.',
+                      style: const TextStyle(color: AppColors.darkText, fontSize: 14, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Processed payments and receipts will appear here.',
+                      style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -563,8 +1160,8 @@ class _TransactionPageState extends State<TransactionPage> {
     );
   }
 
-  Widget _buildMobileTransactionsList() {
-    if (_transactions.isEmpty) {
+  Widget _buildMobileTransactionsList(List<PaymentTransaction> txList) {
+    if (txList.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
@@ -601,12 +1198,13 @@ class _TransactionPageState extends State<TransactionPage> {
     }
 
     return Column(
-      children: _transactions.map((tx) {
-        final mode = tx['mode'] as String? ?? 'UPI';
+      children: txList.map((tx) {
+        final mode = tx.paymentMode;
         final isUPI = mode.toLowerCase().contains('upi');
         final isBank = mode.toLowerCase().contains('bank');
         final isCash = mode.toLowerCase().contains('cash');
-        final isReconciled = tx['status'] == 'Reconciled';
+        final isReconciled = tx.isReconciled;
+        final isOutward = tx.type.toLowerCase() == 'pay';
 
         final iconColor = isUPI
             ? const Color(0xFF6366F1)
@@ -624,10 +1222,8 @@ class _TransactionPageState extends State<TransactionPage> {
                     ? LucideIcons.banknote
                     : LucideIcons.creditCard;
 
-        final totalVal = (tx['total'] as num).toDouble();
-        final paidVal = (tx['paid'] as num).toDouble();
-        final totalStr = totalVal.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-        final paidStr = paidVal.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+        final totalStr = _formatCurrency(tx.totalOriginal);
+        final paidStr = _formatCurrency(tx.paidAmount);
 
         return Container(
           margin: const EdgeInsets.only(bottom: 12),
@@ -668,7 +1264,7 @@ class _TransactionPageState extends State<TransactionPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          tx['customer'] as String? ?? 'Unknown Customer',
+                          tx.partyName,
                           style: const TextStyle(
                             fontSize: 14.5,
                             fontWeight: FontWeight.w800,
@@ -679,7 +1275,7 @@ class _TransactionPageState extends State<TransactionPage> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '${tx['mode'] ?? 'Payment'} • ${tx['date'] ?? ''}',
+                          '${tx.paymentMode} • ${tx.formattedDate}',
                           style: const TextStyle(
                             fontSize: 11.5,
                             color: Color(0xFF64748B),
@@ -698,13 +1294,13 @@ class _TransactionPageState extends State<TransactionPage> {
                     children: [
                       Text(
                         '₹ $paidStr',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15.5,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF166534),
+                          color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF166534),
                         ),
                       ),
-                      if (totalVal != paidVal) ...[
+                      if (tx.totalOriginal != tx.paidAmount && tx.totalOriginal > 0) ...[
                         const SizedBox(height: 1),
                         Text(
                           'of ₹ $totalStr',
@@ -723,7 +1319,7 @@ class _TransactionPageState extends State<TransactionPage> {
               const Divider(height: 1, color: Color(0xFFF1F5F9)),
               const SizedBox(height: 10),
 
-              // Bottom Row: Status Badge & Invoice Chip + Action Buttons
+              // Bottom Row: Status Badge & Reference Chip + Action Button
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -748,7 +1344,7 @@ class _TransactionPageState extends State<TransactionPage> {
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                tx['status'] as String? ?? 'Pending',
+                                isReconciled ? 'MATCHED' : tx.status.toUpperCase(),
                                 style: TextStyle(
                                   fontSize: 10.5,
                                   fontWeight: FontWeight.w700,
@@ -767,7 +1363,7 @@ class _TransactionPageState extends State<TransactionPage> {
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
-                              '${tx['invoice'] ?? tx['id']}',
+                              tx.displayReference,
                               style: const TextStyle(
                                 fontSize: 10.5,
                                 fontWeight: FontWeight.w600,
@@ -782,27 +1378,13 @@ class _TransactionPageState extends State<TransactionPage> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      InkWell(
-                        onTap: () => _openTransactionSheet(tx),
-                        borderRadius: BorderRadius.circular(6),
-                        child: const Padding(
-                          padding: EdgeInsets.all(5),
-                          child: Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      InkWell(
-                        onTap: () => setState(() => _transactions.removeWhere((item) => item['id'] == tx['id'])),
-                        borderRadius: BorderRadius.circular(6),
-                        child: const Padding(
-                          padding: EdgeInsets.all(5),
-                          child: Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
-                        ),
-                      ),
-                    ],
+                  InkWell(
+                    onTap: () => _openTransactionSheet(tx, isSupplier: isOutward),
+                    borderRadius: BorderRadius.circular(6),
+                    child: const Padding(
+                      padding: EdgeInsets.all(5),
+                      child: Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
+                    ),
                   ),
                 ],
               ),
@@ -813,32 +1395,96 @@ class _TransactionPageState extends State<TransactionPage> {
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // BANK & CASH REGISTERS TAB
+  // ═══════════════════════════════════════════════════════════════
   Widget _buildBankRegistersView(bool isMobile) {
-    return isMobile
-        ? Column(
-            children: [
-              _buildDefaultCashAccountCard(),
-              const SizedBox(height: 16),
-              _buildInternalTransferCard(),
-            ],
-          )
-        : Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _buildDefaultCashAccountCard()),
-              const SizedBox(width: 24),
-              Expanded(child: _buildInternalTransferCard()),
-            ],
-          );
+    final accounts = _reports?.accounts ?? [];
+
+    if (accounts.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.tableBorder),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
+              child: const Icon(LucideIcons.landmark, size: 28, color: Color(0xFF94A3B8)),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'No Bank or Cash Accounts Connected',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Accounts registered via /api/v1/bank-accounts will appear here dynamically.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Grid/Wrap of all real backend accounts
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 700;
+            if (isWide) {
+              return Wrap(
+                spacing: 16,
+                runSpacing: 16,
+                children: accounts.map((acc) {
+                  return SizedBox(
+                    width: (constraints.maxWidth - 16) / 2,
+                    child: _buildAccountCard(acc),
+                  );
+                }).toList(),
+              );
+            }
+            return Column(
+              children: accounts.map((acc) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: _buildAccountCard(acc),
+                );
+              }).toList(),
+            );
+          },
+        ),
+        const SizedBox(height: 20),
+        _buildInternalTransferCard(),
+      ],
+    );
   }
 
-  Widget _buildDefaultCashAccountCard() {
+  Widget _buildAccountCard(PaymentAccount account) {
+    final isCash = account.isCash;
+    final balanceFmt = _formatCurrency(account.currentBalance);
+
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppColors.tableBorder),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -852,45 +1498,62 @@ class _TransactionPageState extends State<TransactionPage> {
                   color: AppColors.hoverBackground,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'ACC-DEFL',
-                  style: TextStyle(color: AppColors.primaryGreen, fontSize: 11, fontWeight: FontWeight.bold),
+                child: Text(
+                  'ACC-${account.id}',
+                  style: const TextStyle(color: AppColors.primaryGreen, fontSize: 11, fontWeight: FontWeight.bold),
                 ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppColors.blue.withValues(alpha: 0.1),
+                  color: isCash
+                      ? const Color(0xFFECFDF5)
+                      : const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: const Text(
-                  'CASH',
-                  style: TextStyle(color: AppColors.blue, fontSize: 11, fontWeight: FontWeight.bold),
+                child: Text(
+                  isCash ? 'CASH' : 'BANK',
+                  style: TextStyle(
+                    color: isCash ? const Color(0xFF047857) : const Color(0xFF1D4ED8),
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text(
-            'Default Cash Account',
-            style: TextStyle(color: AppColors.darkText, fontSize: 18, fontWeight: FontWeight.bold),
+          const SizedBox(height: 18),
+          Text(
+            account.displayName,
+            style: const TextStyle(color: AppColors.darkText, fontSize: 17, fontWeight: FontWeight.bold),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 4),
-          const Text(
-            'Account No: ',
-            style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+          Text(
+            'Account No: ${account.displayAccountNumber}',
+            style: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 40),
-          const Row(
+          if (account.branchName != null && account.branchName!.isNotEmpty) ...[
+            const SizedBox(height: 2),
+            Text(
+              'Branch: ${account.branchName} • IFSC: ${account.ifscCode ?? "N/A"}',
+              style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
+            ),
+          ],
+          const SizedBox(height: 28),
+          Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
+              const Text(
                 'Current Balance:',
                 style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
               ),
               Text(
-                '₹ 0',
-                style: TextStyle(color: AppColors.primaryGreen, fontSize: 24, fontWeight: FontWeight.bold),
+                '₹ $balanceFmt',
+                style: const TextStyle(color: AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -901,7 +1564,8 @@ class _TransactionPageState extends State<TransactionPage> {
 
   Widget _buildInternalTransferCard() {
     return Container(
-      padding: const EdgeInsets.all(40),
+      width: double.infinity,
+      padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -911,20 +1575,145 @@ class _TransactionPageState extends State<TransactionPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(LucideIcons.arrowUpRight, color: AppColors.primaryGreen, size: 32),
-            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primaryGreen.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.arrowLeftRight, color: AppColors.primaryGreen, size: 24),
+            ),
+            const SizedBox(height: 12),
             const Text(
-              'Internal Transfer Funds',
+              'Internal Account Transfers',
               style: TextStyle(color: AppColors.darkText, fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             const Text(
-              'Move money between Cash-in-Hand and Bank accounts',
+              'Move money internally between Cash Register and connected Bank Accounts via /api/v1/payments/transfer',
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
+              style: TextStyle(color: AppColors.secondaryText, fontSize: 12.5),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // OVERDUE INVOICES TAB
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildOverdueInvoicesView(bool isMobile) {
+    final list = _activeOverdueInvoices;
+
+    if (list.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.tableBorder),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
+              child: const Icon(LucideIcons.badgeCheck, size: 28, color: Color(0xFF10B981)),
+            ),
+            const SizedBox(height: 14),
+            const Text(
+              'No Overdue Invoices',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'All customer billing schedules are current and settled.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.tableBorder),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tableWidth = math.max(constraints.maxWidth, 850.0);
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: Table(
+                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                columnWidths: const {
+                  0: FlexColumnWidth(1.6), // INVOICE #
+                  1: FlexColumnWidth(2.2), // CLIENT
+                  2: FlexColumnWidth(1.4), // TOTAL
+                  3: FlexColumnWidth(1.4), // PAID
+                  4: FlexColumnWidth(1.4), // DUE
+                  5: FlexColumnWidth(1.4), // DUE DATE
+                  6: FlexColumnWidth(1.4), // STATUS
+                },
+                children: [
+                  TableRow(
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8FAFC),
+                      border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+                    ),
+                    children: const [
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('INVOICE #', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('CLIENT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('TOTAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('PAID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('DUE AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('DUE DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('STATUS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                    ],
+                  ),
+                  ...list.map((inv) {
+                    return TableRow(
+                      decoration: const BoxDecoration(
+                        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+                      ),
+                      children: [
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text(inv.invoiceNumber, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text(inv.clientName, style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('₹ ${_formatCurrency(inv.totalAmount)}', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('₹ ${_formatCurrency(inv.paidAmount)}', style: const TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('₹ ${_formatCurrency(inv.dueAmount)}', style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626), fontWeight: FontWeight.w700))),
+                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text(inv.dueDate ?? 'N/A', style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFEE2E2),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              inv.status.toUpperCase(),
+                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF991B1B)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
