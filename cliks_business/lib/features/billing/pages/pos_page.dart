@@ -205,8 +205,10 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final platform = Theme.of(context).platform;
-    final isMacOS = platform == TargetPlatform.macOS;
-    if (isMacOS) {
+    final isDesktop = platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.windows ||
+        platform == TargetPlatform.linux;
+    if (isDesktop) {
       return const MacOsPosPage();
     }
 
@@ -248,7 +250,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
             slivers: [
               // ─── HERO SUMMARY CARD (Accounting Style Header) ───
               SliverToBoxAdapter(
-                child: isMacOS
+                child: isDesktop
                     ? _buildHeroSummary(isMobile)
                     : _buildHeroSummary(isMobile)
                           .animate()
@@ -287,7 +289,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
                     children: [
                       _buildDesktopActions(isMobile),
                       if (!isMobile) const SizedBox(height: 12),
-                      isMacOS
+                      isDesktop
                           ? _buildMainContent(isMobile, screenWidth)
                           : _buildMainContent(
                               isMobile,
@@ -572,7 +574,7 @@ class _PosPageState extends State<PosPage> with SingleTickerProviderStateMixin {
             child: GestureDetector(
               onTap: () => setState(() => _activeTab = index),
               child: AnimatedContainer(
-                duration: Theme.of(context).platform == TargetPlatform.macOS
+                duration: (Theme.of(context).platform == TargetPlatform.macOS || Theme.of(context).platform == TargetPlatform.windows || Theme.of(context).platform == TargetPlatform.linux)
                     ? Duration.zero
                     : const Duration(milliseconds: 220),
                 curve: Curves.easeOutCubic,

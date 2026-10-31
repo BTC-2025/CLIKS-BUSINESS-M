@@ -34,9 +34,10 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     final ref = this.ref;
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
-    final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
-    final isWindows = !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
-    final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
+    final platform = Theme.of(context).platform;
+    final isMacOS = !kIsWeb && (defaultTargetPlatform == TargetPlatform.macOS || platform == TargetPlatform.macOS);
+    final isWindows = !kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || platform == TargetPlatform.windows);
+    final isLinux = !kIsWeb && (defaultTargetPlatform == TargetPlatform.linux || platform == TargetPlatform.linux);
     final isDesktopPlatform =
         isMacOS || isWindows || isLinux || (kIsWeb && isDesktop);
     final isProfileModule = navigation.currentModule == AppModule.profile;

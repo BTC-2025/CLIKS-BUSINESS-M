@@ -191,7 +191,10 @@ class AppEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final platform = Theme.of(context).platform;
+    final isDesktop = platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.windows ||
+        platform == TargetPlatform.linux;
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -235,7 +238,7 @@ class AppEmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: isMacOS ? content : content.animate().fadeIn(duration: 350.ms).slideY(begin: 0.1, end: 0),
+        child: isDesktop ? content : content.animate().fadeIn(duration: 350.ms).slideY(begin: 0.1, end: 0),
       ),
     );
   }
@@ -249,7 +252,10 @@ class AppErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final platform = Theme.of(context).platform;
+    final isDesktop = platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.windows ||
+        platform == TargetPlatform.linux;
     final content = Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -292,7 +298,7 @@ class AppErrorState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
-        child: isMacOS ? content : content.animate().fadeIn(duration: 350.ms),
+        child: isDesktop ? content : content.animate().fadeIn(duration: 350.ms),
       ),
     );
   }

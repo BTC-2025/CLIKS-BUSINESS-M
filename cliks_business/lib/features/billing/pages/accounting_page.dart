@@ -863,11 +863,12 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
                     decoration: BoxDecoration(
                       color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(8),
@@ -879,16 +880,20 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Revenue Breakdown',
-                    style: TextStyle(
+                  Flexible(
+                    child: Text(
+                      'Revenue Breakdown',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF0F172A),
                       letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                 ],
+              ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1015,11 +1020,12 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(8),
@@ -1031,16 +1037,20 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  const Text(
-                    'Expense Breakdown',
-                    style: TextStyle(
+                  Flexible(
+                    child: Text(
+                      'Expense Breakdown',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF0F172A),
                       letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                 ],
+              ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -1202,10 +1212,13 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final platform = Theme.of(context).platform;
+    final isDesktop = platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.windows ||
+        platform == TargetPlatform.linux;
 
-    // Modernized macOS Desktop Finance Dashboard
-    if (isMacOS) {
+    // Modernized Desktop Finance Dashboard
+    if (isDesktop) {
       return _buildMacOsLayout(context, screenWidth);
     }
 
@@ -6815,7 +6828,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
     DateTime selectedDate = DateTime.now();
     final customerNameCtrl = TextEditingController();
     String category = 'Sales Revenue';
-    String paymentMode = 'uybwaued';
+    String paymentMode = 'Cash in Hand';
     final amountCtrl = TextEditingController(text: '0.00');
     final notesCtrl = TextEditingController();
 
@@ -6909,6 +6922,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                   buildLabel('Entry Type'),
                                   DropdownButtonFormField<String>(
                                     value: entryType,
+                                    isExpanded: true,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -7139,6 +7153,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                   buildLabel('Category'),
                                   DropdownButtonFormField<String>(
                                     value: category,
+                                    isExpanded: true,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -7214,6 +7229,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                                   buildLabel('Payment Mode'),
                                   DropdownButtonFormField<String>(
                                     value: paymentMode,
+                                    isExpanded: true,
                                     decoration: InputDecoration(
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
@@ -8211,7 +8227,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                   // Aligned Table for bank entries (mobile card on mobile, table on desktop/macOS)
                   Builder(
                     builder: (context) {
-                      final isMobile = Theme.of(context).platform != TargetPlatform.macOS &&
+                      final isMobile = (Theme.of(context).platform != TargetPlatform.macOS && Theme.of(context).platform != TargetPlatform.windows && Theme.of(context).platform != TargetPlatform.linux) &&
                           MediaQuery.of(context).size.width < 950;
                       if (isMobile) {
                         return Container(

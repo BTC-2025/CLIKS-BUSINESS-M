@@ -57,8 +57,11 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    if (isMacOS) {
+    final platform = Theme.of(context).platform;
+    final isDesktop = platform == TargetPlatform.macOS ||
+        platform == TargetPlatform.windows ||
+        platform == TargetPlatform.linux;
+    if (isDesktop) {
       return const MacOsBarcodeGenPage();
     }
 
@@ -69,7 +72,7 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
         slivers: [
           // ─── HERO SUMMARY CARD (Accounting Style Header with Top Action Buttons) ───
           SliverToBoxAdapter(
-            child: isMacOS
+            child: isDesktop
                 ? _buildHeroSummary(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
@@ -90,7 +93,7 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
               isMobile ? 40 : 40,
             ),
             sliver: SliverToBoxAdapter(
-              child: isMacOS
+              child: isDesktop
                   ? _buildMainContent(isMobile)
                   : _buildMainContent(isMobile)
                       .animate()

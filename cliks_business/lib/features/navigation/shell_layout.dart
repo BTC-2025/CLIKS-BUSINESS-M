@@ -78,9 +78,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
   Widget build(BuildContext context) {
     final navigation = ref.watch(navigationProvider);
     final isDesktop = MediaQuery.of(context).size.width >= 1100;
-    final isMacOS = !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
-    final isWindows = !kIsWeb && defaultTargetPlatform == TargetPlatform.windows;
-    final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
+    final platform = Theme.of(context).platform;
+    final isMacOS = !kIsWeb && (defaultTargetPlatform == TargetPlatform.macOS || platform == TargetPlatform.macOS);
+    final isWindows = !kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || platform == TargetPlatform.windows);
+    final isLinux = !kIsWeb && (defaultTargetPlatform == TargetPlatform.linux || platform == TargetPlatform.linux);
     final isDesktopPlatform =
         isMacOS || isWindows || isLinux || (kIsWeb && isDesktop);
     final isSplitCalculator = !isDesktopPlatform && !isDesktop && ref.watch(mobileCalculatorSplitScreenProvider);

@@ -136,6 +136,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Accounting'), findsOneWidget);
+      FlutterError.onError = oldHandler;
       if (errorDetails != null) {
         debugPrint('CAPTURED ERROR DETAILS: $errorDetails');
       }

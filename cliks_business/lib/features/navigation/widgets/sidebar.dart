@@ -21,6 +21,7 @@ class Sidebar extends ConsumerWidget {
         defaultTargetPlatform == TargetPlatform.macOS ||
         Theme.of(context).platform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.windows ||
+        Theme.of(context).platform == TargetPlatform.linux ||
         defaultTargetPlatform == TargetPlatform.linux ||
         (kIsWeb && MediaQuery.of(context).size.width >= 1100);
 
@@ -1184,7 +1185,8 @@ class Sidebar extends ConsumerWidget {
                       defaultTargetPlatform == TargetPlatform.macOS ||
                       Theme.of(context).platform == TargetPlatform.windows ||
                       defaultTargetPlatform == TargetPlatform.windows ||
-                      defaultTargetPlatform == TargetPlatform.linux ||
+                      Theme.of(context).platform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.linux ||
                       (kIsWeb && MediaQuery.of(context).size.width >= 1100);
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -2006,7 +2008,8 @@ class _SidebarBottomFixed extends ConsumerWidget {
               defaultTargetPlatform == TargetPlatform.macOS ||
               Theme.of(context).platform == TargetPlatform.windows ||
               defaultTargetPlatform == TargetPlatform.windows ||
-              defaultTargetPlatform == TargetPlatform.linux ||
+              Theme.of(context).platform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.linux ||
               (kIsWeb && MediaQuery.of(context).size.width >= 1100);
           if (isDesktopStorage) {
             Navigator.of(context).push(
