@@ -7,7 +7,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Cliks Buisness</string>
+	<string>Cliks Business</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -27,15 +27,15 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Cliks Buisness requires access to your camera to scan barcodes, capture invoice receipts, and take product photos.</string>
+	<string>Cliks Business requires access to your camera to scan barcodes, capture invoice receipts, and take product photos.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Cliks Buisness requires location access to auto-fill business addresses and calculate delivery and tax zones.</string>
+	<string>Cliks Business requires location access to auto-fill business addresses and calculate delivery and tax zones.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Cliks Buisness requires microphone access when recording video notes or documentation for business transactions.</string>
+	<string>Cliks Business requires microphone access when recording video notes or documentation for business transactions.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
-	<string>Cliks Buisness requires access to save invoices, receipts, and reports to your photo library.</string>
+	<string>Cliks Business requires access to save invoices, receipts, and reports to your photo library.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Cliks Buisness requires access to your photo library to upload invoices, receipts, and product images.</string>
+	<string>Cliks Business requires access to your photo library to upload invoices, receipts, and product images.</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

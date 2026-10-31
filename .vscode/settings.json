@@ -1,5 +1,5 @@
 {
-  "dart.flutterSdkPath": "/Users/btrldev004/development/flutter",
+  "dart.flutterSdkPath": "C:\\flutter",
   "dart.projectSearchDepth": 3,
   "dart.analysisExcludedFolders": [
     "cliks_business/build",
@@ -14,5 +14,6 @@
     "**/build/**": true,
     "**/.dart_tool/**": true,
     "**/.git/**": true
-  }
+  },
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

@@ -1,10 +1,10 @@
 @echo off
 echo ====================================================
-echo       Cliks Buisness Windows App Installer
+echo       Cliks Business Windows App Installer
 echo ====================================================
 echo.
 
-set INSTALL_DIR=%LOCALAPPDATA%\Programs\Cliks Buisness
+set INSTALL_DIR=%LOCALAPPDATA%\Programs\Cliks Business
 if not exist "%INSTALL_DIR%" mkdir "%INSTALL_DIR%"
 
 echo [1/3] Copying application files and plugins...
@@ -16,11 +16,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 
 echo [3/3] Creating Desktop and Start Menu shortcuts...
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
-  "$WshShell = New-Object -ComObject WScript.Shell; $desktop = [System.Environment]::GetFolderPath('Desktop'); $s = $WshShell.CreateShortcut(\"$desktop\Cliks Buisness.lnk\"); $s.TargetPath = \"$env:LOCALAPPDATA\Programs\Cliks Buisness\Cliks Buisness.exe\"; $s.WorkingDirectory = \"$env:LOCALAPPDATA\Programs\Cliks Buisness\"; $s.IconLocation = \"$env:LOCALAPPDATA\Programs\Cliks Buisness\Cliks Buisness.exe,0\"; $s.Save(); $start = [System.Environment]::GetFolderPath('Programs'); $sm = $WshShell.CreateShortcut(\"$start\Cliks Buisness.lnk\"); $sm.TargetPath = \"$env:LOCALAPPDATA\Programs\Cliks Buisness\Cliks Buisness.exe\"; $sm.WorkingDirectory = \"$env:LOCALAPPDATA\Programs\Cliks Buisness\"; $sm.IconLocation = \"$env:LOCALAPPDATA\Programs\Cliks Buisness\Cliks Buisness.exe,0\"; $sm.Save();"
+  "$WshShell = New-Object -ComObject WScript.Shell; $desktop = [System.Environment]::GetFolderPath('Desktop'); $s = $WshShell.CreateShortcut(\"$desktop\Cliks Business.lnk\"); $s.TargetPath = \"$env:LOCALAPPDATA\Programs\Cliks Business\Cliks Business.exe\"; $s.WorkingDirectory = \"$env:LOCALAPPDATA\Programs\Cliks Business\"; $s.IconLocation = \"$env:LOCALAPPDATA\Programs\Cliks Business\Cliks Business.exe,0\"; $s.Save(); $start = [System.Environment]::GetFolderPath('Programs'); $sm = $WshShell.CreateShortcut(\"$start\Cliks Business.lnk\"); $sm.TargetPath = \"$env:LOCALAPPDATA\Programs\Cliks Business\Cliks Business.exe\"; $sm.WorkingDirectory = \"$env:LOCALAPPDATA\Programs\Cliks Business\"; $sm.IconLocation = \"$env:LOCALAPPDATA\Programs\Cliks Business\Cliks Business.exe,0\"; $sm.Save();"
 
 echo.
 echo ====================================================
-echo  SUCCESS! Cliks Buisness installed successfully.
+echo  SUCCESS! Cliks Business installed successfully.
 echo  You can now launch the app from your Desktop.
 echo ====================================================
 echo.

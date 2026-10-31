@@ -1,4 +1,4 @@
-name: Cliks Buisness CI
+name: Cliks Business CI
 
 on:
   push:
@@ -58,14 +58,14 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Cliks-Buisness-APK
+          name: Cliks-Business-APK
           path: cliks_business/build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
 
       - name: Upload AAB
         uses: actions/upload-artifact@v4
         with:
-          name: Cliks-Buisness-AAB
+          name: Cliks-Business-AAB
           path: cliks_business/build/app/outputs/bundle/release/app-release.aab
           if-no-files-found: error
 
@@ -105,7 +105,7 @@ jobs:
       - name: Upload iOS artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Cliks-Buisness-iOS
+          name: Cliks-Business-iOS
           path: cliks_business/build/ios/iphoneos/Runner.app.tar.gz
           if-no-files-found: error
 
@@ -146,13 +146,13 @@ jobs:
       - name: Package Windows ZIP Bundle
         shell: pwsh
         run: |
-          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath Cliks-Buisness-Windows-x64.zip
+          Compress-Archive -Path build\windows\x64\runner\Release\* -DestinationPath Cliks-Business-Windows-x64.zip
 
       - name: Upload Windows Application
         uses: actions/upload-artifact@v4
         with:
-          name: Cliks-Buisness-Windows
-          path: cliks_business/Cliks-Buisness-Windows-x64.zip
+          name: Cliks-Business-Windows
+          path: cliks_business/Cliks-Business-Windows-x64.zip
           if-no-files-found: error
 
   build-linux:
@@ -197,11 +197,11 @@ jobs:
       - name: Package Linux tar.gz Bundle
         run: |
           cd build/linux/x64/release/bundle
-          tar -czf ../../../../Cliks-Buisness-Linux-x64.tar.gz .
+          tar -czf ../../../../Cliks-Business-Linux-x64.tar.gz .
 
       - name: Upload Linux Application
         uses: actions/upload-artifact@v4
         with:
-          name: Cliks-Buisness-Linux
-          path: cliks_business/Cliks-Buisness-Linux-x64.tar.gz
+          name: Cliks-Business-Linux
+          path: cliks_business/Cliks-Business-Linux-x64.tar.gz
           if-no-files-found: error

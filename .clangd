@@ -1,0 +1,22 @@
+CompileFlags:
+  Add:
+    - -Icliks_business/windows/flutter/ephemeral/cpp_client_wrapper/include
+    - -Icliks_business/windows/flutter/ephemeral
+    - -Icliks_business/windows
+    - -std=c++17
+    - -DUNICODE
+    - -D_UNICODE
+
+---
+If:
+  PathMatch: .*linux.*
+Diagnostics:
+  Suppress: ["*"]
+
+---
+If:
+  PathMatch: .*windows.*
+Diagnostics:
+  Suppress:
+    - -Wvexing-parse
+
