@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.cliks" "\0"
-            VALUE "FileDescription", "Cliks Business" "\0"
+            VALUE "FileDescription", "Cliks Buisness" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "Cliks Business" "\0"
+            VALUE "InternalName", "Cliks Buisness" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.cliks. All rights reserved." "\0"
-            VALUE "OriginalFilename", "cliks_business.exe" "\0"
-            VALUE "ProductName", "Cliks Business" "\0"
+            VALUE "OriginalFilename", "Cliks Buisness.exe" "\0"
+            VALUE "ProductName", "Cliks Buisness" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
