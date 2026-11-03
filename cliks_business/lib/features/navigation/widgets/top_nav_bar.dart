@@ -492,7 +492,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
               ] else ...[
                 if (!_isSearchExpanded) ...[
                   // FIN PRO capsule tab - small & sleek, only on Dashboard
-                  if (navigation.currentRoute == AppRoute.dashboard) ...[
+                  if (ref.watch(finProTopButtonVisibleProvider) &&
+                      navigation.currentRoute == AppRoute.dashboard) ...[
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
@@ -678,9 +679,86 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         ? userEmail.split('@').first
         : (activeAccount.name.isNotEmpty ? activeAccount.name : 'User');
 
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isFullDesktop = screenWidth >= 1100;
+    final isMediumDesktop = screenWidth >= 850 && screenWidth < 1100;
+    final isCompact = screenWidth < 850;
+    final isTiny = screenWidth < 680;
+
+    final double actionSpacing = (screenWidth < 1250) ? 5.0 : 7.0;
+    final double maxShowroomWidth = isFullDesktop
+        ? ((screenWidth < 1250) ? 145.0 : 180.0)
+        : (isMediumDesktop ? 130.0 : (isTiny ? 95.0 : 115.0));
+
+    // In-place expanded search bar for compact/minimized desktop window
+    if (_isSearchExpanded && !isFullDesktop) {
+      return Container(
+        height: 64,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: const BoxDecoration(color: AppColors.headerBackground),
+        child: Row(
+          children: [
+            IconButton(
+              icon: const Icon(
+                LucideIcons.arrowLeft,
+                color: Colors.white,
+                size: 22,
+              ),
+              onPressed: () => setState(() => _isSearchExpanded = false),
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Container(
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: Colors.white24),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  cursorColor: Colors.white,
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(
+                      LucideIcons.search,
+                      color: Colors.white70,
+                      size: 16,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(
+                        LucideIcons.x,
+                        color: Colors.white70,
+                        size: 16,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _isSearchExpanded = false);
+                      },
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                    hintText: 'Search transactions, bills, analytics...',
+                    hintStyle: TextStyle(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      fontSize: 13,
+                    ),
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Container(
       height: 64,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: EdgeInsets.symmetric(horizontal: isCompact ? 10 : 16),
       decoration: const BoxDecoration(color: AppColors.headerBackground),
       child: Stack(
         alignment: Alignment.center,
@@ -712,11 +790,11 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Text(
-                      'Cliks Business',
+                    Text(
+                      isTiny ? 'Cliks' : 'Cliks Business',
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 20,
+                        fontSize: isCompact ? 17 : 20,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -726,7 +804,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
               ),
 
               // Showroom selector dropdown pill matching reference screenshot
-              const SizedBox(width: 14),
+              SizedBox(width: isCompact ? 8 : 14),
               Consumer(
                 builder: (context, ref, _) {
                   final isShowroomMenuOpen =
@@ -750,9 +828,11 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                             .update((v) => !v);
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
-                        constraints: const BoxConstraints(maxWidth: 195),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isCompact ? 7 : 10,
+                          vertical: 5,
+                        ),
+                        constraints: BoxConstraints(maxWidth: maxShowroomWidth),
                         decoration: BoxDecoration(
                           color: isShowroomMenuOpen
                               ? Colors.white.withValues(alpha: 0.22)
@@ -772,15 +852,15 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                               size: 8,
                               color: Color(0xFF34D399),
                             ),
-                            const SizedBox(width: 6),
+                            SizedBox(width: isCompact ? 4 : 6),
                             Flexible(
                               child: Text(
                                 label,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontSize: isCompact ? 11 : 12,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -811,10 +891,12 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   _buildMacOSCircleButton(
                     icon: LucideIcons.search,
                     tooltip: 'Search',
+                    size: (screenWidth < 1250) ? 32.0 : 36.0,
+                    iconSize: (screenWidth < 1250) ? 15.0 : 18.0,
                     onTap: () =>
                         setState(() => _isSearchExpanded = !_isSearchExpanded),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: actionSpacing),
 
                   // 2. Notifications Bell button
                   PopupMenuButton<String>(
@@ -848,46 +930,70 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     child: _buildMacOSCircleButton(
                       icon: LucideIcons.bell,
                       tooltip: 'Notifications',
+                      size: (screenWidth < 1250) ? 32.0 : 36.0,
+                      iconSize: (screenWidth < 1250) ? 15.0 : 18.0,
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: actionSpacing),
 
-                  // 3. FIN PRO Capsule button (visible on top right in macOS header)
-                  _buildMacOSCapsuleButton(
-                    onTap: () {
-                      ref
-                          .read(navigationProvider.notifier)
-                          .setModuleAndRoute(
-                            AppModule.books,
-                            AppRoute.auditHub,
-                          );
-                    },
-                    tooltip: 'FIN-PRO Audit Hub',
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          LucideIcons.landmark,
-                          color: Colors.white,
-                          size: 16,
+                  // 3. FIN PRO Capsule button (visible on top right in macOS header, controlled by finProTopButtonVisibleProvider)
+                  if (ref.watch(finProTopButtonVisibleProvider)) ...[
+                    if (screenWidth >= 800)
+                      _buildMacOSCapsuleButton(
+                        horizontalPadding: (screenWidth < 1250) ? 8.0 : 12.0,
+                        height: (screenWidth < 1250) ? 32.0 : 36.0,
+                        onTap: () {
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setModuleAndRoute(
+                                AppModule.books,
+                                AppRoute.auditHub,
+                              );
+                        },
+                        tooltip: 'FIN-PRO Audit Hub',
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.landmark,
+                              color: Colors.white,
+                              size: 15,
+                            ),
+                            SizedBox(width: 5),
+                            Text(
+                              'FIN PRO',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w700,
+                                letterSpacing: 0.3,
+                              ),
+                            ),
+                          ],
                         ),
-                        SizedBox(width: 7),
-                        Text(
-                          'FIN PRO',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
+                      )
+                    else
+                      _buildMacOSCircleButton(
+                        icon: LucideIcons.landmark,
+                        tooltip: 'FIN-PRO Audit Hub',
+                        size: (screenWidth < 1250) ? 32.0 : 36.0,
+                        iconSize: (screenWidth < 1250) ? 15.0 : 18.0,
+                        onTap: () {
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setModuleAndRoute(
+                                AppModule.books,
+                                AppRoute.auditHub,
+                              );
+                        },
+                      ),
+                    SizedBox(width: actionSpacing),
+                  ],
 
                   // 4. User Profile Capsule button (ravinew2004 ▾ / ▴)
                   _buildMacOSCapsuleButton(
+                    horizontalPadding: (screenWidth < 1250) ? 8.0 : 12.0,
+                    height: (screenWidth < 1250) ? 32.0 : 36.0,
                     tooltip: 'Account Settings',
                     onTap: () {
                       ref.read(macosBetaAppsVisibleProvider.notifier).state =
@@ -904,148 +1010,174 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                         const Icon(
                           LucideIcons.circleUser,
                           color: Colors.white,
-                          size: 18,
+                          size: 16,
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          userDisplayName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                        if (!isTiny) ...[
+                          const SizedBox(width: 6),
+                          ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: isFullDesktop
+                                  ? ((screenWidth < 1250) ? 65.0 : 95.0)
+                                  : (isMediumDesktop ? 60.0 : 50.0),
+                            ),
+                            child: Text(
+                              userDisplayName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: isCompact ? 11.5 : 12.0,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 6),
+                        ],
+                        const SizedBox(width: 4),
                         Icon(
                           ref.watch(macosAccountMenuVisibleProvider)
                               ? LucideIcons.chevronUp
                               : LucideIcons.chevronDown,
                           color: Colors.white70,
-                          size: 14,
+                          size: 13,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
 
-                  // 5. Beta Apps View Button
-                  _buildMacOSCircleButton(
-                    icon: LucideIcons.slidersHorizontal,
-                    tooltip: ref.watch(macosBetaAppsVisibleProvider)
-                        ? 'Close Toolbar'
-                        : 'Open Toolbar',
-                    isActive: ref.watch(macosBetaAppsVisibleProvider),
-                    onTap: () {
-                      ref.read(macosAccountMenuVisibleProvider.notifier).state =
-                          false;
-                      ref.read(macosShowroomMenuVisibleProvider.notifier).state =
-                          false;
-                      ref
-                          .read(macosBetaAppsVisibleProvider.notifier)
-                          .update((v) => !v);
-                    },
-                  ),
+                  // 5. Beta Apps View Button (only rendered when full desktop where right toolbar exists)
+                  if (isFullDesktop) ...[
+                    SizedBox(width: actionSpacing),
+                    _buildMacOSCircleButton(
+                      icon: LucideIcons.slidersHorizontal,
+                      tooltip: ref.watch(macosBetaAppsVisibleProvider)
+                          ? 'Close Toolbar'
+                          : 'Open Toolbar',
+                      isActive: ref.watch(macosBetaAppsVisibleProvider),
+                      size: (screenWidth < 1250) ? 32.0 : 36.0,
+                      iconSize: (screenWidth < 1250) ? 15.0 : 18.0,
+                      onTap: () {
+                        ref.read(macosAccountMenuVisibleProvider.notifier).state =
+                            false;
+                        ref.read(macosShowroomMenuVisibleProvider.notifier).state =
+                            false;
+                        ref
+                            .read(macosBetaAppsVisibleProvider.notifier)
+                            .update((v) => !v);
+                      },
+                    ),
+                  ],
                 ],
               ),
             ],
           ),
 
-          // Center: Module Selector (or expanded search input)
-          Align(
-            alignment: Alignment.center,
-            child: _isSearchExpanded
-                ? Container(
-                    width: 380,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13.5,
-                      ),
-                      cursorColor: Colors.white,
-                      decoration: InputDecoration(
-                        hintText: 'Search analytics, people, documents...',
-                        hintStyle: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.5),
-                          fontSize: 13,
-                        ),
-                        prefixIcon: const Icon(
-                          LucideIcons.search,
-                          color: Colors.white70,
-                          size: 18,
-                        ),
-                        suffixIcon: IconButton(
-                          icon: const Icon(
-                            LucideIcons.x,
-                            color: Colors.white70,
-                            size: 18,
+          // Center: Module Selector (strictly centered and bounded between showroom and action icons)
+          if (isFullDesktop)
+            Positioned.fill(
+              left: (screenWidth < 1250) ? 275.0 : 310.0,
+              right: ref.watch(finProTopButtonVisibleProvider)
+                  ? ((screenWidth < 1250) ? 335.0 : 385.0)
+                  : ((screenWidth < 1250) ? 250.0 : 295.0),
+              child: Align(
+                alignment: Alignment.center,
+                child: _isSearchExpanded
+                    ? Container(
+                        constraints: const BoxConstraints(maxWidth: 380),
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.2),
                           ),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _isSearchExpanded = false);
-                          },
                         ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
+                        child: TextField(
+                          controller: _searchController,
+                          autofocus: true,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.5,
+                          ),
+                          cursorColor: Colors.white,
+                          decoration: InputDecoration(
+                            hintText: 'Search analytics, people, documents...',
+                            hintStyle: TextStyle(
+                              color: Colors.white.withValues(alpha: 0.5),
+                              fontSize: 13,
+                            ),
+                            prefixIcon: const Icon(
+                              LucideIcons.search,
+                              color: Colors.white70,
+                              size: 18,
+                            ),
+                            suffixIcon: IconButton(
+                              icon: const Icon(
+                                LucideIcons.x,
+                                color: Colors.white70,
+                                size: 18,
+                              ),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() => _isSearchExpanded = false);
+                              },
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
+                          ),
+                        ),
+                      )
+                    : FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.35),
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _buildMacOSModulePill(
+                                label: 'Books',
+                                isActive:
+                                    navigation.currentModule == AppModule.books,
+                                onTap: () => ref
+                                    .read(navigationProvider.notifier)
+                                    .setModuleAndRoute(
+                                      AppModule.books,
+                                      AppRoute.dashboard,
+                                    ),
+                              ),
+                              _buildMacOSModulePill(
+                                label: 'Payments',
+                                isActive: navigation.currentModule ==
+                                    AppModule.payments,
+                                onTap: () => ref
+                                    .read(navigationProvider.notifier)
+                                    .setModuleAndRoute(
+                                      AppModule.payments,
+                                      AppRoute.people,
+                                    ),
+                              ),
+                              _buildMacOSModulePill(
+                                label: 'Social',
+                                isActive:
+                                    navigation.currentModule == AppModule.social,
+                                onTap: () => ref
+                                    .read(navigationProvider.notifier)
+                                    .setModuleAndRoute(
+                                      AppModule.social,
+                                      AppRoute.betaClub,
+                                    ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  )
-                : Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.35),
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _buildMacOSModulePill(
-                          label: 'Books',
-                          isActive: navigation.currentModule == AppModule.books,
-                          onTap: () => ref
-                              .read(navigationProvider.notifier)
-                              .setModuleAndRoute(
-                                AppModule.books,
-                                AppRoute.dashboard,
-                              ),
-                        ),
-                        _buildMacOSModulePill(
-                          label: 'Payments',
-                          isActive:
-                              navigation.currentModule == AppModule.payments,
-                          onTap: () => ref
-                              .read(navigationProvider.notifier)
-                              .setModuleAndRoute(
-                                AppModule.payments,
-                                AppRoute.people,
-                              ),
-                        ),
-                        _buildMacOSModulePill(
-                          label: 'Social',
-                          isActive:
-                              navigation.currentModule == AppModule.social,
-                          onTap: () => ref
-                              .read(navigationProvider.notifier)
-                              .setModuleAndRoute(
-                                AppModule.social,
-                                AppRoute.betaClub,
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-          ),
+              ),
+            ),
         ],
       ),
     );
@@ -1056,6 +1188,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     String? tooltip,
     VoidCallback? onTap,
     bool isActive = false,
+    double size = 32,
+    double iconSize = 16,
   }) {
     final button = Material(
       color: Colors.transparent,
@@ -1064,8 +1198,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         onTap: onTap,
         customBorder: const CircleBorder(),
         child: Container(
-          width: 36,
-          height: 36,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isActive
@@ -1081,7 +1215,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           child: Icon(
             icon,
             color: isActive ? const Color(0xFF166534) : Colors.white,
-            size: 18,
+            size: iconSize,
           ),
         ),
       ),
@@ -1097,6 +1231,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
     required Widget child,
     String? tooltip,
     VoidCallback? onTap,
+    double horizontalPadding = 9.0,
+    double height = 32.0,
   }) {
     final button = Material(
       color: Colors.transparent,
@@ -1105,8 +1241,8 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 13),
+          height: height,
+          padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             color: Colors.black.withValues(alpha: 0.2),
@@ -1137,7 +1273,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
       borderRadius: BorderRadius.circular(25),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFF0F4622) : Colors.transparent,
           borderRadius: BorderRadius.circular(25),
@@ -1153,7 +1289,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
           style: TextStyle(
             color: isActive ? Colors.white : Colors.white70,
             fontWeight: isActive ? FontWeight.w700 : FontWeight.w500,
-            fontSize: 13,
+            fontSize: 12.0,
             letterSpacing: 0.2,
           ),
         ),

@@ -183,7 +183,7 @@ class MacOsSoftUiBentoHero extends StatelessWidget {
             // Chips row: Bento statistical capsules
             LayoutBuilder(
               builder: (context, constraints) {
-                if (isMobile) {
+                if (isMobile || constraints.maxWidth < 640) {
                   return Wrap(
                     spacing: 8,
                     runSpacing: 8,
