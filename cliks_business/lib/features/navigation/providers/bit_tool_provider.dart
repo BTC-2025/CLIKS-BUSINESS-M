@@ -132,10 +132,12 @@ class BitToolConnectionNotifier extends StateNotifier<BitToolConnectionState> {
 }
 
 final bitToolConnectionProvider =
-    StateNotifierProvider<BitToolConnectionNotifier, BitToolConnectionState>((ref) {
-  ref.watch(activeAccountProvider);
-  return BitToolConnectionNotifier(ref);
-});
+    StateNotifierProvider<BitToolConnectionNotifier, BitToolConnectionState>((
+      ref,
+    ) {
+      ref.watch(activeAccountProvider);
+      return BitToolConnectionNotifier(ref);
+    });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 2. Contacts Provider
@@ -189,7 +191,11 @@ class BitToolContactsNotifier extends StateNotifier<ContactsState> {
 
   Future<void> loadContacts() async {
     if (!mounted) return;
-    state = state.copyWith(contacts: const [], isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      contacts: const [],
+      isLoading: true,
+      errorMessage: null,
+    );
     try {
       final module = ref.read(bitToolApiModuleProvider);
       final list = await module.contacts.getAllContacts();
@@ -198,7 +204,11 @@ class BitToolContactsNotifier extends StateNotifier<ContactsState> {
     } catch (e) {
       if (kDebugMode) debugPrint('[BitToolContactsNotifier] Error: $e');
       if (!mounted) return;
-      state = state.copyWith(contacts: const [], isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        contacts: const [],
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
     }
   }
 
@@ -258,7 +268,7 @@ class BitToolContactsNotifier extends StateNotifier<ContactsState> {
 
 final bitToolContactsProvider =
     StateNotifierProvider<BitToolContactsNotifier, ContactsState>((ref) {
-  ref.watch(activeAccountProvider);
+      ref.watch(activeAccountProvider);
       return BitToolContactsNotifier(ref);
     });
 
@@ -299,7 +309,11 @@ class BitToolNotesNotifier extends StateNotifier<NotesState> {
 
   Future<void> loadNotes() async {
     if (!mounted) return;
-    state = state.copyWith(notes: const [], isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      notes: const [],
+      isLoading: true,
+      errorMessage: null,
+    );
     try {
       final module = ref.read(bitToolApiModuleProvider);
       final list = await module.notes.getNotes(allApps: true);
@@ -308,7 +322,11 @@ class BitToolNotesNotifier extends StateNotifier<NotesState> {
     } catch (e) {
       if (kDebugMode) debugPrint('[BitToolNotesNotifier] Error: $e');
       if (!mounted) return;
-      state = state.copyWith(notes: const [], isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        notes: const [],
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
     }
   }
 
@@ -398,7 +416,7 @@ class BitToolNotesNotifier extends StateNotifier<NotesState> {
 
 final bitToolNotesProvider =
     StateNotifierProvider<BitToolNotesNotifier, NotesState>((ref) {
-  ref.watch(activeAccountProvider);
+      ref.watch(activeAccountProvider);
       return BitToolNotesNotifier(ref);
     });
 
@@ -442,18 +460,19 @@ class BitToolCalendarNotifier extends StateNotifier<CalendarState> {
   final Ref ref;
 
   BitToolCalendarNotifier(this.ref)
-    : super(
-        CalendarState(
-          selectedDate: DateTime.now(),
-          events: const [],
-        ),
-      ) {
+    : super(CalendarState(selectedDate: DateTime.now(), events: const [])) {
     loadForMonth(DateTime.now());
   }
 
   Future<void> loadForMonth(DateTime date) async {
     if (!mounted) return;
-    state = state.copyWith(selectedDate: date, events: const [], reminders: const [], isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      selectedDate: date,
+      events: const [],
+      reminders: const [],
+      isLoading: true,
+      errorMessage: null,
+    );
     try {
       final module = ref.read(bitToolApiModuleProvider);
       final events = await module.calendar.getMonthEvents(
@@ -577,7 +596,7 @@ class BitToolCalendarNotifier extends StateNotifier<CalendarState> {
 
 final bitToolCalendarProvider =
     StateNotifierProvider<BitToolCalendarNotifier, CalendarState>((ref) {
-  ref.watch(activeAccountProvider);
+      ref.watch(activeAccountProvider);
       return BitToolCalendarNotifier(ref);
     });
 
@@ -619,7 +638,11 @@ class BitToolCalculatorNotifier extends StateNotifier<CalculatorSessionsState> {
 
   Future<void> loadSessions() async {
     if (!mounted) return;
-    state = state.copyWith(sessions: const [], isLoading: true, errorMessage: null);
+    state = state.copyWith(
+      sessions: const [],
+      isLoading: true,
+      errorMessage: null,
+    );
     try {
       final module = ref.read(bitToolApiModuleProvider);
       final list = await module.calculator.getHistory();
@@ -628,7 +651,11 @@ class BitToolCalculatorNotifier extends StateNotifier<CalculatorSessionsState> {
     } catch (e) {
       if (kDebugMode) debugPrint('[BitToolCalculatorNotifier] Error: $e');
       if (!mounted) return;
-      state = state.copyWith(sessions: const [], isLoading: false, errorMessage: e.toString());
+      state = state.copyWith(
+        sessions: const [],
+        isLoading: false,
+        errorMessage: e.toString(),
+      );
     }
   }
 
@@ -666,8 +693,9 @@ class BitToolCalculatorNotifier extends StateNotifier<CalculatorSessionsState> {
         createdAt: DateTime.now(),
       );
     } catch (e) {
-      if (kDebugMode)
+      if (kDebugMode) {
         debugPrint('[BitToolCalculatorNotifier] saveSession API error: $e');
+      }
       created = CalculatorSession(
         id: 'local_calc_${DateTime.now().millisecondsSinceEpoch}',
         title: title,
@@ -709,10 +737,12 @@ class BitToolCalculatorNotifier extends StateNotifier<CalculatorSessionsState> {
 }
 
 final bitToolCalculatorProvider =
-    StateNotifierProvider<BitToolCalculatorNotifier, CalculatorSessionsState>((ref) {
-  ref.watch(activeAccountProvider);
-  return BitToolCalculatorNotifier(ref);
-});
+    StateNotifierProvider<BitToolCalculatorNotifier, CalculatorSessionsState>((
+      ref,
+    ) {
+      ref.watch(activeAccountProvider);
+      return BitToolCalculatorNotifier(ref);
+    });
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 6. Notifications Provider
