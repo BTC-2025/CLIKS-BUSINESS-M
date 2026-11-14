@@ -303,8 +303,29 @@ class TokenService {
     final email = (account['email']?.toString() ?? '').trim().toLowerCase();
     if (email.isEmpty) return;
     final existing = await getSavedAccountsFromRegistry();
+    final targetExisting = existing.firstWhere(
+      (a) => (a['email']?.toString() ?? '').toLowerCase() == email,
+      orElse: () => {},
+    );
     final updated = existing.where((a) => (a['email']?.toString() ?? '').toLowerCase() != email).toList();
-    updated.add({...account, 'email': email, 'id': email});
+    String? token = account['accessToken']?.toString() ?? targetExisting['accessToken']?.toString();
+    String? refresh = account['refreshToken']?.toString() ?? targetExisting['refreshToken']?.toString();
+
+    if (token == null || token.isEmpty) {
+      final currentToken = await getAccessToken();
+      if (currentToken != null && currentToken.isNotEmpty) {
+        token = currentToken;
+      }
+    }
+
+    updated.add({
+      ...targetExisting,
+      ...account,
+      if (token != null && token.isNotEmpty) 'accessToken': token,
+      if (refresh != null && refresh.isNotEmpty) 'refreshToken': refresh,
+      'email': email,
+      'id': email,
+    });
     await _safeWrite(key: _kSavedAccountsRegistry, value: jsonEncode(updated));
   }
 
@@ -317,15 +338,40 @@ class TokenService {
 
   static Future<void> switchActiveAccountSession(String id) async {
     final clean = id.trim().toLowerCase();
+    cachedAccessToken = null;
     final accounts = await getSavedAccountsFromRegistry();
     final target = accounts.firstWhere(
       (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
       orElse: () => {},
     );
     if (target.isNotEmpty) {
-      final accessToken = target['accessToken']?.toString() ?? '';
-      final refreshToken = target['refreshToken']?.toString() ?? '';
+      String accessToken = target['accessToken']?.toString() ?? '';
+      String refreshToken = target['refreshToken']?.toString() ?? '';
       final name = target['name']?.toString() ?? clean.split('@').first;
+
+      // If target does not have its own accessToken stored, inspect available registry tokens for a matching sub/email
+      if (accessToken.isEmpty) {
+        for (final acc in accounts) {
+          final tok = acc['accessToken']?.toString() ?? '';
+          if (tok.isNotEmpty) {
+            try {
+              final parts = tok.split('.');
+              if (parts.length == 3) {
+                final normalized = base64Url.normalize(parts[1]);
+                final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
+                if (payload is Map && (payload['sub']?.toString().toLowerCase() == clean ||
+                    payload['email']?.toString().toLowerCase() == clean)) {
+                  accessToken = tok;
+                  refreshToken = acc['refreshToken']?.toString() ?? '';
+                  target['accessToken'] = tok;
+                  break;
+                }
+              }
+            } catch (_) {}
+          }
+        }
+      }
+
       if (accessToken.isNotEmpty) {
         await saveTokens(accessToken: accessToken, refreshToken: refreshToken);
       }

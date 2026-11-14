@@ -192,6 +192,87 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                 ),
               ),
 
+              // Switch Account: Other Available Accounts List
+              Builder(
+                builder: (context) {
+                  final allAccounts = ref.watch(accountsProvider);
+                  final otherAccounts = allAccounts
+                      .where((a) => !a.isActive && a.id != 'loading' && a.email.isNotEmpty)
+                      .toList();
+
+                  if (otherAccounts.isEmpty) return const SizedBox.shrink();
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 14),
+                      const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
+                      const SizedBox(height: 8),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Text(
+                          'SWITCH ACCOUNT',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.5,
+                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                      ),
+                      ...otherAccounts.map((acc) {
+                        final accInitial = acc.email.isNotEmpty ? acc.email[0].toUpperCase() : 'U';
+                        return InkWell(
+                          onTap: () async {
+                            ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
+                            final targetId = acc.email.isNotEmpty ? acc.email : acc.id;
+                            await ref.read(accountsProvider.notifier).switchAccount(targetId, ref);
+                          },
+                          borderRadius: BorderRadius.circular(10),
+                          hoverColor: const Color(0xFFF9FAFB),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 14,
+                                  backgroundColor: const Color(0xFF2563EB),
+                                  child: Text(
+                                    accInitial,
+                                    style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        acc.name.isNotEmpty ? acc.name : acc.email.split('@').first,
+                                        style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF1F2937)),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      Text(
+                                        acc.email,
+                                        style: const TextStyle(fontSize: 11, color: Color(0xFF6B7280)),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(LucideIcons.arrowRightLeft, size: 14, color: Color(0xFF9CA3AF)),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                    ],
+                  );
+                },
+              ),
+
               const SizedBox(height: 16),
               const Divider(height: 1, thickness: 1, color: Color(0xFFF3F4F6)),
               const SizedBox(height: 8),

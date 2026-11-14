@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../features/navigation/providers/bit_tool_provider.dart';
 
 // ═══════════════════════════════════════════════════════════
 // DATA MODELS
@@ -78,21 +80,22 @@ class HistorySection {
 // BETA CALCULATOR WIDGET
 // ═══════════════════════════════════════════════════════════
 
-class BetaCalculator extends StatefulWidget {
-  const BetaCalculator({super.key});
+class BetaCalculator extends ConsumerStatefulWidget {
+  final VoidCallback? onClose;
+  const BetaCalculator({super.key, this.onClose});
 
   @override
-  State<BetaCalculator> createState() => _BetaCalculatorState();
+  ConsumerState<BetaCalculator> createState() => _BetaCalculatorState();
 }
 
-class _BetaCalculatorState extends State<BetaCalculator> {
+class _BetaCalculatorState extends ConsumerState<BetaCalculator> {
   final ScrollController _tapeScrollController = ScrollController();
 
   // State
   List<TapeEntry> _tapeEntries = [];
   List<ComparisonRow> _comparisonRows = [];
   final List<HistorySection> _historyLog = [];
-  bool _showHistoryList = false;
+  bool _showHistoryList = true;
 
   String _currentInput = '0';
   String _pendingOperator = '=';
@@ -112,6 +115,14 @@ class _BetaCalculatorState extends State<BetaCalculator> {
   final TextEditingController _compQtyBController = TextEditingController();
   final TextEditingController _compDiscAController = TextEditingController();
   final TextEditingController _compDiscBController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(bitToolCalculatorProvider.notifier).loadSessions();
+    });
+  }
 
   @override
   void dispose() {
@@ -275,21 +286,86 @@ class _BetaCalculatorState extends State<BetaCalculator> {
   // History logs
   void _saveToHistory() {
     if (_tapeEntries.isEmpty && _comparisonRows.isEmpty) return;
+    final isComp = _activeMode == 'compare';
+    double totA = 0;
+    if (isComp) {
+      for (var r in _comparisonRows) {
+        totA += r.finalA;
+      }
+    }
+    final amt = isComp ? totA : _runningTotal;
+
+    // Persist to Calculator Backend API via Riverpod
+    final tapeItems = _tapeEntries.asMap().entries.map((e) {
+      return CalculatorTapeItem(
+        id: e.value.id,
+        sequence: e.key + 1,
+        value: e.value.value,
+        operator: e.value.operator,
+        runningTotal: e.value.runningTotal,
+        label: e.value.label ?? (e.value.presetTag ?? ''),
+      );
+    }).toList();
+
+    ref.read(bitToolCalculatorProvider.notifier).saveSession(
+      title: isComp ? 'Comparison Log' : 'Calculated Log',
+      totalAmount: amt,
+      items: tapeItems,
+    );
+
     setState(() {
       _historyLog.insert(
         0,
         HistorySection(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           timestamp: DateTime.now(),
-          type: _activeMode == 'compare' ? 'compare' : 'tape',
+          type: isComp ? 'compare' : 'tape',
           tapeEntries: List.from(_tapeEntries),
           comparisonRows: List.from(_comparisonRows),
-          totalValue: _activeMode == 'compare'
-              ? _comparisonRows.fold(0.0, (sum, r) => sum + r.finalA)
-              : _runningTotal,
+          totalValue: amt,
         ),
       );
     });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Calculation session saved to API'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
+
+  void _restoreApiSession(CalculatorSession s) {
+    setState(() {
+      _activeMode = 'gst';
+      final amt = s.totalAmount ?? 0.0;
+      _runningTotal = amt;
+      _currentInput = '0';
+      _pendingOperator = '=';
+      _hasBase = true;
+      if (s.items.isNotEmpty) {
+        _tapeEntries = s.items.map((it) => TapeEntry(
+          id: it.id,
+          operator: it.operator,
+          value: it.value,
+          runningTotal: it.runningTotal,
+          label: it.label,
+          isBase: it.sequence == 1,
+        )).toList();
+      } else {
+        _tapeEntries = [
+          TapeEntry(
+            id: DateTime.now().millisecondsSinceEpoch.toString(),
+            operator: '=',
+            value: amt,
+            runningTotal: amt,
+            isBase: true,
+          ),
+        ];
+      }
+      _showHistoryList = false;
+    });
+    _scrollTapeToBottom();
   }
 
   void _restoreHistory(HistorySection section) {
@@ -315,71 +391,118 @@ class _BetaCalculatorState extends State<BetaCalculator> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // Action Bar Header
+        // Action Bar Header: # BETA CALC matching Image 4
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Beta Calc Tape',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: AppColors.secondaryText),
+              '# BETA CALC',
+              style: TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 14,
+                color: Color(0xFF111827),
+                letterSpacing: 0.3,
+              ),
             ),
             Row(
               children: [
-                _buildActionIcon(LucideIcons.save, 'Save', _saveToHistory),
                 _buildActionIcon(
                   _showHistoryList ? LucideIcons.eyeOff : LucideIcons.history,
                   'History',
                   () => setState(() => _showHistoryList = !_showHistoryList),
                 ),
+                _buildActionIcon(LucideIcons.share2, 'Share', () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Tape log copied to clipboard'), duration: Duration(seconds: 1)),
+                  );
+                }),
                 _buildActionIcon(LucideIcons.trash2, 'Clear', _clearAll),
+                if (widget.onClose != null)
+                  _buildActionIcon(LucideIcons.x, 'Close', widget.onClose!),
               ],
             ),
           ],
         ),
         const SizedBox(height: 8),
 
-        // History logs view
+        // History logs view (Target design matching Image 1)
         if (_showHistoryList) ...[
           Container(
-            constraints: const BoxConstraints(maxHeight: 150),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
+              color: const Color(0xFFF9FAFB),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
-            child: _historyLog.isEmpty
-                ? const Center(child: Text('No saved logs', style: TextStyle(fontSize: 11, color: Colors.grey)))
-                : ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: _historyLog.length,
-                    itemBuilder: (ctx, i) {
-                      final log = _historyLog[i];
-                      final isComp = log.type == 'compare';
-                      double totA = 0;
-                      double totB = 0;
-                      if (isComp && log.comparisonRows != null) {
-                        for (var r in log.comparisonRows!) {
-                          totA += r.finalA;
-                          totB += r.finalB;
-                        }
-                      }
-                      final logText = isComp 
-                          ? 'Compare: A:₹${totA.toStringAsFixed(0)} vs B:₹${totB.toStringAsFixed(0)}'
-                          : 'Tape: $currencySymbol${log.totalValue.toStringAsFixed(1)}';
-
-                      return ListTile(
-                        dense: true,
-                        title: Text(
-                          logText,
-                          style: const TextStyle(fontSize: 10.5, fontWeight: FontWeight.bold),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'TAPE ARCHIVES',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF6B7280),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    InkWell(
+                      onTap: () {
+                        ref.read(bitToolCalculatorProvider.notifier).clearAll();
+                        setState(() => _historyLog.clear());
+                      },
+                      child: const Text(
+                        'CLEAR ALL',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFFEF4444),
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(LucideIcons.refreshCw, size: 12),
-                          onPressed: () => _restoreHistory(log),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // Live API Sessions list
+                Builder(
+                  builder: (context) {
+                    final calcState = ref.watch(bitToolCalculatorProvider);
+                    final sessions = calcState.sessions;
+
+                    if (sessions.isEmpty && _historyLog.isEmpty) {
+                      return Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE5E7EB)),
+                        ),
+                        child: const Text(
+                          'No saved calculations yet.',
+                          style: TextStyle(fontSize: 11, color: Color(0xFF9CA3AF)),
+                          textAlign: TextAlign.center,
                         ),
                       );
-                    },
-                  ),
+                    }
+
+                    if (sessions.isNotEmpty) {
+                      return Column(
+                        children: sessions.map((s) => _buildApiTapeCard(s)).toList(),
+                      );
+                    }
+
+                    return Column(
+                      children: _historyLog.map((log) => _buildLocalTapeCard(log)).toList(),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 8),
         ],
@@ -451,16 +574,16 @@ class _BetaCalculatorState extends State<BetaCalculator> {
           const SizedBox(height: 8),
         ],
 
-        // Mode switch tabs
+        // Mode switch tabs matching Image 4
         Row(
           children: [
-            _buildModeTab('% GST', 'gst'),
+            _buildModeTab('% GST', 'gst', icon: LucideIcons.percent, iconColor: const Color(0xFF059669)),
             const SizedBox(width: 4),
-            _buildModeTab('Discount', 'discount'),
+            _buildModeTab('Discount', 'discount', icon: LucideIcons.tag, iconColor: const Color(0xFFF97316)),
             const SizedBox(width: 4),
-            _buildModeTab(currencySymbol, 'currency'),
+            _buildModeTab(_isUsdMode ? 'USD' : 'INR', 'currency', icon: LucideIcons.globe, iconColor: const Color(0xFF4B5563)),
             const SizedBox(width: 4),
-            _buildModeTab('Compare', 'compare'),
+            _buildModeTab('Compare', 'compare', icon: LucideIcons.arrowUpDown, iconColor: const Color(0xFF4B5563)),
           ],
         ),
         const SizedBox(height: 8),
@@ -531,8 +654,13 @@ class _BetaCalculatorState extends State<BetaCalculator> {
     );
   }
 
-  Widget _buildModeTab(String label, String modeKey) {
+  Widget _buildModeTab(String label, String modeKey, {IconData? icon, Color? iconColor}) {
     final isSelected = modeKey == 'currency' ? false : _activeMode == modeKey;
+    const activeBg = Color(0xFF059669);
+    const inactiveBg = Colors.white;
+    const activeBorder = Color(0xFF059669);
+    const inactiveBorder = Color(0xFFE5E7EB);
+
     return Expanded(
       child: InkWell(
         onTap: () {
@@ -543,20 +671,38 @@ class _BetaCalculatorState extends State<BetaCalculator> {
           }
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6),
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primaryGreen : Colors.grey.shade100,
+            color: isSelected ? activeBg : inactiveBg,
             borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: isSelected ? activeBorder : inactiveBorder),
           ),
           alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              color: isSelected ? Colors.white : AppColors.secondaryText,
-            ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icon != null) ...[
+                Icon(
+                  icon,
+                  size: 10,
+                  color: isSelected ? Colors.white : (iconColor ?? const Color(0xFF4B5563)),
+                ),
+                const SizedBox(width: 2),
+              ],
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : const Color(0xFF374151),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -798,55 +944,437 @@ class _BetaCalculatorState extends State<BetaCalculator> {
   }
 
   Widget _buildNumPad() {
-    return GridView.count(
-      shrinkWrap: true,
-      crossAxisCount: 4,
-      mainAxisSpacing: 3,
-      crossAxisSpacing: 3,
-      childAspectRatio: 1.8,
-      physics: const NeverScrollableScrollPhysics(),
+    const btnHeight = 38.0;
+    const gap = 4.0;
+
+    return Column(
       children: [
-        '↺', '⌫', '÷', '×',
-        '7', '8', '9', '-',
-        '4', '5', '6', '+',
-        '1', '2', '3', '=',
-        '0', '.', '', '',
-      ].map((char) {
-        if (char.isEmpty) return const SizedBox();
-        return InkWell(
-          onTap: () {
-            if (char == '↺') {
-              _clearAll();
-            } else if (char == '⌫') {
-              _backspace();
-            } else if (['+', '-', '×', '÷'].contains(char)) {
-              _setOperator(char);
-            } else if (char == '=') {
-              _calculate();
-            } else {
-              _enterDigit(char);
-            }
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.border),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              char,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: ['↺', '⌫', '÷', '×', '-', '+', '='].contains(char)
-                    ? AppColors.primaryGreen
-                    : AppColors.darkText,
+        // Row 1: ↺, ⌫, /, x
+        Row(
+          children: [
+            Expanded(
+              child: _buildNumBtn(
+                height: btnHeight,
+                bg: const Color(0xFFFEE2E2),
+                border: const Color(0xFFFECACA),
+                onTap: _clearAll,
+                child: const Icon(LucideIcons.rotateCcw, size: 14, color: Color(0xFFDC2626)),
               ),
             ),
+            const SizedBox(width: gap),
+            Expanded(
+              child: _buildNumBtn(
+                height: btnHeight,
+                bg: const Color(0xFFF3F4F6),
+                border: const Color(0xFFE5E7EB),
+                onTap: _backspace,
+                child: const Icon(LucideIcons.delete, size: 14, color: Color(0xFF4B5563)),
+              ),
+            ),
+            const SizedBox(width: gap),
+            Expanded(
+              child: _buildNumBtn(
+                height: btnHeight,
+                bg: const Color(0xFFECFDF5),
+                border: const Color(0xFFA7F3D0),
+                onTap: () => _setOperator('÷'),
+                child: const Text('/', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+              ),
+            ),
+            const SizedBox(width: gap),
+            Expanded(
+              child: _buildNumBtn(
+                height: btnHeight,
+                bg: const Color(0xFFECFDF5),
+                border: const Color(0xFFA7F3D0),
+                onTap: () => _setOperator('×'),
+                child: const Text('x', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: gap),
+
+        // Row 2: 7, 8, 9, -
+        Row(
+          children: [
+            Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('7'), child: const Text('7', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+            const SizedBox(width: gap),
+            Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('8'), child: const Text('8', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+            const SizedBox(width: gap),
+            Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('9'), child: const Text('9', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+            const SizedBox(width: gap),
+            Expanded(
+              child: _buildNumBtn(
+                height: btnHeight,
+                bg: const Color(0xFFECFDF5),
+                border: const Color(0xFFA7F3D0),
+                onTap: () => _setOperator('-'),
+                child: const Text('-', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: gap),
+
+        // Row 3: 4, 5, 6, +
+        Row(
+          children: [
+            Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('4'), child: const Text('4', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+            const SizedBox(width: gap),
+            Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('5'), child: const Text('5', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+            const SizedBox(width: gap),
+            Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('6'), child: const Text('6', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+            const SizedBox(width: gap),
+            Expanded(
+              child: _buildNumBtn(
+                height: btnHeight,
+                bg: const Color(0xFFECFDF5),
+                border: const Color(0xFFA7F3D0),
+                onTap: () => _setOperator('+'),
+                child: const Text('+', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF059669))),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: gap),
+
+        // Row 4 & 5: Left 3 cols (1, 2, 3 / SCI, 0, .) and Right 1 col (tall green =)
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('1'), child: const Text('1', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+                      const SizedBox(width: gap),
+                      Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('2'), child: const Text('2', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+                      const SizedBox(width: gap),
+                      Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('3'), child: const Text('3', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+                    ],
+                  ),
+                  const SizedBox(height: gap),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildNumBtn(
+                          height: btnHeight,
+                          bg: Colors.white,
+                          border: const Color(0xFFE5E7EB),
+                          onTap: () {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Scientific Mode Active'), duration: Duration(milliseconds: 800)),
+                            );
+                          },
+                          child: const Text('SCI', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF4B5563))),
+                        ),
+                      ),
+                      const SizedBox(width: gap),
+                      Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('0'), child: const Text('0', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+                      const SizedBox(width: gap),
+                      Expanded(child: _buildNumBtn(height: btnHeight, onTap: () => _enterDigit('.'), child: const Text('.', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF111827))))),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: gap),
+            Expanded(
+              flex: 1,
+              child: _buildNumBtn(
+                height: (btnHeight * 2) + gap,
+                bg: const Color(0xFF059669),
+                border: const Color(0xFF059669),
+                onTap: _calculate,
+                child: const Text('=', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: Colors.white)),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNumBtn({
+    required double height,
+    required VoidCallback onTap,
+    required Widget child,
+    Color bg = Colors.white,
+    Color border = const Color(0xFFE5E7EB),
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: border),
+        ),
+        alignment: Alignment.center,
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildApiTapeCard(CalculatorSession s) {
+    final timeStr = s.createdAt != null
+        ? '${s.createdAt!.hour.toString().padLeft(2, '0')}:${s.createdAt!.minute.toString().padLeft(2, '0')}:${s.createdAt!.second.toString().padLeft(2, '0')}'
+        : '10:35:13';
+    final amt = s.totalAmount ?? 0.0;
+    final amtFormatted = amt % 1 == 0 ? amt.toInt().toString() : amt.toStringAsFixed(2);
+    final count = s.itemCount ?? s.items.length;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 3,
+            offset: const Offset(0, 1),
           ),
-        );
-      }).toList(),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.clock, size: 10, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 4),
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$count Items',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.title.isNotEmpty ? s.title.toUpperCase() : 'CALCULATED LOG',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6B7280),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '₹$amtFormatted',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF059669),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF059669),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  minimumSize: const Size(60, 28),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  elevation: 0,
+                ),
+                onPressed: () => _restoreApiSession(s),
+                child: const Text('RESTORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+              ),
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () {
+                  ref.read(bitToolCalculatorProvider.notifier).deleteSession(s.id);
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFFECACA)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(LucideIcons.trash2, size: 13, color: Color(0xFFEF4444)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocalTapeCard(HistorySection log) {
+    final timeStr =
+        '${log.timestamp.hour.toString().padLeft(2, '0')}:${log.timestamp.minute.toString().padLeft(2, '0')}:${log.timestamp.second.toString().padLeft(2, '0')}';
+    final amt = log.totalValue;
+    final amtFormatted = amt % 1 == 0 ? amt.toInt().toString() : amt.toStringAsFixed(2);
+    final count = log.type == 'compare' ? (log.comparisonRows?.length ?? 1) : (log.tapeEntries?.length ?? 1);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEE2E2),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.clock, size: 10, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 4),
+                    Text(
+                      timeStr,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  '$count Items',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      log.type == 'compare' ? 'COMPARE LOG' : 'CALCULATED LOG',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6B7280),
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '₹$amtFormatted',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF059669),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF059669),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  minimumSize: const Size(60, 28),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  elevation: 0,
+                ),
+                onPressed: () => _restoreHistory(log),
+                child: const Text('RESTORE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w800)),
+              ),
+              const SizedBox(width: 6),
+              InkWell(
+                onTap: () {
+                  setState(() => _historyLog.removeWhere((l) => l.id == log.id));
+                },
+                borderRadius: BorderRadius.circular(6),
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFFECACA)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(LucideIcons.trash2, size: 13, color: Color(0xFFEF4444)),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

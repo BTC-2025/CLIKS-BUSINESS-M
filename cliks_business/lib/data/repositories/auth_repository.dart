@@ -76,6 +76,8 @@ class AuthRepository {
       'id': user.email,
       'email': user.email,
       'name': user.name,
+      'accessToken': accessToken.isNotEmpty ? accessToken : null,
+      'refreshToken': refreshToken.isNotEmpty ? refreshToken : null,
       'isPrimary': true,
       'accountType': user.accountType ?? userJson['accountType']?.toString() ?? 'BUSINESS',
     });
