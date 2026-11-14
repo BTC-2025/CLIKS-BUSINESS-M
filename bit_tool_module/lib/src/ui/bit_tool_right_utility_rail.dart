@@ -74,31 +74,6 @@ class _BitToolRightUtilityRailState extends ConsumerState<BitToolRightUtilityRai
   void initState() {
     super.initState();
     _activeTool = 'beta';
-    _syncBetaLogoAssets();
-  }
-
-  void _syncBetaLogoAssets() {
-    try {
-      const src = '/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/media_1790664964179.png';
-      final srcFile = File(src);
-      if (srcFile.existsSync()) {
-        final bytes = srcFile.readAsBytesSync();
-        final targets = [
-          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /beta_logo .jpg',
-          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /beta_logo.png',
-          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference/beta_logo.png',
-          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/beta_logo.png',
-          '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/images/beta_logo.png',
-        ];
-        for (final t in targets) {
-          try {
-            final f = File(t);
-            f.parent.createSync(recursive: true);
-            f.writeAsBytesSync(bytes);
-          } catch (_) {}
-        }
-      }
-    } catch (_) {}
   }
 
   @override
@@ -144,36 +119,9 @@ class _BitToolRightUtilityRailState extends ConsumerState<BitToolRightUtilityRai
     BoxFit fit = BoxFit.contain,
     Color? color,
   }) {
-    final candidatePaths = [
-      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference /$fileName',
-      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/icons_images_reference/$fileName',
-      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/$fileName',
-      '/Users/btrldev004/Desktop/CLIKS-BUSINESS-M/cliks_business/assets/images/$fileName',
-      '/Users/btrldev004/.gemini/antigravity-ide/brain/45c0b19c-2750-462e-9d32-e9090898243f/.user_uploaded/$fileName',
-    ];
-
-    for (final p in candidatePaths) {
-      final f = File(p);
-      if (f.existsSync()) {
-        return Image.file(
-          f,
-          width: width,
-          height: height,
-          fit: fit,
-          color: color,
-          filterQuality: FilterQuality.high,
-          errorBuilder: (ctx, err, stack) => _buildFallbackAsset(fileName, width, height, fit, color),
-        );
-      }
-    }
-
-    return _buildFallbackAsset(fileName, width, height, fit, color);
-  }
-
-  Widget _buildFallbackAsset(String fileName, double? width, double? height, BoxFit fit, Color? color) {
     String cleanName = fileName.replaceAll(' ', '');
     return Image.asset(
-      'assets/icons_images_reference/$cleanName',
+      'packages/bit_tool_module/assets/images/$cleanName',
       width: width,
       height: height,
       fit: fit,
@@ -185,15 +133,24 @@ class _BitToolRightUtilityRailState extends ConsumerState<BitToolRightUtilityRai
           height: height,
           fit: fit,
           color: color,
-          errorBuilder: (c, e, s) => Container(
-            width: width ?? 32,
-            height: height ?? 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF6FF),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(LucideIcons.globe, size: 16, color: Color(0xFF3B82F6)),
-          ),
+          errorBuilder: (ctx2, err2, stack2) {
+            return Image.asset(
+              'assets/icons_images_reference/$cleanName',
+              width: width,
+              height: height,
+              fit: fit,
+              color: color,
+              errorBuilder: (c, e, s) => Container(
+                width: width ?? 32,
+                height: height ?? 32,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(LucideIcons.globe, size: 16, color: Color(0xFF3B82F6)),
+              ),
+            );
+          },
         );
       },
     );

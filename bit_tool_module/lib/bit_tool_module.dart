@@ -34,3 +34,4 @@ export 'src/providers/bit_tool_providers.dart';
 // UI Components
 export 'src/ui/bit_tool_right_utility_rail.dart';
 export 'src/ui/calculator/bit_tool_calculator.dart';
+export 'src/api/ui/bit_tool_api_directory_view.dart';

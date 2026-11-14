@@ -86,6 +86,8 @@ class HistorySection {
 // BETA CALCULATOR WIDGET
 // ═══════════════════════════════════════════════════════════
 
+typedef BitToolCalculator = BetaCalculator;
+
 class BetaCalculator extends ConsumerStatefulWidget {
   final VoidCallback? onClose;
   const BetaCalculator({super.key, this.onClose});
