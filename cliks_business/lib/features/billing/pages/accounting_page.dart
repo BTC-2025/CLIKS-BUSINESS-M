@@ -378,36 +378,41 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   // ══════════════════════════════════════════════════════════════════════════
 
   Widget _buildMacOsLayout(BuildContext context, double screenWidth) {
-    final double horizontalPadding = screenWidth >= 1440
-        ? 36.0
-        : (screenWidth >= 1100 ? 30.0 : 22.0);
-    final double verticalPadding = screenWidth >= 1440 ? 30.0 : 22.0;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
+        final double horizontalPadding = availableWidth >= 1300
+            ? 32.0
+            : (availableWidth >= 800 ? 24.0 : 16.0);
+        final double verticalPadding = availableWidth >= 1300 ? 28.0 : 20.0;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(
-            horizontalPadding,
-            verticalPadding,
-            horizontalPadding,
-            44,
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F9FB),
+          body: SafeArea(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.fromLTRB(
+                horizontalPadding,
+                verticalPadding,
+                horizontalPadding,
+                44,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildMacOsPageHeader(context),
+                  const SizedBox(height: 22),
+                  _buildMacOsTopMetrics(availableWidth),
+                  const SizedBox(height: 24),
+                  _buildMacOsTabNavigation(),
+                  const SizedBox(height: 20),
+                  _buildMacOsActiveTabContent(availableWidth),
+                ],
+              ),
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMacOsPageHeader(context),
-              const SizedBox(height: 22),
-              _buildMacOsTopMetrics(screenWidth),
-              const SizedBox(height: 24),
-              _buildMacOsTabNavigation(),
-              const SizedBox(height: 20),
-              _buildMacOsActiveTabContent(screenWidth),
-            ],
-          ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -556,33 +561,47 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       return Row(
         children: [
           Expanded(child: card1),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(child: card2),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(child: card3),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(child: card4),
+        ],
+      );
+    }
+
+    if (screenWidth >= 520) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: card1),
+              const SizedBox(width: 14),
+              Expanded(child: card2),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(child: card3),
+              const SizedBox(width: 14),
+              Expanded(child: card4),
+            ],
+          ),
         ],
       );
     }
 
     return Column(
       children: [
-        Row(
-          children: [
-            Expanded(child: card1),
-            const SizedBox(width: 14),
-            Expanded(child: card2),
-          ],
-        ),
-        const SizedBox(height: 14),
-        Row(
-          children: [
-            Expanded(child: card3),
-            const SizedBox(width: 14),
-            Expanded(child: card4),
-          ],
-        ),
+        card1,
+        const SizedBox(height: 12),
+        card2,
+        const SizedBox(height: 12),
+        card3,
+        const SizedBox(height: 12),
+        card4,
       ],
     );
   }
@@ -623,7 +642,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
               child: Container(height: 3.5, color: accentColor),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -633,18 +652,23 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Text(
-                        label,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.7,
+                      Expanded(
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.7,
+                          ),
                         ),
                       ),
+                      const SizedBox(width: 6),
                       Container(
-                        width: 32,
-                        height: 32,
+                        width: 30,
+                        height: 30,
                         decoration: BoxDecoration(
                           color: iconBgColor,
                           borderRadius: BorderRadius.circular(8),
@@ -654,18 +678,23 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                     ],
                   ),
                   // Financial Amount Value
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      formattedValue,
-                      maxLines: 1,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: -0.6,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          formattedValue,
+                          maxLines: 1,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.6,
+                            fontFeatures: [FontFeature.tabularFigures()],
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -682,13 +711,17 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Text(
-                        'LIVE POSITION',
-                        style: TextStyle(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.8,
+                      const Flexible(
+                        child: Text(
+                          'LIVE POSITION',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
                     ],
@@ -791,7 +824,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
   Widget _buildMacOsActiveTabContent(double screenWidth) {
     switch (_activeTab) {
       case 0:
-        if (screenWidth >= 1050) {
+        if (screenWidth >= 900) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -821,7 +854,7 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
       case 6:
         return _buildDayBookTab(false, screenWidth);
       default:
-        if (screenWidth >= 1050) {
+        if (screenWidth >= 900) {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -954,6 +987,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Expanded(
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
@@ -962,36 +997,45 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             ),
           ),
           const SizedBox(width: 12),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                  fontFeatures: [FontFeature.tabularFigures()],
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                decoration: BoxDecoration(
-                  color: pct == '0%' ? const Color(0xFFF1F5F9) : const Color(0xFFDCFCE7),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  pct,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: pct == '0%' ? const Color(0xFF64748B) : const Color(0xFF15803D),
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      amount,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                        fontFeatures: [FontFeature.tabularFigures()],
+                        letterSpacing: -0.2,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                  decoration: BoxDecoration(
+                    color: pct == '0%' ? const Color(0xFFF1F5F9) : const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    pct,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: pct == '0%' ? const Color(0xFF64748B) : const Color(0xFF15803D),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
@@ -1161,6 +1205,8 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
           Expanded(
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -1169,36 +1215,45 @@ class _AccountingPageState extends ConsumerState<AccountingPage> {
             ),
           ),
           const SizedBox(width: 12),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
-                  fontFeatures: [FontFeature.tabularFigures()],
-                  letterSpacing: -0.2,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-                decoration: BoxDecoration(
-                  color: pct == '0%' ? const Color(0xFFFDE8E8) : const Color(0xFFFECDD3),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Text(
-                  pct,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFDC2626),
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      amount,
+                      maxLines: 1,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                        fontFeatures: [FontFeature.tabularFigures()],
+                        letterSpacing: -0.2,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: pct == '0%' ? const Color(0xFFFDE8E8) : const Color(0xFFFECDD3),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Text(
+                    pct,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

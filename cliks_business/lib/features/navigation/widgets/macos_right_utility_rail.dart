@@ -8,7 +8,7 @@ import '../../../core/navigation/navigation_provider.dart';
 import '../../../widgets/calculator/beta_calculator.dart';
 import '../../../data/account_provider.dart';
 
-final macosBetaAppsVisibleProvider = StateProvider<bool>((ref) => true);
+final macosBetaAppsVisibleProvider = StateProvider<bool>((ref) => false);
 
 class MacOSRightUtilityRail extends ConsumerStatefulWidget {
   const MacOSRightUtilityRail({super.key});
@@ -72,7 +72,7 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
   @override
   void initState() {
     super.initState();
-    _activeTool = 'beta';
+    _activeTool = null;
     _syncBetaLogoAssets();
   }
 

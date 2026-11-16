@@ -6,7 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../providers/bit_tool_providers.dart';
 import 'calculator/bit_tool_calculator.dart';
 
-final macosBetaAppsVisibleProvider = StateProvider<bool>((ref) => true);
+final macosBetaAppsVisibleProvider = StateProvider<bool>((ref) => false);
 typedef BitToolNavCallback = void Function(String target);
 final bitToolNavigationCallbackProvider = StateProvider<BitToolNavCallback?>((ref) => null);
 
@@ -73,7 +73,7 @@ class _BitToolRightUtilityRailState extends ConsumerState<BitToolRightUtilityRai
   @override
   void initState() {
     super.initState();
-    _activeTool = 'beta';
+    _activeTool = null;
   }
 
   @override
