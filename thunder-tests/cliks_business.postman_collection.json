@@ -1,0 +1,974 @@
+{
+  "info": {
+    "name": "Cliks Business & BNX Mail APIs",
+    "_postman_id": "588abdfc-6d54-4d07-af5a-0416c78877da",
+    "description": "Complete API collection for Cliks Business Payments, Billing, BNX Mail, Sub-IDs, and Bit Tool",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Core Payments & Cash Flow",
+      "item": [
+        {
+          "name": "Receive Customer Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/receive",
+              "host": [
+                "{{baseUrl}}/payments/receive"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 5000,\n  \"customer_name\": \"Ramesh Traders\",\n  \"invoice_id\": \"INV-2026-0042\",\n  \"payment_mode\": \"UPI\",\n  \"reference_number\": \"UPI/9876543210/PAY\",\n  \"account_id\": 1,\n  \"notes\": \"Payment received via PhonePe QR code\",\n  \"total_original_amount\": 5000,\n  \"paid_amount\": 5000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Pay Supplier / Vendor",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/pay",
+              "host": [
+                "{{baseUrl}}/payments/pay"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 12500,\n  \"vendor_name\": \"Apex Fabricators Pvt Ltd\",\n  \"purchase_id\": \"PB-2026-0019\",\n  \"payment_mode\": \"Bank Transfer\",\n  \"reference_number\": \"NEFT/HDFC/884920194\",\n  \"account_id\": 1,\n  \"notes\": \"Raw material purchase milestone 1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Internal Vault & Account Transfer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/transfer",
+              "host": [
+                "{{baseUrl}}/payments/transfer"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from_account_id\": 1,\n  \"to_account_id\": 2,\n  \"amount\": 20000,\n  \"reference_number\": \"INTERNAL-TXN-0012\",\n  \"notes\": \"Transfer from Main Current Account to Cash Register\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Unified Payment Reports & Ledgers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/reports?start_date=2026-01-01&end_date=2026-12-31&type=all",
+              "host": [
+                "{{baseUrl}}/payments/reports"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2026-01-01"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2026-12-31"
+                },
+                {
+                  "key": "type",
+                  "value": "all"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Outstanding Aggregated Stats",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/outstanding",
+              "host": [
+                "{{baseUrl}}/payments/outstanding"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Create Payment Gateway Order (Cashfree / UPI)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/payments/create-order",
+              "host": [
+                "{{baseUrl}}/payments/create-order"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"order_id\": \"ORDER_20261117_001\",\n  \"order_amount\": 1500,\n  \"order_currency\": \"INR\",\n  \"customer_details\": {\n    \"customer_id\": \"CUST_9918\",\n    \"customer_name\": \"Ravi Kumar\",\n    \"customer_email\": \"ravi@example.com\",\n    \"customer_phone\": \"9876543210\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Invoice Direct Payments",
+      "item": [
+        {
+          "name": "Record Payment on Specific Invoice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/INV-2026-0042/payments",
+              "host": [
+                "{{baseUrl}}/billing/INV-2026-0042/payments"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 2500,\n  \"payment_mode\": \"Cash\",\n  \"reference_number\": \"CASH-REC-001\",\n  \"notes\": \"Partial counter cash settlement\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Payments for Specific Invoice",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/billing/INV-2026-0042/payments",
+              "host": [
+                "{{baseUrl}}/billing/INV-2026-0042/payments"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Supplier Purchase Payments",
+      "item": [
+        {
+          "name": "Record Payment on Purchase Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/purchases/PB-2026-0019/payments",
+              "host": [
+                "{{baseUrl}}/purchases/PB-2026-0019/payments"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 10000,\n  \"payment_mode\": \"Bank Transfer\",\n  \"reference_number\": \"IMPS/99201948\",\n  \"account_id\": 1,\n  \"notes\": \"Cleared against PB-2026-0019\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Payments for Purchase Bill",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/purchases/PB-2026-0019/payments",
+              "host": [
+                "{{baseUrl}}/purchases/PB-2026-0019/payments"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Planned & Scheduled Payments",
+      "item": [
+        {
+          "name": "List Planned Payments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/planned-payments?status=all&page=1&limit=20",
+              "host": [
+                "{{baseUrl}}/planned-payments"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "all"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Planned Payment (Monthly / Rent / Utility)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/planned-payments",
+              "host": [
+                "{{baseUrl}}/planned-payments"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Electricity / Internet Bill\",\n  \"amount\": 67890,\n  \"due_date\": \"2026-12-11\",\n  \"category\": \"Utilities\",\n  \"type\": \"OUTWARD\",\n  \"is_recurring\": true,\n  \"recurring_interval\": \"monthly\",\n  \"auto_notify\": true,\n  \"notes\": \"Automated email notification active via BNX Mail\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Update Planned Payment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/planned-payments/1",
+              "host": [
+                "{{baseUrl}}/planned-payments/1"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 69500,\n  \"notes\": \"Updated revised tariff\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Mark Planned Payment as Paid",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/planned-payments/1/mark-paid",
+              "host": [
+                "{{baseUrl}}/planned-payments/1/mark-paid"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Delete Planned Payment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/planned-payments/1",
+              "host": [
+                "{{baseUrl}}/planned-payments/1"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Bank Accounts & Wallets",
+      "item": [
+        {
+          "name": "List Bank Accounts & Current Balances",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bank-accounts",
+              "host": [
+                "{{baseUrl}}/bank-accounts"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Add New Bank / Cash Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bank-accounts",
+              "host": [
+                "{{baseUrl}}/bank-accounts"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bank_name\": \"State Bank of India\",\n  \"account_holder\": \"Cliks Business Account\",\n  \"account_number\": \"30192837465\",\n  \"ifsc\": \"SBIN0000456\",\n  \"branch\": \"MG Road Branch\",\n  \"opening_balance\": 50000,\n  \"account_type\": \"Current\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. User Profile & Settings (BNX)",
+      "item": [
+        {
+          "name": "Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/users/me",
+              "host": [
+                "{{bnxBaseUrl}}/api/users/me"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Get User Settings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/users/settings",
+              "host": [
+                "{{bnxBaseUrl}}/api/users/settings"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Get Mail Storage Quota",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/mail/storage-quota",
+              "host": [
+                "{{bnxBaseUrl}}/api/mail/storage-quota"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Update Profile Info",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/users/profile",
+              "host": [
+                "{{bnxBaseUrl}}/api/users/profile"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Ravi\",\n  \"lastName\": \"Kumar\",\n  \"displayName\": \"Ravi Kumar C\",\n  \"phoneNumber\": \"+919876543210\",\n  \"recoveryEmail\": \"ravinew2004@bnxmail.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Business Subscription",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://cliks.beta-softnet.com/api/v1/business/subscription/{{userEmail}}",
+              "host": [
+                "https://cliks.beta-softnet.com/api/v1/business/subscription/{{userEmail}}"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. Connected Emails & Sub-IDs",
+      "item": [
+        {
+          "name": "List Connected Emails & Mailboxes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/emails/list",
+              "host": [
+                "{{bnxBaseUrl}}/api/emails/list"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Create Connected Mailbox Alias",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/emails/create",
+              "host": [
+                "{{bnxBaseUrl}}/api/emails/create"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emailName\": \"sales2\",\n  \"password\": \"StrongPassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Set Primary Mailbox",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/emails/1/set-primary",
+              "host": [
+                "{{bnxBaseUrl}}/api/emails/1/set-primary"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "List Sub-IDs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/subid/list",
+              "host": [
+                "{{bnxBaseUrl}}/api/subid/list"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Create Sub-ID Account",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/subid/create",
+              "host": [
+                "{{bnxBaseUrl}}/api/subid/create"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"prefix\": \"sales2\",\n  \"password\": \"TempPassword123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete Sub-ID",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bnxBaseUrl}}/api/subid/1",
+              "host": [
+                "{{bnxBaseUrl}}/api/subid/1"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "8. Bit Tool Contacts & Notes",
+      "item": [
+        {
+          "name": "Get Notifications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bitToolBaseUrl}}/notifications",
+              "host": [
+                "{{bitToolBaseUrl}}/notifications"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Get All Contacts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bitToolBaseUrl}}/contacts/get-all",
+              "host": [
+                "{{bitToolBaseUrl}}/contacts/get-all"
+              ],
+              "query": []
+            }
+          }
+        },
+        {
+          "name": "Create New Contact",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bitToolBaseUrl}}/contacts/add",
+              "host": [
+                "{{bitToolBaseUrl}}/contacts/add"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Santhosh\",\n  \"lastName\": \"Kumar\",\n  \"email\": \"santhosh@example.com\",\n  \"phone\": \"+919876543210\",\n  \"company\": \"Cliks Retail Hub\",\n  \"notes\": \"Main showroom key partner\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Get Notes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bitToolBaseUrl}}/notes?allApps=true",
+              "host": [
+                "{{bitToolBaseUrl}}/notes"
+              ],
+              "query": [
+                {
+                  "key": "allApps",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Business Note",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bitToolBaseUrl}}/notes/create",
+              "host": [
+                "{{bitToolBaseUrl}}/notes/create"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Daily Showroom Reconciliation\",\n  \"content\": \"Check cash register against POS counter balance and approve ledger entry\",\n  \"color\": \"#10B981\",\n  \"isPinned\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "9. Calendar & Business Calculator",
+      "item": [
+        {
+          "name": "Get Calendar Events (Monthly)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.bit-tool.com/api/calendar/events/month?year=2026&month=11",
+              "host": [
+                "https://api.bit-tool.com/api/calendar/events/month"
+              ],
+              "query": [
+                {
+                  "key": "year",
+                  "value": "2026"
+                },
+                {
+                  "key": "month",
+                  "value": "11"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Calendar Schedule Event",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "https://api.bit-tool.com/api/calendar/events",
+              "host": [
+                "https://api.bit-tool.com/api/calendar/events"
+              ],
+              "query": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"GST Return Filing Review\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"11:00\",\n  \"endTime\": \"12:00\",\n  \"categoryId\": 1,\n  \"description\": \"Review GSTR-1 and GSTR-3B with auditor\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Calculator History Sessions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bnx_auth_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{bitToolBaseUrl}}/calculator/history",
+              "host": [
+                "{{bitToolBaseUrl}}/calculator/history"
+              ],
+              "query": []
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

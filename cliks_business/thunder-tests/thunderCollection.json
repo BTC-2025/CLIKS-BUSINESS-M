@@ -1,0 +1,80 @@
+[
+  {
+    "_id": "col-cliks-business-main",
+    "colName": "Cliks Business & BNX Mail APIs",
+    "created": "2026-11-17T14:47:53.827Z",
+    "sortNum": 10000,
+    "folders": [
+      {
+        "_id": "fol-core-payments",
+        "name": "1. Core Payments & Cash Flow",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 10000
+      },
+      {
+        "_id": "fol-invoice-payments",
+        "name": "2. Invoice Direct Payments",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 20000
+      },
+      {
+        "_id": "fol-purchase-payments",
+        "name": "3. Supplier Purchase Payments",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 30000
+      },
+      {
+        "_id": "fol-planned-payments",
+        "name": "4. Planned & Scheduled Payments",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 40000
+      },
+      {
+        "_id": "fol-bank-accounts",
+        "name": "5. Bank Accounts & Wallets",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 50000
+      },
+      {
+        "_id": "fol-bnx-profile",
+        "name": "6. User Profile & Settings (BNX)",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 60000
+      },
+      {
+        "_id": "fol-bnx-subids",
+        "name": "7. Connected Emails & Sub-IDs",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 70000
+      },
+      {
+        "_id": "fol-bit-tool",
+        "name": "8. Bit Tool Contacts & Notes",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 80000
+      },
+      {
+        "_id": "fol-calendar-calc",
+        "name": "9. Calendar & Business Calculator",
+        "containerId": "",
+        "created": "2026-11-17T14:47:53.827Z",
+        "sortNum": 90000
+      }
+    ],
+    "settings": {
+      "headers": [],
+      "auth": {
+        "type": "bearer",
+        "bearer": "{{token}}"
+      }
+    }
+  }
+]

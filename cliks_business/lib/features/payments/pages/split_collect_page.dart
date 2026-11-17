@@ -778,8 +778,9 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                     )
                                     .toList(),
                                 onChanged: (v) {
-                                  if (v != null)
+                                  if (v != null) {
                                     setDialogState(() => selectedCurrency = v);
+                                  }
                                 },
                               ),
                             ),
@@ -1306,8 +1307,9 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                       );
                                     }).toList(),
                                     onChanged: (v) {
-                                      if (v != null)
+                                      if (v != null) {
                                         setModalState(() => paidBy = v);
+                                      }
                                     },
                                   ),
                                 ),
@@ -1365,10 +1367,11 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                           );
                                         }).toList(),
                                     onChanged: (v) {
-                                      if (v != null)
+                                      if (v != null) {
                                         setModalState(
                                           () => selectedCategory = v,
                                         );
+                                      }
                                     },
                                   ),
                                 ),

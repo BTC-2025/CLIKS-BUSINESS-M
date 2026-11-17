@@ -1,3 +1,6 @@
 {
-  "dart.flutterSdkPath": "C:\\flutter"
+  "dart.flutterSdkPath": "C:\\flutter",
+  "thunder-client.saveToWorkspace": true,
+  "thunder-client.workspaceRelativePath": "thunder-tests",
+  "thunder-client.sidebar.defaultTab": "Collections"
 }

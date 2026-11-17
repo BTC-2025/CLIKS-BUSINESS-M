@@ -1,0 +1,876 @@
+[
+  {
+    "_id": "72e9acb5-11c5-44a6-a696-7699ca090b58",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-core-payments",
+    "name": "Receive Customer Payment",
+    "url": "{{baseUrl}}/payments/receive",
+    "method": "POST",
+    "sortNum": 10000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 5000,\n  \"customer_name\": \"Ramesh Traders\",\n  \"invoice_id\": \"INV-2026-0042\",\n  \"payment_mode\": \"UPI\",\n  \"reference_number\": \"UPI/9876543210/PAY\",\n  \"account_id\": 1,\n  \"notes\": \"Payment received via PhonePe QR code\",\n  \"total_original_amount\": 5000,\n  \"paid_amount\": 5000\n}",
+      "form": []
+    },
+    "tests": [
+      {
+        "type": "res-code",
+        "value": "200",
+        "action": "equal"
+      }
+    ]
+  },
+  {
+    "_id": "5932b4b3-ba21-4bce-b18d-aa8c5e4257e5",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-core-payments",
+    "name": "Pay Supplier / Vendor",
+    "url": "{{baseUrl}}/payments/pay",
+    "method": "POST",
+    "sortNum": 11000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 12500,\n  \"vendor_name\": \"Apex Fabricators Pvt Ltd\",\n  \"purchase_id\": \"PB-2026-0019\",\n  \"payment_mode\": \"Bank Transfer\",\n  \"reference_number\": \"NEFT/HDFC/884920194\",\n  \"account_id\": 1,\n  \"notes\": \"Raw material purchase milestone 1\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "ffd2135d-0731-46a2-9215-b998bd423ff9",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-core-payments",
+    "name": "Internal Vault & Account Transfer",
+    "url": "{{baseUrl}}/payments/transfer",
+    "method": "POST",
+    "sortNum": 12000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"from_account_id\": 1,\n  \"to_account_id\": 2,\n  \"amount\": 20000,\n  \"reference_number\": \"INTERNAL-TXN-0012\",\n  \"notes\": \"Transfer from Main Current Account to Cash Register\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "44eb4085-ad0e-4d84-86ff-3a9b58d28425",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-core-payments",
+    "name": "Get Unified Payment Reports & Ledgers",
+    "url": "{{baseUrl}}/payments/reports?start_date=2026-01-01&end_date=2026-12-31&type=all",
+    "method": "GET",
+    "sortNum": 13000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "name": "start_date",
+        "value": "2026-01-01",
+        "isPath": false
+      },
+      {
+        "name": "end_date",
+        "value": "2026-12-31",
+        "isPath": false
+      },
+      {
+        "name": "type",
+        "value": "all",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "6e1beb85-40fd-40fa-a60d-355daf9bd578",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-core-payments",
+    "name": "Get Outstanding Aggregated Stats",
+    "url": "{{baseUrl}}/payments/outstanding",
+    "method": "GET",
+    "sortNum": 14000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "ed31e8ec-df56-4556-ac7f-1bfc1b50279a",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-core-payments",
+    "name": "Create Payment Gateway Order (Cashfree / UPI)",
+    "url": "{{baseUrl}}/payments/create-order",
+    "method": "POST",
+    "sortNum": 15000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"order_id\": \"ORDER_20261117_001\",\n  \"order_amount\": 1500,\n  \"order_currency\": \"INR\",\n  \"customer_details\": {\n    \"customer_id\": \"CUST_9918\",\n    \"customer_name\": \"Ravi Kumar\",\n    \"customer_email\": \"ravi@example.com\",\n    \"customer_phone\": \"9876543210\"\n  }\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "f5fb1c19-d7cb-4e27-8a37-8b62d675ea44",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-invoice-payments",
+    "name": "Record Payment on Specific Invoice",
+    "url": "{{baseUrl}}/billing/INV-2026-0042/payments",
+    "method": "POST",
+    "sortNum": 20000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 2500,\n  \"payment_mode\": \"Cash\",\n  \"reference_number\": \"CASH-REC-001\",\n  \"notes\": \"Partial counter cash settlement\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "3fe48b19-c3c2-44d5-9811-764a5ee34634",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-invoice-payments",
+    "name": "Get Payments for Specific Invoice",
+    "url": "{{baseUrl}}/billing/INV-2026-0042/payments",
+    "method": "GET",
+    "sortNum": 21000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "4dd3ed91-3e5a-4970-ac9d-0d0c3e23c95b",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-purchase-payments",
+    "name": "Record Payment on Purchase Bill",
+    "url": "{{baseUrl}}/purchases/PB-2026-0019/payments",
+    "method": "POST",
+    "sortNum": 30000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 10000,\n  \"payment_mode\": \"Bank Transfer\",\n  \"reference_number\": \"IMPS/99201948\",\n  \"account_id\": 1,\n  \"notes\": \"Cleared against PB-2026-0019\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "d651ec01-4662-4e9c-b004-d52dbb4c7f34",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-purchase-payments",
+    "name": "Get Payments for Purchase Bill",
+    "url": "{{baseUrl}}/purchases/PB-2026-0019/payments",
+    "method": "GET",
+    "sortNum": 31000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "d2e3304e-e1d1-486a-81bb-4d85dfc4c765",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-planned-payments",
+    "name": "List Planned Payments",
+    "url": "{{baseUrl}}/planned-payments?status=all&page=1&limit=20",
+    "method": "GET",
+    "sortNum": 40000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [
+      {
+        "name": "status",
+        "value": "all",
+        "isPath": false
+      },
+      {
+        "name": "page",
+        "value": "1",
+        "isPath": false
+      },
+      {
+        "name": "limit",
+        "value": "20",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "7f26c33e-617a-4541-8eff-ffe6acfc2902",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-planned-payments",
+    "name": "Create Planned Payment (Monthly / Rent / Utility)",
+    "url": "{{baseUrl}}/planned-payments",
+    "method": "POST",
+    "sortNum": 41000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"title\": \"Electricity / Internet Bill\",\n  \"amount\": 67890,\n  \"due_date\": \"2026-12-11\",\n  \"category\": \"Utilities\",\n  \"type\": \"OUTWARD\",\n  \"is_recurring\": true,\n  \"recurring_interval\": \"monthly\",\n  \"auto_notify\": true,\n  \"notes\": \"Automated email notification active via BNX Mail\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "fbc2b9f4-be8e-4328-82ca-1a3c84552368",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-planned-payments",
+    "name": "Update Planned Payment",
+    "url": "{{baseUrl}}/planned-payments/1",
+    "method": "PATCH",
+    "sortNum": 42000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"amount\": 69500,\n  \"notes\": \"Updated revised tariff\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "2fe149f4-3227-4900-a33c-c107090c2ed8",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-planned-payments",
+    "name": "Mark Planned Payment as Paid",
+    "url": "{{baseUrl}}/planned-payments/1/mark-paid",
+    "method": "PATCH",
+    "sortNum": 43000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "8380a692-5f70-4981-9cd3-a86b2a4d4cf2",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-planned-payments",
+    "name": "Delete Planned Payment",
+    "url": "{{baseUrl}}/planned-payments/1",
+    "method": "DELETE",
+    "sortNum": 44000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "f6fa8ba6-9d47-4858-b187-dc8d46a42147",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bank-accounts",
+    "name": "List Bank Accounts & Current Balances",
+    "url": "{{baseUrl}}/bank-accounts",
+    "method": "GET",
+    "sortNum": 50000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "80de2299-65cb-404f-a476-bbbb6ba31edd",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bank-accounts",
+    "name": "Add New Bank / Cash Account",
+    "url": "{{baseUrl}}/bank-accounts",
+    "method": "POST",
+    "sortNum": 51000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"bank_name\": \"State Bank of India\",\n  \"account_holder\": \"Cliks Business Account\",\n  \"account_number\": \"30192837465\",\n  \"ifsc\": \"SBIN0000456\",\n  \"branch\": \"MG Road Branch\",\n  \"opening_balance\": 50000,\n  \"account_type\": \"Current\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "6f296197-d00e-4d25-9191-891abc4b636d",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-profile",
+    "name": "Get Current User Profile",
+    "url": "{{bnxBaseUrl}}/api/users/me",
+    "method": "GET",
+    "sortNum": 60000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "61ecf544-a290-4d0e-97c8-38cb63e9a635",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-profile",
+    "name": "Get User Settings",
+    "url": "{{bnxBaseUrl}}/api/users/settings",
+    "method": "GET",
+    "sortNum": 61000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "9312b702-ce13-4bcc-b385-1676997be278",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-profile",
+    "name": "Get Mail Storage Quota",
+    "url": "{{bnxBaseUrl}}/api/mail/storage-quota",
+    "method": "GET",
+    "sortNum": 62000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "4aeb825f-c67e-4cf9-b05f-12e71009f93b",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-profile",
+    "name": "Update Profile Info",
+    "url": "{{bnxBaseUrl}}/api/users/profile",
+    "method": "PATCH",
+    "sortNum": 63000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"firstName\": \"Ravi\",\n  \"lastName\": \"Kumar\",\n  \"displayName\": \"Ravi Kumar C\",\n  \"phoneNumber\": \"+919876543210\",\n  \"recoveryEmail\": \"ravinew2004@bnxmail.com\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "7883d9f5-8d70-4c7b-b5ad-cbab237a0233",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-profile",
+    "name": "Get Business Subscription",
+    "url": "https://cliks.beta-softnet.com/api/v1/business/subscription/{{userEmail}}",
+    "method": "GET",
+    "sortNum": 64000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "c9300460-06ce-49cc-8214-74a952cb8261",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-subids",
+    "name": "List Connected Emails & Mailboxes",
+    "url": "{{bnxBaseUrl}}/api/emails/list",
+    "method": "GET",
+    "sortNum": 70000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "c8f0cfd8-41de-44dd-b172-9b2566002a8b",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-subids",
+    "name": "Create Connected Mailbox Alias",
+    "url": "{{bnxBaseUrl}}/api/emails/create",
+    "method": "POST",
+    "sortNum": 71000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"emailName\": \"sales2\",\n  \"password\": \"StrongPassword123!\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "ab9467f0-74ab-42fc-8fa5-8709ae5b5a68",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-subids",
+    "name": "Set Primary Mailbox",
+    "url": "{{bnxBaseUrl}}/api/emails/1/set-primary",
+    "method": "POST",
+    "sortNum": 72000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "249d990b-f5dc-4130-97da-1841c6ec5510",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-subids",
+    "name": "List Sub-IDs",
+    "url": "{{bnxBaseUrl}}/api/subid/list",
+    "method": "GET",
+    "sortNum": 73000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "9343680d-86e6-42f8-99b1-7093de78f726",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-subids",
+    "name": "Create Sub-ID Account",
+    "url": "{{bnxBaseUrl}}/api/subid/create",
+    "method": "POST",
+    "sortNum": 74000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"prefix\": \"sales2\",\n  \"password\": \"TempPassword123!\",\n  \"firstName\": \"John\",\n  \"lastName\": \"Doe\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "f399a5fd-c8d8-4c97-95e4-5094afa7efed",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bnx-subids",
+    "name": "Delete Sub-ID",
+    "url": "{{bnxBaseUrl}}/api/subid/1",
+    "method": "DELETE",
+    "sortNum": 75000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "ef2f8c7b-a348-46c0-80c8-e7d7362d2979",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bit-tool",
+    "name": "Get Notifications",
+    "url": "{{bitToolBaseUrl}}/notifications",
+    "method": "GET",
+    "sortNum": 80000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "3a8d59b0-8cc0-4664-87ae-d9954445cc5e",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bit-tool",
+    "name": "Get All Contacts",
+    "url": "{{bitToolBaseUrl}}/contacts/get-all",
+    "method": "GET",
+    "sortNum": 81000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  },
+  {
+    "_id": "c12d023a-6aaf-44aa-a302-c0a5cf095478",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bit-tool",
+    "name": "Create New Contact",
+    "url": "{{bitToolBaseUrl}}/contacts/add",
+    "method": "POST",
+    "sortNum": 82000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"firstName\": \"Santhosh\",\n  \"lastName\": \"Kumar\",\n  \"email\": \"santhosh@example.com\",\n  \"phone\": \"+919876543210\",\n  \"company\": \"Cliks Retail Hub\",\n  \"notes\": \"Main showroom key partner\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "b5fe9b1d-7ce5-4be0-ba3d-8d826a63b7ee",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bit-tool",
+    "name": "Get Notes",
+    "url": "{{bitToolBaseUrl}}/notes?allApps=true",
+    "method": "GET",
+    "sortNum": 83000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [
+      {
+        "name": "allApps",
+        "value": "true",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "b512b11a-371e-43d5-89a1-add28d30cd4a",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-bit-tool",
+    "name": "Create Business Note",
+    "url": "{{bitToolBaseUrl}}/notes/create",
+    "method": "POST",
+    "sortNum": 84000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"title\": \"Daily Showroom Reconciliation\",\n  \"content\": \"Check cash register against POS counter balance and approve ledger entry\",\n  \"color\": \"#10B981\",\n  \"isPinned\": true\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "4d3360ed-8265-4170-8813-d659db9775cd",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-calendar-calc",
+    "name": "Get Calendar Events (Monthly)",
+    "url": "https://api.bit-tool.com/api/calendar/events/month?year=2026&month=11",
+    "method": "GET",
+    "sortNum": 90000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [
+      {
+        "name": "year",
+        "value": "2026",
+        "isPath": false
+      },
+      {
+        "name": "month",
+        "value": "11",
+        "isPath": false
+      }
+    ],
+    "tests": []
+  },
+  {
+    "_id": "a2780e88-d898-4ee3-9d27-a21bfcd0aec6",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-calendar-calc",
+    "name": "Create Calendar Schedule Event",
+    "url": "https://api.bit-tool.com/api/calendar/events",
+    "method": "POST",
+    "sortNum": 91000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      },
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "body": {
+      "type": "json",
+      "raw": "{\n  \"title\": \"GST Return Filing Review\",\n  \"date\": \"2026-11-20\",\n  \"startTime\": \"11:00\",\n  \"endTime\": \"12:00\",\n  \"categoryId\": 1,\n  \"description\": \"Review GSTR-1 and GSTR-3B with auditor\"\n}",
+      "form": []
+    },
+    "tests": []
+  },
+  {
+    "_id": "62f53889-0ab9-4aa2-852f-92c16b4ce153",
+    "colId": "col-cliks-business-main",
+    "containerId": "fol-calendar-calc",
+    "name": "Calculator History Sessions",
+    "url": "{{bitToolBaseUrl}}/calculator/history",
+    "method": "GET",
+    "sortNum": 92000,
+    "created": "2026-11-17T14:47:53.827Z",
+    "modified": "2026-11-17T14:47:53.827Z",
+    "headers": [
+      {
+        "name": "Authorization",
+        "value": "Bearer {{bnx_auth_token}}"
+      }
+    ],
+    "params": [],
+    "tests": []
+  }
+]

@@ -1,0 +1,64 @@
+[
+  {
+    "_id": "env-cliks-prod",
+    "name": "Cliks Business (Production)",
+    "default": true,
+    "variables": [
+      {
+        "name": "baseUrl",
+        "value": "https://cliks.beta-softnet.com/api/v1"
+      },
+      {
+        "name": "bnxBaseUrl",
+        "value": "https://api.bnxmail.com"
+      },
+      {
+        "name": "bitToolBaseUrl",
+        "value": "https://api.bit-tool.com/api"
+      },
+      {
+        "name": "token",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mjh9"
+      },
+      {
+        "name": "bnx_auth_token",
+        "value": "dummy_bnx_auth_token"
+      },
+      {
+        "name": "userEmail",
+        "value": "ravinew2004@bnxmail.com"
+      }
+    ]
+  },
+  {
+    "_id": "env-cliks-local",
+    "name": "Cliks Business (Local Dev)",
+    "default": false,
+    "variables": [
+      {
+        "name": "baseUrl",
+        "value": "http://localhost:8000/api/v1"
+      },
+      {
+        "name": "bnxBaseUrl",
+        "value": "https://api.bnxmail.com"
+      },
+      {
+        "name": "bitToolBaseUrl",
+        "value": "http://localhost:5000/api"
+      },
+      {
+        "name": "token",
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mjh9"
+      },
+      {
+        "name": "bnx_auth_token",
+        "value": "dummy_bnx_auth_token"
+      },
+      {
+        "name": "userEmail",
+        "value": "ravinew2004@bnxmail.com"
+      }
+    ]
+  }
+]
