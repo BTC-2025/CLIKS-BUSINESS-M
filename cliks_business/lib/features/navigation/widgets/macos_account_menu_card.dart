@@ -285,7 +285,7 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                   ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
                   ref.read(navigationProvider.notifier).setModuleAndRoute(
                         AppModule.books,
-                        AppRoute.warehouse,
+                        AppRoute.showrooms,
                       );
                 },
               ),
@@ -296,12 +296,10 @@ class MacOSAccountMenuCard extends ConsumerWidget {
                 title: 'Manage SubIDs',
                 onTap: () {
                   ref.read(macosAccountMenuVisibleProvider.notifier).state = false;
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const ManageAccountScreen(initialTab: 3),
-                    ),
-                  );
+                  ref.read(navigationProvider.notifier).setModuleAndRoute(
+                        AppModule.books,
+                        AppRoute.subIds,
+                      );
                 },
               ),
 

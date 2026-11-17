@@ -292,7 +292,7 @@ class MacOSShowroomMenuCard extends ConsumerWidget {
                       false;
                   ref
                       .read(navigationProvider.notifier)
-                      .setRoute(AppRoute.warehouse);
+                      .setRoute(AppRoute.showrooms);
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(vertical: 9),

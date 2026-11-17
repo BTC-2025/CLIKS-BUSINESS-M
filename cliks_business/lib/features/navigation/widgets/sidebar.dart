@@ -296,12 +296,29 @@ class Sidebar extends ConsumerWidget {
                     icon: LucideIcons.shoppingCart,
                     label: 'Sales',
                     isInitiallyExpanded:
+                        navigation.currentRoute == AppRoute.sales ||
+                        navigation.currentRoute == AppRoute.newSalesOrder ||
                         navigation.currentRoute == AppRoute.billing ||
                         navigation.currentRoute == AppRoute.newInvoice ||
+                        navigation.currentRoute == AppRoute.rewards ||
                         navigation.currentRoute == AppRoute.customers ||
                         navigation.currentRoute == AppRoute.invoiceTemplates ||
                         navigation.currentRoute == AppRoute.addCustomer,
                     children: [
+                      _SidebarSubItem(
+                        label: 'Sales Orders',
+                        isSelected: navigation.currentRoute == AppRoute.sales ||
+                            navigation.currentRoute == AppRoute.newSalesOrder,
+                        onTap: () {
+                          final scaffold = Scaffold.maybeOf(context);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.sales);
+                        },
+                      ),
                       _SidebarSubItem(
                         label: 'Sales Invoice',
                         isSelected:
@@ -317,6 +334,19 @@ class Sidebar extends ConsumerWidget {
                           ref
                               .read(navigationProvider.notifier)
                               .setRoute(AppRoute.billing);
+                        },
+                      ),
+                      _SidebarSubItem(
+                        label: 'Loyalty Points',
+                        isSelected: navigation.currentRoute == AppRoute.rewards,
+                        onTap: () {
+                          final scaffold = Scaffold.maybeOf(context);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.rewards);
                         },
                       ),
                       _SidebarSubItem(
@@ -377,8 +407,10 @@ class Sidebar extends ConsumerWidget {
                     label: 'Inventory',
                     isInitiallyExpanded:
                         navigation.currentRoute == AppRoute.products ||
+                        navigation.currentRoute == AppRoute.inventory ||
                         navigation.currentRoute == AppRoute.stock ||
-                        navigation.currentRoute == AppRoute.warehouse,
+                        navigation.currentRoute == AppRoute.warehouse ||
+                        navigation.currentRoute == AppRoute.showrooms,
                     children: [
                       _SidebarSubItem(
                         label: 'Products',
@@ -395,7 +427,21 @@ class Sidebar extends ConsumerWidget {
                         },
                       ),
                       _SidebarSubItem(
-                        label: 'Stock',
+                        label: 'Categories',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.inventory,
+                        onTap: () {
+                          final scaffold = Scaffold.maybeOf(context);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.inventory);
+                        },
+                      ),
+                      _SidebarSubItem(
+                        label: 'Stock Items',
                         isSelected: navigation.currentRoute == AppRoute.stock,
                         onTap: () {
                           final scaffold = Scaffold.maybeOf(context);
@@ -408,7 +454,7 @@ class Sidebar extends ConsumerWidget {
                         },
                       ),
                       _SidebarSubItem(
-                        label: 'Warehouse',
+                        label: 'Warehouses',
                         isSelected:
                             navigation.currentRoute == AppRoute.warehouse,
                         onTap: () {
@@ -429,6 +475,7 @@ class Sidebar extends ConsumerWidget {
                     isInitiallyExpanded:
                         navigation.currentRoute == AppRoute.staff ||
                         navigation.currentRoute == AppRoute.payroll ||
+                        navigation.currentRoute == AppRoute.subIds ||
                         navigation.currentRoute == AppRoute.hr,
                     children: [
                       _SidebarSubItem(
@@ -444,6 +491,19 @@ class Sidebar extends ConsumerWidget {
                           ref
                               .read(navigationProvider.notifier)
                               .setRoute(AppRoute.staff);
+                        },
+                      ),
+                      _SidebarSubItem(
+                        label: 'Sub-IDs',
+                        isSelected: navigation.currentRoute == AppRoute.subIds,
+                        onTap: () {
+                          final scaffold = Scaffold.maybeOf(context);
+                          if (scaffold != null && scaffold.isDrawerOpen) {
+                            Navigator.pop(context);
+                          }
+                          ref
+                              .read(navigationProvider.notifier)
+                              .setRoute(AppRoute.subIds);
                         },
                       ),
                       _SidebarSubItem(
@@ -815,16 +875,29 @@ class Sidebar extends ConsumerWidget {
                     icon: LucideIcons.shoppingCart,
                     label: 'Sales',
                     isInitiallyExpanded: [
+                      AppRoute.sales,
+                      AppRoute.newSalesOrder,
                       AppRoute.billing,
                       AppRoute.newInvoice,
+                      AppRoute.rewards,
                       AppRoute.customers,
                       AppRoute.addCustomer,
                       AppRoute.invoiceTemplates,
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
+                        icon: LucideIcons.shoppingBag,
+                        label: 'Sales Orders',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.sales ||
+                            navigation.currentRoute == AppRoute.newSalesOrder,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.sales),
+                      ),
+                      _buildMacOSSubItem(
                         icon: LucideIcons.receipt,
-                        label: 'Sales Invoices',
+                        label: 'Sales Invoice',
                         isSelected:
                             navigation.currentRoute == AppRoute.billing ||
                             navigation.currentRoute == AppRoute.newInvoice ||
@@ -833,6 +906,15 @@ class Sidebar extends ConsumerWidget {
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.billing),
+                      ),
+                      _buildMacOSSubItem(
+                        icon: LucideIcons.award,
+                        label: 'Loyalty Points',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.rewards,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.rewards),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.users,
@@ -890,6 +972,7 @@ class Sidebar extends ConsumerWidget {
                       AppRoute.products,
                       AppRoute.stock,
                       AppRoute.warehouse,
+                      AppRoute.showrooms,
                       AppRoute.inventory,
                       AppRoute.registerProduct,
                       AppRoute.adjustStock,
@@ -912,8 +995,17 @@ class Sidebar extends ConsumerWidget {
                             .setRoute(AppRoute.products),
                       ),
                       _buildMacOSSubItem(
+                        icon: LucideIcons.tag,
+                        label: 'Categories',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.inventory,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.inventory),
+                      ),
+                      _buildMacOSSubItem(
                         icon: LucideIcons.boxes,
-                        label: 'Stock & Inventory',
+                        label: 'Stock Items',
                         isSelected:
                             navigation.currentRoute == AppRoute.stock ||
                             navigation.currentRoute == AppRoute.adjustStock,
@@ -923,7 +1015,7 @@ class Sidebar extends ConsumerWidget {
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.warehouse,
-                        label: 'Warehouse',
+                        label: 'Warehouses',
                         isSelected:
                             navigation.currentRoute == AppRoute.warehouse ||
                             navigation.currentRoute ==
@@ -941,6 +1033,7 @@ class Sidebar extends ConsumerWidget {
                     isInitiallyExpanded: [
                       AppRoute.staff,
                       AppRoute.payroll,
+                      AppRoute.subIds,
                       AppRoute.hr,
                       AppRoute.allocateEmployeeLoan,
                       AppRoute.processMonthlyPayroll,
@@ -955,6 +1048,15 @@ class Sidebar extends ConsumerWidget {
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.staff),
+                      ),
+                      _buildMacOSSubItem(
+                        icon: LucideIcons.users,
+                        label: 'Sub-IDs',
+                        isSelected:
+                            navigation.currentRoute == AppRoute.subIds,
+                        onTap: () => ref
+                            .read(navigationProvider.notifier)
+                            .setRoute(AppRoute.subIds),
                       ),
                       _buildMacOSSubItem(
                         icon: LucideIcons.fileText,

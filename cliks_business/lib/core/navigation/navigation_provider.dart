@@ -28,6 +28,8 @@ enum AppRoute {
   products,
   stock,
   warehouse,
+  showrooms,
+  subIds,
   hr,
   staff,
   attendance,

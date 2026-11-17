@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -39,6 +40,8 @@ import '../billing/pages/returns_page.dart';
 import '../billing/pages/products_page.dart';
 import '../billing/pages/stock_page.dart';
 import '../billing/pages/warehouse_page.dart';
+import '../billing/pages/showrooms_page.dart';
+import '../billing/pages/sub_ids_page.dart';
 import '../billing/pages/staff_page.dart';
 import '../billing/pages/attendance_page.dart';
 import '../billing/widgets/attendance_panels.dart';
@@ -464,8 +467,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                   child: _buildStylishBottomBar(context, ref, navigation),
                 ),
 
-              // macOS and Windows Top-Right Account Dropdown Menu Overlay
-              if (isDesktopPlatform && ref.watch(macosAccountMenuVisibleProvider)) ...[
+              // Top-Right Account Dropdown Menu Overlay (Accessible on all OS's)
+              if (ref.watch(macosAccountMenuVisibleProvider)) ...[
                 Positioned.fill(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -477,13 +480,19 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 ),
                 Positioned(
                   top: 68 + MediaQuery.of(context).padding.top,
-                  right: 24,
-                  child: const MacOSAccountMenuCard(),
+                  right: isDesktop ? 24 : 12,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isDesktop ? 340 : math.min(340, MediaQuery.of(context).size.width - 24),
+                      maxHeight: MediaQuery.of(context).size.height - 90,
+                    ),
+                    child: const MacOSAccountMenuCard(),
+                  ),
                 ),
               ],
 
-              // macOS and Windows Branch / Showroom Scope Dropdown Menu Overlay
-              if (isDesktopPlatform && ref.watch(macosShowroomMenuVisibleProvider)) ...[
+              // Branch / Showroom Scope Dropdown Menu Overlay (Accessible on all OS's)
+              if (ref.watch(macosShowroomMenuVisibleProvider)) ...[
                 Positioned.fill(
                   child: GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -495,8 +504,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                 ),
                 Positioned(
                   top: 68 + MediaQuery.of(context).padding.top,
-                  left: 172,
-                  child: const MacOSShowroomMenuCard(),
+                  left: isDesktop ? 172 : 12,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: isDesktop ? 340 : math.min(340, MediaQuery.of(context).size.width - 24),
+                      maxHeight: MediaQuery.of(context).size.height - 90,
+                    ),
+                    child: const MacOSShowroomMenuCard(),
+                  ),
                 ),
               ],
             ],
@@ -874,6 +889,10 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return StockPage(key: ValueKey(route));
       case AppRoute.warehouse:
         return WarehousePage(key: ValueKey(route));
+      case AppRoute.showrooms:
+        return ShowroomsPage(key: ValueKey(route));
+      case AppRoute.subIds:
+        return SubIdsPage(key: ValueKey(route));
       case AppRoute.hr:
       case AppRoute.staff:
         return StaffPage(key: ValueKey(route));

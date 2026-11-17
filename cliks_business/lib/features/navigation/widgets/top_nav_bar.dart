@@ -314,6 +314,10 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                                     return 'Stock & Inventory';
                                   case AppRoute.warehouse:
                                     return 'Warehouse';
+                                  case AppRoute.showrooms:
+                                    return 'Showrooms & Multi-Branch';
+                                  case AppRoute.subIds:
+                                    return 'Manage Sub-IDs';
                                   case AppRoute.inventory:
                                     return 'Inventory';
                                   case AppRoute.pos:

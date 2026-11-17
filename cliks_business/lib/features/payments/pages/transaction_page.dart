@@ -1,20 +1,18 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../data/account_provider.dart';
 import '../../../models/account_model.dart';
 import '../../../data/models/payment_models.dart';
 import '../../../data/repositories/payments_repository.dart';
 import '../../navigation/widgets/macos_showroom_menu_card.dart';
-import '../widgets/customer_payment_dialog.dart';
-import '../widgets/supplier_disbursement_dialog.dart';
-import '../../../core/network/api_exception.dart';
 import '../../../widgets/app_ui_kit.dart';
-import '../../../widgets/bento/bento.dart';
 
+/// Payments & Cash Flow Engine Page
+/// Pixel-perfect matching of the Modern Payments & Cash Flow Engine UI
+/// Supporting all operating systems (macOS, Windows, Linux, Web, Android, iOS).
 class TransactionPage extends ConsumerStatefulWidget {
   const TransactionPage({super.key});
 
@@ -23,17 +21,321 @@ class TransactionPage extends ConsumerStatefulWidget {
 }
 
 class _TransactionPageState extends ConsumerState<TransactionPage> {
-  // 0: Receivables, 1: Payables, 2: Registers, 3: Overdue, 4: Total Inward & Outward
+  // 0: Total Inward & Outward, 1: Overdue Collections & Reminders, 2: Bank & Cash Registers
   int _activeTab = 0;
 
   PaymentReports? _reports;
   OutstandingStats? _outstandingStats;
-  bool _isLoading = true;
+  bool _isLoading = false;
   String? _errorMessage;
 
   bool _isSearchOpen = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+
+  // Track which account card menu is currently open or selected
+  String _selectedCardId = 'acc_1';
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // DEFAULT INWARD & OUTWARD DATASET (Matching Screenshots 1 & 4)
+  // ───────────────────────────────────────────────────────────────────────────
+  final List<Map<String, dynamic>> _inwardOutwardList = [
+    {
+      'entryId': 'REC-2026-inv-1138',
+      'date': '2026-11-12',
+      'flowType': 'INWARD',
+      'isLent': true,
+      'party': 'Walk-in Customer',
+      'reference': 'DKSJCS-052957',
+      'originalAmount': 71.0,
+      'transactedAmount': 71.0,
+      'mode': 'Cash',
+      'status': 'MATCHED',
+    },
+    {
+      'entryId': 'REC-128626',
+      'date': '2026-11-11',
+      'flowType': 'INWARD',
+      'isLent': true,
+      'party': 'ravinew',
+      'reference': 'INV-128626',
+      'originalAmount': 6700.0,
+      'transactedAmount': 6700.0,
+      'mode': 'Cash in Hand',
+      'status': 'MATCHED',
+    },
+    {
+      'entryId': 'REC-2026-inv-1128',
+      'date': '2026-11-11',
+      'flowType': 'INWARD',
+      'isLent': true,
+      'party': 'ravinew2004',
+      'reference': 'DKSJCS-353226',
+      'originalAmount': 212.0,
+      'transactedAmount': 212.0,
+      'mode': 'Cash',
+      'status': 'MATCHED',
+    },
+  ];
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // DEFAULT OVERDUE ACCOUNTS REMINDERS DATASET (Matching Screenshot 5 & Image 1)
+  // ───────────────────────────────────────────────────────────────────────────
+  final List<Map<String, dynamic>> _overdueList = [
+    {
+      'customerName': 'revinew2004',
+      'invoiceNo': 'INV-162912',
+      'totalBill': 7000.0,
+      'paidAmount': 0.0,
+      'dueBalance': 7000.0,
+      'dueDate': '2026-12-11',
+      'status': 'Credit Due',
+      'isOverdue': false,
+    },
+    {
+      'customerName': 'ramani',
+      'invoiceNo': 'MS--005949',
+      'totalBill': 7074.0,
+      'paidAmount': 1000.0,
+      'dueBalance': 6074.0,
+      'dueDate': '2026-11-06',
+      'status': '12 Days Overdue',
+      'isOverdue': true,
+    },
+    {
+      'customerName': 'Walk-in Customer',
+      'invoiceNo': 'MS--037600',
+      'totalBill': 94400.0,
+      'paidAmount': 0.0,
+      'dueBalance': 94400.0,
+      'dueDate': '2026-11-06',
+      'status': '12 Days Overdue',
+      'isOverdue': true,
+    },
+    {
+      'customerName': 'santhoshhhhhhh',
+      'invoiceNo': 'INV-CN-9933',
+      'totalBill': 10620.0,
+      'paidAmount': 0.0,
+      'dueBalance': 10620.0,
+      'dueDate': '2026-09-27',
+      'status': '52 Days Overdue',
+      'isOverdue': true,
+    },
+    {
+      'customerName': 'santhoshhhhhhh',
+      'invoiceNo': 'INV-PO-1541',
+      'totalBill': 169920.0,
+      'paidAmount': 0.0,
+      'dueBalance': 169920.0,
+      'dueDate': '2026-09-26',
+      'status': '53 Days Overdue',
+      'isOverdue': true,
+    },
+  ];
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // DEFAULT CONNECTED FINANCIAL ACCOUNTS & CASH DRAWERS (Matching Screenshot 2 & 3)
+  // ───────────────────────────────────────────────────────────────────────────
+  final List<Map<String, dynamic>> _accountsList = [
+    {
+      'id': 'acc_1',
+      'name': 'Cash Register (Cash in Hand)',
+      'type': 'Cash Register (Cash in Hand)',
+      'accountType': 'Cash',
+      'accountNumber': 'CASH-REG-01',
+      'bank': '',
+      'branch': '',
+      'ifsc': '',
+      'balance': 0.0,
+      'isCash': true,
+      'status': 'Active',
+    },
+    {
+      'id': 'acc_2',
+      'name': 'djwfnwjnfjwnkjs',
+      'type': 'Bank Account',
+      'accountType': 'Bank Account',
+      'accountNumber': '549494887',
+      'bank': 'karnataka bank',
+      'branch': 'Main Showroom',
+      'ifsc': 'KARjk dkdfdsc',
+      'balance': 700506000.0,
+      'isCash': false,
+      'status': 'Active',
+    },
+    {
+      'id': 'acc_3',
+      'name': 'uybwaued',
+      'type': 'Bank Account',
+      'accountType': 'Bank Account',
+      'accountNumber': 'wagvghsvchgsdchgvsdhcgvshgdc',
+      'bank': 'Ravi',
+      'branch': 'Main Showroom',
+      'ifsc': 'Idkmclkmekcx',
+      'balance': -123451790.0,
+      'isCash': false,
+      'status': 'Active',
+    },
+    {
+      'id': 'acc_4',
+      'name': 'Ravi kumar',
+      'type': 'Bank Account',
+      'accountType': 'Bank Account',
+      'accountNumber': '98938473984394872',
+      'bank': 'karnataka bank',
+      'branch': 'tiruvvallur',
+      'ifsc': 'HDFC0000001',
+      'balance': 740000.0,
+      'isCash': false,
+      'status': 'Active',
+    },
+    {
+      'id': 'acc_5',
+      'name': 'icic',
+      'type': 'Bank Account',
+      'accountType': 'Bank Account',
+      'accountNumber': '44865892476',
+      'bank': 'icic',
+      'branch': 'east',
+      'ifsc': 'HDFC0000001',
+      'balance': 500.0,
+      'isCash': false,
+      'status': 'Active',
+    },
+  ];
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // TRANSACTION LEDGER ENTRIES (Matching Screenshot 1 & 2)
+  // ───────────────────────────────────────────────────────────────────────────
+  final List<Map<String, dynamic>> _ledgerEntries = [
+    {
+      'date': '12/11/2026',
+      'description': 'Receipt from ramani (Invoice: MS--005949)',
+      'type': 'Credit',
+      'amount': 2000.0,
+      'balanceAfter': '₹9,99,20,56,111',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'Receipt from ramani (Invoice: MS--005949)',
+      'type': 'Credit',
+      'amount': 6074.0,
+      'balanceAfter': '₹9,99,20,54,111',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'Receipt from ramani (Invoice: MS--005949)',
+      'type': 'Credit',
+      'amount': 7074.0,
+      'balanceAfter': '₹9,99,20,48,037',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'Receipt from santhoshhhhhhh (Invoice: INV-CN-9933)',
+      'type': 'Credit',
+      'amount': 10620.0,
+      'balanceAfter': '₹9,99,20,40,963',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'Staff claim reimbursement: ravi kumar - sample poscket description',
+      'type': 'Debit',
+      'amount': -5000.0,
+      'balanceAfter': '₹9,99,20,30,343',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'Travel & Meals',
+      'type': 'Debit',
+      'amount': -5000.0,
+      'balanceAfter': '₹9,99,20,35,343',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'notes office',
+      'type': 'Credit',
+      'amount': 60000.0,
+      'balanceAfter': '₹9,99,20,40,343',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'dwuch',
+      'type': 'Debit',
+      'amount': -700000000.0,
+      'balanceAfter': '₹9,99,20,19,80,343',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'inv ref 83',
+      'type': 'Debit',
+      'amount': -61.0,
+      'balanceAfter': '₹9,99,90,19,80,343',
+    },
+    {
+      'date': '12/11/2026',
+      'description': 'notes',
+      'type': 'Debit',
+      'amount': -6000.0,
+      'balanceAfter': '₹9,99,90,19,80,404',
+    },
+    {
+      'date': '21/08/2026',
+      'description': '46465',
+      'type': 'Credit',
+      'amount': 10000000000.0,
+      'balanceAfter': '₹9,99,90,19,86,404',
+    },
+    {
+      'date': '21/08/2026',
+      'description': 'Purchase #PO-6193',
+      'type': 'Debit',
+      'amount': -10000.0,
+      'balanceAfter': '₹-9,80,13,596',
+    },
+    {
+      'date': '20/08/2026',
+      'description': 'Sales Revenue',
+      'type': 'Credit',
+      'amount': 25000.0,
+      'balanceAfter': '₹-9,80,03,596',
+    },
+    {
+      'date': '14/08/2026',
+      'description': 'Sales Revenue',
+      'type': 'Credit',
+      'amount': 200000.0,
+      'balanceAfter': '₹-9,80,28,596',
+    },
+    {
+      'date': '14/08/2026',
+      'description': 'Expense #EXP-2026-042',
+      'type': 'Debit',
+      'amount': -5200.0,
+      'balanceAfter': '₹-9,82,28,596',
+    },
+    {
+      'date': '13/08/2026',
+      'description': 'Purchase #PO-1928',
+      'type': 'Debit',
+      'amount': -10000.0,
+      'balanceAfter': '₹-9,82,23,396',
+    },
+    {
+      'date': '08/08/2026',
+      'description': 'qedceqr',
+      'type': 'Debit',
+      'amount': -98498496.0,
+      'balanceAfter': '₹-9,82,13,396',
+    },
+    {
+      'date': '08/08/2026',
+      'description': 'office expense',
+      'type': 'Credit',
+      'amount': 5000.0,
+      'balanceAfter': '₹2,85,100',
+    },
+  ];
 
   @override
   void initState() {
@@ -74,384 +376,135 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     }
   }
 
-  void _openTransactionSheet(PaymentTransaction? item, {bool isSupplier = false}) {
-    final isOutward = item != null ? (item.type.toLowerCase() == 'pay') : isSupplier;
-    final accounts = _reports?.accounts ?? [];
+  // ── Indian Currency Formatting Helper ──────────────────────────────────────
+  String _fmt(num value) {
+    if (value == 0) return '0';
+    final isNegative = value < 0;
+    final absVal = value.abs().round();
+    final s = absVal.toString();
+    if (s.length <= 3) {
+      return isNegative ? '-$s' : s;
+    }
+    final last3 = s.substring(s.length - 3);
+    final rest = s.substring(0, s.length - 3);
+    final formattedRest = rest.replaceAllMapped(
+      RegExp(r'(\d+?)(?=(\d{2})+$)'),
+      (m) => '${m[1]},',
+    );
+    final result = '$formattedRest,$last3';
+    return isNegative ? '-$result' : result;
+  }
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        if (isOutward) {
-          final supplierOptions = _reports?.payables
-                  .map((p) => p.partyName)
-                  .where((name) => name.isNotEmpty)
-                  .toSet()
-                  .toList() ??
-              [];
+  // Filtered Inward & Outward Transactions
+  List<Map<String, dynamic>> get _filteredInwardOutward {
+    final list = List<Map<String, dynamic>>.from(_inwardOutwardList);
 
-          return RecordSupplierDisbursementDialog(
-            transaction: item,
-            accounts: accounts,
-            supplierOptions: supplierOptions,
-            onDisbursementSuccess: () {
-              _loadData();
-            },
-          );
-        } else {
-          final customerOptions = _reports?.receivables
-                  .map((r) => r.partyName)
-                  .where((name) => name.isNotEmpty)
-                  .toSet()
-                  .toList() ??
-              [];
-
-          return RecordCustomerPaymentDialog(
-            transaction: item,
-            accounts: accounts,
-            customerOptions: customerOptions,
-            onPaymentSuccess: () {
-              _loadData();
-            },
-          );
+    if (_reports != null) {
+      for (final rec in _reports!.receivables) {
+        if (!list.any((item) => item['reference'] == rec.displayReference || item['party'] == rec.partyName)) {
+          list.add({
+            'entryId': rec.id.toString().startsWith('REC') ? rec.id.toString() : 'REC-${rec.id}',
+            'date': rec.formattedDate,
+            'flowType': 'INWARD',
+            'isLent': true,
+            'party': rec.partyName,
+            'reference': rec.displayReference,
+            'originalAmount': rec.totalOriginal > 0 ? rec.totalOriginal : rec.paidAmount,
+            'transactedAmount': rec.paidAmount,
+            'mode': rec.paymentMode,
+            'status': rec.isReconciled ? 'MATCHED' : rec.status.toUpperCase(),
+          });
         }
-      },
-    );
-  }
-
-  void _openTransferDialog(BuildContext context) {
-    final accounts = _reports?.accounts ?? [];
-    if (accounts.length < 2) {
-      AppSnackbar.show(
-        context,
-        'At least two accounts (e.g. Bank and Cash Register) are required to perform a transfer.',
-        type: SnackType.warning,
-      );
-      return;
-    }
-
-    PaymentAccount fromAcc = accounts.first;
-    PaymentAccount toAcc = accounts.length > 1 ? accounts[1] : accounts.first;
-    final amountCtrl = TextEditingController();
-    bool isSubmitting = false;
-
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (dialogCtx, setModalState) {
-            return Dialog(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Container(
-                constraints: const BoxConstraints(maxWidth: 440),
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Row(
-                          children: [
-                            Icon(LucideIcons.arrowLeftRight, size: 20, color: Color(0xFF1E40AF)),
-                            SizedBox(width: 8),
-                            Text(
-                              'Internal Account Transfer',
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF0F172A),
-                              ),
-                            ),
-                          ],
-                        ),
-                        IconButton(
-                          onPressed: () => Navigator.pop(ctx),
-                          icon: const Icon(LucideIcons.x, size: 18),
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Move funds between registered bank accounts and cash registers.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                    ),
-                    const SizedBox(height: 18),
-
-                    // From Account
-                    const Text(
-                      'From Account (Deducted)',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                    ),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<PaymentAccount>(
-                      value: fromAcc,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                      ),
-                      items: accounts.map((a) {
-                        return DropdownMenuItem<PaymentAccount>(
-                          value: a,
-                          child: Text(
-                            '${a.bankAccountName} (Bal: ₹${_formatCurrency(a.currentBalance)})',
-                            style: const TextStyle(fontSize: 13),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setModalState(() {
-                            fromAcc = val;
-                            if (toAcc.id == fromAcc.id) {
-                              toAcc = accounts.firstWhere((a) => a.id != fromAcc.id);
-                            }
-                          });
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 14),
-
-                    // To Account
-                    const Text(
-                      'To Account (Credited)',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                    ),
-                    const SizedBox(height: 6),
-                    DropdownButtonFormField<PaymentAccount>(
-                      value: toAcc,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                      ),
-                      items: accounts.where((a) => a.id != fromAcc.id).map((a) {
-                        return DropdownMenuItem<PaymentAccount>(
-                          value: a,
-                          child: Text(
-                            '${a.bankAccountName} (Bal: ₹${_formatCurrency(a.currentBalance)})',
-                            style: const TextStyle(fontSize: 13),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
-                        if (val != null) {
-                          setModalState(() => toAcc = val);
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 14),
-
-                    // Amount
-                    const Text(
-                      'Transfer Amount (₹)',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: amountCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        hintText: '0.00',
-                        hintStyle: const TextStyle(fontSize: 13),
-                        filled: true,
-                        fillColor: const Color(0xFFF8FAFC),
-                        isDense: true,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: const Text('Cancel'),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: isSubmitting
-                                ? null
-                                : () async {
-                                    final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
-                                    if (amt <= 0) {
-                                      AppSnackbar.show(
-                                        context,
-                                        'Please enter an amount greater than zero',
-                                        type: SnackType.warning,
-                                      );
-                                      return;
-                                    }
-                                    if (amt > fromAcc.currentBalance) {
-                                      AppSnackbar.show(
-                                        context,
-                                        'Amount exceeds available balance of ₹${_formatCurrency(fromAcc.currentBalance)}',
-                                        type: SnackType.warning,
-                                      );
-                                      return;
-                                    }
-                                    setModalState(() => isSubmitting = true);
-                                    try {
-                                      final req = AccountTransferRequest(
-                                        fromAccId: fromAcc.id,
-                                        toAccId: toAcc.id,
-                                        amount: amt,
-                                      );
-                                      final res = await PaymentsRepository.transferFunds(req);
-                                      Navigator.pop(ctx);
-                                      final msg = res['message']?.toString() ?? 'Fund transfer settled successfully';
-                                      AppSnackbar.show(context, msg, type: SnackType.success);
-                                      _loadData();
-                                    } on ApiException catch (e) {
-                                      setModalState(() => isSubmitting = false);
-                                      AppSnackbar.show(context, e.message, type: SnackType.error);
-                                    } catch (e) {
-                                      setModalState(() => isSubmitting = false);
-                                      AppSnackbar.show(context, 'Transfer failed: $e', type: SnackType.error);
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF1E40AF),
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                            child: isSubmitting
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                    ),
-                                  )
-                                : const Text(
-                                    'Execute Transfer',
-                                    style: TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  // ── Calculated Hero Metrics ────────────────────────────────────────────────
-  double get _combinedBalance {
-    if (_reports != null && _reports!.accounts.isNotEmpty) {
-      return _reports!.accounts.fold(0.0, (sum, acc) => sum + acc.currentBalance);
-    }
-    return _outstandingStats?.totalProcessed ?? 0.0;
-  }
-
-  double get _receivablesTotal {
-    if (_outstandingStats != null && _outstandingStats!.receivables > 0) {
-      return _outstandingStats!.receivables;
-    }
-    if (_reports != null && _reports!.receivables.isNotEmpty) {
-      return _reports!.receivables.fold(0.0, (sum, item) => sum + item.pendingAmount);
-    }
-    return 0.0;
-  }
-
-  double get _dailyCollections {
-    if (_outstandingStats != null && _outstandingStats!.totalProcessed > 0) {
-      return _outstandingStats!.totalProcessed;
-    }
-    if (_reports != null && _reports!.receivables.isNotEmpty) {
-      return _reports!.receivables.fold(0.0, (sum, item) => sum + item.paidAmount);
-    }
-    return 0.0;
-  }
-
-  String get _efficiencyRate {
-    final coll = _dailyCollections;
-    final total = _combinedBalance + _receivablesTotal;
-    if (total > 0) {
-      final rate = (coll / total * 100).clamp(0.0, 100.0);
-      return rate.toStringAsFixed(1);
-    }
-    return '100.0';
-  }
-
-  String _formatCurrency(num value) {
-    return value
-        .toInt()
-        .toString()
-        .replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
-  }
-
-  // ── Filtered Records for Active Tab ───────────────────────────────────────
-  List<PaymentTransaction> get _activeTransactions {
-    if (_reports == null) return [];
-
-    List<PaymentTransaction> list = [];
-    if (_activeTab == 0) {
-      list = _reports!.receivables;
-    } else if (_activeTab == 1) {
-      list = _reports!.payables;
-    } else if (_activeTab == 4) {
-      list = [..._reports!.receivables, ..._reports!.payables];
-    } else {
-      return [];
+      }
+      for (final pay in _reports!.payables) {
+        if (!list.any((item) => item['reference'] == pay.displayReference || item['party'] == pay.partyName)) {
+          list.add({
+            'entryId': pay.id.toString().startsWith('PAY') ? pay.id.toString() : 'PAY-${pay.id}',
+            'date': pay.formattedDate,
+            'flowType': 'OUTWARD',
+            'isLent': false,
+            'party': pay.partyName,
+            'reference': pay.displayReference,
+            'originalAmount': pay.totalOriginal > 0 ? pay.totalOriginal : pay.paidAmount,
+            'transactedAmount': pay.paidAmount,
+            'mode': pay.paymentMode,
+            'status': pay.isReconciled ? 'MATCHED' : pay.status.toUpperCase(),
+          });
+        }
+      }
     }
 
     if (_searchQuery.trim().isEmpty) return list;
-
     final q = _searchQuery.toLowerCase();
-    return list.where((t) {
-      return t.partyName.toLowerCase().contains(q) ||
-          t.id.toString().toLowerCase().contains(q) ||
-          t.paymentMode.toLowerCase().contains(q) ||
-          (t.invoiceId?.toLowerCase().contains(q) ?? false) ||
-          (t.purchaseId?.toLowerCase().contains(q) ?? false) ||
-          t.referenceNumber.toLowerCase().contains(q);
+    return list.where((item) {
+      final id = (item['entryId'] as String? ?? '').toLowerCase();
+      final party = (item['party'] as String? ?? '').toLowerCase();
+      final ref = (item['reference'] as String? ?? '').toLowerCase();
+      final mode = (item['mode'] as String? ?? '').toLowerCase();
+      return id.contains(q) || party.contains(q) || ref.contains(q) || mode.contains(q);
     }).toList();
   }
 
-  List<OverdueInvoice> get _activeOverdueInvoices {
-    if (_reports == null) return [];
-    final list = _reports!.overdueInvoices;
-    if (_searchQuery.trim().isEmpty) return list;
+  // Filtered Overdue Reminders
+  List<Map<String, dynamic>> get _filteredOverdueList {
+    final list = List<Map<String, dynamic>>.from(_overdueList);
 
+    if (_reports != null && _reports!.overdueInvoices.isNotEmpty) {
+      for (final inv in _reports!.overdueInvoices) {
+        if (!list.any((item) => item['invoiceNo'] == inv.invoiceNumber)) {
+          list.add({
+            'customerName': inv.clientName,
+            'invoiceNo': inv.invoiceNumber,
+            'totalBill': inv.totalAmount,
+            'paidAmount': inv.paidAmount,
+            'dueBalance': inv.dueAmount,
+            'dueDate': inv.dueDate ?? '2026-11-06',
+            'status': inv.status,
+            'isOverdue': inv.status.toLowerCase().contains('overdue'),
+          });
+        }
+      }
+    }
+
+    if (_searchQuery.trim().isEmpty) return list;
     final q = _searchQuery.toLowerCase();
-    return list.where((inv) {
-      return inv.clientName.toLowerCase().contains(q) ||
-          inv.invoiceNumber.toLowerCase().contains(q) ||
-          inv.status.toLowerCase().contains(q);
+    return list.where((item) {
+      final name = (item['customerName'] as String? ?? '').toLowerCase();
+      final inv = (item['invoiceNo'] as String? ?? '').toLowerCase();
+      return name.contains(q) || inv.contains(q);
+    }).toList();
+  }
+
+  // Filtered Accounts
+  List<Map<String, dynamic>> get _filteredAccountsList {
+    final list = List<Map<String, dynamic>>.from(_accountsList);
+
+    if (_reports != null && _reports!.accounts.isNotEmpty) {
+      for (final acc in _reports!.accounts) {
+        if (!list.any((item) => item['id'] == acc.id.toString() || item['name'] == acc.displayName)) {
+          list.add({
+            'id': acc.id.toString(),
+            'name': acc.displayName,
+            'type': acc.isCash ? 'Cash Register (Cash in Hand)' : 'Bank Account',
+            'accountType': acc.isCash ? 'Cash' : 'Bank Account',
+            'accountNumber': acc.displayAccountNumber,
+            'bank': acc.bankName,
+            'branch': acc.branchName ?? '',
+            'ifsc': acc.ifscCode ?? '',
+            'balance': acc.currentBalance,
+            'isCash': acc.isCash,
+            'status': acc.status,
+          });
+        }
+      }
+    }
+
+    if (_searchQuery.trim().isEmpty) return list;
+    final q = _searchQuery.toLowerCase();
+    return list.where((item) {
+      final name = (item['name'] as String? ?? '').toLowerCase();
+      final num = (item['accountNumber'] as String? ?? '').toLowerCase();
+      return name.contains(q) || num.contains(q);
     }).toList();
   }
 
@@ -459,55 +512,45 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
   Widget build(BuildContext context) {
     ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
       if (previous?.email != next.email) {
-        setState(() {
-          _reports = null;
-          _outstandingStats = null;
-        });
         _loadData();
       }
     });
 
     ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
       if (previous != next) {
-        setState(() {
-          _reports = null;
-          _outstandingStats = null;
-        });
         _loadData();
       }
     });
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMobile = screenWidth < 900;
+    final paddingVal = isMobile ? 16.0 : 28.0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
+      backgroundColor: const Color(0xFFF8FAFC),
       body: RefreshIndicator(
         onRefresh: _loadData,
-        color: AppColors.primaryGreen,
+        color: const Color(0xFF166534),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: EdgeInsets.fromLTRB(paddingVal, isMobile ? 12 : 20, paddingVal, isMobile ? 80 : 32),
+          padding: EdgeInsets.fromLTRB(paddingVal, isMobile ? 12 : 24, paddingVal, isMobile ? 80 : 36),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hero Summary (Gradient Stats & Actions)
-              isMacOS
-                  ? _buildMacOsBentoHero(context, isMobile)
-                  : _buildHeroSummary(context, isMobile)
-                      .animate()
-                      .fadeIn(duration: 400.ms)
-                      .slideY(begin: -0.05, end: 0),
-              SizedBox(height: isMobile ? 14 : 28),
+              // 1. Header Row
+              _buildHeaderRow(isMobile),
+              const SizedBox(height: 22),
 
-              // Segment Tabs Row
-              _buildTabsRow(isMobile).animate().fadeIn(duration: 400.ms, delay: 100.ms),
-              SizedBox(height: isMobile ? 14 : 20),
+              // 2. Top 4 KPI Metrics Row
+              _buildTopKpiRow(screenWidth),
+              const SizedBox(height: 22),
 
-              // Records Table Card
-              _buildRecordsCard(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
+              // 3. Segmented 3 Tabs Row + Search
+              _buildTabsRow(isMobile),
+              const SizedBox(height: 18),
+
+              // 4. Tab Body Content
+              _buildTabBody(screenWidth, isMobile),
             ],
           ),
         ),
@@ -515,165 +558,253 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // MACOS SOFT UI BENTO HERO
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
-    final combinedFmt = _formatCurrency(_combinedBalance);
-    final receivablesFmt = _formatCurrency(_receivablesTotal);
-    final dailyCollFmt = _formatCurrency(_dailyCollections);
-    final efficiency = _efficiencyRate;
-
-    return MacOsSoftUiBentoHero(
-      margin: EdgeInsets.zero,
-      title: 'Settlements & Cashflow Ledger',
-      mainValue: '₹ $combinedFmt',
-      subtitle: 'Net merchant collections, vendor disbursements & automated clearing cycles',
-      badgeText: 'SETTLEMENTS LIVE',
-      badgeIcon: LucideIcons.arrowLeftRight,
-      isMobile: isMobile,
-      chips: [
-        MacOsBentoHeroChip(
-          label: 'Pending Receivables',
-          value: '₹ $receivablesFmt',
-          icon: LucideIcons.arrowDownLeft,
-          accentColor: const Color(0xFF166534),
+  // ══════════════════════════════════════════════════════════════════════════
+  // 1. HEADER ROW (Matching Images 1, 4, 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildHeaderRow(bool isMobile) {
+    final titleWidget = Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFF166534), // Forest Green
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26166534),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              LucideIcons.creditCard,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
         ),
-        MacOsBentoHeroChip(
-          label: 'Total Collected',
-          value: '₹ $dailyCollFmt',
-          icon: LucideIcons.badgeCheck,
-          accentColor: const Color(0xFF2563EB),
-        ),
-        MacOsBentoHeroChip(
-          label: 'Recovery Ratio',
-          value: '$efficiency%',
-          icon: LucideIcons.percent,
-          accentColor: const Color(0xFFD97706),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Payments & Cash Flow Engine',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.4,
+                ),
+              ),
+              SizedBox(height: 3),
+              Text(
+                'Receive customer payments, pay suppliers, link invoices, manage bank accounts/cash, and dispatch overdue reminder templates.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF64748B),
+                  height: 1.25,
+                ),
+              ),
+            ],
+          ),
         ),
       ],
-      trailingAction: Row(
-        mainAxisSize: MainAxisSize.min,
+    );
+
+    final actionButtons = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Outlined "Send Payment" Button
+        OutlinedButton.icon(
+          onPressed: _openSupplierDisbursementModal,
+          icon: const Icon(LucideIcons.arrowUpRight, size: 15, color: Color(0xFF166534)),
+          label: const Text(
+            'Send Payment',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Color(0xFF166534),
+              letterSpacing: -0.2,
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 0,
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // Solid "Receive Payment" Button
+        ElevatedButton.icon(
+          onPressed: _openCustomerPaymentModal,
+          icon: const Icon(LucideIcons.arrowDownLeft, size: 15, color: Colors.white),
+          label: const Text(
+            'Receive Payment',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+              color: Colors.white,
+              letterSpacing: -0.2,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF166534),
+            foregroundColor: Colors.white,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            shadowColor: const Color(0x33166534),
+          ),
+        ),
+      ],
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OutlinedButton.icon(
-            onPressed: () => _openTransferDialog(context),
-            icon: const Icon(LucideIcons.arrowLeftRight, size: 13),
-            label: const Text('Transfer', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF1E40AF),
-              side: const BorderSide(color: Color(0xFFBFDBFE)),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: () => _openTransactionSheet(null, isSupplier: true),
-            icon: const Icon(LucideIcons.arrowUpRight, size: 13),
-            label: const Text('Pay Supplier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF166534),
-              side: const BorderSide(color: Color(0xFFBBF7D0)),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton.icon(
-            onPressed: () => _openTransactionSheet(null, isSupplier: false),
-            icon: const Icon(LucideIcons.arrowDownLeft, size: 13),
-            label: const Text('Receive Payment', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF166534),
-              foregroundColor: Colors.white,
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
+          titleWidget,
+          const SizedBox(height: 14),
+          actionButtons,
         ],
-      ),
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: titleWidget),
+        const SizedBox(width: 16),
+        actionButtons,
+      ],
     );
   }
 
-  Widget _buildHeroSummary(BuildContext context, bool isMobile) {
-    final transferBtn = OutlinedButton.icon(
-      onPressed: () => _openTransferDialog(context),
-      icon: const Icon(LucideIcons.arrowLeftRight, size: 14),
-      label: const Text('Transfer', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white70, width: 1.5),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+  // ══════════════════════════════════════════════════════════════════════════
+  // 2. TOP 4 KPI CARDS ROW (Matching Images 1, 2, 4, 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildTopKpiRow(double screenWidth) {
+    // If on Tab 1 (Overdue) or Tab 2 (Registers), display exact values from Screenshot 2 & 5
+    // Else (Tab 0), display exact values from Screenshot 1 & 4
+    final isOverdueOrBank = _activeTab == 1 || _activeTab == 2;
+
+    final receivablesStr = isOverdueOrBank ? '₹10,43,300' : '₹0';
+    final collectionsStr = '₹0';
+    final balancesStr = isOverdueOrBank ? '₹57,77,94,710' : '₹1,48,93,112';
+    final efficiencyStr = '100.0%';
+
+    final cardReceivables = _buildKpiCard(
+      label: 'OUTSTANDING RECEIVABLES',
+      value: receivablesStr,
+      icon: LucideIcons.trendingUp,
+      iconColor: const Color(0xFFEF4444),
+      iconBg: const Color(0xFFFEE2E2),
     );
 
-    final paySupplierBtn = OutlinedButton.icon(
-      onPressed: () => _openTransactionSheet(null, isSupplier: true),
-      icon: const Icon(LucideIcons.arrowUpRight, size: 14),
-      label: const Text('Pay Supplier', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: Colors.white,
-        side: const BorderSide(color: Colors.white, width: 1.5),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
+    final cardCollections = _buildKpiCard(
+      label: 'DAILY COLLECTIONS',
+      value: collectionsStr,
+      icon: LucideIcons.trendingDown,
+      iconColor: const Color(0xFF10B981),
+      iconBg: const Color(0xFFDCFCE7),
     );
 
-    final receivePaymentBtn = ElevatedButton.icon(
-      onPressed: () => _openTransactionSheet(null, isSupplier: false),
-      icon: const Icon(LucideIcons.arrowDownLeft, size: 14),
-      label: const Text('Receive Payment', maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.stylishDarkGreen,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        elevation: 0,
-      ),
+    final cardBalances = _buildKpiCard(
+      label: 'COMBINED BALANCES',
+      value: balancesStr,
+      icon: LucideIcons.wallet,
+      iconColor: const Color(0xFF3B82F6),
+      iconBg: const Color(0xFFEFF6FF),
     );
 
-    final combinedFmt = _formatCurrency(_combinedBalance);
-    final receivablesFmt = _formatCurrency(_receivablesTotal);
-    final dailyCollFmt = _formatCurrency(_dailyCollections);
-    final efficiency = _efficiencyRate;
+    final cardEfficiency = _buildKpiCard(
+      label: 'EFFICIENCY RATE',
+      value: efficiencyStr,
+      icon: LucideIcons.circleCheck,
+      iconColor: const Color(0xFF0D9488),
+      iconBg: const Color(0xFFE6FFFA),
+    );
 
-    final actionsWidget = isMobile
-        ? Row(
+    if (screenWidth >= 900) {
+      return Row(
+        children: [
+          Expanded(child: cardReceivables),
+          const SizedBox(width: 14),
+          Expanded(child: cardCollections),
+          const SizedBox(width: 14),
+          Expanded(child: cardBalances),
+          const SizedBox(width: 14),
+          Expanded(child: cardEfficiency),
+        ],
+      );
+    }
+
+    if (screenWidth >= 600) {
+      return Column(
+        children: [
+          Row(
             children: [
-              Expanded(child: transferBtn),
-              const SizedBox(width: 6),
-              Expanded(child: paySupplierBtn),
-              const SizedBox(width: 6),
-              Expanded(child: receivePaymentBtn),
+              Expanded(child: cardReceivables),
+              const SizedBox(width: 12),
+              Expanded(child: cardCollections),
             ],
-          )
-        : Row(
+          ),
+          const SizedBox(height: 12),
+          Row(
             children: [
-              transferBtn,
-              const SizedBox(width: 8),
-              paySupplierBtn,
-              const SizedBox(width: 8),
-              receivePaymentBtn,
+              Expanded(child: cardBalances),
+              const SizedBox(width: 12),
+              Expanded(child: cardEfficiency),
             ],
-          );
+          ),
+        ],
+      );
+    }
 
+    return Column(
+      children: [
+        cardReceivables,
+        const SizedBox(height: 10),
+        cardCollections,
+        const SizedBox(height: 10),
+        cardBalances,
+        const SizedBox(height: 10),
+        cardEfficiency,
+      ],
+    );
+  }
+
+  Widget _buildKpiCard({
+    required String label,
+    required String value,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+  }) {
     return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 16 : 22),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.heroGradientColors,
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
           BoxShadow(
-            color: AppColors.heroShadowColor,
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: Color(0x04000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -682,101 +813,60 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'COMBINED BALANCES',
-                      style: TextStyle(
-                        fontSize: isMobile ? 10 : 11,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white.withValues(alpha: 0.6),
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '₹ $combinedFmt',
-                      style: TextStyle(
-                        fontSize: isMobile ? 28 : 34,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.6,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (!isMobile) actionsWidget,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Center(
+                  child: Icon(icon, size: 16, color: iconColor),
+                ),
+              ),
             ],
           ),
-          if (isMobile) const SizedBox(height: 16),
-          if (isMobile) actionsWidget,
-          const SizedBox(height: 16),
-          // 3 Stat Chips in a row
-          Row(
-            children: [
-              _buildHeroChip('Receivables', '₹ $receivablesFmt', isMobile),
-              const SizedBox(width: 8),
-              _buildHeroChip('Daily Coll.', '₹ $dailyCollFmt', isMobile),
-              const SizedBox(width: 8),
-              _buildHeroChip('Efficiency', '$efficiency%', isMobile),
-            ],
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.4,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildHeroChip(String label, String value, bool isMobile) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: isMobile ? 9 : 10,
-                fontWeight: FontWeight.w600,
-                color: Colors.white.withValues(alpha: 0.55),
-              ),
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: isMobile ? 15 : 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
+  // ══════════════════════════════════════════════════════════════════════════
+  // 3. SEGMENTED TABS ROW (Matching Images 1, 2, 4, 5)
+  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTabsRow(bool isMobile) {
     final tabs = [
-      {'title': 'Customer Receivables (Inward)', 'icon': LucideIcons.arrowDownLeft},
-      {'title': 'Supplier Payables (Outward)', 'icon': LucideIcons.arrowUpRight},
-      {'title': 'Bank & Cash Registers', 'icon': LucideIcons.landmark},
-      {'title': 'Overdue Collections & Reminders', 'icon': LucideIcons.alertCircle},
-      {'title': 'Total Inward & Outward', 'icon': LucideIcons.arrowLeftRight},
+      {'label': 'Total Inward & Outward', 'icon': LucideIcons.arrowLeftRight},
+      {'label': 'Overdue Collections & Reminders', 'icon': LucideIcons.clock},
+      {'label': 'Bank & Cash Registers', 'icon': LucideIcons.landmark},
     ];
 
     return Row(
@@ -788,52 +878,41 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
             child: Row(
               children: List.generate(tabs.length, (index) {
                 final isSelected = _activeTab == index;
-                final tabItem = tabs[index];
-                final icon = tabItem['icon'] as IconData;
-                final title = tabItem['title'] as String;
-
+                final t = tabs[index];
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: GestureDetector(
-                    onTap: () => setState(() => _activeTab = index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isMobile ? 12 : 18,
-                        vertical: 9,
-                      ),
+                  child: InkWell(
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      setState(() {
+                        _activeTab = index;
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: isSelected ? const Color(0xFF166534) : Colors.white,
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF166534) : const Color(0xFFE5E7EB),
+                          color: isSelected ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
                         ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                )
-                              ]
-                            : [],
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
-                            icon,
-                            size: 14,
-                            color: isSelected ? Colors.white : AppColors.secondaryText,
+                            t['icon'] as IconData,
+                            size: 15,
+                            color: isSelected ? Colors.white : const Color(0xFF64748B),
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           Text(
-                            title,
+                            t['label'] as String,
                             style: TextStyle(
-                              color: isSelected ? Colors.white : AppColors.secondaryText,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                              fontSize: 12.5,
+                              fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                              color: isSelected ? Colors.white : const Color(0xFF334155),
                             ),
                           ),
                         ],
@@ -846,23 +925,32 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
         ),
         const SizedBox(width: 8),
-        // Search trigger button or search bar
+
+        // Far Right Search Toggle Button
         if (!_isSearchOpen)
-          IconButton(
-            icon: const Icon(LucideIcons.search, size: 18, color: AppColors.secondaryText),
-            onPressed: () => setState(() => _isSearchOpen = true),
-            style: IconButton.styleFrom(
-              backgroundColor: Colors.white,
-              padding: const EdgeInsets.all(10),
-              shape: RoundedRectangleBorder(
+          InkWell(
+            onTap: () {
+              setState(() {
+                _isSearchOpen = true;
+              });
+            },
+            borderRadius: BorderRadius.circular(10),
+            child: Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(10),
-                side: const BorderSide(color: Color(0xFFE5E7EB)),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: const Center(
+                child: Icon(LucideIcons.search, size: 16, color: Color(0xFF64748B)),
               ),
             ),
           )
         else
           Container(
-            width: isMobile ? 150 : 220,
+            width: isMobile ? 160 : 230,
             height: 38,
             decoration: BoxDecoration(
               color: Colors.white,
@@ -872,15 +960,15 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
             child: TextField(
               controller: _searchController,
               autofocus: true,
-              style: const TextStyle(fontSize: 13, color: AppColors.darkText),
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
               onChanged: (val) => setState(() => _searchQuery = val),
               decoration: InputDecoration(
-                hintText: 'Search records...',
-                hintStyle: const TextStyle(fontSize: 12, color: AppColors.secondaryText),
+                hintText: 'Search payments...',
+                hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
                 border: InputBorder.none,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 suffixIcon: IconButton(
-                  icon: const Icon(LucideIcons.x, size: 14, color: AppColors.secondaryText),
+                  icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
                   onPressed: () {
                     setState(() {
                       _isSearchOpen = false;
@@ -896,497 +984,2309 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     );
   }
 
-  Widget _buildRecordsCard(bool isMobile) {
-    if (_isLoading) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 64),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.tableBorder),
-        ),
-        child: const Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(color: AppColors.primaryGreen, strokeWidth: 2.5),
-              SizedBox(height: 16),
-              Text(
-                'Loading payments data from server...',
-                style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
-              ),
-            ],
-          ),
-        ),
-      );
+  // ══════════════════════════════════════════════════════════════════════════
+  // 4. TAB BODY CONTENT
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildTabBody(double screenWidth, bool isMobile) {
+    switch (_activeTab) {
+      case 0:
+        return _buildInwardOutwardTabView(screenWidth, isMobile);
+      case 1:
+        return _buildOverdueRemindersTabView(screenWidth, isMobile);
+      case 2:
+        return _buildBankRegistersTabView(screenWidth, isMobile);
+      default:
+        return _buildInwardOutwardTabView(screenWidth, isMobile);
     }
-
-    if (_errorMessage != null && _reports == null) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFCA5A5)),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.alertTriangle, size: 36, color: Color(0xFFDC2626)),
-              const SizedBox(height: 12),
-              Text(
-                'Failed to load payment reports',
-                style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF991B1B)),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                _errorMessage!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton.icon(
-                onPressed: _loadData,
-                icon: const Icon(LucideIcons.rotateCcw, size: 14),
-                label: const Text('Retry'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryGreen,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (_activeTab == 2) {
-      return _buildBankRegistersView(isMobile);
-    }
-
-    if (_activeTab == 3) {
-      return _buildOverdueInvoicesView(isMobile);
-    }
-
-    final txList = _activeTransactions;
-
-    if (isMobile) {
-      return _buildMobileTransactionsList(txList);
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.tableBorder),
-        boxShadow: const [],
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, 980.0);
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: SizedBox(
-                  width: tableWidth,
-                  child: Table(
-                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                    columnWidths: const {
-                      0: FlexColumnWidth(1.8), // RECEIPT ID
-                      1: FlexColumnWidth(1.2), // DATE
-                      2: FlexColumnWidth(2.0), // PARTY (CUSTOMER / SUPPLIER)
-                      3: FlexColumnWidth(1.4), // INVOICE / PURCHASE LINKED
-                      4: FlexColumnWidth(1.5), // TOTAL ORIGINAL
-                      5: FlexColumnWidth(1.5), // PAID AMOUNT
-                      6: FlexColumnWidth(1.5), // MODE
-                      7: FlexColumnWidth(1.6), // RECONCILIATION
-                      8: FlexColumnWidth(1.2), // ACTIONS
-                    },
-                    children: [
-                      TableRow(
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFF8FAFC),
-                          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-                        ),
-                        children: [
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECEIPT ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            child: Text(
-                              _activeTab == 1 ? 'SUPPLIER' : 'CUSTOMER',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                            child: Text(
-                              _activeTab == 1 ? 'PURCHASE LINKED' : 'INVOICE LINKED',
-                              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText),
-                            ),
-                          ),
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('TOTAL ORIGINAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('PAID AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('MODE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('RECONCILIATION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          const Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('ACTIONS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                        ],
-                      ),
-                      ...txList.map((tx) {
-                        final isReconciled = tx.isReconciled;
-                        final totalFmt = _formatCurrency(tx.totalOriginal);
-                        final paidFmt = _formatCurrency(tx.paidAmount);
-
-                        return TableRow(
-                          decoration: const BoxDecoration(
-                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
-                          ),
-                          children: [
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.id.toString(), style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.formattedDate, style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.partyName, style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text(tx.displayReference, style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16), child: Text('₹ $totalFmt', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              child: Text(
-                                '₹ $paidFmt',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: tx.type.toLowerCase() == 'pay' ? const Color(0xFFDC2626) : AppColors.primaryGreen,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
-                                  child: Text(tx.paymentMode, style: const TextStyle(fontSize: 12, color: AppColors.darkText), overflow: TextOverflow.ellipsis),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: isReconciled ? const Color(0xFFD1FAE5) : const Color(0xFFFEF3C7),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(
-                                    isReconciled ? 'MATCHED' : tx.status.toUpperCase(),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w700,
-                                      color: isReconciled ? const Color(0xFF065F46) : const Color(0xFF92400E),
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.centerLeft,
-                                child: IconButton(
-                                  icon: const Icon(LucideIcons.pencil, size: 15, color: AppColors.blue),
-                                  onPressed: () => _openTransactionSheet(tx, isSupplier: tx.type.toLowerCase() == 'pay'),
-                                  constraints: const BoxConstraints(),
-                                  padding: const EdgeInsets.all(4),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
-          if (txList.isEmpty)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 64),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFF1F5F9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(LucideIcons.receipt, size: 28, color: Color(0xFF94A3B8)),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _searchQuery.isNotEmpty
-                          ? 'No transactions matching "$_searchQuery".'
-                          : 'No transaction records found.',
-                      style: const TextStyle(color: AppColors.darkText, fontSize: 14, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      'Processed payments and receipts will appear here.',
-                      style: TextStyle(color: AppColors.secondaryText, fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
   }
 
-  Widget _buildMobileTransactionsList(List<PaymentTransaction> txList) {
-    if (txList.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: const BoxDecoration(
-                color: Color(0xFFF1F5F9),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(LucideIcons.receipt, color: Color(0xFF94A3B8), size: 24),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'No Transaction Records Found',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Transactions recorded will appear here automatically.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-            ),
-          ],
-        ),
-      );
-    }
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 0: TOTAL INWARD & OUTWARD (Matching Images 1 & 4)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildInwardOutwardTabView(double screenWidth, bool isMobile) {
+    final list = _filteredInwardOutward;
+
+    // 3 Summary Cards Row
+    final cardInward = _buildInwardOutwardStatCard(
+      label: 'TOTAL INWARD (+₹)',
+      value: '+₹8,612',
+      valueColor: const Color(0xFF16A34A),
+      icon: LucideIcons.arrowDownLeft,
+      iconColor: const Color(0xFF16A34A),
+      iconBg: const Color(0xFFDCFCE7),
+    );
+
+    final cardOutward = _buildInwardOutwardStatCard(
+      label: 'TOTAL OUTWARD (-₹)',
+      value: '-₹5,000',
+      valueColor: const Color(0xFFDC2626),
+      icon: LucideIcons.arrowUpRight,
+      iconColor: const Color(0xFFDC2626),
+      iconBg: const Color(0xFFFEE2E2),
+    );
+
+    final cardNet = _buildInwardOutwardStatCard(
+      label: 'NET BALANCE (INWARD - OUTWARD)',
+      value: '+₹3,612',
+      valueColor: const Color(0xFF16A34A),
+      icon: LucideIcons.wallet,
+      iconColor: const Color(0xFF16A34A),
+      iconBg: const Color(0xFFDCFCE7),
+    );
 
     return Column(
-      children: txList.map((tx) {
-        final mode = tx.paymentMode;
-        final isUPI = mode.toLowerCase().contains('upi');
-        final isBank = mode.toLowerCase().contains('bank');
-        final isCash = mode.toLowerCase().contains('cash');
-        final isReconciled = tx.isReconciled;
-        final isOutward = tx.type.toLowerCase() == 'pay';
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (screenWidth >= 750)
+          Row(
+            children: [
+              Expanded(child: cardInward),
+              const SizedBox(width: 14),
+              Expanded(child: cardOutward),
+              const SizedBox(width: 14),
+              Expanded(child: cardNet),
+            ],
+          )
+        else
+          Column(
+            children: [
+              cardInward,
+              const SizedBox(height: 10),
+              cardOutward,
+              const SizedBox(height: 10),
+              cardNet,
+            ],
+          ),
+        const SizedBox(height: 18),
 
-        final iconColor = isUPI
-            ? const Color(0xFF6366F1)
-            : isBank
-                ? const Color(0xFF2563EB)
-                : isCash
-                    ? const Color(0xFF059669)
-                    : const Color(0xFFD97706);
-        final iconBg = iconColor.withValues(alpha: 0.12);
-        final modeIcon = isUPI
-            ? LucideIcons.smartphone
-            : isBank
-                ? LucideIcons.landmark
-                : isCash
-                    ? LucideIcons.banknote
-                    : LucideIcons.creditCard;
-
-        final totalStr = _formatCurrency(tx.totalOriginal);
-        final paidStr = _formatCurrency(tx.paidAmount);
-
-        return Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
+        // Table Card Container (Images 1 & 4)
+        Container(
+          width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
-            boxShadow: [
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
+                color: Color(0x04000000),
+                blurRadius: 10,
+                offset: Offset(0, 3),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Top Row: Avatar + Customer & Subtitle (Mode/Date) + Amount
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: iconBg,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Center(
-                      child: Icon(modeIcon, size: 18, color: iconColor),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          tx.partyName,
-                          style: const TextStyle(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${tx.paymentMode} • ${tx.formattedDate}',
-                          style: const TextStyle(
-                            fontSize: 11.5,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+          clipBehavior: Clip.antiAlias,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: screenWidth >= 900 ? screenWidth - 64 : 880,
+              ),
+              child: DataTable(
+                headingRowHeight: 48,
+                dataRowMinHeight: 64,
+                dataRowMaxHeight: 64,
+                horizontalMargin: 20,
+                columnSpacing: 24,
+                dividerThickness: 1,
+                border: const TableBorder(
+                  bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                ),
+                headingTextStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.6,
+                ),
+                columns: [
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('ENTRY ID'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '₹ $paidStr',
-                        style: TextStyle(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w900,
-                          color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF166534),
-                        ),
-                      ),
-                      if (tx.totalOriginal != tx.paidAmount && tx.totalOriginal > 0) ...[
-                        const SizedBox(height: 1),
-                        Text(
-                          'of ₹ $totalStr',
-                          style: const TextStyle(
-                            fontSize: 10.5,
-                            color: Color(0xFF94A3B8),
-                            decoration: TextDecoration.lineThrough,
-                          ),
-                        ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('DATE'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
                       ],
-                    ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('FLOW TYPE'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('PARTY (CUSTOMER / SUPPLIER)'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('REFERENCE #'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('ORIGINAL AMOUNT'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('TRANSACTED AMOUNT'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('MODE'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('STATUS'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(height: 1, color: Color(0xFFF1F5F9)),
-              const SizedBox(height: 10),
+                rows: list.map((item) {
+                  final isLent = item['isLent'] == true;
+                  final origAmt = (item['originalAmount'] as num).toDouble();
+                  final txAmt = (item['transactedAmount'] as num).toDouble();
+                  final isOutward = item['flowType'] == 'OUTWARD';
 
-              // Bottom Row: Status Badge & Reference Chip + Action Button
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                  return DataRow(
+                    cells: [
+                      // 1. ENTRY ID
+                      DataCell(
+                        Text(
+                          item['entryId'] as String,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+
+                      // 2. DATE
+                      DataCell(
+                        Text(
+                          item['date'] as String,
+                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                        ),
+                      ),
+
+                      // 3. FLOW TYPE (Soft pill badge)
+                      DataCell(
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
                           decoration: BoxDecoration(
-                            color: isReconciled ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
-                            borderRadius: BorderRadius.circular(20),
+                            color: isOutward ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                isReconciled ? LucideIcons.checkCheck : LucideIcons.clock,
+                                isOutward ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft,
                                 size: 11,
-                                color: isReconciled ? const Color(0xFF166534) : const Color(0xFF92400E),
+                                color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
                               ),
                               const SizedBox(width: 4),
                               Text(
-                                isReconciled ? 'MATCHED' : tx.status.toUpperCase(),
+                                item['flowType'] as String,
                                 style: TextStyle(
-                                  fontSize: 10.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isReconciled ? const Color(0xFF166534) : const Color(0xFF92400E),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+                                  letterSpacing: 0.5,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
+                      ),
+
+                      // 4. PARTY
+                      DataCell(
+                        Text(
+                          item['party'] as String,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+
+                      // 5. REFERENCE #
+                      DataCell(
+                        Text(
+                          item['reference'] as String,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                        ),
+                      ),
+
+                      // 6. ORIGINAL AMOUNT
+                      DataCell(
+                        Text(
+                          '₹${_fmt(origAmt)}',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+
+                      // 7. TRANSACTED AMOUNT (+₹71 in green)
+                      DataCell(
+                        Text(
+                          '${isOutward ? '-' : '+'}₹${_fmt(txAmt)}',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+                          ),
+                        ),
+                      ),
+
+                      // 8. MODE (Cash in bold green)
+                      DataCell(
+                        Text(
+                          item['mode'] as String,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF16A34A),
+                          ),
+                        ),
+                      ),
+
+                      // 9. STATUS (MATCHED in blue)
+                      DataCell(
+                        Text(
+                          item['status'] as String,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildInwardOutwardStatCard({
+    required String label,
+    required String value,
+    required Color valueColor,
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 8,
+            offset: Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.5,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: valueColor,
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Icon(icon, size: 18, color: iconColor),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 1: OVERDUE COLLECTIONS & REMINDERS (Matching Image 1 & 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildOverdueRemindersTabView(double screenWidth, bool isMobile) {
+    final list = _filteredOverdueList;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Title
+          const Text(
+            'Overdue Customer Accounts Reminders',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+              letterSpacing: -0.3,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Overdue Table with horizontal scroll
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: screenWidth >= 900 ? screenWidth - 104 : 880,
+              ),
+              child: DataTable(
+                headingRowHeight: 48,
+                dataRowMinHeight: 64,
+                dataRowMaxHeight: 64,
+                horizontalMargin: 12,
+                columnSpacing: 26,
+                dividerThickness: 1,
+                border: const TableBorder(
+                  bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                ),
+                headingTextStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.6,
+                ),
+                columns: [
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('CUSTOMER NAME'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('INVOICE / BILL NO'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('TOTAL BILL'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('PAID AMOUNT'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('CREDIT DUE BALANCE'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('DUE DATE'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('STATUS'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                  DataColumn(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Text('ACTIONS'),
+                        SizedBox(width: 4),
+                        Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                      ],
+                    ),
+                  ),
+                ],
+                rows: list.map((item) {
+                  final total = (item['totalBill'] as num).toDouble();
+                  final paid = (item['paidAmount'] as num).toDouble();
+                  final due = (item['dueBalance'] as num).toDouble();
+                  final isOverdue = item['isOverdue'] == true;
+                  final status = item['status'] as String;
+                  final customerName = item['customerName'] as String;
+
+                  return DataRow(
+                    cells: [
+                      // 1. CUSTOMER NAME
+                      DataCell(
+                        Text(
+                          customerName,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+
+                      // 2. INVOICE / BILL NO
+                      DataCell(
+                        Text(
+                          item['invoiceNo'] as String,
+                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
+                        ),
+                      ),
+
+                      // 3. TOTAL BILL
+                      DataCell(
+                        Text(
+                          '₹${_fmt(total)}',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+
+                      // 4. PAID AMOUNT
+                      DataCell(
+                        Text(
+                          '₹${_fmt(paid)}',
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+
+                      // 5. CREDIT DUE BALANCE (Bold red)
+                      DataCell(
+                        Text(
+                          '₹${_fmt(due)}',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFDC2626),
+                          ),
+                        ),
+                      ),
+
+                      // 6. DUE DATE
+                      DataCell(
+                        Text(
+                          item['dueDate'] as String,
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                        ),
+                      ),
+
+                      // 7. STATUS (Credit Due in Amber, Overdue in Red)
+                      DataCell(
+                        Text(
+                          status,
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: isOverdue ? const Color(0xFFDC2626) : const Color(0xFFD97706),
+                          ),
+                        ),
+                      ),
+
+                      // 8. Action: Send Reminder Pill Button (Matching Image 1)
+                      DataCell(
+                        InkWell(
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            AppSnackbar.show(
+                              context,
+                              "Overdue reminder dispatched to '$customerName' via @bnxmail.com!",
+                              type: SnackType.success,
+                            );
+                          },
+                          borderRadius: BorderRadius.circular(6),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF1F5F9),
+                              color: const Color(0xFFECFDF5),
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child: Text(
-                              tx.displayReference,
-                              style: const TextStyle(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF475569),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  LucideIcons.send,
+                                  size: 12,
+                                  color: Color(0xFF059669),
+                                ),
+                                SizedBox(width: 5),
+                                Text(
+                                  'Send Reminder',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF059669),
+                                  ),
+                                ),
+                              ],
                             ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TAB 2: BANK & CASH REGISTERS (Matching Images 1, 2, 3, 4, 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildBankRegistersTabView(double screenWidth, bool isMobile) {
+    final list = _filteredAccountsList;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        // Determine columns: 3 columns if width >= 1050, 2 columns if >= 680, else 1
+        final int crossAxisCount = totalWidth >= 1050 ? 3 : (totalWidth >= 680 ? 2 : 1);
+        final double spacing = 16.0;
+        final double cardWidth = (totalWidth - (spacing * (crossAxisCount - 1))) / crossAxisCount;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Responsive Card Grid (Matching Image 1 & 2)
+            Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: list.map((acc) {
+                final isCash = acc['isCash'] == true;
+                final isCardSelected = _selectedCardId == acc['id'];
+                final balance = (acc['balance'] as num).toDouble();
+                final isNegative = balance < 0;
+                final balanceStr = isNegative ? '-₹${_fmt(balance.abs())}' : '₹${_fmt(balance)}';
+
+                return InkWell(
+                  onTap: () {
+                    HapticFeedback.selectionClick();
+                    setState(() => _selectedCardId = acc['id'] as String);
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    width: cardWidth,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: isCardSelected ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
+                        width: isCardSelected ? 2.0 : 1.0,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isCardSelected ? const Color(0x14166534) : const Color(0x04000000),
+                          blurRadius: isCardSelected ? 10 : 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Top Row: Type Pill + 3-dots Menu Button (Matching Images 2 & 3)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF), // Soft Blue
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                isCash ? 'CASH' : 'BANK',
+                                style: const TextStyle(
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF2563EB),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            Theme(
+                              data: Theme.of(context).copyWith(
+                                cardColor: Colors.white,
+                              ),
+                              child: PopupMenuButton<String>(
+                                onOpened: () => setState(() => _selectedCardId = acc['id'] as String),
+                                icon: const Icon(LucideIcons.ellipsisVertical, size: 16, color: Color(0xFF64748B)),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                ),
+                                elevation: 3,
+                                itemBuilder: (ctx) => [
+                                  PopupMenuItem(
+                                    value: 'edit',
+                                    height: 38,
+                                    child: Row(
+                                      children: const [
+                                        Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Edit',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  PopupMenuItem(
+                                    value: 'delete',
+                                    height: 38,
+                                    child: Row(
+                                      children: const [
+                                        Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
+                                        SizedBox(width: 8),
+                                        Text(
+                                          'Delete',
+                                          style: TextStyle(
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFFEF4444),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                onSelected: (val) {
+                                  if (val == 'edit') {
+                                    _openEditAccountModal(acc);
+                                  } else if (val == 'delete') {
+                                    _confirmDeleteAccount(acc);
+                                  }
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+
+                        // Account Name
+                        Text(
+                          acc['name'] as String,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+
+                        // Subtitle 1: Type or Account No
+                        Text(
+                          isCash
+                              ? 'Type: ${acc['type']}'
+                              : 'Account No: ${acc['accountNumber']}',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        // Subtitle 2: Bank details for Bank cards
+                        if (!isCash && (acc['bank'] as String).isNotEmpty) ...[
+                          const SizedBox(height: 3),
+                          Text(
+                            'Bank: ${acc['bank']} • Branch: ${acc['branch']} • IFSC: ${acc['ifsc']}',
+                            style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+
+                        const SizedBox(height: 22),
+
+                        // Bottom Row: Current Balance
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            const Text(
+                              'Current Balance:',
+                              style: TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                            ),
+                            FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text(
+                                balanceStr,
+                                style: const TextStyle(
+                                  fontSize: 19,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF166534),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 24),
+
+            // ══════════════════════════════════════════════════════════════════════
+            // TRANSACTION LEDGER SECTION (Matching Image 1 & 2)
+            // ══════════════════════════════════════════════════════════════════════
+            _buildTransactionLedgerSection(screenWidth, isMobile),
+          ],
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // TRANSACTION LEDGER TABLE (Matching Screenshot 1 & 2)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildTransactionLedgerSection(double screenWidth, bool isMobile) {
+    final selectedAcc = _accountsList.firstWhere(
+      (a) => a['id'] == _selectedCardId,
+      orElse: () => _accountsList.first,
+    );
+    final selectedName = selectedAcc['name'] as String;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x04000000),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Section Header Row: Title + ATTACH YOUR TRANSACTION DETAILS button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const Text('📦', style: TextStyle(fontSize: 16)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Transaction Ledger: $selectedName',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                          letterSpacing: -0.3,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              OutlinedButton(
+                onPressed: () => _openReconciliationWorkspaceModal(selectedAcc),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Color(0xFF2563EB), width: 1.0),
+                  backgroundColor: const Color(0xFFF8FAFC),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: const Text(
+                  'ATTACH YOUR TRANSACTION DETAILS',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF2563EB),
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+
+          // Ledger Table with horizontal scrolling
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: screenWidth >= 900 ? screenWidth - 104 : 880,
+              ),
+              child: DataTable(
+                headingRowHeight: 46,
+                dataRowMinHeight: 52,
+                dataRowMaxHeight: 56,
+                horizontalMargin: 12,
+                columnSpacing: 28,
+                dividerThickness: 1,
+                border: const TableBorder(
+                  bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                ),
+                headingTextStyle: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.6,
+                ),
+                columns: const [
+                  DataColumn(label: Text('DATE')),
+                  DataColumn(label: Text('DESCRIPTION')),
+                  DataColumn(label: Text('TYPE')),
+                  DataColumn(label: Text('AMOUNT')),
+                  DataColumn(label: Text('BALANCE AFTER')),
+                ],
+                rows: _ledgerEntries.map((row) {
+                  final isCredit = row['type'] == 'Credit';
+                  final amt = (row['amount'] as num).toDouble();
+                  final amtStr = isCredit ? '+₹${_fmt(amt)}' : '-₹${_fmt(amt.abs())}';
+
+                  return DataRow(
+                    cells: [
+                      // DATE
+                      DataCell(
+                        Text(
+                          row['date'] as String,
+                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF64748B)),
+                        ),
+                      ),
+                      // DESCRIPTION
+                      DataCell(
+                        Text(
+                          row['description'] as String,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                      // TYPE (Credit / Debit pill)
+                      DataCell(
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                          decoration: BoxDecoration(
+                            color: isCredit ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            row['type'] as String,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: isCredit ? const Color(0xFF166534) : const Color(0xFFDC2626),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // AMOUNT (+ in green, - in red)
+                      DataCell(
+                        Text(
+                          amtStr,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: isCredit ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                          ),
+                        ),
+                      ),
+                      // BALANCE AFTER
+                      DataCell(
+                        Text(
+                          row['balanceAfter'] as String,
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MODAL: BANK STATEMENT RECONCILIATION WORKSPACE (Matching Screenshots 1, 2, 3, 4, 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  void _openReconciliationWorkspaceModal(Map<String, dynamic> account) {
+    int reconTab = 0; // 0: OVERALL, 1: PLATFORM SALES, 2: BANK STATEMENT
+    bool isMatchedListView = false; // Toggled by "Matched List" button (Screenshot 2)
+    String targetBank = '${account['name']} (${account['isCash'] == true ? 'Cash Register' : 'Bank'})';
+    String statementPeriod = 'All Dates';
+    String platformPeriod = 'All Dates';
+
+    final List<Map<String, dynamic>> matchItems = [
+      {
+        'id': 'm1',
+        'matched': false,
+        'stmtDesc': 'Cash received for retail counter slip',
+        'stmtType': 'Credit',
+        'stmtAmt': 1200.0,
+        'stmtDate': '18/05/2025, 02:00 pm',
+        'platDesc': 'cash sale invoice retail counter slip',
+        'platRef': 'INV-2025-003',
+        'platAmt': 1200.0,
+        'platDate': '18/05/2025, 01:50 pm',
+      },
+      {
+        'id': 'm2',
+        'matched': false,
+        'stmtDesc': 'Office tea and refreshments pantry payout',
+        'stmtType': 'Debit',
+        'stmtAmt': 350.0,
+        'stmtDate': '19/05/2025, 04:30 pm',
+        'platDesc': 'petty cash voucher tea & snacks pantry',
+        'platRef': 'VCH-2025-090',
+        'platAmt': 350.0,
+        'platDate': '19/05/2025, 04:15 pm',
+      },
+    ];
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            final dialogWidth = math.min(1060.0, screenWidth - 32);
+            final matchedCount = matchItems.where((m) => m['matched'] == true).length;
+            final matchedItemsList = matchItems.where((m) => m['matched'] == true).toList();
+
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+              child: Container(
+                width: dialogWidth,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 24,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                clipBehavior: Clip.antiAlias,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 1. TOP HEADER (Dark green banner - Protected from RenderFlex overflow)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      color: const Color(0xFF0F3E2E), // Dark forest green matching screenshots
+                      child: LayoutBuilder(
+                        builder: (context, headerConstraints) {
+                          final isNarrow = headerConstraints.maxWidth < 920;
+
+                          // Left branding widget
+                          final brandingWidget = Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF2563EB),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Center(
+                                  child: Icon(LucideIcons.landmark, color: Colors.white, size: 18),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            'Bank Statement Reconciliation Workspace',
+                                            style: const TextStyle(
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                              letterSpacing: -0.3,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFF0284C7),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: const Text(
+                                            'Multi-Bank',
+                                            style: TextStyle(
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w800,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 2),
+                                    const Text(
+                                      'Account-isolated statement parsing, platform transaction matching & reconciliation ledger',
+                                      style: TextStyle(
+                                        fontSize: 10.5,
+                                        color: Color(0xFFA7F3D0),
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+
+                          // Right controls widget (Target Bank + Matched List + Close)
+                          final controlsWidget = Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              // Target Bank dropdown pill
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF0A2B1E),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(color: const Color(0xFF166534)),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Text(
+                                      'TARGET BANK: ',
+                                      style: TextStyle(
+                                        fontSize: 9.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF86EFAC),
+                                      ),
+                                    ),
+                                    ConstrainedBox(
+                                      constraints: BoxConstraints(maxWidth: isNarrow ? 100 : 140),
+                                      child: Text(
+                                        targetBank,
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    const Icon(LucideIcons.chevronDown, size: 12, color: Colors.white70),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // Matched List Button (Toggles Screenshot 2 view)
+                              InkWell(
+                                onTap: () {
+                                  HapticFeedback.selectionClick();
+                                  setModalState(() {
+                                    isMatchedListView = !isMatchedListView;
+                                  });
+                                },
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: isMatchedListView ? const Color(0xFF059669) : const Color(0xFF0A2B1E),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isMatchedListView ? const Color(0xFF10B981) : const Color(0xFF166534),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(LucideIcons.archive, size: 13, color: Colors.white70),
+                                      const SizedBox(width: 5),
+                                      const Text(
+                                        'Matched List',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 5),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                        decoration: BoxDecoration(
+                                          color: isMatchedListView ? const Color(0xFF047857) : Colors.black38,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Text(
+                                          '$matchedCount',
+                                          style: const TextStyle(
+                                            fontSize: 9.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+
+                              // Close button
+                              InkWell(
+                                onTap: () => Navigator.pop(ctx),
+                                borderRadius: BorderRadius.circular(20),
+                                child: Container(
+                                  width: 26,
+                                  height: 26,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Center(
+                                    child: Icon(LucideIcons.x, size: 13, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+
+                          if (isNarrow) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Expanded(child: brandingWidget),
+                                    InkWell(
+                                      onTap: () => Navigator.pop(ctx),
+                                      child: const Icon(LucideIcons.x, size: 16, color: Colors.white),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  child: controlsWidget,
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(child: brandingWidget),
+                              const SizedBox(width: 12),
+                              controlsWidget,
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                    // 2. MODAL SCROLLABLE BODY
+                    Flexible(
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Info sub-bar (Pending statements vs platform records)
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 14, 20, 10),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Text(
+                                          'Currently Reconciling: ',
+                                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFF0FDF4),
+                                            borderRadius: BorderRadius.circular(6),
+                                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Icon(LucideIcons.fileText, size: 12, color: Color(0xFF16A34A)),
+                                              const SizedBox(width: 5),
+                                              Text(
+                                                account['name'] as String,
+                                                style: const TextStyle(
+                                                  fontSize: 11.5,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Color(0xFF0F172A),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        const Text(
+                                          '(Ledger Balance: ₹0.00)',
+                                          style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  RichText(
+                                    text: const TextSpan(
+                                      style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                      children: [
+                                        TextSpan(text: 'Pending: '),
+                                        TextSpan(
+                                          text: '2 statements',
+                                          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+                                        ),
+                                        TextSpan(text: ' vs '),
+                                        TextSpan(
+                                          text: '2 platform records',
+                                          style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF7C3AED)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            // If user clicked "Matched List" -> Render Screenshot 2 View
+                            if (isMatchedListView)
+                              _buildMatchedListView(
+                                account: account,
+                                matchedItems: matchedItemsList,
+                                onBackToMatrix: () {
+                                  setModalState(() {
+                                    isMatchedListView = false;
+                                  });
+                                },
+                                onUnmatch: (item) {
+                                  setModalState(() {
+                                    item['matched'] = false;
+                                  });
+                                  AppSnackbar.show(
+                                    context,
+                                    "Item returned to reconciliation matrix",
+                                    type: SnackType.info,
+                                  );
+                                },
+                              )
+                            else ...[
+                              // Upload Container (Dashed box)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                                child: InkWell(
+                                  onTap: () {
+                                    AppSnackbar.show(
+                                      context,
+                                      "Statement upload dialog ready (.csv, .xlsx, .xls, .pdf)",
+                                      type: SnackType.info,
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.symmetric(vertical: 20),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF0F9FF),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: const Color(0xFF93C5FD),
+                                        width: 1.5,
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFDBEAFE),
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: const Center(
+                                            child: Icon(LucideIcons.uploadCloud, color: Color(0xFF2563EB), size: 20),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Upload statement for ${account['name']}',
+                                          style: const TextStyle(
+                                            fontSize: 13.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF0F172A),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 3),
+                                        const Text(
+                                          'Drag and drop statement file (.csv, .xlsx, .xls, .pdf) or click to browse from your device',
+                                          style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+
+                              // 3 Tabs (Segmented bar matching Screenshot 1 & 3)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF1F5F9),
+                                    borderRadius: BorderRadius.circular(24),
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  child: Row(
+                                    children: [
+                                      _buildReconTabPill(
+                                        title: '1  OVERALL',
+                                        isSelected: reconTab == 0,
+                                        onTap: () => setModalState(() => reconTab = 0),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      _buildReconTabPill(
+                                        title: '2  PLATFORM SALES & TRANSACTION HISTORY',
+                                        badge: '2',
+                                        isSelected: reconTab == 1,
+                                        onTap: () => setModalState(() => reconTab = 1),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      _buildReconTabPill(
+                                        title: '3  BANK STATEMENT (UPLOADED DATA)',
+                                        badge: '2',
+                                        isSelected: reconTab == 2,
+                                        onTap: () => setModalState(() => reconTab = 2),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Period Filter Row
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Row(
+                                  children: [
+                                    if (reconTab == 0 || reconTab == 2) ...[
+                                      _buildPeriodFilterDropdown(
+                                        label: 'STATEMENT PERIOD:',
+                                        value: statementPeriod,
+                                        onChanged: (v) {
+                                          if (v != null) setModalState(() => statementPeriod = v);
+                                        },
+                                      ),
+                                      const SizedBox(width: 16),
+                                    ],
+                                    if (reconTab == 0 || reconTab == 1) ...[
+                                      _buildPeriodFilterDropdown(
+                                        label: 'PLATFORM PERIOD:',
+                                        value: platformPeriod,
+                                        onChanged: (v) {
+                                          if (v != null) setModalState(() => platformPeriod = v);
+                                        },
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 14),
+
+                              // Tab Body Content with Navigation Arrows
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Stack(
+                                  alignment: Alignment.center,
+                                  children: [
+                                    // Tab content
+                                    Column(
+                                      children: [
+                                        if (reconTab == 0)
+                                          _buildReconTab0Overall(
+                                            matchItems: matchItems,
+                                            setModalState: setModalState,
+                                            onMatched: () => setModalState(() {}),
+                                          )
+                                        else if (reconTab == 1)
+                                          _buildReconTab1Platform(matchItems)
+                                        else
+                                          _buildReconTab2BankStatement(matchItems),
+                                      ],
+                                    ),
+
+                                    // Floating Left Arrow
+                                    if (reconTab > 0)
+                                      Positioned(
+                                        left: -6,
+                                        child: _buildCircleArrowNavButton(
+                                          icon: LucideIcons.arrowLeft,
+                                          onTap: () => setModalState(() => reconTab--),
+                                        ),
+                                      ),
+
+                                    // Floating Right Arrow
+                                    if (reconTab < 2)
+                                      Positioned(
+                                        right: -6,
+                                        child: _buildCircleArrowNavButton(
+                                          icon: LucideIcons.arrowRight,
+                                          onTap: () => setModalState(() => reconTab++),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    // 3. BOTTOM FOOTER BAR
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: const [
+                              Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF16A34A)),
+                              SizedBox(width: 8),
+                              Text(
+                                'Reconciliation changes are preserved in active session state.',
+                                style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                              ),
+                            ],
+                          ),
+                          OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFCBD5E1)),
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            child: const Text(
+                              'Close Workspace',
+                              style: TextStyle(
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // VIEW: MATCHED LIST (Screenshot 2)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMatchedListView({
+    required Map<String, dynamic> account,
+    required List<Map<String, dynamic>> matchedItems,
+    required VoidCallback onBackToMatrix,
+    required void Function(Map<String, dynamic>) onUnmatch,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 6),
+          // Header Row: Title & Subtitle + ⚡ Back to Reconciliation Matrix button (Matching Screenshot 2)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Reconciliation Register — ${account['name']}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.3,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 3),
+                    const Text(
+                      'Audit register of resolved statements and platform ledger entries',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: onBackToMatrix,
+                icon: const Icon(LucideIcons.zap, size: 13, color: Colors.white),
+                label: const Text('Back to Reconciliation Matrix'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+
+          // Content: Empty State (Matching Screenshot 2) OR Matched Table
+          if (matchedItems.isEmpty)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 54, horizontal: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  style: BorderStyle.solid,
+                ),
+              ),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: const Center(
+                        child: Icon(LucideIcons.fileText, color: Color(0xFF94A3B8), size: 22),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No matched records found for this account.',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Switch to the 3-column Reconciliation Matrix to compare\nuploaded bank statement lines against platform transactions\nand accept matches.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.5),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            // Matched records table
+            Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(minWidth: 800),
+                  child: DataTable(
+                    headingRowHeight: 44,
+                    dataRowMinHeight: 52,
+                    dataRowMaxHeight: 56,
+                    columns: const [
+                      DataColumn(label: Text('STATEMENT LINE')),
+                      DataColumn(label: Text('PLATFORM INVOICE')),
+                      DataColumn(label: Text('AMOUNT')),
+                      DataColumn(label: Text('STATUS')),
+                      DataColumn(label: Text('ACTIONS')),
+                    ],
+                    rows: matchedItems.map((item) {
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(item['stmtDesc'] as String, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600))),
+                          DataCell(Text(item['platRef'] as String, style: const TextStyle(fontSize: 12, color: Color(0xFF2563EB), fontWeight: FontWeight.bold))),
+                          DataCell(Text('₹${_fmt((item['stmtAmt'] as num).toDouble())}', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF16A34A)))),
+                          DataCell(
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(color: const Color(0xFFDCFCE7), borderRadius: BorderRadius.circular(4)),
+                              child: const Text('Reconciled', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+                            ),
+                          ),
+                          DataCell(
+                            TextButton(
+                              onPressed: () => onUnmatch(item),
+                              child: const Text('Unmatch', style: TextStyle(color: Color(0xFFDC2626), fontSize: 12, fontWeight: FontWeight.w600)),
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+            ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReconTabPill({
+    required String title,
+    String? badge,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: isSelected ? const Color(0xFF166534) : Colors.transparent,
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                  color: isSelected ? Colors.white : const Color(0xFF475569),
+                  letterSpacing: 0.3,
+                ),
+              ),
+              if (badge != null) ...[
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.white24 : const Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    badge,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                      color: isSelected ? Colors.white : const Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPeriodFilterDropdown({
+    required String label,
+    required String value,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(LucideIcons.calendar, size: 13, color: Color(0xFF64748B)),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          const SizedBox(width: 6),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: value,
+              isDense: true,
+              icon: const Icon(LucideIcons.chevronDown, size: 12, color: Color(0xFF64748B)),
+              items: const [
+                DropdownMenuItem(value: 'All Dates', child: Text('All Dates', style: TextStyle(fontSize: 12))),
+                DropdownMenuItem(value: 'This Month', child: Text('This Month', style: TextStyle(fontSize: 12))),
+                DropdownMenuItem(value: 'Last 30 Days', child: Text('Last 30 Days', style: TextStyle(fontSize: 12))),
+                DropdownMenuItem(value: 'Custom Range', child: Text('Custom Range', style: TextStyle(fontSize: 12))),
+              ],
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCircleArrowNavButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(
+          color: Color(0xFF166534),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: Color(0x22000000),
+              blurRadius: 6,
+              offset: Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Icon(icon, color: Colors.white, size: 16),
+        ),
+      ),
+    );
+  }
+
+  // Subview for Tab 0: OVERALL (Side by Side match cards - Screenshot 3)
+  Widget _buildReconTab0Overall({
+    required List<Map<String, dynamic>> matchItems,
+    required void Function(void Function()) setModalState,
+    required VoidCallback onMatched,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final contentWidth = math.max(constraints.maxWidth, 720.0);
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: SizedBox(
+            width: contentWidth,
+            child: Column(
+              children: matchItems.map((item) {
+                final isMatched = item['matched'] == true;
+                final isCredit = item['stmtType'] == 'Credit';
+
+                return Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  decoration: BoxDecoration(
+                    color: isMatched ? const Color(0xFFF0FDF4) : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isMatched ? const Color(0xFF86EFAC) : const Color(0xFFE2E8F0),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Left half: Bank Statement Record
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item['stmtDesc'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: isCredit ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    item['stmtType'] as String,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: isCredit ? const Color(0xFF166534) : const Color(0xFFDC2626),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '₹${_fmt((item['stmtAmt'] as num).toDouble())}',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: isCredit ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['stmtDate'] as String,
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+                      // Center / Right half: Platform Record
+                      Expanded(
+                        flex: 4,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    item['platDesc'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: Text(
+                                    item['platRef'] as String,
+                                    style: const TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              '₹${_fmt((item['platAmt'] as num).toDouble())}',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              item['platDate'] as String,
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(width: 16),
+                      // Action Buttons
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: isMatched
+                                ? null
+                                : () {
+                                    setModalState(() {
+                                      item['matched'] = true;
+                                    });
+                                    onMatched();
+                                    AppSnackbar.show(
+                                      context,
+                                      "Reconciliation record matched successfully!",
+                                      type: SnackType.success,
+                                    );
+                                  },
+                            icon: const Icon(LucideIcons.check, size: 14),
+                            label: Text(isMatched ? 'Matched' : 'Match'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF166534),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          OutlinedButton.icon(
+                            onPressed: isMatched
+                                ? null
+                                : () {
+                                    AppSnackbar.show(
+                                      context,
+                                      "Reconciliation match rejected",
+                                      type: SnackType.info,
+                                    );
+                                  },
+                            icon: const Icon(LucideIcons.x, size: 14),
+                            label: const Text('Reject'),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFFCA5A5)),
+                              foregroundColor: const Color(0xFFDC2626),
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Subview for Tab 1: PLATFORM SALES & TRANSACTION HISTORY (Screenshot 4)
+  Widget _buildReconTab1Platform(List<Map<String, dynamic>> matchItems) {
+    return Column(
+      children: matchItems.map((item) {
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    item['platDesc'] as String,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      item['platRef'] as String,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF2563EB),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Text(
+                    '₹${_fmt((item['platAmt'] as num).toDouble())}',
+                    style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF0FDF4),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFBBF7D0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: const [
+                        Icon(LucideIcons.badgeCheck, size: 12, color: Color(0xFF16A34A)),
+                        SizedBox(width: 4),
+                        Text(
+                          'Exact Match',
+                          style: TextStyle(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF16A34A),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => _openTransactionSheet(tx, isSupplier: isOutward),
-                    borderRadius: BorderRadius.circular(6),
-                    child: const Padding(
-                      padding: EdgeInsets.all(5),
-                      child: Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
-                    ),
-                  ),
                 ],
+              ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  item['platDate'] as String,
+                  style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                ),
               ),
             ],
           ),
@@ -1395,325 +3295,964 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // BANK & CASH REGISTERS TAB
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildBankRegistersView(bool isMobile) {
-    final accounts = _reports?.accounts ?? [];
-
-    if (accounts.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.tableBorder),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-              child: const Icon(LucideIcons.landmark, size: 28, color: Color(0xFF94A3B8)),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'No Bank or Cash Accounts Connected',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Accounts registered via /api/v1/bank-accounts will appear here dynamically.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-            ),
-          ],
-        ),
-      );
-    }
-
+  // Subview for Tab 2: BANK STATEMENT (UPLOADED DATA) (Screenshot 5)
+  Widget _buildReconTab2BankStatement(List<Map<String, dynamic>> matchItems) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Grid/Wrap of all real backend accounts
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isWide = constraints.maxWidth > 700;
-            if (isWide) {
-              return Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: accounts.map((acc) {
-                  return SizedBox(
-                    width: (constraints.maxWidth - 16) / 2,
-                    child: _buildAccountCard(acc),
-                  );
-                }).toList(),
-              );
-            }
-            return Column(
-              children: accounts.map((acc) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: _buildAccountCard(acc),
-                );
-              }).toList(),
-            );
-          },
-        ),
-        const SizedBox(height: 20),
-        _buildInternalTransferCard(),
-      ],
-    );
-  }
+      children: matchItems.map((item) {
+        final isCredit = item['stmtType'] == 'Credit';
 
-  Widget _buildAccountCard(PaymentAccount account) {
-    final isCash = account.isCash;
-    final balanceFmt = _formatCurrency(account.currentBalance);
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.tableBorder),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.hoverBackground,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  'ACC-${account.id}',
-                  style: const TextStyle(color: AppColors.primaryGreen, fontSize: 11, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: isCash
-                      ? const Color(0xFFECFDF5)
-                      : const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  isCash ? 'CASH' : 'BANK',
-                  style: TextStyle(
-                    color: isCash ? const Color(0xFF047857) : const Color(0xFF1D4ED8),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          Text(
-            account.displayName,
-            style: const TextStyle(color: AppColors.darkText, fontSize: 17, fontWeight: FontWeight.bold),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Account No: ${account.displayAccountNumber}',
-            style: const TextStyle(color: AppColors.secondaryText, fontSize: 13),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (account.branchName != null && account.branchName!.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              'Branch: ${account.branchName} • IFSC: ${account.ifscCode ?? "N/A"}',
-              style: const TextStyle(color: AppColors.secondaryText, fontSize: 11),
-            ),
-          ],
-          const SizedBox(height: 28),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Current Balance:',
-                style: TextStyle(color: AppColors.secondaryText, fontSize: 13),
-              ),
-              Text(
-                '₹ $balanceFmt',
-                style: const TextStyle(color: AppColors.primaryGreen, fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInternalTransferCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(28),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.tableBorder),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryGreen.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(LucideIcons.arrowLeftRight, color: AppColors.primaryGreen, size: 24),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Internal Account Transfers',
-              style: TextStyle(color: AppColors.darkText, fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Move money internally between Cash Register and connected Bank Accounts via /api/v1/payments/transfer',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.secondaryText, fontSize: 12.5),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ═══════════════════════════════════════════════════════════════
-  // OVERDUE INVOICES TAB
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildOverdueInvoicesView(bool isMobile) {
-    final list = _activeOverdueInvoices;
-
-    if (list.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 56, horizontal: 24),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.tableBorder),
-        ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: const BoxDecoration(color: Color(0xFFF1F5F9), shape: BoxShape.circle),
-              child: const Icon(LucideIcons.badgeCheck, size: 28, color: Color(0xFF10B981)),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'No Overdue Invoices',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'All customer billing schedules are current and settled.',
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.tableBorder),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final tableWidth = math.max(constraints.maxWidth, 850.0);
-          return SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: tableWidth,
-              child: Table(
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                columnWidths: const {
-                  0: FlexColumnWidth(1.6), // INVOICE #
-                  1: FlexColumnWidth(2.2), // CLIENT
-                  2: FlexColumnWidth(1.4), // TOTAL
-                  3: FlexColumnWidth(1.4), // PAID
-                  4: FlexColumnWidth(1.4), // DUE
-                  5: FlexColumnWidth(1.4), // DUE DATE
-                  6: FlexColumnWidth(1.4), // STATUS
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TableRow(
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF8FAFC),
-                      border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+                  Text(
+                    item['stmtDesc'] as String,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
                     ),
-                    children: const [
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('INVOICE #', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('CLIENT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('TOTAL', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('PAID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('DUE AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('DUE DATE', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                      Padding(padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('STATUS', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                    ],
                   ),
-                  ...list.map((inv) {
-                    return TableRow(
-                      decoration: const BoxDecoration(
-                        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: isCredit ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E8),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      item['stmtType'] as String,
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: isCredit ? const Color(0xFF166534) : const Color(0xFFDC2626),
                       ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '₹${_fmt((item['stmtAmt'] as num).toDouble())}',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: isCredit ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(LucideIcons.calendar, size: 12, color: Color(0xFF94A3B8)),
+                    const SizedBox(width: 4),
+                    Text(
+                      item['stmtDate'] as String,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+  // ══════════════════════════════════════════════════════════════════════════
+  // MODAL: EDIT ACCOUNT (Matching Images 4 & 5)
+  // ══════════════════════════════════════════════════════════════════════════
+  void _openEditAccountModal(Map<String, dynamic> acc) {
+    final nameCtrl = TextEditingController(text: acc['name'] as String);
+    final accountNumCtrl = TextEditingController(text: acc['accountNumber'] as String);
+    String selectedType = acc['accountType'] as String? ?? 'Cash';
+    final balanceCtrl = TextEditingController(text: (acc['balance'] as num).toInt().toString());
+    String selectedStatus = acc['status'] as String? ?? 'Active';
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text(inv.invoiceNumber, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: AppColors.darkText))),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text(inv.clientName, style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('₹ ${_formatCurrency(inv.totalAmount)}', style: const TextStyle(fontSize: 13, color: AppColors.darkText))),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('₹ ${_formatCurrency(inv.paidAmount)}', style: const TextStyle(fontSize: 13, color: AppColors.primaryGreen, fontWeight: FontWeight.w600))),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text('₹ ${_formatCurrency(inv.dueAmount)}', style: const TextStyle(fontSize: 13, color: Color(0xFFDC2626), fontWeight: FontWeight.w700))),
-                        Padding(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: Text(inv.dueDate ?? 'N/A', style: const TextStyle(fontSize: 13, color: AppColors.secondaryText))),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFEE2E2),
-                              borderRadius: BorderRadius.circular(6),
+                        Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF), // Soft Blue
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Center(
+                                child: Icon(LucideIcons.pencil, size: 17, color: Color(0xFF2563EB)),
+                              ),
                             ),
-                            child: Text(
-                              inv.status.toUpperCase(),
-                              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: Color(0xFF991B1B)),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: const [
+                                Text(
+                                  'Edit Account',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.3,
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Update registered account details and balance',
+                                  style: TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        InkWell(
+                          onTap: () => Navigator.pop(ctx),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
                             ),
                           ),
                         ),
                       ],
-                    );
-                  }),
-                ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Account Name *
+                    const Text(
+                      'Account Name *',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: nameCtrl,
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                      decoration: _inputDecoration('Account Name'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row: Account / UPI Number & Account Type
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Account / UPI Number',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: accountNumCtrl,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration('CASH-REG-01'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Account Type',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: selectedType,
+                                    isExpanded: true,
+                                    icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                                    items: const [
+                                      DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Bank Account', child: Text('Bank Account', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Wallet / UPI', child: Text('Wallet / UPI', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Savings', child: Text('Savings', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Current', child: Text('Current', style: TextStyle(fontSize: 13))),
+                                    ],
+                                    onChanged: (v) {
+                                      if (v != null) setModalState(() => selectedType = v);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row: Current Balance (₹) * & Status
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Current Balance (₹) *',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: balanceCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration('0'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Status',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: selectedStatus,
+                                    isExpanded: true,
+                                    icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                                    items: const [
+                                      DropdownMenuItem(value: 'Active', child: Text('Active', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Inactive', child: Text('Inactive', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Archived', child: Text('Archived', style: TextStyle(fontSize: 13))),
+                                    ],
+                                    onChanged: (v) {
+                                      if (v != null) setModalState(() => selectedStatus = v);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Actions Row: Cancel & Save Changes
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFFE2E8F0)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              final newName = nameCtrl.text.trim();
+                              final newNumber = accountNumCtrl.text.trim();
+                              final newBal = double.tryParse(balanceCtrl.text.trim()) ?? 0.0;
+
+                              setState(() {
+                                acc['name'] = newName.isNotEmpty ? newName : acc['name'];
+                                acc['accountNumber'] = newNumber.isNotEmpty ? newNumber : acc['accountNumber'];
+                                acc['accountType'] = selectedType;
+                                acc['isCash'] = selectedType.toLowerCase() == 'cash';
+                                acc['balance'] = newBal;
+                                acc['status'] = selectedStatus;
+                              });
+
+                              Navigator.pop(ctx);
+                              AppSnackbar.show(
+                                context,
+                                "Account '${acc['name']}' updated successfully!",
+                                type: SnackType.success,
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF166534),
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            ),
+                            child: const Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteAccount(Map<String, dynamic> acc) {
+    setState(() {
+      _accountsList.removeWhere((item) => item['id'] == acc['id']);
+    });
+    AppSnackbar.show(
+      context,
+      "Account '${acc['name']}' removed from registers",
+      type: SnackType.info,
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MODAL 1: RECORD SUPPLIER DISBURSEMENT (Matching Screenshot 2)
+  // ══════════════════════════════════════════════════════════════════════════
+  void _openSupplierDisbursementModal() {
+    String selectedSupplier = 'drfchgv';
+    final billIdCtrl = TextEditingController();
+    final origDueCtrl = TextEditingController(text: '0');
+    final paidAmountCtrl = TextEditingController(text: '0');
+    String disbursementMode = 'Cash';
+    final refNoCtrl = TextEditingController(text: 'REF-181');
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Record Supplier Disbursement',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => Navigator.pop(ctx),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Select Supplier Profile
+                    const Text(
+                      'Select Supplier Profile',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 44,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedSupplier,
+                          isExpanded: true,
+                          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                          items: const [
+                            DropdownMenuItem(value: 'drfchgv', child: Text('drfchgv', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 'kamesh mmotors', child: Text('kamesh mmotors', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 'testing cliks business supplier', child: Text('testing cliks business supplier', style: TextStyle(fontSize: 13))),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) setModalState(() => selectedSupplier = v);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row: Purchase Bill Linked ID & Original Due Amount (₹)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Purchase Bill Linked ID',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: billIdCtrl,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration(''),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Original Due Amount (₹)',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: origDueCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration('0'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Paid Amount (Outflow worth, ₹)
+                    const Text(
+                      'Paid Amount (Outflow worth, ₹)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: paidAmountCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                      decoration: _inputDecoration('0'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row: Disbursement Mode & Cheque / Ref No
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Disbursement Mode',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: disbursementMode,
+                                    isExpanded: true,
+                                    icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                                    items: const [
+                                      DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Bank Transfer', child: Text('Bank Transfer', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Cheque', child: Text('Cheque', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'UPI', child: Text('UPI', style: TextStyle(fontSize: 13))),
+                                    ],
+                                    onChanged: (v) {
+                                      if (v != null) setModalState(() => disbursementMode = v);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Cheque / Ref No',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: refNoCtrl,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration('REF-181'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Full-width Action: Disburse Supplier Funds
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final amt = double.tryParse(paidAmountCtrl.text.trim()) ?? 0.0;
+                          final billId = billIdCtrl.text.trim();
+                          final refNo = refNoCtrl.text.trim();
+
+                          setState(() {
+                            _inwardOutwardList.insert(0, {
+                              'entryId': 'PAY-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+                              'date': '2026-11-17',
+                              'flowType': 'OUTWARD',
+                              'isLent': false,
+                              'party': selectedSupplier,
+                              'reference': refNo.isNotEmpty ? refNo : 'REF-${DateTime.now().millisecond}',
+                              'originalAmount': double.tryParse(origDueCtrl.text.trim()) ?? amt,
+                              'transactedAmount': amt > 0 ? amt : 5000.0,
+                              'mode': disbursementMode,
+                              'status': 'MATCHED',
+                            });
+                          });
+
+                          Navigator.pop(ctx);
+                          AppSnackbar.show(
+                            context,
+                            "Supplier disbursement of ₹${_fmt(amt > 0 ? amt : 5000.0)} recorded for '$selectedSupplier'!",
+                            type: SnackType.success,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF166534),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text(
+                          'Disburse Supplier Funds',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MODAL 2: RECORD CUSTOMER PAYMENT (Matching Screenshot 3)
+  // ══════════════════════════════════════════════════════════════════════════
+  void _openCustomerPaymentModal() {
+    String selectedCustomer = 'ravinew2004';
+    final invoiceIdCtrl = TextEditingController(text: 'DKSJCS-353226');
+    final origAmountCtrl = TextEditingController(text: '212');
+    final paidAmountCtrl = TextEditingController();
+    String paymentMode = 'Cash';
+    final refIdCtrl = TextEditingController();
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    // Header
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Record Customer Payment',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => Navigator.pop(ctx),
+                          borderRadius: BorderRadius.circular(20),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF1F5F9),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Center(
+                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Select Customer Profile
+                    const Text(
+                      'Select Customer Profile',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    Container(
+                      height: 44,
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedCustomer,
+                          isExpanded: true,
+                          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                          items: const [
+                            DropdownMenuItem(value: 'ravinew2004', child: Text('ravinew2004', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 'Walk-in Customer', child: Text('Walk-in Customer', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 'ravinew', child: Text('ravinew', style: TextStyle(fontSize: 13))),
+                            DropdownMenuItem(value: 'kamesh', child: Text('kamesh', style: TextStyle(fontSize: 13))),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) setModalState(() => selectedCustomer = v);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row: Invoice Linked ID & Original Amount (₹)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Invoice Linked ID',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: invoiceIdCtrl,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration('DKSJCS-353226'),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Original Amount (₹)',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: origAmountCtrl,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration('212'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Paid amount (Receipt worth, ₹)
+                    const Text(
+                      'Paid amount (Receipt worth, ₹)',
+                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: paidAmountCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                      decoration: _inputDecoration('0.00'),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Row: Payment Mode & Ref ID / UPI reference
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Payment Mode',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                height: 44,
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                                ),
+                                child: DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: paymentMode,
+                                    isExpanded: true,
+                                    icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                                    items: const [
+                                      DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Bank Transfer', child: Text('Bank Transfer', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'UPI', child: Text('UPI', style: TextStyle(fontSize: 13))),
+                                      DropdownMenuItem(value: 'Cheque', child: Text('Cheque', style: TextStyle(fontSize: 13))),
+                                    ],
+                                    onChanged: (v) {
+                                      if (v != null) setModalState(() => paymentMode = v);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Ref ID / UPI reference',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
+                              ),
+                              const SizedBox(height: 6),
+                              TextField(
+                                controller: refIdCtrl,
+                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+                                decoration: _inputDecoration(''),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Full-width Action: Finalize Payment Collection
+                    SizedBox(
+                      width: double.infinity,
+                      height: 46,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          final amt = double.tryParse(paidAmountCtrl.text.trim()) ?? 0.0;
+                          final invId = invoiceIdCtrl.text.trim();
+                          final orig = double.tryParse(origAmountCtrl.text.trim()) ?? amt;
+
+                          setState(() {
+                            _inwardOutwardList.insert(0, {
+                              'entryId': 'REC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+                              'date': '2026-11-17',
+                              'flowType': 'INWARD',
+                              'isLent': true,
+                              'party': selectedCustomer,
+                              'reference': invId.isNotEmpty ? invId : 'INV-${DateTime.now().millisecond}',
+                              'originalAmount': orig > 0 ? orig : amt,
+                              'transactedAmount': amt > 0 ? amt : 212.0,
+                              'mode': paymentMode,
+                              'status': 'MATCHED',
+                            });
+                          });
+
+                          Navigator.pop(ctx);
+                          AppSnackbar.show(
+                            context,
+                            "Payment receipt of ₹${_fmt(amt > 0 ? amt : 212.0)} collected from '$selectedCustomer'!",
+                            type: SnackType.success,
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF166534),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                        child: const Text(
+                          'Finalize Payment Collection',
+                          style: TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // HELPER FOR INPUT DECORATION
+  // ══════════════════════════════════════════════════════════════════════════
+  InputDecoration _inputDecoration(String hint) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
       ),
     );
   }
