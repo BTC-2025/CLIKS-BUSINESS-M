@@ -2,29 +2,26 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'api_exception.dart';
 import 'token_service.dart';
 import 'package:http_parser/http_parser.dart';
 
-/// Central HTTP client for all BNX Mail API calls.
+/// Central HTTP client for all BNX Mail & Cliks Business API calls.
 ///
 /// Features:
-/// - Reads BASE_URL from flutter_dotenv
+/// - Configurable base URL (default: https://api.bnxmail.com)
 /// - Automatically injects Authorization header
 /// - 401 → auto refreshes token → retries once
 /// - Uniform error parsing into [ApiException]
 /// - 15-second timeout on all requests
 class ApiClient {
+  static String _base = 'https://api.bnxmail.com';
+
   static String get baseUrl => _base;
 
-  static String get _base {
-    try {
-      return dotenv.env['BASE_URL'] ?? 'https://api.bnxmail.com';
-    } catch (_) {
-      return 'https://api.bnxmail.com';
-    }
+  static void setBaseUrl(String url) {
+    _base = url.replaceAll(RegExp(r'/+$'), '');
   }
 
   static const Duration _timeout = Duration(seconds: 15);

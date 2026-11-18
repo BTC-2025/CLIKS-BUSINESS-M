@@ -1,13 +1,14 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_exception.dart';
 import '../../core/network/token_service.dart';
-import '../../../../manage_account_api_bundle/core/notifications/notification_service.dart';
 import '../../models/user_model.dart';
 import 'user_repository.dart';
 
 /// Handles all authentication API calls.
 /// Saves/clears tokens after successful login/logout.
 class AuthRepository {
+  /// Optional callback to retrieve FCM / push notification token if used by the app.
+  static String? Function()? fcmTokenProvider;
   // ── Login ────────────────────────────────────────────────────────────────
 
   /// Authenticates the user and persists tokens.
@@ -75,9 +76,9 @@ class AuthRepository {
           .catchError((_) {});
     }
 
-    // Register FCM device token with backend API immediately after login
+    // Register device token with backend API immediately after login if available
     try {
-      final fcmToken = NotificationService.instance.fcmToken;
+      final fcmToken = fcmTokenProvider?.call();
       if (fcmToken != null && fcmToken.isNotEmpty) {
         UserRepository.registerDeviceToken(fcmToken).catchError((_) {});
       }
@@ -90,7 +91,7 @@ class AuthRepository {
 
   static Future<void> logout() async {
     try {
-      final fcmToken = NotificationService.instance.fcmToken;
+      final fcmToken = fcmTokenProvider?.call();
       if (fcmToken != null && fcmToken.isNotEmpty) {
         await UserRepository.unregisterDeviceToken(fcmToken);
       }
@@ -107,7 +108,7 @@ class AuthRepository {
 
   static Future<void> logoutSpecificAccount(String email) async {
     try {
-      final fcmToken = NotificationService.instance.fcmToken;
+      final fcmToken = fcmTokenProvider?.call();
       if (fcmToken != null && fcmToken.isNotEmpty) {
         await UserRepository.unregisterDeviceToken(fcmToken);
       }

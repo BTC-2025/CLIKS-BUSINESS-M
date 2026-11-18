@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../manage_account_api_bundle/data/core/network/api_exception.dart';
-import '../../../../manage_account_api_bundle/data/models/signature_model.dart';
-import '../../../../manage_account_api_bundle/data/models/two_factor_model.dart';
-import '../../../../manage_account_api_bundle/data/models/user_settings_model.dart';
+import '../../core/network/api_exception.dart';
+import '../../models/signature_model.dart';
+import '../../models/two_factor_model.dart';
+import '../../models/user_settings_model.dart';
 import 'account_provider.dart';
-import '../../../../manage_account_api_bundle/data/providers/repositories/settings_repository.dart';
+import '../repositories/settings_repository.dart';
 
 /// Immutable state containing all settings, signatures, and customization values.
 ///
@@ -181,14 +181,18 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       bool? smartComp = fullSettings?.smartComposeEnabled;
       try {
         final composing = await SettingsRepository.getComposing();
-        if (composing.containsKey('spellingCheckEnabled'))
+        if (composing.containsKey('spellingCheckEnabled')) {
           spell = composing['spellingCheckEnabled'];
-        if (composing.containsKey('grammarCheckEnabled'))
+        }
+        if (composing.containsKey('grammarCheckEnabled')) {
           grammar = composing['grammarCheckEnabled'];
-        if (composing.containsKey('autoCorrectEnabled'))
+        }
+        if (composing.containsKey('autoCorrectEnabled')) {
           autoCorr = composing['autoCorrectEnabled'];
-        if (composing.containsKey('smartComposeEnabled'))
+        }
+        if (composing.containsKey('smartComposeEnabled')) {
           smartComp = composing['smartComposeEnabled'];
+        }
       } catch (_) {}
 
       if (_loadingAccountId != accountEmail) return;

@@ -1,18 +1,11 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../models/account_model.dart';
-
-import 'package:go_router/go_router.dart';
-import 'repositories/user_repository.dart';
-import 'repositories/auth_repository.dart';
-import '../features/auth/presentation/notifiers/auth_notifier.dart';
-import '../core/network/token_service.dart';
-import 'email_provider.dart';
-import 'colab_provider.dart';
-import 'app_state_provider.dart';
+import '../../models/account_model.dart';
+import '../repositories/user_repository.dart';
+import '../repositories/auth_repository.dart';
+import '../../core/network/token_service.dart';
 import 'settings_provider.dart';
-import 'storage_provider.dart';
 
 class AccountsNotifier extends StateNotifier<List<AccountModel>> {
   AccountsNotifier()
@@ -219,19 +212,9 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
       return acc.copyWith(isActive: isTarget);
     }).toList();
 
-    // 3. Clear state caches and reset navigation folder to 'Inbox' (Mail Section)
+    // 3. Clear state caches and invalidate settings for the new account
     if (ref != null) {
-      ref.read(emailProvider.notifier).switchAccountContext(cleanId);
-      ref.read(colabListProvider.notifier).switchAccountContext(cleanId);
-      ref.read(colabInvitationsProvider.notifier).switchAccountContext(cleanId);
-      ref.read(casboxMessagesProvider.notifier).switchAccountContext(cleanId);
-      ref.read(customLabelsProvider.notifier).switchAccountContext(cleanId);
-      ref.read(storageQuotaProvider.notifier).onAccountSwitched();
       ref.invalidate(settingsProvider);
-
-      // Reset active folder to 'Inbox' so app lands on Mail section
-      ref.read(appUiProvider.notifier).selectFolder('Inbox');
-      ref.read(appUiProvider.notifier).loadUserSettings(cleanId);
     }
 
     // 4. Non-blocking background call to update primary mailbox on backend
@@ -240,11 +223,12 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
 
   /// Signs out of a single specific account.
   /// If other accounts exist in the account list, automatically switches to the next account.
-  /// If no other account exists, clears state and navigates to the login screen.
+  /// If no other account exists, clears state.
   Future<void> signOutSingleAccount({
     required String targetEmail,
-    required WidgetRef ref,
-    required BuildContext context,
+    WidgetRef? ref,
+    BuildContext? context,
+    void Function()? onAllAccountsLoggedOut,
   }) async {
     final cleanTarget = targetEmail.trim().toLowerCase();
     print('[ACCOUNT SIGN OUT] Signing out of single account: $cleanTarget');
@@ -274,7 +258,7 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
       // Switch session tokens to next account
       await switchAccount(nextAccount.id, ref);
 
-      if (context.mounted) {
+      if (context != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -286,17 +270,14 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
         );
       }
     } else {
-      // 3B. No other accounts exist! Clear all providers and navigate to login screen
+      // 3B. No other accounts exist! Clear state
       print(
-        '[ACCOUNT SIGN OUT] No remaining accounts. Redirecting to login screen.',
+        '[ACCOUNT SIGN OUT] No remaining accounts.',
       );
-      ref.read(emailProvider.notifier).clear();
-      ref.read(accountsProvider.notifier).clear();
-      ref.read(authProvider.notifier).logout();
+      clear();
+      onAllAccountsLoggedOut?.call();
 
-      if (context.mounted) {
-        // We are already past an await so this is safe — no addPostFrameCallback needed
-        context.go('/login');
+      if (context != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Signed out of $cleanTarget'),

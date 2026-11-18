@@ -4,21 +4,30 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../core/network/api_exception.dart';
-import '../../../core/widgets/avatar_widget.dart';
-import '../../../data/account_provider.dart';
-import '../../../data/repositories/storage_repository.dart';
-import '../../../data/repositories/subscription_repository.dart';
-import '../../../data/repositories/user_repository.dart';
-import '../../../data/settings_provider.dart';
-import '../../../models/account_model.dart';
-import '../../../models/two_factor_model.dart';
+import '../core/network/api_exception.dart';
+import '../core/widgets/avatar_widget.dart';
+import '../data/providers/account_provider.dart';
+import '../data/repositories/storage_repository.dart';
+import '../data/repositories/subscription_repository.dart';
+import '../data/repositories/user_repository.dart';
+import '../data/providers/settings_provider.dart';
+import '../models/account_model.dart';
+import '../models/two_factor_model.dart';
 
 class ManageAccountScreen extends ConsumerStatefulWidget {
   final int initialTab;
-  const ManageAccountScreen({super.key, this.initialTab = 0});
+  final VoidCallback? onAddAccount;
+  final VoidCallback? onSignedOut;
+  final VoidCallback? onNavigateToStorage;
+
+  const ManageAccountScreen({
+    super.key,
+    this.initialTab = 0,
+    this.onAddAccount,
+    this.onSignedOut,
+    this.onNavigateToStorage,
+  });
 
   @override
   ConsumerState<ManageAccountScreen> createState() =>
@@ -1065,7 +1074,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
   // ═══════════════════════════════════════════════════════════════════════════
   Future<void> _pickAndUploadPhoto() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.image,
         allowMultiple: false,
         withData: true,
@@ -1203,7 +1212,15 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     } else if (Navigator.of(context).canPop()) {
       Navigator.of(context).pop();
     } else {
-      context.go('/home');
+      Navigator.of(context).maybePop();
+    }
+  }
+
+  void _navigateToStoragePage() {
+    if (widget.onNavigateToStorage != null) {
+      widget.onNavigateToStorage!();
+    } else {
+      Navigator.of(context).pushNamed('/storage');
     }
   }
 
@@ -1426,7 +1443,11 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         if (value == 'sign_out') {
           _handleSignOut();
         } else if (value == 'add_account') {
-          context.go('/auth/login');
+          if (widget.onAddAccount != null) {
+            widget.onAddAccount!();
+          } else {
+            Navigator.of(context).pushNamed('/login');
+          }
         }
       },
       itemBuilder: (context) => [
@@ -1484,7 +1505,11 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
                 InkWell(
                   onTap: () {
                     Navigator.pop(context);
-                    context.go('/auth/login');
+                    if (widget.onAddAccount != null) {
+                      widget.onAddAccount!();
+                    } else {
+                      Navigator.of(context).pushNamed('/login');
+                    }
                   },
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
@@ -1614,7 +1639,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
               child: InkWell(
                 onTap: () {
                   if (index == 4) {
-                    context.push('/storage');
+                    _navigateToStoragePage();
                     return;
                   }
                   setState(() {
@@ -1743,7 +1768,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
             child: InkWell(
               onTap: () {
                 if (index == 4) {
-                  context.push('/storage');
+                  _navigateToStoragePage();
                   return;
                 }
                 setState(() {
@@ -1993,7 +2018,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
         ],
       ),
       actionLabel: 'Manage storage',
-      onAction: () => context.push('/storage'),
+      onAction: _navigateToStoragePage,
     );
 
     return Column(
@@ -4672,7 +4697,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
-              onPressed: () => context.push('/storage'),
+              onPressed: _navigateToStoragePage,
               icon: const Icon(Icons.storage_rounded, size: 18),
               label: const Text('Open Storage Manager'),
               style: ElevatedButton.styleFrom(
@@ -5201,6 +5226,7 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
             targetEmail: activeEmail,
             ref: ref,
             context: context,
+            onAllAccountsLoggedOut: widget.onSignedOut,
           );
     }
   }
