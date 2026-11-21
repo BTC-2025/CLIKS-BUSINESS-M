@@ -184,6 +184,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                           AppRoute.payroll,
                           AppRoute.allocateEmployeeLoan,
                           AppRoute.processMonthlyPayroll,
+                          AppRoute.disburseSalaryAdvance,
                           AppRoute.attendance,
                           AppRoute.manualPunchEntry,
                           AppRoute.regularizeMissedPunch,
@@ -319,7 +320,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                                   case AppRoute.subIds:
                                     return 'Manage Sub-IDs';
                                   case AppRoute.inventory:
-                                    return 'Inventory';
+                                    return 'Categories';
                                   case AppRoute.pos:
                                     return 'Point of Sale (POS)';
                                   case AppRoute.reports:
@@ -335,6 +336,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                                   case AppRoute.payroll:
                                   case AppRoute.allocateEmployeeLoan:
                                   case AppRoute.processMonthlyPayroll:
+                                  case AppRoute.disburseSalaryAdvance:
                                     return 'Payroll';
                                   case AppRoute.attendance:
                                   case AppRoute.manualPunchEntry:
@@ -596,6 +598,7 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                   AppRoute.payroll,
                   AppRoute.allocateEmployeeLoan,
                   AppRoute.processMonthlyPayroll,
+                  AppRoute.disburseSalaryAdvance,
                   AppRoute.attendance,
                   AppRoute.manualPunchEntry,
                   AppRoute.regularizeMissedPunch,

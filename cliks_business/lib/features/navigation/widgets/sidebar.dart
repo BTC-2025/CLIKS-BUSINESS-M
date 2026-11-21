@@ -475,7 +475,6 @@ class Sidebar extends ConsumerWidget {
                     isInitiallyExpanded:
                         navigation.currentRoute == AppRoute.staff ||
                         navigation.currentRoute == AppRoute.payroll ||
-                        navigation.currentRoute == AppRoute.subIds ||
                         navigation.currentRoute == AppRoute.hr,
                     children: [
                       _SidebarSubItem(
@@ -491,19 +490,6 @@ class Sidebar extends ConsumerWidget {
                           ref
                               .read(navigationProvider.notifier)
                               .setRoute(AppRoute.staff);
-                        },
-                      ),
-                      _SidebarSubItem(
-                        label: 'Sub-IDs',
-                        isSelected: navigation.currentRoute == AppRoute.subIds,
-                        onTap: () {
-                          final scaffold = Scaffold.maybeOf(context);
-                          if (scaffold != null && scaffold.isDrawerOpen) {
-                            Navigator.pop(context);
-                          }
-                          ref
-                              .read(navigationProvider.notifier)
-                              .setRoute(AppRoute.subIds);
                         },
                       ),
                       _SidebarSubItem(
@@ -1033,10 +1019,10 @@ class Sidebar extends ConsumerWidget {
                     isInitiallyExpanded: [
                       AppRoute.staff,
                       AppRoute.payroll,
-                      AppRoute.subIds,
                       AppRoute.hr,
                       AppRoute.allocateEmployeeLoan,
                       AppRoute.processMonthlyPayroll,
+                      AppRoute.disburseSalaryAdvance,
                     ].contains(navigation.currentRoute),
                     children: [
                       _buildMacOSSubItem(
@@ -1050,15 +1036,6 @@ class Sidebar extends ConsumerWidget {
                             .setRoute(AppRoute.staff),
                       ),
                       _buildMacOSSubItem(
-                        icon: LucideIcons.users,
-                        label: 'Sub-IDs',
-                        isSelected:
-                            navigation.currentRoute == AppRoute.subIds,
-                        onTap: () => ref
-                            .read(navigationProvider.notifier)
-                            .setRoute(AppRoute.subIds),
-                      ),
-                      _buildMacOSSubItem(
                         icon: LucideIcons.fileText,
                         label: 'Payroll',
                         isSelected:
@@ -1066,7 +1043,9 @@ class Sidebar extends ConsumerWidget {
                             navigation.currentRoute ==
                                 AppRoute.allocateEmployeeLoan ||
                             navigation.currentRoute ==
-                                AppRoute.processMonthlyPayroll,
+                                AppRoute.processMonthlyPayroll ||
+                            navigation.currentRoute ==
+                                AppRoute.disburseSalaryAdvance,
                         onTap: () => ref
                             .read(navigationProvider.notifier)
                             .setRoute(AppRoute.payroll),

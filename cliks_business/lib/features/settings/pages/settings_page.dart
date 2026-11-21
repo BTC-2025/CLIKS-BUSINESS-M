@@ -105,12 +105,19 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   bool _reverseGoodsLogic = true;
   bool _displayAmount = false;
   bool _darkMode = false;
-  String _language = 'English (US)';
+  String _language = 'EN-US (English)';
   bool _pushNotifications = true;
   bool _emailDigest = false;
-  bool _publicProfile = true;
+  bool _publicProfile = false;
   bool _twoFactorAuth = true;
   bool _dataAnalytics = false;
+
+  // Customization & Loyalty State (Image 1, 2, 3)
+  bool _showCustomization = false;
+  bool _enableLoyaltyPoints = true;
+  final TextEditingController _spendRequiredController = TextEditingController(text: '100');
+  final TextEditingController _pointsPerDiscountController = TextEditingController(text: '1');
+  final TextEditingController _maxClaimPercentageController = TextEditingController(text: '50');
 
   // Org Profile State
   final TextEditingController _businessNameController = TextEditingController(text: 'Cliks Business');
@@ -158,6 +165,11 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     _booksDateController.dispose();
     _pincodeController.dispose();
     _addressController.dispose();
+
+    // Dispose loyalty program controllers
+    _spendRequiredController.dispose();
+    _pointsPerDiscountController.dispose();
+    _maxClaimPercentageController.dispose();
     
     super.dispose();
   }
@@ -168,6 +180,546 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
     final isMobile = screenWidth < 950;
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
+    if (!_showCustomization) {
+      return _buildPrimarySettingsView(context, isMobile, isMacOS);
+    }
+
+    return _buildCustomizationView(context, isMobile, isMacOS);
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRIMARY SETTINGS VIEW (Default view matching UI images)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildPrimarySettingsView(BuildContext context, bool isMobile, bool isMacOS) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.symmetric(
+            horizontal: isMobile ? 16 : 32,
+            vertical: 24,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildPrimaryHeader(isMobile),
+              const SizedBox(height: 28),
+
+              // 1. Preferences Section
+              _buildPrimarySectionHeader(
+                icon: LucideIcons.globe,
+                title: 'Preferences',
+              ),
+              const SizedBox(height: 12),
+              _buildSettingsCard(
+                children: [
+                  _buildSwitchRow(
+                    title: 'Dark Mode',
+                    subtitle: 'Use a dark theme for the application interface.',
+                    value: _darkMode,
+                    onChanged: (val) => setState(() => _darkMode = val),
+                  ),
+                  _buildDivider(),
+                  _buildLanguageRow(),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // 2. Notifications Section
+              _buildPrimarySectionHeader(
+                icon: LucideIcons.bell,
+                title: 'Notifications',
+              ),
+              const SizedBox(height: 12),
+              _buildSettingsCard(
+                children: [
+                  _buildSwitchRow(
+                    title: 'Push Notifications',
+                    subtitle: 'Receive real-time alerts for updates and activities.',
+                    value: _pushNotifications,
+                    onChanged: (val) => setState(() => _pushNotifications = val),
+                  ),
+                  _buildDivider(),
+                  _buildSwitchRow(
+                    title: 'Email Digest',
+                    subtitle: 'Receive a weekly summary of your financial activity.',
+                    value: _emailDigest,
+                    onChanged: (val) => setState(() => _emailDigest = val),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // 3. Customer Loyalty Program Section
+              _buildPrimarySectionHeader(
+                icon: LucideIcons.award,
+                title: 'Customer Loyalty Program',
+              ),
+              const SizedBox(height: 12),
+              _buildSettingsCard(
+                children: [
+                  _buildSwitchRow(
+                    title: 'Enable Loyalty Points',
+                    subtitle: 'Reward customers with points for purchases.',
+                    value: _enableLoyaltyPoints,
+                    onChanged: (val) => setState(() => _enableLoyaltyPoints = val),
+                  ),
+                  _buildDivider(),
+                  _buildInputSettingRow(
+                    title: 'Spend required for 1 point',
+                    subtitle: 'Amount in ₹ a customer must spend on an invoice to earn 1 loyalty point.',
+                    controller: _spendRequiredController,
+                    unitSuffix: '₹',
+                  ),
+                  _buildDivider(),
+                  _buildInputSettingRow(
+                    title: 'Points per ₹1 discount',
+                    subtitle: 'Number of points required to get a ₹1 discount.',
+                    controller: _pointsPerDiscountController,
+                    unitSuffix: 'pts',
+                  ),
+                  _buildDivider(),
+                  _buildInputSettingRow(
+                    title: 'Max Claim Percentage',
+                    subtitle: "Maximum percentage of a customer's total points they can claim per invoice.",
+                    controller: _maxClaimPercentageController,
+                    unitSuffix: '%',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 28),
+
+              // 4. Privacy & Security Section
+              _buildPrimarySectionHeader(
+                icon: LucideIcons.shield,
+                title: 'Privacy & Security',
+              ),
+              const SizedBox(height: 12),
+              _buildSettingsCard(
+                children: [
+                  _buildSwitchRow(
+                    title: 'Public Profile',
+                    subtitle: 'Allow other users on the platform to find you.',
+                    value: _publicProfile,
+                    onChanged: (val) => setState(() => _publicProfile = val),
+                  ),
+                  _buildDivider(),
+                  _buildSwitchRow(
+                    title: 'Two-Factor Authentication',
+                    subtitle: 'Add an extra layer of security to your account.',
+                    value: _twoFactorAuth,
+                    onChanged: (val) => setState(() => _twoFactorAuth = val),
+                  ),
+                  _buildDivider(),
+                  _buildSwitchRow(
+                    title: 'Data & Analytics',
+                    subtitle: 'Allow usage data to be collected to improve experience.',
+                    value: _dataAnalytics,
+                    onChanged: (val) => setState(() => _dataAnalytics = val),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              // 5. Save Changes Button (Bottom-Right)
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    AppSnackbar.show(
+                      context,
+                      "Settings saved successfully!",
+                      type: SnackType.success,
+                    );
+                  },
+                  icon: const Icon(LucideIcons.save, size: 16),
+                  label: const Text(
+                    'Save Changes',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF166534),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimaryHeader(bool isMobile) {
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Settings',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.5,
+                ),
+              ),
+              _buildCustomizationButton(),
+            ],
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Manage your application preferences and system configurations.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Settings',
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.5,
+              ),
+            ),
+            SizedBox(height: 6),
+            Text(
+              'Manage your application preferences and system configurations.',
+              style: TextStyle(
+                fontSize: 13,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+        _buildCustomizationButton(),
+      ],
+    );
+  }
+
+  Widget _buildCustomizationButton() {
+    return OutlinedButton.icon(
+      onPressed: () {
+        setState(() {
+          _showCustomization = true;
+        });
+      },
+      icon: const Icon(
+        LucideIcons.slidersHorizontal,
+        size: 15,
+        color: Color(0xFF334155),
+      ),
+      label: const Text(
+        'Customization',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF1E293B),
+        ),
+      ),
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        foregroundColor: const Color(0xFF1E293B),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPrimarySectionHeader({
+    required IconData icon,
+    required String title,
+  }) {
+    return Row(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: const Color(0xFFE0F2FE),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 18,
+            color: const Color(0xFF0284C7),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSettingsCard({required List<Widget> children}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.015),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+
+  Widget _buildSwitchRow({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeColor: Colors.white,
+            activeTrackColor: const Color(0xFF166534),
+            inactiveThumbColor: Colors.white,
+            inactiveTrackColor: const Color(0xFFCBD5E1),
+            trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageRow() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Language',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'System localization language',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _language,
+                isDense: true,
+                icon: const Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                ),
+                items: const [
+                  DropdownMenuItem(
+                    value: 'EN-US (English)',
+                    child: Text('EN-US (English)', style: TextStyle(fontSize: 13, color: Color(0xFF1E293B))),
+                  ),
+                  DropdownMenuItem(
+                    value: 'HI-IN (Hindi)',
+                    child: Text('HI-IN (Hindi)', style: TextStyle(fontSize: 13, color: Color(0xFF1E293B))),
+                  ),
+                  DropdownMenuItem(
+                    value: 'TA-IN (Tamil)',
+                    child: Text('TA-IN (Tamil)', style: TextStyle(fontSize: 13, color: Color(0xFF1E293B))),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    setState(() => _language = val);
+                  }
+                },
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputSettingRow({
+    required String title,
+    required String subtitle,
+    required TextEditingController controller,
+    required String unitSuffix,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 76,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: TextField(
+                  controller: controller,
+                  textAlign: TextAlign.center,
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF1E293B),
+                  ),
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.zero,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              SizedBox(
+                width: 28,
+                child: Text(
+                  unitSuffix,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return const Divider(
+      height: 1,
+      thickness: 1,
+      color: Color(0xFFF1F5F9),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ADVANCED CUSTOMIZATION ENGINE VIEW (Existing full settings)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildCustomizationView(BuildContext context, bool isMobile, bool isMacOS) {
     return Scaffold(
       backgroundColor: isMacOS ? const Color(0xFFF8F9FB) : Colors.white,
       body: SafeArea(
@@ -190,7 +742,11 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                               children: [
                                 IconButton(
                                   icon: const Icon(LucideIcons.arrowLeft, color: AppColors.darkText),
-                                  onPressed: () => Navigator.of(context).maybePop(),
+                                  onPressed: () {
+                                    setState(() {
+                                      _showCustomization = false;
+                                    });
+                                  },
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),
                                 ),
@@ -215,6 +771,20 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
                                         ),
                                       ),
                                     ],
+                                  ),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      _showCustomization = false;
+                                    });
+                                  },
+                                  icon: const Icon(LucideIcons.arrowLeft, size: 14),
+                                  label: const Text('Back to Settings', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: AppColors.darkText,
+                                    side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
                                 ),
                               ],
@@ -332,23 +902,45 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
           accentColor: const Color(0xFF7C3AED),
         ),
       ],
-      trailingAction: ElevatedButton.icon(
-        onPressed: () {
-          AppSnackbar.show(
-            context,
-            "Deployment successful! System preferences updated globally.",
-            type: SnackType.success,
-          );
-        },
-        icon: const Icon(LucideIcons.rocket, size: 13),
-        label: const Text('Deploy Config', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF166534),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
+      trailingAction: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          OutlinedButton.icon(
+            onPressed: () {
+              setState(() {
+                _showCustomization = false;
+              });
+            },
+            icon: const Icon(LucideIcons.arrowLeft, size: 13),
+            label: const Text('Back to Settings', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: AppColors.darkText,
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          ElevatedButton.icon(
+            onPressed: () {
+              AppSnackbar.show(
+                context,
+                "Deployment successful! System preferences updated globally.",
+                type: SnackType.success,
+              );
+            },
+            icon: const Icon(LucideIcons.rocket, size: 13),
+            label: const Text('Deploy Config', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -38,6 +38,7 @@ import '../billing/pages/orders_page.dart';
 import '../billing/pages/customers_page.dart';
 import '../billing/pages/returns_page.dart';
 import '../billing/pages/products_page.dart';
+import '../billing/pages/categories_page.dart';
 import '../billing/pages/stock_page.dart';
 import '../billing/pages/warehouse_page.dart';
 import '../billing/pages/showrooms_page.dart';
@@ -151,6 +152,7 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         navigation.currentRoute == AppRoute.scheduleReturnReminder ||
         navigation.currentRoute == AppRoute.allocateEmployeeLoan ||
         navigation.currentRoute == AppRoute.processMonthlyPayroll ||
+        navigation.currentRoute == AppRoute.disburseSalaryAdvance ||
         navigation.currentRoute == AppRoute.manualPunchEntry ||
         navigation.currentRoute == AppRoute.regularizeMissedPunch;
 
@@ -212,7 +214,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
               return AppRoute.attendance;
             }
             if (navigation.currentRoute == AppRoute.allocateEmployeeLoan ||
-                navigation.currentRoute == AppRoute.processMonthlyPayroll) {
+                navigation.currentRoute == AppRoute.processMonthlyPayroll ||
+                navigation.currentRoute == AppRoute.disburseSalaryAdvance) {
               return AppRoute.payroll;
             }
             if (navigation.currentRoute == AppRoute.adjustStock ||
@@ -338,7 +341,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
                                         return AppRoute.attendance;
                                       }
                                       if (navigation.currentRoute == AppRoute.allocateEmployeeLoan ||
-                                          navigation.currentRoute == AppRoute.processMonthlyPayroll) {
+                                          navigation.currentRoute == AppRoute.processMonthlyPayroll ||
+                                          navigation.currentRoute == AppRoute.disburseSalaryAdvance) {
                                         return AppRoute.payroll;
                                       }
                                       if (navigation.currentRoute == AppRoute.adjustStock ||
@@ -885,6 +889,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return RegisterSupplierPage(key: ValueKey(route));
       case AppRoute.products:
         return ProductsPage(key: ValueKey(route));
+      case AppRoute.inventory:
+        return CategoriesPage(key: ValueKey(route));
       case AppRoute.stock:
         return StockPage(key: ValueKey(route));
       case AppRoute.warehouse:
@@ -908,6 +914,8 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return EmployeeLoanPanel(key: ValueKey(route));
       case AppRoute.processMonthlyPayroll:
         return ProcessPayrollPanel(key: ValueKey(route));
+      case AppRoute.disburseSalaryAdvance:
+        return SalaryAdvancePanel(key: ValueKey(route));
       case AppRoute.pos:
         return PosPage(key: ValueKey(route));
       case AppRoute.reports:
@@ -964,18 +972,6 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
         return RecordAccountingEntryModal(key: ValueKey(route));
       case AppRoute.scheduleReturnReminder:
         return ScheduleReturnReminderPanel(key: ValueKey(route));
-      default:
-        return Center(
-          key: ValueKey(route),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(LucideIcons.construction, size: 64, color: AppColors.border),
-              const SizedBox(height: 16),
-              Text('Page ${route.name} is under construction', style: const TextStyle(color: AppColors.secondaryText)),
-            ],
-          ),
-        );
     }
   }
 

@@ -78,6 +78,7 @@ enum AppRoute {
   regularizeMissedPunch,
   allocateEmployeeLoan,
   processMonthlyPayroll,
+  disburseSalaryAdvance,
   scheduleReturnReminder,
 }
 

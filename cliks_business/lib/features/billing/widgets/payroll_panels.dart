@@ -104,7 +104,7 @@ class _EmployeeLoanPanelState extends ConsumerState<EmployeeLoanPanel> {
                   _buildLabel('Immediate Salary Advance (₹)'),
                   _buildTextField(_advanceController, '0', keyboardType: TextInputType.number),
                   const SizedBox(height: 32),
-                  _buildActionButton('Settle Granted Loan Allocation', const Color(0xFF7C3AED)),
+                  _buildActionButton('Settle Granted Loan Allocation', const Color(0xFF059669)),
                 ],
               ),
             ),
@@ -434,7 +434,7 @@ class _ProcessPayrollPanelState extends ConsumerState<ProcessPayrollPanel> {
                   ),
                   
                   const SizedBox(height: 32),
-                  _buildActionButton('Settle Monthly Take-Home Salary', const Color(0xFF7C3AED)),
+                  _buildActionButton('Settle Monthly Take-Home Salary', const Color(0xFFE11D48)),
                 ],
               ),
             ),
@@ -505,6 +505,259 @@ class _ProcessPayrollPanelState extends ConsumerState<ProcessPayrollPanel> {
           fontSize: 9, 
           fontWeight: FontWeight.bold, 
           color: Colors.grey.shade600, 
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDropdown(List<String> items, String value, ValueChanged<String?> onChanged) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          icon: const Icon(LucideIcons.chevronDown, size: 16),
+          items: items.map((i) => DropdownMenuItem(value: i, child: Text(i, style: const TextStyle(fontSize: 13)))).toList(),
+          onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String hint, {TextInputType? keyboardType}) {
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.border),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 13),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: const TextStyle(color: Colors.grey),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(String label, Color color) {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: ElevatedButton(
+        onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.payroll),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+        child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+      ),
+    );
+  }
+}
+
+class SalaryAdvancePanel extends ConsumerStatefulWidget {
+  const SalaryAdvancePanel({super.key});
+
+  @override
+  ConsumerState<SalaryAdvancePanel> createState() => _SalaryAdvancePanelState();
+}
+
+class _SalaryAdvancePanelState extends ConsumerState<SalaryAdvancePanel> {
+  String _selectedEmployee = '-- Select Employee --';
+  String _recoveryMonth = 'Immediate (Next Payroll)';
+  final TextEditingController _amountController = TextEditingController();
+  final TextEditingController _reasonController = TextEditingController();
+
+  final List<String> _monthOptions = const [
+    'Immediate (Next Payroll)',
+    'January 2026',
+    'February 2026',
+    'March 2026',
+    'April 2026',
+    'May 2026',
+    'June 2026',
+    'July 2026',
+    'August 2026',
+    'September 2026',
+    'October 2026',
+    'November 2026',
+    'December 2026',
+    'January 2027',
+    'February 2027',
+    'March 2027',
+    'April 2027',
+  ];
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    _reasonController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 950;
+    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    final panelContent = Container(
+      constraints: BoxConstraints(
+        maxWidth: isMobile ? double.infinity : 480,
+        maxHeight: screenHeight * 0.85,
+      ),
+      margin: isMobile ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: isMobile
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              )
+            : BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isMobile) _buildDragHandle(),
+          Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFEF3C7),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          LucideIcons.zap,
+                          size: 18,
+                          color: Color(0xFFD97706),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Disburse Salary Advance',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF78350F),
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.payroll),
+                  icon: const Icon(LucideIcons.x, size: 18, color: AppColors.secondaryText),
+                  style: IconButton.styleFrom(
+                    backgroundColor: Colors.grey.shade100,
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 16, color: AppColors.border),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Employee Name'),
+                  _buildDropdown(
+                    ['-- Select Employee --', 'kiran Kumar C', 'Ravi Kumar', 'Arun Kumar', 'Priya Sharma'],
+                    _selectedEmployee,
+                    (val) => setState(() => _selectedEmployee = val!),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildLabel('Advance Amount (₹)'),
+                  _buildTextField(_amountController, 'e.g. 5000', keyboardType: TextInputType.number),
+                  const SizedBox(height: 16),
+                  _buildLabel('Recovery Payroll Month'),
+                  _buildDropdown(
+                    _monthOptions,
+                    _recoveryMonth,
+                    (val) => setState(() => _recoveryMonth = val!),
+                  ),
+                  const SizedBox(height: 16),
+                  _buildLabel('Reason / Purpose (Optional)'),
+                  _buildTextField(_reasonController, 'e.g. Medical emergency, festival advance, urgent'),
+                  const SizedBox(height: 28),
+                  _buildActionButton('Confirm Salary Advance Disbursal', const Color(0xFFD97706)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: Align(
+        alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
+        child: isMacOS
+            ? panelContent
+            : panelContent.animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
+      ),
+    );
+  }
+
+  Widget _buildDragHandle() {
+    return Align(
+      alignment: Alignment.topCenter,
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(top: 8, bottom: 4),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      child: Text(
+        text.toUpperCase(),
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade600,
           letterSpacing: 0.5,
         ),
       ),
