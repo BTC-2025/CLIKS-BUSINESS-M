@@ -2453,7 +2453,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         _buildTierCards(isMobile),
         SizedBox(height: isMobile ? 26 : 36),
 
-        // ─── 6. PLAN FEATURES COMPARISON TABLE (30 FEATURES x 5 TIERS MATRIX) ───
+        // ─── 6. PLAN FEATURES COMPARISON TABLE (94 FEATURES x 5 TIERS MATRIX) ───
         Container(
           key: _featuresComparisonKey,
           child: PlanFeaturesComparisonTable(
@@ -2464,7 +2464,544 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             },
           ),
         ),
+        SizedBox(height: isMobile ? 26 : 36),
+
+        // ─── 7. OPTIONAL CAPABILITY ADD-ONS ───
+        _buildAddOnsSection(isMobile),
+        SizedBox(height: isMobile ? 26 : 36),
+
+        // ─── 8. WHY INDIAN BUSINESSES CHOOSE CLIKS OVER ZOHO BOOKS ───
+        _buildZohoComparisonSection(isMobile),
       ],
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // OPTIONAL CAPABILITY ADD-ONS SECTION (Matching Screenshot 4)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildAddOnsSection(bool isMobile) {
+    final List<Map<String, String>> addOns = [
+      {
+        'module': 'Extra Sub IDs',
+        'monthly': '₹199 / user / mo',
+        'annual': '₹2,388 / user / yr',
+        'includes': 'Add more user logins with custom role permissions (Billing, Stock, Accountant)',
+      },
+      {
+        'module': 'Extra Branches',
+        'monthly': '₹399 / branch / mo',
+        'annual': '₹4,788 / branch / yr',
+        'includes': 'Expand to additional showrooms with isolated stock & consolidated HQ reports',
+      },
+      {
+        'module': 'Cloud Storage',
+        'monthly': '₹149 / mo (50 GB)',
+        'annual': '₹1,788 / yr',
+        'includes': 'Additional 50 GB secure cloud storage for receipts, invoices & documents',
+      },
+      {
+        'module': 'E-Way Bill Packs',
+        'monthly': '₹299 / pack (500 APIs)',
+        'annual': '₹299 / pack (500 APIs)',
+        'includes': 'On-demand credit packs for NIC live E-Way Bill generation',
+      },
+      {
+        'module': 'Sales E-Invoice',
+        'monthly': '₹299 / pack (500 APIs)',
+        'annual': '₹299 / pack (500 APIs)',
+        'includes': 'On-demand credit packs for government IRP portal E-Invoicing (IRN & QR)',
+      },
+      {
+        'module': 'Priority Support',
+        'monthly': '₹799 / mo',
+        'annual': '₹9,588 / yr',
+        'includes': 'Dedicated support queue with prioritized ticketing and fast response SLA',
+      },
+      {
+        'module': 'Advanced Analytics',
+        'monthly': '₹599 / mo',
+        'annual': '₹7,188 / yr',
+        'includes': 'AI-powered cohort analytics, cashflow forecasts, and margin intelligence',
+      },
+      {
+        'module': 'Custom Domain Portals',
+        'monthly': '₹999 / mo',
+        'annual': '₹11,988 / yr',
+        'includes': 'Run your customer billing and supplier portal on your own company domain',
+      },
+      {
+        'module': 'Employees (HR Headcount)',
+        'monthly': '₹60 / employee / mo',
+        'annual': '₹720 / employee / yr',
+        'includes': 'Scale employee database and automated payroll processing capacity',
+      },
+    ];
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      LucideIcons.plusCircle,
+                      size: 20,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Cliks Business — Optional Capability Add-ons',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Scale seats, locations, or compliance calls on demand without having to force-upgrade your core subscription.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Table
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double minWidth = 840;
+              final bool shouldScroll = constraints.maxWidth < minWidth;
+
+              final tableContent = SizedBox(
+                width: shouldScroll ? minWidth : constraints.maxWidth,
+                child: Column(
+                  children: [
+                    // Table Header Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8FAFC),
+                        border: Border(
+                          top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Add-on Module',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Monthly Rate',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Annual Rate',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 6,
+                            child: Text(
+                              'What it Includes',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Rows
+                    ...addOns.asMap().entries.map((entry) {
+                      final item = entry.value;
+                      final isLast = entry.key == addOns.length - 1;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: isLast
+                              ? null
+                              : const Border(
+                                  bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+                                ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                item['module']!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                item['monthly']!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                item['annual']!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF2563EB),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 6,
+                              child: Text(
+                                item['includes']!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: const Color(0xFF64748B),
+                                  height: 1.35,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+
+              if (shouldScroll) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: tableContent,
+                );
+              }
+              return tableContent;
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // ZOHO BOOKS COMPARISON SECTION (Matching Screenshots 5 & 6)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildZohoComparisonSection(bool isMobile) {
+    final List<Map<String, String>> comparisons = [
+      {
+        'module': 'Expense Claim (user)',
+        'zoho': '₹1,788 / user / yr',
+        'cliks': 'Staff reimbursements & claims are native in Cliks HR & Payroll at ₹0 extra cost; extra logins are full-access Sub IDs (₹199/mo).',
+      },
+      {
+        'module': 'Billpay',
+        'zoho': '₹35,988 / yr',
+        'cliks': 'Core vendor management, POs, bills, and payment logs are native in Cliks at ₹0 extra fee vs Zoho\'s ₹35,988/yr add-on.',
+      },
+      {
+        'module': 'Users',
+        'zoho': '₹1,800 / user / yr',
+        'cliks': 'Cliks offers Extra Sub IDs at ₹199/user/mo with granular role permissions (Billing, POS, Stock) without annual lock-in.',
+      },
+      {
+        'module': 'Location / Branch',
+        'zoho': '₹7,200 / location / yr',
+        'cliks': 'Cliks Extra Branches are ₹399/mo (~₹4,788/yr, 33% cheaper) with stock isolation, branch toggle, and custom prefixes.',
+      },
+      {
+        'module': 'API (call)',
+        'zoho': '₹9,990 / yr',
+        'cliks': 'Cliks avoids annual API lock-ins; compliance APIs use flexible on-demand credit packs (₹299 for 500 E-Way Bill calls).',
+      },
+      {
+        'module': 'Document AutoScan (scans)',
+        'zoho': '₹5,028 / yr',
+        'cliks': 'Cliks provides 50 GB Cloud Storage (₹149/mo) for digital bills without charging steep per-scan OCR fees (~₹8.38/scan in Zoho).',
+      },
+      {
+        'module': 'SMS Credits',
+        'zoho': '₹75 / credit pack',
+        'cliks': 'Cliks leverages official WhatsApp Business API (₹499/mo) for invoice PDFs and alerts with 95%+ open rates over SMS.',
+      },
+    ];
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      LucideIcons.trendingUp,
+                      size: 20,
+                      color: Color(0xFF16A34A),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Why Indian Businesses Choose Cliks Over Zoho Books',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF0F172A),
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Zoho Books charges extra recurring fees for Billpay, Expense Claims, extra Branches, and Document Scans. Cliks includes native capabilities right in your plan.',
+                        style: GoogleFonts.inter(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Table
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const double minWidth = 840;
+              final bool shouldScroll = constraints.maxWidth < minWidth;
+
+              final tableContent = SizedBox(
+                width: shouldScroll ? minWidth : constraints.maxWidth,
+                child: Column(
+                  children: [
+                    // Table Header Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFF8FAFC),
+                        border: Border(
+                          top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Feature / Module',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Text(
+                              'Zoho Books Extra Add-on Pricing',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFFDC2626),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 7,
+                            child: Text(
+                              'Cliks Business Native Benefit',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF16A34A),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // Rows
+                    ...comparisons.asMap().entries.map((entry) {
+                      final item = entry.value;
+                      final isLast = entry.key == comparisons.length - 1;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          border: isLast
+                              ? null
+                              : const Border(
+                                  bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+                                ),
+                        ),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                item['module']!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                item['zoho']!,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFFDC2626),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 7,
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(top: 2, right: 6),
+                                    child: Icon(
+                                      LucideIcons.check,
+                                      size: 14,
+                                      color: Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      item['cliks']!,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                        color: const Color(0xFF334155),
+                                        height: 1.35,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
+                  ],
+                ),
+              );
+
+              if (shouldScroll) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: tableContent,
+                );
+              }
+              return tableContent;
+            },
+          ),
+        ],
+      ),
     );
   }
 
@@ -3067,14 +3604,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                       ),
                     ),
 
-                    // Table Row 1 (From Image 2)
+                    // Table Row 1 (From Image 6)
                     _buildTableRow(
-                      invoiceId: 'INV-2026-0996',
-                      billingDate: '2026-09-10',
+                      invoiceId: 'INV-2026-1137',
+                      billingDate: '2026-11-11',
                       tierDetails: 'Elite Suite',
                       paymentMode: 'Cashfree PG',
                       status: 'Paid',
-                      amountPaid: '₹8,999',
+                      amountPaid: '₹29,988',
                       isLast: false,
                     ),
 

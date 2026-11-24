@@ -2,43 +2,39 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-/// Data class representing one feature row in the 5-tier plan comparison table.
+/// Data class representing one feature row in the 5-tier limit allocation matrix table.
 class PlanComparisonFeatureItem {
   final int id;
-  final String module;
+  final String category;
   final String featureName;
-  final String description;
   final String micro;
   final String starter;
   final String standard;
   final String growth;
   final String elite;
-  final IconData icon;
 
   const PlanComparisonFeatureItem({
     required this.id,
-    required this.module,
+    required this.category,
     required this.featureName,
-    required this.description,
-    this.micro = '—',
+    required this.micro,
     required this.starter,
     required this.standard,
     required this.growth,
     required this.elite,
-    required this.icon,
   });
 }
 
-/// A comprehensive, responsive 4-tier comparison table widget matching the design of Cliks Business.
+/// Comprehensive 5-tier limit allocation matrix table matching Cliks Business.
 class PlanFeaturesComparisonTable extends StatefulWidget {
   final bool isMobile;
-  final int activeTierNumber; // 1: Starter, 2: Standard, 3: Growth/Premium, 4: Elite
+  final int activeTierNumber; // 1: Micro, 2: Starter, 3: Standard, 4: Growth, 5: Elite Suite
   final ValueChanged<int>? onUpgrade;
 
   const PlanFeaturesComparisonTable({
     super.key,
     this.isMobile = false,
-    this.activeTierNumber = 1,
+    this.activeTierNumber = 5,
     this.onUpgrade,
   });
 
@@ -51,15 +47,14 @@ class _PlanFeaturesComparisonTableState
     extends State<PlanFeaturesComparisonTable> {
   // Brand colors
   static const Color _darkForestGreen = Color(0xFF135029);
-  static const Color _starterGreen = Color(0xFF16A34A);
-  static const Color _standardBlue = Color(0xFF0284C7);
-  static const Color _growthIndigo = Color(0xFF4F46E5);
-  static const Color _elitePurple = Color(0xFF7C3AED);
 
   // Search and Module Filter state
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
-  String _selectedCategory = 'All';
+  String _selectedCategory = 'All Categories (94)';
+
+  // Collapsed categories state (empty means all are expanded by default)
+  final Set<String> _collapsedCategories = {};
 
   // Horizontal scroll controller for the table
   final ScrollController _horizontalScrollController = ScrollController();
@@ -74,495 +69,1039 @@ class _PlanFeaturesComparisonTableState
     super.dispose();
   }
 
-  // All 30 features across 15 Modules strictly reflecting the prompt specifications
+  static const List<String> _categories = [
+    'All Categories (94)',
+    'Core Subscription & Limits 8',
+    'GST API & Compliance 5',
+    'Dashboard & Accounting 17',
+    'Purchases & Suppliers 9',
+    'Sales & Billing Center 10',
+    'Products & Inventory 9',
+    'POS (Point of Sale) 7',
+    'HR, Staff & Payroll 5',
+    'Payments & Escrow 24',
+  ];
+
   static const List<PlanComparisonFeatureItem> _allFeatures = [
-    // ─── 1. Workspace & Users ───
+    // ═══════════════════════════════════════════════════════════════
+    // 1. Core Subscription & Limits (8 Features)
+    // ═══════════════════════════════════════════════════════════════
     PlanComparisonFeatureItem(
       id: 1,
-      module: 'Workspace & Users',
-      featureName: 'Organization User Seats',
-      description:
-          'Controls how many staff members or accountants can log into the organization workspace.',
-      micro: '1 User (Owner Only)',
-      starter: '0 Users',
-      standard: '2 Users',
-      growth: '7 Users',
-      elite: '15 Users',
-      icon: LucideIcons.users,
+      category: '1. Core Subscription & Limits',
+      featureName: "Sub ID's Roles",
+      micro: '🔒 Locked',
+      starter: "2 ID's",
+      standard: "5 ID's",
+      growth: "10 ID's",
+      elite: "20 ID's",
     ),
     PlanComparisonFeatureItem(
       id: 2,
-      module: 'Workspace & Users',
-      featureName: 'Role-Based Access & Permissions',
-      description:
-          'Restricts what each user can view, create, edit, or delete across modules.',
-      micro: 'Predefined Owner Roles',
-      starter: 'Predefined Basic Roles',
-      standard: 'Standard Module-Level Roles',
-      growth: 'Granular Multi-User Role Permissions',
-      elite: 'Custom Field-Level & Branch Locks',
-      icon: LucideIcons.shieldCheck,
+      category: '1. Core Subscription & Limits',
+      featureName: 'Internal Showrooms / Godowns (Owned)',
+      micro: '1 branch',
+      starter: '1 branch',
+      standard: '2 branch',
+      growth: '5 branch',
+      elite: '15 branch',
     ),
-
-    // ─── 2. Sales & Billing ───
     PlanComparisonFeatureItem(
       id: 3,
-      module: 'Sales & Billing',
-      featureName: 'Annual Sales Invoices Cap',
-      description:
-          'Sets the maximum number of standard B2B/B2C tax invoices generated per year.',
-      micro: '1,000 Sales Invoices / yr',
-      starter: '5,000 Invoices / yr (~415/mo)',
-      standard: '10,000 Invoices / yr',
-      growth: '25,000 Invoices / yr',
-      elite: '100,000 Invoices / yr',
-      icon: LucideIcons.fileText,
+      category: '1. Core Subscription & Limits',
+      featureName: 'External Franchise / Partner Branches',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '🔒 Locked',
+      growth: 'Upto 2 External',
+      elite: 'Upto 10 External',
     ),
     PlanComparisonFeatureItem(
       id: 4,
-      module: 'Sales & Billing',
-      featureName: 'Quotes, Proforma & Delivery Challans',
-      description:
-          'Creates estimates, proforma bills, and delivery challans that convert into invoices in 1 click.',
-      micro: '❌ (Standard Invoicing Only)',
-      starter: '1,000 Quotes/Challans / yr',
-      standard: '5,000 Quotes/Challans / yr',
-      growth: '20,000 Quotes/Challans / yr',
-      elite: '50,000 Quotes/Challans / yr',
-      icon: LucideIcons.fileCheck,
+      category: '1. Core Subscription & Limits',
+      featureName: 'Sales Invoice Limit',
+      micro: '1,000',
+      starter: '5,000',
+      standard: '10,000',
+      growth: '25,000',
+      elite: '100,000',
     ),
     PlanComparisonFeatureItem(
       id: 5,
-      module: 'Sales & Billing',
-      featureName: 'Credit Notes & Sales Returns',
-      description:
-          'Processes customer returns, damaged goods adjustments, and tax credit notes.',
-      micro: 'Basic Credit Notes',
-      starter: 'Up to 500 Credit Notes / yr',
-      standard: 'Up to 2,000 Credit Notes / yr',
-      growth: 'Up to 10,000 Credit Notes / yr',
-      elite: '25,000 Credit Notes / yr',
-      icon: LucideIcons.receipt,
+      category: '1. Core Subscription & Limits',
+      featureName: 'Bill Limit',
+      micro: '1,000',
+      starter: '5,000',
+      standard: '10,000',
+      growth: '25,000',
+      elite: '100,000',
     ),
     PlanComparisonFeatureItem(
       id: 6,
-      module: 'Sales & Billing',
-      featureName: 'Customer Directory (CRM)',
-      description:
-          'Stores customer profiles, billing/shipping addresses, credit limits, and receivable ledgers.',
-      micro: '100 Customers CRM & 50 Vendors',
-      starter: '1,000 Customers CRM',
-      standard: '5,000 Customers CRM',
-      growth: '15,000 Customers CRM',
-      elite: '25,000 Customers CRM',
-      icon: LucideIcons.contact,
+      category: '1. Core Subscription & Limits',
+      featureName: 'Active Stock SKUs',
+      micro: '1,000',
+      starter: '5,000',
+      standard: '10,000',
+      growth: '50,000',
+      elite: '✨ Unlimited',
     ),
     PlanComparisonFeatureItem(
       id: 7,
-      module: 'Sales & Billing',
-      featureName: 'Recurring Invoices & Overdue Alerts',
-      description:
-          'Auto-generates repeat subscription bills and flags overdue customer receivables.',
-      micro: '❌ (Manual Billing Only)',
-      starter: '❌ (Manual Billing Only)',
-      standard: 'Recurring Invoices & Smart Overdue Alerts',
-      growth: 'Automated Dunning & Late-Fee Rules',
-      elite: 'Custom Multi-Schedule Billing Pipelines',
-      icon: LucideIcons.refreshCw,
+      category: '1. Core Subscription & Limits',
+      featureName: 'Cloud Storage Tracker',
+      micro: '1 GB',
+      starter: '5 GB',
+      standard: '10 GB',
+      growth: '20 GB',
+      elite: '50 GB',
     ),
-
-    // ─── 3. Purchases ───
     PlanComparisonFeatureItem(
       id: 8,
-      module: 'Purchases',
-      featureName: 'Annual Purchase Bills & Expenses Cap',
-      description:
-          'Tracks supplier purchase invoices, raw material inward bills, and operational vouchers.',
-      micro: '1,000 Bills / yr',
-      starter: '5,000 Bills / yr',
-      standard: '10,000 Bills / yr',
-      growth: '25,000 Bills / yr',
-      elite: '100,000 Bills / yr',
-      icon: LucideIcons.shoppingBag,
+      category: '1. Core Subscription & Limits',
+      featureName: 'Auto-Backup',
+      micro: '🔒 Locked',
+      starter: 'Monthly',
+      standard: 'Weekly',
+      growth: 'Daily',
+      elite: 'Daily',
     ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 2. GST API & Compliance (5 Features)
+    // ═══════════════════════════════════════════════════════════════
     PlanComparisonFeatureItem(
       id: 9,
-      module: 'Purchases',
-      featureName: 'Purchase Orders (PO) & Debit Notes',
-      description:
-          'Issues formal purchase orders to suppliers and generates debit notes for purchase returns.',
-      micro: 'Basic Debit Note Entry',
-      starter: 'Basic Debit Note Entry',
-      standard: 'Full Purchase Order (PO) Workflows',
-      growth: '10,000 POs / yr + GRN Matching',
-      elite: '30,000 POs / yr + Auto-Reorder POs',
-      icon: LucideIcons.clipboardList,
+      category: '2. GST API & Compliance',
+      featureName: 'Live E-Invoicing (IRN/QR)',
+      micro: '🔒 (0/day)',
+      starter: 'Up to 5/day\n(150/mo)',
+      standard: 'Up to 10/day\n(300/mo)',
+      growth: 'Up to 20/day\n(600/mo)',
+      elite: 'Up to 30/day\n(900/mo)',
     ),
     PlanComparisonFeatureItem(
       id: 10,
-      module: 'Purchases',
-      featureName: 'Supplier / Vendor Directory',
-      description:
-          'Maintains vendor contact records, payment terms, and supplier payable ledgers.',
-      micro: '50 Vendor Records',
-      starter: '500 Vendor Records',
-      standard: '2,000 Vendor Records',
-      growth: '10,000 Vendor Records',
-      elite: '25,000 Vendor Records Max',
-      icon: LucideIcons.truck,
+      category: '2. GST API & Compliance',
+      featureName: 'Live E-Way Bills',
+      micro: '🔒 (0/day)',
+      starter: 'Up to 2/day\n(60/mo)',
+      standard: 'Up to 3/day (90/mo)',
+      growth: 'Up to 5/day\n(150/mo)',
+      elite: 'Up to 10/day\n(300/mo)',
     ),
-
-    // ─── 4. External Tax APIs (Master India @ ₹0.70/call) ───
     PlanComparisonFeatureItem(
       id: 11,
-      module: 'External Tax APIs (Master India @ ₹0.70/call)',
-      featureName:
-          'Combined Daily Tax API Quota (E-Invoice + E-Way Bill + GSTIN Lookup)',
-      description:
-          'Total daily external Master India API calls allowed across E-Invoicing, E-Way Bills, and GSTIN verification.',
-      micro: '❌ 0 API Calls / day (No E-Invoice / E-Way)',
-      starter: 'Live E-Invoicing (5/day) & E-Way (2/day)',
-      standard: 'Live E-Invoicing (10/day) & E-Way (3/day)',
-      growth: 'Live E-Invoicing (20/day) & E-Way (5/day)',
-      elite: 'Live E-Invoicing (30/day) & E-Way (10/day)',
-      icon: LucideIcons.zap,
+      category: '2. GST API & Compliance',
+      featureName: 'GSTIN Validation API',
+      micro: '🔒 Locked',
+      starter: '1/day',
+      standard: '2/day',
+      growth: '3/day',
+      elite: '5/day',
     ),
     PlanComparisonFeatureItem(
       id: 12,
-      module: 'External Tax APIs (Master India)',
-      featureName: 'Live E-Invoice (IRN & QR) & E-Way Bill Generation',
-      description:
-          'Generates official Government IRN, Signed QR Code, and Part-A/B E-Way Bills within the daily API cap.',
-      micro: '❌ Not Included in Micro',
-      starter: 'Included (5 E-Inv / 2 E-Way per day)',
-      standard: 'Included (10 E-Inv / 3 E-Way per day)',
-      growth: 'Included (20 E-Inv / 5 E-Way per day)',
-      elite: 'Included (30 E-Inv / 10 E-Way per day)',
-      icon: LucideIcons.qrCode,
+      category: '2. GST API & Compliance',
+      featureName: 'GST Tax Summary & Day Book',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
-
-    // ─── 5. Tax (Zero-Cost Local Software) ───
     PlanComparisonFeatureItem(
       id: 13,
-      module: 'Tax (Zero-Cost Local Software)',
-      featureName: 'GSTR-1, 2B, 3B & Tax Report Downloads',
-      description:
-          'Lists and downloads local GSTR-1, GSTR-2, GSTR-3B, and GSTR-9 CSV/PDF reports (₹0 API cost).',
-      micro: 'List & Download GSTR-1 & 3B (CSV/PDF)',
-      starter: 'P&L Statements, GST Day Book & Tax Summary',
-      standard: 'GSTR-1, 2B Purchase View & 3B Downloads',
-      growth: 'GSTR-1, 2, 3B, GSTR-9 & Audit Hub Exports',
-      elite: 'Multi-GSTIN Consolidated Tax Repository',
-      icon: LucideIcons.download,
-    ),
-    PlanComparisonFeatureItem(
-      id: 14,
-      module: 'Tax (Zero-Cost Local Software)',
-      featureName: 'TDS / TCS Deduction Schedules',
-      description:
-          'Calculates and tracks Tax Deducted/Collected at Source on vendor bills and sales invoices.',
-      micro: '❌',
-      starter: '❌',
-      standard: 'Basic TDS Deducted Ledger View',
-      growth: 'Advanced Tax Deductions (TDS/TCS) Reports',
-      elite: 'Full Quarterly TDS/TCS Statement Export',
-      icon: LucideIcons.percent,
+      category: '2. GST API & Compliance',
+      featureName: 'GSTR Reports (1, 2B, 3B)',
+      micro: '🔒 Locked',
+      starter: 'Offline CSV/PDF',
+      standard: 'GSTR-1 & 3B\nReports',
+      growth: 'GSTR-1, 2B, 3B +\nIMS',
+      elite: 'Full GSTR + JSON\nExport',
     ),
 
-    // ─── 6. Inventory ───
+    // ═══════════════════════════════════════════════════════════════
+    // 3. Dashboard & Accounting (17 Features)
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 14,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Business Overview Dashboard',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
     PlanComparisonFeatureItem(
       id: 15,
-      module: 'Inventory',
-      featureName: 'Products & Stock SKU Catalog',
-      description:
-          'Defines how many unique products, services, and variants can be stored in inventory.',
-      micro: '1,000 Active Stock SKUs',
-      starter: '5,000 Active Stock SKUs',
-      standard: '10,000 Active Stock SKUs',
-      growth: '50,000 Products',
-      elite: 'Unlimited Active Stock SKUs',
-      icon: LucideIcons.package,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Quick Action Center',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
     PlanComparisonFeatureItem(
       id: 16,
-      module: 'Inventory',
-      featureName: 'Warehouses, Godowns & Showrooms',
-      description:
-          'Tracks stock quantities across multiple physical store locations, godowns, and branches.',
-      micro: '1 Branch / Godown',
-      starter: '1 Branch (Single Site)',
-      standard: '2 Branches (Toggle) & 1 Godown',
-      growth: '5 Branches (Toggle) & 5 Godowns',
-      elite: '15 Branches & 10 Godowns',
-      icon: LucideIcons.warehouse,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Multi-Showroom Toggle',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: 'Yes (2 Branches)',
+      growth: 'Yes (5 Branches)',
+      elite: 'Yes (10 Branches)',
     ),
     PlanComparisonFeatureItem(
       id: 17,
-      module: 'Inventory',
-      featureName: 'Batch, Serial Number & Expiry Tracking',
-      description:
-          'Tracks medicine/FMCG batches with expiry dates or electronics IMEI/serial numbers.',
-      micro: 'Basic Stock In/Out',
-      starter: 'Basic Stock In/Out',
-      standard: 'Batch & Expiry Date Alerts',
-      growth: 'Multi-Tier Landed Cost & Serial Tracking',
-      elite: 'FIFO/LIFO Costing, QC Logs & White-Label',
-      icon: LucideIcons.calendarClock,
+      category: '3. Dashboard & Accounting',
+      featureName: 'P&L & Balance Sheet',
+      micro: '🔒 Locked',
+      starter: 'P&L Only',
+      standard: 'Full Statements',
+      growth: 'Full Statements',
+      elite: 'Full + Branch Level',
     ),
-
-    // ─── 7. POS & Simple Billing ───
     PlanComparisonFeatureItem(
       id: 18,
-      module: 'POS & Simple Billing',
-      featureName: 'POS Billing Counters & Kiosk Mode',
-      description:
-          'Runs touch-friendly retail checkout counters with cart hold, barcode scan, and split tender.',
-      micro: 'POS Checkout (PDF Only) & Hold/Split',
-      starter: 'POS 1 Counter Thermal Printing (1 Format)',
-      standard: 'POS 2 Counters (2 Thermal Formats)',
-      growth: 'POS 5 Counters + Basic Kiosk Mode',
-      elite: 'POS 15 Counters + Customizable Kiosk Mode',
-      icon: LucideIcons.monitor,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Receivables & Payables',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
     PlanComparisonFeatureItem(
       id: 19,
-      module: 'POS & Simple Billing',
-      featureName: 'Thermal & A4 Invoice Print Formats',
-      description:
-          'Formats bills for 2-inch/3-inch thermal receipt printers and standard A4/A5 laser printers.',
-      micro: 'Standard PDF Formats',
-      starter: 'Thermal Printing (1 Format) + A4/A5',
-      standard: '2 Thermal Formats + A4/A5 Layouts',
-      growth: 'Custom Logo, Header & Terms on Thermal/A4',
-      elite: 'Full White-Labeling & Custom Thermal/A4',
-      icon: LucideIcons.printer,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Expense Breakdown',
+      micro: '🔒 Locked',
+      starter: 'Basic Groups',
+      standard: 'Full Breakdown',
+      growth: 'Full Breakdown',
+      elite: 'Sub-accounts &\nCost Centers',
     ),
-
-    // ─── 8. Barcode Gen ───
     PlanComparisonFeatureItem(
       id: 20,
-      module: 'Barcode Gen',
-      featureName: 'Barcode & Thermal QR Label Engine',
-      description:
-          'Generates and prints scannable SKU barcodes and QR stickers using local software rendering.',
-      micro: 'Standard A4 Sticker Sheets',
-      starter: 'Standard A4 Barcode Sticker Sheets',
-      standard: 'Custom Barcode & QR Label Printing (1,500/mo)',
-      growth: 'Bulk Roll Label Designer (10,000 labels/mo)',
-      elite: '50,000 Labels/mo + Weigh-Scale Barcode Support',
-      icon: LucideIcons.scanLine,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Cash & Bank Ledger',
+      micro: '🔒 Locked',
+      starter: 'Bank Statement\nCSV',
+      standard: 'Bank Rec (BRS)',
+      growth: 'BRS Rules',
+      elite: 'Multi-Bank + Auto-\nRules',
     ),
-
-    // ─── 9. Finance ───
     PlanComparisonFeatureItem(
       id: 21,
-      module: 'Finance',
-      featureName: 'Core Accounting & Financial Statements',
-      description:
-          'Automates double-entry bookkeeping, Day Book logs, Cash & Bank registers, P&L, and Balance Sheets.',
-      micro: 'Custom Chart of Accounts & Item-wise Expenses',
-      starter: 'Day Book, Cash Flow & P&L Statements',
-      standard: 'Full Statements (P&L + Balance Sheet) & BRS',
-      growth: 'Cost Centre Tagging & Branch-Wise P&L',
-      elite: 'Consolidated Multi-Showroom Statements & Audits',
-      icon: LucideIcons.bookOpen,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Audit Center',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: 'Basic Auditor Role',
+      growth: 'Transaction\nLocking',
+      elite: 'Full Activity Audit\nLog',
     ),
     PlanComparisonFeatureItem(
       id: 22,
-      module: 'Finance',
-      featureName: 'Expense Tracking & Voucher Approvals',
-      description:
-          'Records operational expenses with receipt attachments and manager approval workflows.',
-      micro: 'Item-wise Expenses Logging',
-      starter: 'Basic Expense Category Logging',
-      standard: 'Expense Receipts + Vendor Tagging',
-      growth: 'Single-Level Manager Expense Approval',
-      elite: 'Multi-Stage Maker-Checker Voucher Approvals',
-      icon: LucideIcons.checkSquare,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Custom Chart of Accounts',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
-
-    // ─── 10. HR & Payroll ───
     PlanComparisonFeatureItem(
       id: 23,
-      module: 'HR & Payroll',
-      featureName: 'Active Staff Roster & Attendance',
-      description:
-          'Manages employee profiles, daily attendance logs, leave balances, and shift rosters.',
-      micro: '❌ Not Included',
-      starter: '2 Staff (HR Profiles, Attendance & Shifts)',
-      standard: '5 Staff (HR Database & Automated Payroll)',
-      growth: '25 Staff (Advanced HR & Payroll)',
-      elite: '100 Staff (HR & Full Sync Payroll)',
-      icon: LucideIcons.userCheck,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Item-wise Expenses',
+      micro: 'Basic',
+      starter: 'Basic',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
     PlanComparisonFeatureItem(
       id: 24,
-      module: 'HR & Payroll',
-      featureName: 'Automated Salary & Payslip Engine',
-      description:
-          'Calculates monthly staff salaries, PF/ESI/TDS deductions, advances, and PDF payslips.',
-      micro: '❌ Not Included',
-      starter: 'Basic Salary Expense Entry',
-      standard: 'Automated Payroll & Payslip PDF Generation',
-      growth: 'Bulk Salary Register + Staff Sync',
-      elite: 'Full Statutory Payroll Vault & Department Costing',
-      icon: LucideIcons.banknote,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Dashboard Customization',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '🔒 Locked',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
-
-    // ─── 11. Marketing ───
     PlanComparisonFeatureItem(
       id: 25,
-      module: 'Marketing',
-      featureName: 'Email Campaigns & ROI Automation',
-      description:
-          'Sends promotional newsletters, discount codes, and abandoned cart emails with ROI tracking.',
-      micro: '❌ Not Included',
-      starter: '500 Campaign Emails / mo (2 Templates)',
-      standard: '2,500 Campaign Emails / mo + Loyalty Points',
-      growth: '10,000 Campaign Emails / mo + Advanced ROI',
-      elite: '25,000 Campaign Emails / mo (Strict Cap)',
-      icon: LucideIcons.mail,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Advanced Voucher Audit & Voucher Modification History',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '🔒 Locked',
+      growth: '5 limit/day',
+      elite: '15 limit/day',
     ),
     PlanComparisonFeatureItem(
       id: 26,
-      module: 'Marketing',
-      featureName: 'WhatsApp Bill Share & Payment Links',
-      description:
-          'Shares PDF invoices and overdue reminders via free WhatsApp deep-links (wa.me).',
-      micro: 'Manual 1-Click WhatsApp Bill Share',
-      starter: 'Manual 1-Click WhatsApp Bill Share',
-      standard: 'Automated Overdue Reminder Templates',
-      growth: 'Bulk Festival Broadcast Lists',
-      elite: 'Custom Webhook Notification Pipelines',
-      icon: LucideIcons.messageSquare,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Sales & Revenue Reports Download (8)',
+      micro: '3 Reports',
+      starter: '5 Reports',
+      standard: '6 Reports',
+      growth: '8 Reports',
+      elite: '8 Reports',
     ),
-
-    // ─── 12. Reports ───
     PlanComparisonFeatureItem(
       id: 27,
-      module: 'Reports',
-      featureName: 'Business Analytics & Custom Reports',
-      description:
-          'Generates party-wise, item-wise, tax, ageing, and profitability reports with CSV/PDF export.',
-      micro: 'Full Billing & Purchases Dashboards',
-      starter: '15+ Core Financial & Sales Reports',
-      standard: '40+ Inventory, Party & Ageing Reports',
-      growth: 'Advanced Margin, Cohort & Audit Reports',
-      elite: 'Custom Report Builder + Scheduled Digests',
-      icon: LucideIcons.barChart3,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Purchase Reports Download (6)',
+      micro: '2 Reports',
+      starter: '3 Reports',
+      standard: '4 Reports',
+      growth: '6 Reports',
+      elite: '6 Reports',
     ),
-
-    // ─── 13. Storage & Backup ───
     PlanComparisonFeatureItem(
       id: 28,
-      module: 'Storage & Backup',
-      featureName: 'Cloud Document Vault & Attachments',
-      description:
-          'Stores uploaded supplier bills, expense receipts, product images, and backups in the cloud.',
-      micro: '1 GB Cloud Storage Tracker',
-      starter: '5 GB Cloud Storage & Monthly Auto-Backup',
-      standard: '10 GB Cloud Storage & Weekly Auto-Backup',
-      growth: '20 GB Cloud Storage & Daily Auto-Backup',
-      elite: '50 GB Cloud Storage & Daily Auto-Backup',
-      icon: LucideIcons.cloud,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Stock & Inventory Reports Download (6)',
+      micro: '2 Reports',
+      starter: '3 Reports',
+      standard: '4 Reports',
+      growth: '5 Reports',
+      elite: '6 Reports',
     ),
-
-    // ─── 14. Integrations ───
     PlanComparisonFeatureItem(
       id: 29,
-      module: 'Integrations',
-      featureName: 'Inbound REST API & Webhook ERP Sync',
-      description:
-          'Connects Cliks Business with Shopify, WooCommerce, or custom ERPs (Your own server API).',
-      micro: '❌',
-      starter: '❌',
-      standard: '❌',
-      growth: 'API & Webhooks Access',
-      elite: 'Enterprise API & Webhooks Access (10,000 calls)',
-      icon: LucideIcons.webhook,
+      category: '3. Dashboard & Accounting',
+      featureName: 'CRM & Parties Reports Download (5)',
+      micro: '2 Reports',
+      starter: '3 Reports',
+      standard: '4 Reports',
+      growth: '5 Reports',
+      elite: '5 Reports',
     ),
-
-    // ─── 15. Support & SLA ───
     PlanComparisonFeatureItem(
       id: 30,
-      module: 'Support & SLA',
-      featureName: 'Customer Support & Uptime SLA',
-      description:
-          'Defines guaranteed response time for technical tickets, onboarding, and server availability.',
-      micro: 'Standard Community / Email Support',
-      starter: 'Standard Email Support (24h SLA)',
-      standard: 'Priority Live Chat & Email Support (12h SLA)',
-      growth: 'Fast-Track Phone & VIP Chat (6h SLA)',
-      elite: 'Dedicated Account Manager & 99.99% SLA',
-      icon: LucideIcons.headphones,
+      category: '3. Dashboard & Accounting',
+      featureName: 'Finance & Tax Reports Download (17)',
+      micro: '3 Reports',
+      starter: '5 Reports',
+      standard: '8 Reports',
+      growth: '13 Reports',
+      elite: '17 Reports',
+    ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 4. Purchases & Suppliers (9 Features) - [Screenshot 1]
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 31,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Purchases Hub Dashboard',
+      micro: 'Full Dashboard',
+      starter: 'Full Dashboard',
+      standard: 'Full Dashboard',
+      growth: 'Full Dashboard',
+      elite: 'Full Dashboard',
+    ),
+    PlanComparisonFeatureItem(
+      id: 32,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Request Stock',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 33,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Purchase Orders (PO)',
+      micro: 'Basic POs',
+      starter: 'Basic POs',
+      standard: 'Full POs',
+      growth: 'POs + Landed\nCost',
+      elite: 'POs + Custom\nWorkflows',
+    ),
+    PlanComparisonFeatureItem(
+      id: 34,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Purchase Bills & Invoices',
+      micro: 'Basic',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: 'Yes + Vendor Portal',
+    ),
+    PlanComparisonFeatureItem(
+      id: 35,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Purchase Returns',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 36,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Supplier Directory',
+      micro: 'Basic',
+      starter: 'Basic',
+      standard: 'Advance + Credit\nterms',
+      growth: 'Advance',
+      elite: 'Advance + Multi-\nCurrency',
+    ),
+    PlanComparisonFeatureItem(
+      id: 37,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Advance Payments Tracker',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 38,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Landed Cost Allocation',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: 'Basic',
+      growth: 'Advanced',
+      elite: 'Multi-Currency\nLanded Cost',
+    ),
+    PlanComparisonFeatureItem(
+      id: 39,
+      category: '4. Purchases & Suppliers',
+      featureName: 'Voucher Scan',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '10 scans',
+      growth: '50 scans',
+      elite: '200 scans',
+    ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 5. Sales & Billing Center (10 Features) - [Screenshot 2]
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 40,
+      category: '5. Sales & Billing Center',
+      featureName: 'Billing Center Dashboard',
+      micro: 'Full Dashboard',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 41,
+      category: '5. Sales & Billing Center',
+      featureName: 'Generate Invoice',
+      micro: 'Fixed Basic\nTemplates',
+      starter: 'Cust. Templates',
+      standard: 'Advanced\nTemplates',
+      growth: 'Advanced\nTemplates',
+      elite: '✨ Unlimited White-label',
+    ),
+    PlanComparisonFeatureItem(
+      id: 42,
+      category: '5. Sales & Billing Center',
+      featureName: 'Sales Orders List',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 43,
+      category: '5. Sales & Billing Center',
+      featureName: 'Sales Returns',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 44,
+      category: '5. Sales & Billing Center',
+      featureName: 'Delivery Challan',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 45,
+      category: '5. Sales & Billing Center',
+      featureName: 'Loyalty Points Tracker',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: 'Basic Tracking',
+      growth: 'Auto-Redemption',
+      elite: 'Advanced Loyalty\nRules',
+    ),
+    PlanComparisonFeatureItem(
+      id: 46,
+      category: '5. Sales & Billing Center',
+      featureName: 'Customer CRM Directory',
+      micro: '100 Customers',
+      starter: '1,000 Customers',
+      standard: '5,000 Customers',
+      growth: '15,000 Customers',
+      elite: '25,000 Customers',
+    ),
+    PlanComparisonFeatureItem(
+      id: 47,
+      category: '5. Sales & Billing Center',
+      featureName: 'Multi-Series Invoice Numbering',
+      micro: '🔒 Locked',
+      starter: 'Single Prefix',
+      standard: '2 Prefixes',
+      growth: '5 Prefixes',
+      elite: '✨ Unlimited Custom Series',
+    ),
+    PlanComparisonFeatureItem(
+      id: 48,
+      category: '5. Sales & Billing Center',
+      featureName: 'Remove Branding / White-Label',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '🔒 Locked',
+      growth: '✓ Available',
+      elite: 'Full White-Label',
+    ),
+    PlanComparisonFeatureItem(
+      id: 49,
+      category: '5. Sales & Billing Center',
+      featureName: 'Marketing Campaigns',
+      micro: '5 limit/day',
+      starter: '10 limit/day',
+      standard: '15 limit/day',
+      growth: '20 limit/day',
+      elite: '40 limit/day',
+    ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 6. Products & Inventory (9 Features) - [Screenshot 3]
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 50,
+      category: '6. Products & Inventory',
+      featureName: 'Stock Valuation Dashboard',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 51,
+      category: '6. Products & Inventory',
+      featureName: 'Low Stock SKU Alerts',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 52,
+      category: '6. Products & Inventory',
+      featureName: 'Categories & Subcategories',
+      micro: 'Basic',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 53,
+      category: '6. Products & Inventory',
+      featureName: 'Bulk Import (CSV)',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 54,
+      category: '6. Products & Inventory',
+      featureName: 'Product Master Management',
+      micro: 'Basic Profiles',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 55,
+      category: '6. Products & Inventory',
+      featureName: 'Godown / Warehouse Mapping',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '1 Godowns',
+      growth: '5 Godowns',
+      elite: '10 Godowns',
+    ),
+    PlanComparisonFeatureItem(
+      id: 56,
+      category: '6. Products & Inventory',
+      featureName: 'Price Lists',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 57,
+      category: '6. Products & Inventory',
+      featureName: 'Batch, Expiry & Serial Tracking',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '🔒 Locked',
+      growth: 'Basic Batching',
+      elite: 'Full\nBatch/Expiry/Serial',
+    ),
+    PlanComparisonFeatureItem(
+      id: 58,
+      category: '6. Products & Inventory',
+      featureName: 'FMCG Distribution',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 7. POS (Point of Sale) (7 Features) - [Screenshot 4]
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 59,
+      category: '7. POS (Point of Sale)',
+      featureName: 'POS Checkout Interface',
+      micro: 'Basic PDF Only',
+      starter: '1 Counter\n(Thermal)',
+      standard: '2 Counters',
+      growth: '5 Counters +\nBasic Kiosk Mode',
+      elite: '15 Counters +\nCustomizable Kiosk\nMode',
+    ),
+    PlanComparisonFeatureItem(
+      id: 60,
+      category: '7. POS (Point of Sale)',
+      featureName: 'Batch, Expiry & Serial Tracking in POS',
+      micro: '🔒 Locked',
+      starter: 'Basic Support',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: 'Yes + Mobile App\nScanning',
+    ),
+    PlanComparisonFeatureItem(
+      id: 61,
+      category: '7. POS (Point of Sale)',
+      featureName: 'Sold by Weight Toggle',
+      micro: 'Basic',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: 'Yes + Weigh Scale\nSync',
+    ),
+    PlanComparisonFeatureItem(
+      id: 62,
+      category: '7. POS (Point of Sale)',
+      featureName: 'Hold / Clear Cart',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 63,
+      category: '7. POS (Point of Sale)',
+      featureName: 'Payment Split',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 64,
+      category: '7. POS (Point of Sale)',
+      featureName: 'Thermal Receipt Printing',
+      micro: '🔒 PDF Only',
+      starter: '1 Format',
+      standard: '2 Formats',
+      growth: 'Custom Layouts',
+      elite: 'Custom Layouts +\nLogo',
+    ),
+    PlanComparisonFeatureItem(
+      id: 65,
+      category: '7. POS (Point of Sale)',
+      featureName: 'Simple Billing',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 8. HR, Staff & Payroll (5 Features) - [Screenshot 5]
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 66,
+      category: '8. HR, Staff & Payroll',
+      featureName: 'HR & Employees Database',
+      micro: '🔒 Locked',
+      starter: 'Basic (2 Staff)',
+      standard: 'Basic (5 Staff)',
+      growth: 'Advanced (25\nStaff)',
+      elite: 'Elite (100 Staff)',
+    ),
+    PlanComparisonFeatureItem(
+      id: 67,
+      category: '8. HR, Staff & Payroll',
+      featureName: 'Active Headcount & Payroll',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 68,
+      category: '8. HR, Staff & Payroll',
+      featureName: 'Leaves & Shifts Rosters',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 69,
+      category: '8. HR, Staff & Payroll',
+      featureName: 'Staff Reimbursements',
+      micro: '🔒 Locked',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 70,
+      category: '8. HR, Staff & Payroll',
+      featureName: 'Automated Payroll Processing',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: 'Full Sync to\nAccounts',
+    ),
+
+    // ═══════════════════════════════════════════════════════════════
+    // 9. Payments & Escrow (24 Features) - [Screenshot 5]
+    // ═══════════════════════════════════════════════════════════════
+    PlanComparisonFeatureItem(
+      id: 71,
+      category: '9. Payments & Escrow',
+      featureName: 'People Network & Escrow',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 72,
+      category: '9. Payments & Escrow',
+      featureName: 'To Receive / To Pay Dashboard',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 73,
+      category: '9. Payments & Escrow',
+      featureName: 'Financial Groups',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 74,
+      category: '9. Payments & Escrow',
+      featureName: 'Global Ledger',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 75,
+      category: '9. Payments & Escrow',
+      featureName: 'Repayment Alerts',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: 'Basic Alerts',
+      growth: 'Custom Alerts',
+      elite: 'Custom SMS/Email',
+    ),
+    PlanComparisonFeatureItem(
+      id: 76,
+      category: '9. Payments & Escrow',
+      featureName: 'Contact Classification',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 77,
+      category: '9. Payments & Escrow',
+      featureName: 'Net Exposure Tracking',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 78,
+      category: '9. Payments & Escrow',
+      featureName: 'Payments & Cash Flow Engine',
+      micro: 'Manual',
+      starter: 'Basic',
+      standard: 'Full',
+      growth: 'Full',
+      elite: 'Full',
+    ),
+    PlanComparisonFeatureItem(
+      id: 79,
+      category: '9. Payments & Escrow',
+      featureName: 'Outstanding Receivables Tracker',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 80,
+      category: '9. Payments & Escrow',
+      featureName: 'Combined Balances View',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 81,
+      category: '9. Payments & Escrow',
+      featureName: 'Efficiency Rate Metric',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 82,
+      category: '9. Payments & Escrow',
+      featureName: 'Total Inward & Outward Flow',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 83,
+      category: '9. Payments & Escrow',
+      featureName: 'Log Transaction (Inward/Outward)',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 84,
+      category: '9. Payments & Escrow',
+      featureName: 'Segregation Goals',
+      micro: 'Upto 5 Goals',
+      starter: 'Upto 10 Goals',
+      standard: 'Upto 20 Goals',
+      growth: 'Upto 30 Goals',
+      elite: '✨ Yes (Unlimited)',
+    ),
+    PlanComparisonFeatureItem(
+      id: 85,
+      category: '9. Payments & Escrow',
+      featureName: 'Total Isolated Funds Tracker',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 86,
+      category: '9. Payments & Escrow',
+      featureName: 'Splitwise & Collect',
+      micro: 'Upto 5 splits',
+      starter: 'Upto 10 splits',
+      standard: 'Upto 20 splits',
+      growth: 'Upto 30 splits',
+      elite: '✨ Yes (Unlimited)',
+    ),
+    PlanComparisonFeatureItem(
+      id: 87,
+      category: '9. Payments & Escrow',
+      featureName: 'Group Expense Tickets',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 88,
+      category: '9. Payments & Escrow',
+      featureName: 'Members & Balances Tracking',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 89,
+      category: '9. Payments & Escrow',
+      featureName: 'Invite Member & Admin Rights',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 90,
+      category: '9. Payments & Escrow',
+      featureName: 'Payment Planner',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 91,
+      category: '9. Payments & Escrow',
+      featureName: 'Automated Reminders',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '10 limit',
+      growth: '20 limit/day',
+      elite: '40 limit/day',
+    ),
+    PlanComparisonFeatureItem(
+      id: 92,
+      category: '9. Payments & Escrow',
+      featureName: 'Payment Reminders',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 93,
+      category: '9. Payments & Escrow',
+      featureName: 'Import Bank and Credit Card Statements',
+      micro: '✓ Available',
+      starter: '✓ Available',
+      standard: '✓ Available',
+      growth: '✓ Available',
+      elite: '✓ Available',
+    ),
+    PlanComparisonFeatureItem(
+      id: 94,
+      category: '9. Payments & Escrow',
+      featureName: 'Late Fees',
+      micro: '🔒 Locked',
+      starter: '🔒 Locked',
+      standard: '🔒 Locked',
+      growth: '✓ Available',
+      elite: '✓ Available',
     ),
   ];
 
-  // Category filter options
-  static const List<String> _categories = [
-    'All',
-    'Workspace & Users',
-    'Sales & Billing',
-    'Purchases',
-    'Tax & Compliance',
-    'Inventory & Barcode',
-    'POS & Billing',
-    'Finance',
-    'HR & Payroll',
-    'Marketing',
-    'Reports & Storage',
-    'Integrations & Support',
-  ];
+  static IconData _getCategoryIcon(String category) {
+    if (category.contains('Core')) return LucideIcons.layers;
+    if (category.contains('GST')) return LucideIcons.fileCheck;
+    if (category.contains('Dashboard')) return LucideIcons.barChart2;
+    if (category.contains('Purchases')) return LucideIcons.shoppingBag;
+    if (category.contains('Sales') || category.contains('Billing')) return LucideIcons.receipt;
+    if (category.contains('Products') || category.contains('Inventory')) return LucideIcons.box;
+    if (category.contains('POS')) return LucideIcons.store;
+    if (category.contains('HR')) return LucideIcons.users;
+    if (category.contains('Payments') || category.contains('Escrow')) return LucideIcons.wallet;
+    return LucideIcons.shieldAlert;
+  }
 
   List<PlanComparisonFeatureItem> get _filteredFeatures {
     return _allFeatures.where((item) {
       // Category filter
-      if (_selectedCategory != 'All') {
-        if (_selectedCategory == 'Tax & Compliance') {
-          if (!item.module.toLowerCase().contains('tax')) return false;
-        } else if (_selectedCategory == 'Inventory & Barcode') {
-          if (!item.module.toLowerCase().contains('inventory') &&
-              !item.module.toLowerCase().contains('barcode')) {
-            return false;
-          }
-        } else if (_selectedCategory == 'Reports & Storage') {
-          if (!item.module.toLowerCase().contains('reports') &&
-              !item.module.toLowerCase().contains('storage')) {
-            return false;
-          }
-        } else if (_selectedCategory == 'Integrations & Support') {
-          if (!item.module.toLowerCase().contains('integrations') &&
-              !item.module.toLowerCase().contains('support')) {
-            return false;
-          }
-        } else {
-          if (!item.module
-              .toLowerCase()
-              .contains(_selectedCategory.toLowerCase())) {
-            return false;
-          }
+      if (_selectedCategory != 'All Categories (94)') {
+        final cleanCategory = _selectedCategory.replaceAll(RegExp(r'\s+\d+$'), '').trim().toLowerCase();
+        final itemClean = item.category.replaceAll(RegExp(r'^\d+\.\s*'), '').trim().toLowerCase();
+        if (!itemClean.contains(cleanCategory) && !cleanCategory.contains(itemClean)) {
+          return false;
         }
       }
 
       // Search filter
       if (_searchQuery.isNotEmpty) {
         final q = _searchQuery.toLowerCase();
-        final matchName = item.featureName.toLowerCase().contains(q);
-        final matchDesc = item.description.toLowerCase().contains(q);
-        final matchModule = item.module.toLowerCase().contains(q);
-        final matchMicro = item.micro.toLowerCase().contains(q);
-        final matchStarter = item.starter.toLowerCase().contains(q);
-        final matchStandard = item.standard.toLowerCase().contains(q);
-        final matchGrowth = item.growth.toLowerCase().contains(q);
-        final matchElite = item.elite.toLowerCase().contains(q);
-        return matchName ||
-            matchDesc ||
-            matchModule ||
-            matchMicro ||
-            matchStarter ||
-            matchStandard ||
-            matchGrowth ||
-            matchElite;
+        final matchesName = item.featureName.toLowerCase().contains(q);
+        final matchesCat = item.category.toLowerCase().contains(q);
+        final matchesMicro = item.micro.toLowerCase().contains(q);
+        final matchesStarter = item.starter.toLowerCase().contains(q);
+        final matchesStandard = item.standard.toLowerCase().contains(q);
+        final matchesGrowth = item.growth.toLowerCase().contains(q);
+        final matchesElite = item.elite.toLowerCase().contains(q);
+
+        return matchesName ||
+            matchesCat ||
+            matchesMicro ||
+            matchesStarter ||
+            matchesStandard ||
+            matchesGrowth ||
+            matchesElite;
       }
 
       return true;
@@ -571,112 +1110,93 @@ class _PlanFeaturesComparisonTableState
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _filteredFeatures;
+    final features = _filteredFeatures;
 
     return Container(
-      width: double.infinity,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ─── 1. TOP CARD HEADER: Shield Icon, Title & Subtitle ───
+          // ─── 1. TOP CARD HEADER ───
           _buildCardHeader(),
 
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
-          // ─── 2. CONTROLS: Search Bar & Module Filter Chips ───
+          // ─── 2. SEARCH & CATEGORY FILTER BAR ───
           _buildFilterBar(),
 
-          // ─── 3. COMPARISON TABLE ───
-          _buildTableContent(filtered),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+          // ─── 3. RESPONSIVE TABLE WITH HORIZONTAL SCROLL ───
+          _buildTableContent(features),
         ],
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // CARD HEADER (Shield Check + Title + Subtitle)
+  // 1. TOP CARD HEADER (Icon + Matrix Title + Subtitle)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildCardHeader() {
     return Padding(
-      padding: EdgeInsets.all(widget.isMobile ? 18.0 : 26.0),
+      padding: EdgeInsets.symmetric(
+        horizontal: widget.isMobile ? 16 : 24,
+        vertical: 18,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Green Shield Icon Container
           Container(
-            width: widget.isMobile ? 38 : 44,
-            height: widget.isMobile ? 38 : 44,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAFAE3),
+              color: const Color(0xFFE6F4EA),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFD1F2C2), width: 1.2),
+              border: Border.all(color: const Color(0xFFCEEAD6)),
             ),
             child: const Center(
               child: Icon(
                 LucideIcons.shieldCheck,
-                color: _darkForestGreen,
+                color: Color(0xFF135029),
                 size: 22,
               ),
             ),
           ),
-          SizedBox(width: widget.isMobile ? 12 : 16),
-          // Title & Description
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Wrap(
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  spacing: 8,
-                  runSpacing: 4,
-                  children: [
-                    Text(
-                      'Plan Features Comparison',
-                      style: GoogleFonts.inter(
-                        fontSize: widget.isMobile ? 16 : 21,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF0F172A),
-                        letterSpacing: -0.4,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Text(
-                        '${_allFeatures.length} Features Matrix',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ),
-                  ],
+                Text(
+                  'Full Subscription Features & Limit Allocation Matrix',
+                  style: GoogleFonts.inter(
+                    fontSize: widget.isMobile ? 16 : 20,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.4,
+                  ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Compare exact features, usage quotas, and capabilities across all subscription tiers.',
+                  'Comprehensive breakdown across 9 categories (94+ platform features) based on the official Cliks Business Feature Allocation Document.',
                   style: GoogleFonts.inter(
-                    fontSize: widget.isMobile ? 12 : 13.5,
+                    fontSize: widget.isMobile ? 11.5 : 13,
                     fontWeight: FontWeight.w500,
                     color: const Color(0xFF64748B),
+                    height: 1.35,
                   ),
                 ),
               ],
@@ -688,7 +1208,7 @@ class _PlanFeaturesComparisonTableState
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // FILTER BAR (Search + Category Filter Chips)
+  // 2. FILTER BAR (Search + Expand/Collapse All + Category Filter Chips)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildFilterBar() {
     return Container(
@@ -701,7 +1221,6 @@ class _PlanFeaturesComparisonTableState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (widget.isMobile) ...[
-            // Mobile Search
             Container(
               height: 38,
               decoration: BoxDecoration(
@@ -717,14 +1236,14 @@ class _PlanFeaturesComparisonTableState
                   color: const Color(0xFF1E293B),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search features (e.g. invoice, e-way)...',
+                  hintText: 'Search features (e.g. E-Invoicing, BRS, C...',
                   hintStyle: GoogleFonts.inter(
-                    fontSize: 12,
+                    fontSize: 12.5,
                     color: const Color(0xFF94A3B8),
                   ),
                   prefixIcon: const Icon(
                     LucideIcons.search,
-                    size: 15,
+                    size: 16,
                     color: Color(0xFF94A3B8),
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -737,27 +1256,110 @@ class _PlanFeaturesComparisonTableState
                         )
                       : null,
                   border: InputBorder.none,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Text(
-                '${_filteredFeatures.length} of ${_allFeatures.length} Features',
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF334155),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _collapsedCategories.clear();
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                LucideIcons.chevronDown,
+                                size: 13,
+                                color: Color(0xFF475569),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Expand All',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF475569),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _collapsedCategories.addAll(
+                          _allFeatures.map((f) => f.category).toSet(),
+                        );
+                      });
+                    },
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 36,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 4),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                LucideIcons.chevronUp,
+                                size: 13,
+                                color: Color(0xFF475569),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Collapse All',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF475569),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ] else ...[
             Row(
@@ -779,8 +1381,7 @@ class _PlanFeaturesComparisonTableState
                         color: const Color(0xFF1E293B),
                       ),
                       decoration: InputDecoration(
-                        hintText:
-                            'Search features (e.g. invoice, e-way, warehouse, gst, payroll)...',
+                        hintText: 'Search features (e.g. E-Invoicing, BRS, C...',
                         hintStyle: GoogleFonts.inter(
                           fontSize: 12.5,
                           color: const Color(0xFF94A3B8),
@@ -801,27 +1402,92 @@ class _PlanFeaturesComparisonTableState
                             : null,
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 8),
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Results counter pill
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                // Expand All Button
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _collapsedCategories.clear();
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.chevronDown,
+                          size: 13,
+                          color: Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Expand All',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  child: Text(
-                    '${_filteredFeatures.length} of ${_allFeatures.length} Features',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF334155),
+                ),
+                const SizedBox(width: 8),
+                // Collapse All Button
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _collapsedCategories.addAll(
+                        _allFeatures.map((f) => f.category).toSet(),
+                      );
+                    });
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          LucideIcons.chevronUp,
+                          size: 13,
+                          color: Color(0xFF475569),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Collapse All',
+                          style: GoogleFonts.inter(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF475569),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -844,7 +1510,9 @@ class _PlanFeaturesComparisonTableState
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: isSelected
                             ? _darkForestGreen
@@ -879,7 +1547,7 @@ class _PlanFeaturesComparisonTableState
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // TABLE CONTENT WITH HORIZONTAL SCROLL
+  // 3. TABLE CONTENT WITH HORIZONTAL SCROLL
   // ═══════════════════════════════════════════════════════════════
   Widget _buildTableContent(List<PlanComparisonFeatureItem> features) {
     if (features.isEmpty) {
@@ -911,12 +1579,8 @@ class _PlanFeaturesComparisonTableState
       );
     }
 
-    // Column widths:
-    // Feature Column: 290px
-    // 5 Tier Columns: equal flex width (~198px each)
-    // Total table width = 290 + 990 = 1280px
-    const double featureColWidth = 290.0;
-    const double totalTableWidth = 1280.0;
+    const double featureColWidth = 280.0;
+    const double totalTableWidth = 1260.0;
 
     return Scrollbar(
       controller: _horizontalScrollController,
@@ -935,10 +1599,10 @@ class _PlanFeaturesComparisonTableState
               // ─── TABLE HEADER ROW ───
               _buildTableHeader(featureColWidth),
 
-              // ─── TABLE BODY ROWS (Grouped by module) ───
+              // ─── TABLE BODY ROWS (Grouped by category with collapse/expand) ───
               ..._buildGroupedFeatureRows(features, featureColWidth),
 
-              // ─── BOTTOM CTA ACTIONS ROW ───
+              // ─── BOTTOM ACTIONS ROW ───
               _buildTableFooterActions(featureColWidth),
             ],
           ),
@@ -962,8 +1626,8 @@ class _PlanFeaturesComparisonTableState
           // ── 1. PLATFORM / FEATURE HEADER ──
           Container(
             width: featureColWidth,
-            height: 136,
-            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+            height: 140,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
             decoration: const BoxDecoration(
               color: Color(0xFFF8FAFC),
               border: Border(
@@ -978,9 +1642,9 @@ class _PlanFeaturesComparisonTableState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Platform / Feature',
+                  'Platform Features',
                   style: GoogleFonts.inter(
-                    fontSize: 15.5,
+                    fontSize: 16,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF0F172A),
                     letterSpacing: -0.3,
@@ -988,7 +1652,7 @@ class _PlanFeaturesComparisonTableState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_allFeatures.length} modules & operational quotas',
+                  'Compare exact quotas & parameters',
                   style: GoogleFonts.inter(
                     fontSize: 11.5,
                     fontWeight: FontWeight.w500,
@@ -999,67 +1663,68 @@ class _PlanFeaturesComparisonTableState
             ),
           ),
 
-          // ── 2. TIER 1: MICRO (Teal) ──
+          // ── 2. MICRO (Teal #0F766E) ──
           Expanded(
             child: _buildTierHeaderColumn(
               tierNumber: 1,
               title: 'Micro',
-              annualPrice: '₹3,000 / year',
-              monthlySubtext: '(~₹250/month)',
-              badgeText: 'BEST FOR SINGLE-STORE',
-              backgroundColor: const Color(0xFF0D9488),
+              annualPrice: '₹3,000 / yr',
+              monthlySubtext: '₹250 / mo',
+              buttonText: 'Select Micro',
+              backgroundColor: const Color(0xFF0F766E),
               isCurrent: widget.activeTierNumber == 1,
             ),
           ),
 
-          // ── 3. TIER 2: STARTER (Green) ──
+          // ── 3. STARTER (Green #16A34A) ──
           Expanded(
             child: _buildTierHeaderColumn(
               tierNumber: 2,
               title: 'Starter',
-              annualPrice: '₹6,996 / year',
-              monthlySubtext: '(~₹583/month)',
-              badgeText: 'EMERGING RETAIL & SMBS',
-              backgroundColor: _starterGreen,
+              annualPrice: '₹6,996 / yr',
+              monthlySubtext: '₹583 / mo',
+              buttonText: 'Select Starter',
+              backgroundColor: const Color(0xFF16A34A),
               isCurrent: widget.activeTierNumber == 2,
             ),
           ),
 
-          // ── 4. TIER 3: STANDARD (Blue) ──
+          // ── 4. STANDARD (Royal Blue #2563EB with RECOMMENDED badge) ──
           Expanded(
             child: _buildTierHeaderColumn(
               tierNumber: 3,
               title: 'Standard',
-              annualPrice: '₹10,788 / year',
-              monthlySubtext: '(~₹899/month)',
-              badgeText: 'MULTI-BRANCH RETAIL',
-              backgroundColor: _standardBlue,
+              annualPrice: '₹10,788 / yr',
+              monthlySubtext: '₹899 / mo',
+              buttonText: 'Select Standard',
+              topBadgeText: 'RECOMMENDED',
+              backgroundColor: const Color(0xFF2563EB),
               isCurrent: widget.activeTierNumber == 3,
             ),
           ),
 
-          // ── 5. TIER 4: GROWTH (Indigo) ──
+          // ── 5. GROWTH (Sky Blue #0284C7) ──
           Expanded(
             child: _buildTierHeaderColumn(
               tierNumber: 4,
               title: 'Growth',
-              annualPrice: '₹17,988 / year',
-              monthlySubtext: '(~₹1,499/month)',
-              badgeText: 'SCALING & MULTI-SITE',
-              backgroundColor: _growthIndigo,
+              annualPrice: '₹17,988 / yr',
+              monthlySubtext: '₹1,499 / mo',
+              buttonText: 'Select Growth',
+              backgroundColor: const Color(0xFF0284C7),
               isCurrent: widget.activeTierNumber == 4,
             ),
           ),
 
-          // ── 6. TIER 5: ELITE (Forest Green) ──
+          // ── 6. ELITE (Purple #7C3AED) ──
           Expanded(
             child: _buildTierHeaderColumn(
               tierNumber: 5,
-              title: 'Elite Suite',
-              annualPrice: '₹29,988 / year',
-              monthlySubtext: '(~₹2,499/month)',
-              badgeText: 'NATIONAL DISTRIBUTION',
-              backgroundColor: _darkForestGreen,
+              title: 'Elite',
+              annualPrice: '₹29,988 / yr',
+              monthlySubtext: '₹2,499 / mo',
+              buttonText: 'CURRENT PLAN',
+              backgroundColor: const Color(0xFF7C3AED),
               isCurrent: widget.activeTierNumber == 5,
               isLast: true,
             ),
@@ -1077,14 +1742,14 @@ class _PlanFeaturesComparisonTableState
     required String title,
     required String annualPrice,
     required String monthlySubtext,
-    required String badgeText,
+    required String buttonText,
+    String? topBadgeText,
     required Color backgroundColor,
     required bool isCurrent,
     bool isLast = false,
   }) {
     return Container(
-      height: 136,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      height: 140,
       decoration: BoxDecoration(
         color: backgroundColor,
         border: Border(
@@ -1095,145 +1760,248 @@ class _PlanFeaturesComparisonTableState
               : BorderSide(color: Colors.white.withValues(alpha: 0.15), width: 1),
         ),
       ),
-      child: Center(
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Tier Title
-              Text(
-                title,
-                style: GoogleFonts.inter(
-                  fontSize: 16.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: -0.3,
-                ),
-              ),
-              const SizedBox(height: 3),
-
-              // Annual Price
-              Text(
-                annualPrice,
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
-
-              // Monthly subtext
-              Text(
-                monthlySubtext,
-                style: GoogleFonts.inter(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              // Badge Pill
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.35),
-                    width: 0.8,
-                  ),
+      child: Stack(
+        alignment: Alignment.topCenter,
+        children: [
+          if (topBadgeText != null)
+            Positioned(
+              top: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                decoration: const BoxDecoration(
+                  color: Color(0xFFF59E0B),
+                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(6)),
                 ),
                 child: Text(
-                  badgeText,
+                  topBadgeText,
                   style: GoogleFonts.inter(
-                    fontSize: 8.8,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 8.5,
+                    fontWeight: FontWeight.w900,
                     color: Colors.white,
-                    letterSpacing: 0.3,
+                    letterSpacing: 0.5,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ],
+            ),
+          Padding(
+            padding: EdgeInsets.only(
+              left: 10,
+              right: 10,
+              top: topBadgeText != null ? 18 : 12,
+              bottom: 10,
+            ),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: GoogleFonts.inter(
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      annualPrice,
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      monthlySubtext,
+                      style: GoogleFonts.inter(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.88),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    InkWell(
+                      onTap: () {
+                        if (!isCurrent && widget.onUpgrade != null) {
+                          widget.onUpgrade!(tierNumber);
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(20),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 5.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isCurrent
+                              ? Colors.white.withValues(alpha: 0.25)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: isCurrent
+                              ? null
+                              : [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.12),
+                                    blurRadius: 4,
+                                    offset: const Offset(0, 1),
+                                  ),
+                                ],
+                        ),
+                        child: Text(
+                          buttonText,
+                          style: GoogleFonts.inter(
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
+                            color: isCurrent ? Colors.white : backgroundColor,
+                            letterSpacing: 0.2,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // GROUPED FEATURE ROWS WITH MODULE SECTION HEADERS
+  // GROUPED FEATURE ROWS WITH COLLAPSIBLE CATEGORY HEADERS
   // ═══════════════════════════════════════════════════════════════
   List<Widget> _buildGroupedFeatureRows(
     List<PlanComparisonFeatureItem> features,
     double featureColWidth,
   ) {
     final List<Widget> rows = [];
-    String? currentModule;
+    final Map<String, List<PlanComparisonFeatureItem>> grouped = {};
 
-    for (int i = 0; i < features.length; i++) {
-      final item = features[i];
-
-      // Add Module category separator bar whenever module changes
-      if (_selectedCategory == 'All' && item.module != currentModule) {
-        currentModule = item.module;
-        rows.add(_buildModuleSectionDivider(currentModule));
-      }
-
-      // Add feature comparison row
-      rows.add(
-        _buildFeatureComparisonRow(
-          item: item,
-          rowIndex: i,
-          featureColWidth: featureColWidth,
-        ),
-      );
+    for (final item in features) {
+      grouped.putIfAbsent(item.category, () => []).add(item);
     }
+
+    int rowIndex = 0;
+    grouped.forEach((category, items) {
+      final isCollapsed = _collapsedCategories.contains(category);
+      // Category header
+      rows.add(_buildCategoryHeader(category, items.length));
+
+      // Category rows (if not collapsed)
+      if (!isCollapsed) {
+        for (final item in items) {
+          rows.add(
+            _buildFeatureComparisonRow(
+              item: item,
+              rowIndex: rowIndex++,
+              featureColWidth: featureColWidth,
+            ),
+          );
+        }
+      }
+    });
 
     return rows;
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // MODULE SECTION DIVIDER
+  // CATEGORY HEADER BAR WITH COLLAPSE / EXPAND TOGGLE
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildModuleSectionDivider(String moduleName) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF1F5F9),
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-          left: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-          right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+  Widget _buildCategoryHeader(String category, int count) {
+    final isCollapsed = _collapsedCategories.contains(category);
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          if (isCollapsed) {
+            _collapsedCategories.remove(category);
+          } else {
+            _collapsedCategories.add(category);
+          }
+        });
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF0FDF4),
+          border: Border(
+            top: BorderSide(color: Color(0xFFDCFCE7), width: 1.0),
+            bottom: BorderSide(color: Color(0xFFDCFCE7), width: 1.0),
+            left: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+            right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: _darkForestGreen,
-              shape: BoxShape.circle,
+        child: Row(
+          children: [
+            Container(
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                color: const Color(0xFF166534),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Center(
+                child: Icon(
+                  _getCategoryIcon(category),
+                  size: 13,
+                  color: Colors.white,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            moduleName.toUpperCase(),
-            style: GoogleFonts.inter(
-              fontSize: 11.5,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF334155),
-              letterSpacing: 0.8,
+            const SizedBox(width: 10),
+            Text(
+              category,
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDCFCE7),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$count Features',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF166534),
+                ),
+              ),
+            ),
+            const Spacer(),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  isCollapsed ? 'Expand' : 'Collapse',
+                  style: GoogleFonts.inter(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  isCollapsed ? LucideIcons.chevronDown : LucideIcons.chevronUp,
+                  size: 13,
+                  color: const Color(0xFF475569),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1249,7 +2017,7 @@ class _PlanFeaturesComparisonTableState
     final isEven = rowIndex % 2 == 0;
     final isHovered = _hoveredRowIndex == rowIndex;
     final baseColor = isHovered
-        ? const Color(0xFFF1F5F9)
+        ? const Color(0xFFF8FAFC)
         : (isEven ? Colors.white : const Color(0xFFFAFCFF));
 
     return MouseRegion(
@@ -1268,65 +2036,39 @@ class _PlanFeaturesComparisonTableState
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── 1. FEATURE NAME & DESCRIPTION COLUMN ──
+              // ── 1. FEATURE NAME COLUMN ──
               Container(
                 width: featureColWidth,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: const BoxDecoration(
                   border: Border(
                     right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
                   ),
                 ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Feature Icon
                     Container(
-                      width: 32,
-                      height: 32,
-                      margin: const EdgeInsets.only(top: 2),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFEFF6FF),
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF10B981),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: const Color(0xFFBFDBFE),
-                          width: 0.8,
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          item.icon,
-                          size: 15,
-                          color: const Color(0xFF2563EB),
-                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    // Name and What This Does
+                    const SizedBox(width: 8),
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            item.featureName,
-                            style: GoogleFonts.inter(
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFF1E293B),
-                              height: 1.25,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            item.description,
-                            style: GoogleFonts.inter(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w400,
-                              color: const Color(0xFF64748B),
-                              height: 1.3,
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        item.featureName,
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1E293B),
+                          height: 1.3,
+                        ),
                       ),
                     ),
                   ],
@@ -1386,7 +2128,7 @@ class _PlanFeaturesComparisonTableState
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // PARSED TIER VALUE CELL
+  // CELL VALUE RENDERER
   // ═══════════════════════════════════════════════════════════════
   Widget _buildTierValueCell({
     required String rawText,
@@ -1397,10 +2139,9 @@ class _PlanFeaturesComparisonTableState
     final textTrim = rawText.trim();
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 64),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
       decoration: BoxDecoration(
-        color: isCurrent ? const Color(0xFFF0FDF4).withValues(alpha: 0.35) : null,
+        color: isCurrent ? const Color(0xFFF0FDF4).withValues(alpha: 0.3) : null,
         border: Border(
           right: isLast
               ? BorderSide.none
@@ -1414,195 +2155,148 @@ class _PlanFeaturesComparisonTableState
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // CELL VALUE FORMATTER (Red Crosses, Green Checks, Bold Metrics)
+  // CELL VALUE FORMATTER (Locked Badges, Available Badges, Text)
   // ═══════════════════════════════════════════════════════════════
   Widget _formatCellValue(String text) {
-    // 1. Exact Red Cross: "❌"
-    if (text == '❌') {
-      return Container(
-        width: 26,
-        height: 26,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFEF2F2),
-          shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
-        ),
-        child: const Center(
-          child: Icon(
-            LucideIcons.x,
-            color: Color(0xFFEF4444),
-            size: 15,
+    // 1. Red locked badge: "🔒 Locked"
+    if (text == '🔒 Locked') {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF2F2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
           ),
-        ),
-      );
-    }
-
-    // 2. Starts with "❌" (e.g., "❌ (Manual Billing Only)", "❌ Not Included in Starter")
-    if (text.startsWith('❌')) {
-      final detail = text.replaceFirst('❌', '').trim();
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFEF2F2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      LucideIcons.x,
-                      color: Color(0xFFEF4444),
-                      size: 11,
-                    ),
-                  ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.lock, size: 11, color: Color(0xFFEF4444)),
+              const SizedBox(width: 4),
+              Text(
+                'Locked',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFDC2626),
                 ),
-                const SizedBox(width: 5),
-                Text(
-                  'Not Available',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFFDC2626),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (detail.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              detail,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF94A3B8),
               ),
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       );
     }
 
-    // 3. Included with details (e.g. "Included (Up to 5 combined calls/day)")
-    if (text.toLowerCase().startsWith('included')) {
-      final sub =
-          text.replaceFirst(RegExp(r'included', caseSensitive: false), '').trim();
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 18,
-                  height: 18,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFDCFCE7),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      LucideIcons.check,
-                      color: Color(0xFF16A34A),
-                      size: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  'Included',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF16A34A),
-                  ),
-                ),
-              ],
-            ),
+    // 2. Red locked with quota: starts with "🔒" (e.g. "🔒 (0/day)")
+    if (text.startsWith('🔒')) {
+      final quota = text.replaceFirst('🔒', '').trim();
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFEF2F2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFFECACA), width: 0.8),
           ),
-          if (sub.isNotEmpty) ...[
-            const SizedBox(height: 2),
-            Text(
-              sub,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.inter(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.lock, size: 11, color: Color(0xFFEF4444)),
+              const SizedBox(width: 4),
+              Text(
+                quota.isNotEmpty ? quota : 'Locked',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFFDC2626),
+                ),
               ),
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       );
     }
 
-    // 4. Highlighted Unlimited or Strict Cap
-    final isUnlimited = text.toLowerCase().contains('unlimited');
-    final hasParenthesis = text.contains('(') && text.contains(')');
-
-    if (hasParenthesis) {
-      final parenIdx = text.indexOf('(');
-      final mainPart = text.substring(0, parenIdx).trim();
-      final subPart = text.substring(parenIdx).trim();
-
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Text(
-            mainPart,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-              color: isUnlimited
-                  ? const Color(0xFF16A34A)
-                  : const Color(0xFF1E293B),
-            ),
+    // 3. Green Available badge: "✓ Available"
+    if (text == '✓ Available') {
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFFDCFCE7),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFBBF7D0), width: 0.8),
           ),
-          const SizedBox(height: 2),
-          Text(
-            subPart,
-            textAlign: TextAlign.center,
-            style: GoogleFonts.inter(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF64748B),
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.check, size: 11, color: Color(0xFF16A34A)),
+              const SizedBox(width: 4),
+              Text(
+                'Available',
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF166534),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       );
     }
 
-    // 5. Default single text line
-    return Text(
-      text,
-      textAlign: TextAlign.center,
-      style: GoogleFonts.inter(
-        fontSize: 12.5,
-        fontWeight: isUnlimited ? FontWeight.w800 : FontWeight.w600,
-        color: isUnlimited
-            ? const Color(0xFF16A34A)
-            : const Color(0xFF1E293B),
-        height: 1.3,
+    // 4. Emerald Unlimited badge: "✨ Unlimited" / "✨ Unlimited White-label" / "✨ Unlimited Custom Series"
+    if (text.contains('Unlimited')) {
+      final label = text.replaceAll('✨', '').trim();
+      return FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF059669),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.sparkles, size: 11, color: Colors.white),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    // 5. Standard text representation
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        text,
+        textAlign: TextAlign.center,
+        style: GoogleFonts.inter(
+          fontSize: 11.5,
+          fontWeight: FontWeight.w600,
+          color: const Color(0xFF334155),
+          height: 1.25,
+        ),
       ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // TABLE FOOTER ACTIONS ROW (Upgrade buttons for each tier)
+  // BOTTOM ACTIONS ROW
   // ═══════════════════════════════════════════════════════════════
   Widget _buildTableFooterActions(double featureColWidth) {
     return Container(
@@ -1611,194 +2305,63 @@ class _PlanFeaturesComparisonTableState
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
         border: Border(
           bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.5),
-          left: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-          right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+          left: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+          right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
         ),
       ),
       child: Row(
         children: [
-          // Empty placeholder column matching feature column
           Container(
             width: featureColWidth,
-            height: 72,
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            alignment: Alignment.centerLeft,
-            decoration: const BoxDecoration(
-              border: Border(
-                right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: Text(
+              'Upgrade or change workspace plan:',
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF475569),
               ),
             ),
-            child: Row(
-              children: [
-                const Icon(
-                  LucideIcons.sparkles,
-                  color: _darkForestGreen,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Select Workspace Plan',
-                    style: GoogleFonts.inter(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF334155),
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
           ),
-
-          // Action button for Tier 1: Micro
-          Expanded(
-            child: _buildTierActionCell(
-              tierNumber: 1,
-              tierName: 'Micro',
-              color: const Color(0xFF0D9488),
-            ),
-          ),
-
-          // Action button for Tier 2: Starter
-          Expanded(
-            child: _buildTierActionCell(
-              tierNumber: 2,
-              tierName: 'Starter',
-              color: _starterGreen,
-            ),
-          ),
-
-          // Action button for Tier 3: Standard
-          Expanded(
-            child: _buildTierActionCell(
-              tierNumber: 3,
-              tierName: 'Standard',
-              color: _standardBlue,
-            ),
-          ),
-
-          // Action button for Tier 4: Growth
-          Expanded(
-            child: _buildTierActionCell(
-              tierNumber: 4,
-              tierName: 'Growth',
-              color: _growthIndigo,
-            ),
-          ),
-
-          // Action button for Tier 5: Elite
-          Expanded(
-            child: _buildTierActionCell(
-              tierNumber: 5,
-              tierName: 'Elite Suite',
-              color: _darkForestGreen,
-              isLast: true,
-            ),
-          ),
+          Expanded(child: _buildFooterActionButton(1, 'Select Micro', const Color(0xFF0F766E))),
+          Expanded(child: _buildFooterActionButton(2, 'Select Starter', const Color(0xFF16A34A))),
+          Expanded(child: _buildFooterActionButton(3, 'Select Standard', const Color(0xFF2563EB))),
+          Expanded(child: _buildFooterActionButton(4, 'Select Growth', const Color(0xFF0284C7))),
+          Expanded(child: _buildFooterActionButton(5, 'CURRENT PLAN', const Color(0xFF7C3AED))),
         ],
       ),
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════
-  // SINGLE TIER ACTION BUTTON CELL
-  // ═══════════════════════════════════════════════════════════════
-  Widget _buildTierActionCell({
-    required int tierNumber,
-    required String tierName,
-    required Color color,
-    bool isLast = false,
-  }) {
-    final bool isCurrent = tierNumber == widget.activeTierNumber;
-    final bool isBelow = tierNumber < widget.activeTierNumber;
-
+  Widget _buildFooterActionButton(int tierNumber, String label, Color color) {
+    final isCurrent = widget.activeTierNumber == tierNumber;
     return Container(
-      height: 72,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(
-          right: isLast
-              ? BorderSide.none
-              : const BorderSide(color: Color(0xFFE2E8F0), width: 1),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: ElevatedButton(
+        onPressed: isCurrent
+            ? null
+            : () {
+                if (widget.onUpgrade != null) {
+                  widget.onUpgrade!(tierNumber);
+                }
+              },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: isCurrent ? const Color(0xFFE2E8F0) : color,
+          foregroundColor: isCurrent ? const Color(0xFF94A3B8) : Colors.white,
+          elevation: isCurrent ? 0 : 1,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        ),
+        child: Text(
+          isCurrent ? 'Active Plan' : label,
+          style: GoogleFonts.inter(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
         ),
       ),
-      child: isCurrent
-          ? Container(
-              height: 40,
-              decoration: BoxDecoration(
-                color: const Color(0xFFECFDF5),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: const Color(0xFFA7F3D0), width: 1.2),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    LucideIcons.checkCheck,
-                    size: 15,
-                    color: Color(0xFF065F46),
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Active Plan',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF065F46),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : isBelow
-              ? SizedBox(
-                  height: 40,
-                  child: OutlinedButton(
-                    onPressed: null,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      backgroundColor: const Color(0xFFF1F5F9),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      'Included in Tier',
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF94A3B8),
-                      ),
-                    ),
-                  ),
-                )
-              : SizedBox(
-                  height: 40,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (widget.onUpgrade != null) {
-                        widget.onUpgrade!(tierNumber);
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: color,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
-                    child: Text(
-                      'Upgrade to $tierName',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ),
     );
   }
 }
