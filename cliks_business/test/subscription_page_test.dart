@@ -39,7 +39,11 @@ void main() {
 
         // Verify core workspace tiers are present
         expect(find.text('Upgrade Workspace Tier'), findsOneWidget);
-        expect(find.text('Tier 1 (Starter)'), findsWidgets);
+        expect(find.text('Micro Plan'), findsWidgets);
+        expect(find.text('Starter Plan'), findsWidgets);
+        expect(find.text('Standard Plan'), findsWidgets);
+        expect(find.text('Growth Plan'), findsWidgets);
+        expect(find.text('Elite Suite'), findsWidgets);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
@@ -103,8 +107,8 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
-        // Find all Upgrade Plan buttons (Tier 2 Standard is first available upgrade)
-        final upgradeButtons = find.widgetWithText(ElevatedButton, 'Upgrade Plan');
+        // Find all Upgrade Plan buttons
+        final upgradeButtons = find.widgetWithText(OutlinedButton, 'Upgrade Plan');
         expect(upgradeButtons, findsWidgets);
 
         // Scroll to button to ensure it is visible and hit-testable
@@ -116,9 +120,9 @@ void main() {
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 
-        // Confirmation dialog should appear for Tier 2 (Standard)
+        // Confirmation dialog should appear
         expect(find.textContaining('Upgrade Plan -'), findsOneWidget);
-        final confirmButton = find.widgetWithText(ElevatedButton, 'Confirm Upgrade to Tier 2 (Standard)');
+        final confirmButton = find.widgetWithText(ElevatedButton, 'Confirm Upgrade to Micro Plan');
         expect(confirmButton, findsOneWidget);
 
         // Confirm upgrade
@@ -127,10 +131,63 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         // Dialog is dismissed and snackbar appears directly with success
-        expect(find.text('Successfully upgraded to Tier 2 (Standard)!'), findsOneWidget);
+        expect(find.text('Successfully upgraded to Micro Plan!'), findsOneWidget);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
+    });
+
+    testWidgets('SubscriptionPage 5-Tier pricing, cards and down table render without overflow across all screens',
+        (tester) async {
+      final screenSizes = [
+        const Size(1920, 1080),
+        const Size(1366, 768),
+        const Size(1100, 800),
+        const Size(800, 600),
+        const Size(375, 812),
+        const Size(320, 568),
+      ];
+
+      for (final size in screenSizes) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(
+                body: SubscriptionPage(),
+              ),
+            ),
+          ),
+        );
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 300));
+
+        // Verify all 5 tiers exist
+        expect(find.text('Micro Plan'), findsWidgets);
+        expect(find.text('Starter Plan'), findsWidgets);
+        expect(find.text('Standard Plan'), findsWidgets);
+        expect(find.text('Growth Plan'), findsWidgets);
+        expect(find.text('Elite Suite'), findsWidgets);
+
+        // Verify active plan banner has Elite Suite by default
+        expect(find.text('Elite Suite'), findsWidgets);
+        expect(find.text('Currently Active\nPlan'), findsOneWidget);
+
+        // Verify prices
+        expect(find.text('₹3,000'), findsWidgets);
+        expect(find.text('₹6,996'), findsWidgets);
+        expect(find.text('₹10,788'), findsWidgets);
+        expect(find.text('₹17,988'), findsWidgets);
+        expect(find.text('₹29,988'), findsWidgets);
+
+        // Verify down table features comparison
+        expect(find.text('Platform / Feature'), findsOneWidget);
+      }
+
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
     });
   });
 }

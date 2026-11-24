@@ -6,7 +6,6 @@ import '../../../core/theme/app_colors.dart';
 import '../../../widgets/bento/bento.dart';
 import '../../../core/network/token_service.dart';
 import '../../../data/repositories/subscription_repository.dart';
-import '../widgets/customizable_plan_builder_section.dart';
 import '../widgets/plan_features_comparison_table.dart';
 
 class SubscriptionPage extends StatefulWidget {
@@ -61,13 +60,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
   // Section Navigation Tabs (BUSINESS, FIN-PRO, PARTNER LAUNCH DESK)
   int _selectedMainTab = 0; // 0: BUSINESS, 1: FIN-PRO, 2: PARTNER LAUNCH DESK
-  int _selectedBusinessSubTab = 0; // 0: Standard Tiers (4 Plans), 1: ✦ Customizable Plan
   int _selectedPartnerTab = 0; // 0: Investor Club, 1: Products & Ideas
 
   // Tier tracking for Upgrade logic:
-  // "A person can go from starter plan to elite plan , like upgrading ,
-  // but if he puts the elite or any other plan , the plan which is before it button should not work , the button above it can work"
-  int _currentBusinessTier = 1; // 1: Starter, 2: Standard, 3: Premium, 4: Elite
+  int _currentBusinessTier = 5; // 1: Micro, 2: Starter, 3: Standard, 4: Growth, 5: Elite Suite (Active in screenshot)
   int _currentFinProTier = 1; // 1: Solo (Active), 2: Firm (Top tier with Gold UI)
   int _finProTeamMembers = 3; // Stepper counter in Fin-Pro Firm
   int _currentInvestorTier = 1; // 1: Basic Investor, 2: Pro Investor (Top tier with Gold UI)
@@ -130,12 +126,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           } else if (planName.isNotEmpty) {
             final pLower = planName.toLowerCase();
             if (pLower.contains('elite')) {
+              resolvedTier = 5;
+            } else if (pLower.contains('growth') || pLower.contains('premium')) {
               resolvedTier = 4;
-            } else if (pLower.contains('premium') || pLower.contains('growth')) {
-              resolvedTier = 3;
             } else if (pLower.contains('standard')) {
-              resolvedTier = 2;
+              resolvedTier = 3;
             } else if (pLower.contains('starter')) {
+              resolvedTier = 2;
+            } else if (pLower.contains('micro')) {
               resolvedTier = 1;
             }
           }
@@ -170,90 +168,127 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   final List<_SubscriptionTierData> _tiers = const [
     _SubscriptionTierData(
       tierNumber: 1,
-      topTag: 'STARTER',
-      name: 'Tier 1 (Starter)',
+      topTag: '',
+      name: 'Micro Plan',
       headline:
-          'Essential tools for emerging retail, solopreneurs & small teams.',
-      originalMonthlyPrice: '₹549',
-      offerMonthlyPrice: '₹99',
-      fullAnnualPrice: '₹1,188',
-      discountTag: 'Save 82%',
-      icon: LucideIcons.rocket,
+          'Micro subscription for single-branch stores & small enterprises.',
+      originalMonthlyPrice: '₹4,999',
+      offerMonthlyPrice: '₹250',
+      fullAnnualPrice: '₹3,000',
+      discountTag: 'Save ₹1,999',
+      icon: LucideIcons.store,
       features: [
-        'Unlimited Accounting & Day Book Logs',
-        'Live GST Filings & ITC Auto-Matching',
-        'Single-Warehouse Inventory Management',
-        'Fast Invoicing, E-Way & Payment Links',
-        'Automated Cash Flow & P&L Statements',
-        'Standard Email Support (24h SLA)',
+        '1 Branch / Godown',
+        '1,000 Sales Invoices & 1,000 Bills / year',
+        '1,000 Active Stock SKUs',
+        '100 Customers CRM & 50 Vendors',
+        '1 GB Cloud Storage Tracker',
+        'Full Billing & Purchases Dashboards',
+        'POS Checkout (PDF Only) & Hold/Split Payments',
+        'Custom Chart of Accounts & Item-wise Expenses',
       ],
       isCurrentPlan: false,
+      billingSubtext: '(Equivalent to ₹250 per month)',
     ),
     _SubscriptionTierData(
       tierNumber: 2,
-      topTag: 'STANDARD',
-      name: 'Tier 2 (Standard)',
+      topTag: '',
+      name: 'Starter Plan',
       headline:
-          'Comprehensive operational suite for growing SMBs and expanding stores.',
-      originalMonthlyPrice: '₹1,349',
-      offerMonthlyPrice: '₹249',
-      fullAnnualPrice: '₹2,988',
-      discountTag: 'Save 81%',
-      icon: LucideIcons.layers,
+          'Ideal for emerging single-branch retail & growing SMBs.',
+      originalMonthlyPrice: '₹9,999',
+      offerMonthlyPrice: '₹583',
+      fullAnnualPrice: '₹6,996',
+      discountTag: 'Save ₹3,003',
+      icon: LucideIcons.shieldCheck,
       features: [
-        'Everything included in Tier 1',
-        'Multi-Warehouse Routing (up to 3 sites)',
-        'Automated Payroll & Staff Attendance',
-        'Recurring Invoices & Smart Overdue Alerts',
-        'Custom Barcode & QR Label Printing',
-        'Priority Live Chat & Email Support',
+        '2 Sub IDs / Roles & 1 Branch',
+        '5,000 Invoices & 5,000 Bills / year',
+        '5,000 Active Stock SKUs & 1,000 Customers',
+        '2 Staff (HR Profiles, Attendance & Shifts)',
+        'Live E-Invoicing (5/day) & E-Way Bills (2/day)',
+        'P&L Statements, GST Day Book & Tax Summary',
+        '5 GB Cloud Storage & Monthly Auto-Backup',
+        'POS 1 Counter Thermal Printing (1 Format)',
       ],
       isCurrentPlan: false,
+      billingSubtext: '(Equivalent to ₹583 per month)',
     ),
     _SubscriptionTierData(
       tierNumber: 3,
-      topTag: 'MOST POPULAR',
-      name: 'Tier 3 (Premium / Growth)',
+      topTag: '',
+      name: 'Standard Plan',
       headline:
-          'High-velocity automation, multi-site sync & advanced business analytics.',
-      originalMonthlyPrice: '₹2,499',
-      offerMonthlyPrice: '₹549',
-      fullAnnualPrice: '₹6,588',
-      discountTag: 'Save 78%',
-      icon: LucideIcons.trendingUp,
+          'Designed for multi-branch retail, full PO workflows & automated compliance.',
+      originalMonthlyPrice: '₹15,999',
+      offerMonthlyPrice: '₹899',
+      fullAnnualPrice: '₹10,788',
+      discountTag: 'Save ₹5,211',
+      icon: LucideIcons.ribbon,
       features: [
-        'Everything included in Tier 2',
-        'Multi-Site Inventory & Routing (up to 10 sites)',
-        'Dedicated Bill of Materials (BOM) & Work Orders',
-        'API Webhook Access & Direct ERP Sync',
-        'Advanced Tax Deductions & Audit Hub Reports',
-        'Granular Multi-User Role Permissions',
-        'Fast-Track Phone & VIP Chat Assistance',
+        '5 Sub IDs / Roles & 2 Branches (Toggle)',
+        '10,000 Invoices & 10,000 Bills / year',
+        '10,000 Active Stock SKUs & 5,000 Customers',
+        '5 Staff (HR Database & Automated Payroll)',
+        'Live E-Invoicing (10/day) & E-Way Bills (3/day)',
+        'Full Statements (P&L + Balance Sheet) & BRS',
+        'Delivery Challan & Loyalty Points Tracking',
+        '10 GB Cloud Storage & Weekly Auto-Backup',
+        'POS 2 Counters (2 Thermal Formats)',
+        '1 Godown / Warehouse & Price Lists',
       ],
       isCurrentPlan: false,
+      billingSubtext: '(Equivalent to ₹899 per month)',
     ),
     _SubscriptionTierData(
       tierNumber: 4,
-      topTag: 'ELITE ENTERPRISE',
-      name: 'Tier 4 (Elite)',
+      topTag: '',
+      name: 'Growth Plan',
       headline:
-          'Maximum performance, unlimited scale & dedicated 24/7 VIP governance.',
-      originalMonthlyPrice: '₹3,499',
-      offerMonthlyPrice: '₹999',
-      fullAnnualPrice: '₹11,988',
-      discountTag: 'Save 71%',
-      icon: LucideIcons.crown,
+          'Built for scaling businesses and multi-site operations.',
+      originalMonthlyPrice: '₹24,999',
+      offerMonthlyPrice: '₹1,499',
+      fullAnnualPrice: '₹17,988',
+      discountTag: 'Save ₹7,011',
+      icon: LucideIcons.zap,
       features: [
-        'Everything included in Tier 3',
-        'Unlimited Warehouses & Branch Locations',
-        'Uncapped Active Staff & User Accounts',
-        'Custom White-Label Invoicing & Branding',
-        'Unlimited Manufacturing Batches & QC Logs',
-        'Guaranteed 99.99% Enterprise Uptime SLA',
-        'Dedicated FIN-PRO Manager & 24/7 VIP Support',
+        '10 Sub IDs / Roles & 5 Branches (Toggle)',
+        '25,000 Invoices & 25,000 Bills / year',
+        '50,000 Products & 15,000 Customers',
+        '25 Staff (Advanced HR & Payroll)',
+        'Live E-Invoicing (20/day) & E-Way Bills (5/day)',
+        '5 Godowns & Multi-Tier Landed Cost',
+        'API & Webhooks Access',
+        '20 GB Cloud Storage & Daily Auto-Backup',
+        'POS 5 Counters + Basic Kiosk Mode',
       ],
       isCurrentPlan: false,
+      billingSubtext: '(Equivalent to ₹1,499 per month)',
+    ),
+    _SubscriptionTierData(
+      tierNumber: 5,
+      topTag: 'TIER 5: ELITE (₹2,499/MO)',
+      name: 'Elite Suite',
+      headline:
+          'Absolute control for national distribution networks.',
+      originalMonthlyPrice: '₹39,999',
+      offerMonthlyPrice: '₹2,499',
+      fullAnnualPrice: '₹29,988',
+      discountTag: 'Save ₹10,011',
+      icon: LucideIcons.crown,
+      features: [
+        '20 Sub IDs / Roles & 15 Branches',
+        '100,000 Invoices & 100,000 Bills / year',
+        'Unlimited Active Stock SKUs & 25,000 Customers',
+        '100 Staff (HR & Full Sync Payroll)',
+        'Live E-Invoicing (30/day) & E-Way Bills (10/day)',
+        '10 Godowns & Full White-Labeling',
+        '50 GB Cloud Storage & Daily Auto-Backup',
+        'POS 15 Counters + Customizable Kiosk Mode',
+      ],
+      isCurrentPlan: true,
       isTopTier: true,
+      billingSubtext: '(Equivalent to ₹2,499 per month)',
     ),
   ];
 
@@ -806,274 +841,32 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     String title = 'Upgrade Workspace Tier',
     bool isMobile = false,
   ]) {
-    if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: _darkForestGreen,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.4,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              // Quick Jump to Active Plan
-              InkWell(
-                onTap: () => _scrollToSection(_activePlanKey),
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.arrowUp, size: 10.5, color: Color(0xFF475569)),
-                      const SizedBox(width: 3.5),
-                      Text(
-                        'Active Plan',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Quick Jump to Features Comparison
-              InkWell(
-                onTap: () => _scrollToSection(_featuresComparisonKey),
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.table, size: 10.5, color: Color(0xFF475569)),
-                      const SizedBox(width: 3.5),
-                      Text(
-                        'Compare Plans',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // Quick Jump to Billing History
-              InkWell(
-                onTap: () => _scrollToSection(_billingHistoryKey),
-                borderRadius: BorderRadius.circular(6),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(LucideIcons.arrowDown, size: 10.5, color: Color(0xFF475569)),
-                      const SizedBox(width: 3.5),
-                      Text(
-                        'Billing History',
-                        style: GoogleFonts.inter(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF475569),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
-      );
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 12,
-          runSpacing: 8,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: _darkForestGreen,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    title,
-                    style: GoogleFonts.inter(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF0F172A),
-                      letterSpacing: -0.4,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            // Quick Jump to Active Plan
-            InkWell(
-              onTap: () => _scrollToSection(_activePlanKey),
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.arrowUp, size: 10.5, color: Color(0xFF475569)),
-                    const SizedBox(width: 3.5),
-                    Text(
-                      'Active Plan',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF475569),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Quick Jump to Features Comparison
-            InkWell(
-              onTap: () => _scrollToSection(_featuresComparisonKey),
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.table, size: 10.5, color: Color(0xFF475569)),
-                    const SizedBox(width: 3.5),
-                    Text(
-                      'Compare Plans',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF475569),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            // Quick Jump to Billing History
-            InkWell(
-              onTap: () => _scrollToSection(_billingHistoryKey),
-              borderRadius: BorderRadius.circular(6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(LucideIcons.arrowDown, size: 10.5, color: Color(0xFF475569)),
-                    const SizedBox(width: 3.5),
-                    Text(
-                      'Billing History',
-                      style: GoogleFonts.inter(
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        color: const Color(0xFF475569),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Text(
+        title,
+        style: GoogleFonts.inter(
+          fontSize: isMobile ? 18 : 22,
+          fontWeight: FontWeight.w800,
+          color: const Color(0xFF0F172A),
+          letterSpacing: -0.4,
         ),
-      ],
+      ),
     );
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 2. FOUR SUBSCRIPTION CARDS (Strict Identical Height & Layout Uniformity)
+  // 2. FIVE SUBSCRIPTION CARDS (Strict Identical Height & Layout Uniformity)
   // ═══════════════════════════════════════════════════════════════
-  Widget _buildFourTierCards([bool isMobile = false]) {
-    final days = _remainingTime.inDays;
-    final hours = _remainingTime.inHours % 24;
-    final mins = _remainingTime.inMinutes % 60;
-
+  Widget _buildTierCards([bool isMobile = false]) {
     final cards = _tiers
         .map(
-          (tier) => _buildSingleSubscriptionCard(
+          (tier) => _buildBusinessTierCard(
             tier: tier,
             activeTierNumber: _currentBusinessTier,
             onUpgrade: (newTier) {
               setState(() => _currentBusinessTier = newTier);
             },
-            days: days,
-            hours: hours,
-            mins: mins,
           ),
         )
         .toList();
@@ -1093,23 +886,22 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-
-        // Responsive horizontal scroll guard on smaller window sizes to avoid overflow
-        if (constraints.maxWidth < 1180) {
+        // Responsive horizontal scroll guard on smaller window sizes (< 1350px) to avoid overflow
+        if (constraints.maxWidth < 1350) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 1200),
+              constraints: const BoxConstraints(minWidth: 1350),
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: cards
                       .map(
                         (c) => SizedBox(
-                          width: 290,
+                          width: 260,
                           child: Padding(
-                            padding: const EdgeInsets.only(right: 14.0),
+                            padding: const EdgeInsets.only(right: 12.0),
                             child: c,
                           ),
                         ),
@@ -1121,7 +913,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           );
         }
 
-        // Full width desktop: 4 cards side-by-side with strict identical height
+        // Full width desktop: 5 cards side-by-side with strict identical height
         return IntrinsicHeight(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1129,7 +921,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 .map(
                   (c) => Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 7.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 6.0),
                       child: c,
                     ),
                   ),
@@ -1140,6 +932,310 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       },
     );
   }
+
+  // ═══════════════════════════════════════════════════════════════
+  // BUSINESS TIER CARD (Exactly matching images)
+  // ═══════════════════════════════════════════════════════════════
+  Widget _buildBusinessTierCard({
+    required _SubscriptionTierData tier,
+    required int activeTierNumber,
+    required ValueChanged<int> onUpgrade,
+  }) {
+    final int tierNum = tier.tierNumber;
+    final bool isCurrent = tierNum == activeTierNumber;
+    final bool isTier3 = tierNum == 3;
+    final bool isTier5 = tierNum == 5;
+
+    final Color primaryColor = isTier3
+        ? const Color(0xFF2563EB)
+        : const Color(0xFF0F766E);
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCurrent || isTier5
+              ? const Color(0xFF0F766E)
+              : const Color(0xFFE2E8F0),
+          width: isCurrent || isTier5 ? 2.0 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ─── 1. TOP BADGE (Only for Tier 5 Elite Suite) ───
+          Container(
+            height: 28,
+            alignment: Alignment.centerLeft,
+            child: isTier5
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4.5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF0F766E),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      tier.topTag.isNotEmpty
+                          ? tier.topTag
+                          : 'TIER 5: ELITE (₹2,499/MO)',
+                      style: GoogleFonts.inter(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  )
+                : const SizedBox(height: 28),
+          ),
+          const SizedBox(height: 14),
+
+          // ─── 2. TIER ICON ───
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: isTier3
+                  ? const Color(0xFFEFF6FF)
+                  : const Color(0xFFF0FDF4),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: Icon(
+                tier.icon,
+                size: 20,
+                color: primaryColor,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // ─── 3. TIER NAME ───
+          SizedBox(
+            height: 26,
+            child: Text(
+              tier.name,
+              style: GoogleFonts.inter(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+                letterSpacing: -0.3,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // ─── 4. TIER HEADLINE ───
+          SizedBox(
+            height: 44,
+            child: Text(
+              tier.headline,
+              style: GoogleFonts.inter(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+                height: 1.35,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ─── 5. PRICING SECTION ───
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              children: [
+                Text(
+                  tier.originalMonthlyPrice,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF94A3B8),
+                    decoration: TextDecoration.lineThrough,
+                    decorationColor: const Color(0xFF94A3B8),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 7,
+                    vertical: 2.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    tier.discountTag,
+                    style: GoogleFonts.inter(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF166534),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  tier.fullAnnualPrice,
+                  style: GoogleFonts.inter(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF0F172A),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '/ year',
+                  style: GoogleFonts.inter(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              tier.billingSubtext ?? '',
+              style: GoogleFonts.inter(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // ─── 6. ACTION CTA BUTTON ───
+          isCurrent
+              ? Container(
+                  height: 42,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F766E),
+                    borderRadius: BorderRadius.circular(21),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Currently Active\nPlan',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      height: 1.15,
+                    ),
+                  ),
+                )
+              : SizedBox(
+                  height: 42,
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () => _showPlanUpgradeDialog(tier, onUpgrade),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(
+                        color: primaryColor,
+                        width: 1.4,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(21),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                    ),
+                    child: Text(
+                      'Upgrade Plan',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: primaryColor,
+                      ),
+                    ),
+                  ),
+                ),
+          const SizedBox(height: 20),
+
+          // ─── 7. WHAT'S INCLUDED ───
+          Text(
+            "WHAT'S INCLUDED",
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF0F172A),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // ─── 8. FEATURES LIST ───
+          ...tier.features.map(
+            (f) => Padding(
+              padding: const EdgeInsets.only(bottom: 9.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      LucideIcons.check,
+                      size: 13,
+                      color: isTier3
+                          ? const Color(0xFF2563EB)
+                          : const Color(0xFF10B981),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      f,
+                      style: GoogleFonts.inter(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w500,
+                        color: const Color(0xFF334155),
+                        height: 1.35,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFourTierCards([bool isMobile = false]) => _buildTierCards(isMobile);
 
   // ═══════════════════════════════════════════════════════════════
   // INDIVIDUAL SUBSCRIPTION CARD (Enterprise SaaS Aesthetic)
@@ -2340,139 +2436,35 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // BUSINESS SECTION (Standard Tiers + Customizable Plan Builder)
+  // BUSINESS SECTION (Standard 5 Tiers + Features Comparison Table)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildBusinessSection(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Sub-selector tabs: [ Standard Tiers (4 Plans) ] [ ✦ Customizable Plan & Add-Ons ]
-        Center(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildBusinessSubTab(
-                  index: 0,
-                  label: 'Standard Tiers (4 Plans)',
-                  icon: LucideIcons.layers,
-                  isMobile: isMobile,
-                ),
-                SizedBox(width: isMobile ? 8 : 14),
-                _buildBusinessSubTab(
-                  index: 1,
-                  label: '✦ Customizable Plan & Add-Ons',
-                  icon: LucideIcons.sliders,
-                  isMobile: isMobile,
-                ),
-              ],
-            ),
-          ),
+        // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
+        Container(
+          key: _upgradeTiersKey,
+          child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
         ),
-        SizedBox(height: isMobile ? 18 : 24),
+        const SizedBox(height: 18),
 
-        if (_selectedBusinessSubTab == 0) ...[
-          // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
-          Container(
-            key: _upgradeTiersKey,
-            child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
-          ),
-          const SizedBox(height: 18),
+        // ─── 5. FIVE SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
+        _buildTierCards(isMobile),
+        SizedBox(height: isMobile ? 26 : 36),
 
-          // ─── 5. FOUR SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
-          _buildFourTierCards(isMobile),
-          SizedBox(height: isMobile ? 26 : 36),
-
-          // ─── 6. PLAN FEATURES COMPARISON TABLE (34 FEATURES x 4 TIERS MATRIX) ───
-          Container(
-            key: _featuresComparisonKey,
-            child: PlanFeaturesComparisonTable(
-              isMobile: isMobile,
-              activeTierNumber: _currentBusinessTier,
-              onUpgrade: (newTier) {
-                setState(() => _currentBusinessTier = newTier);
-              },
-            ),
-          ),
-        ] else ...[
-          // ─── 4. CUSTOMIZABLE SUBSCRIPTION & INSTANT ADD-ONS BUILDER ───
-          CustomizablePlanBuilderSection(
+        // ─── 6. PLAN FEATURES COMPARISON TABLE (30 FEATURES x 5 TIERS MATRIX) ───
+        Container(
+          key: _featuresComparisonKey,
+          child: PlanFeaturesComparisonTable(
             isMobile: isMobile,
-            onScrollToActivePlan: () => _scrollToSection(_activePlanKey),
-            onScrollToBillingHistory: () => _scrollToSection(_billingHistoryKey),
+            activeTierNumber: _currentBusinessTier,
+            onUpgrade: (newTier) {
+              setState(() => _currentBusinessTier = newTier);
+            },
           ),
-        ],
+        ),
       ],
-    );
-  }
-
-  Widget _buildBusinessSubTab({
-    required int index,
-    required String label,
-    required IconData icon,
-    bool isMobile = false,
-  }) {
-    final bool isSelected = _selectedBusinessSubTab == index;
-    final Color activeColor = _darkForestGreen;
-
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedBusinessSubTab = index;
-        });
-      },
-      borderRadius: BorderRadius.circular(25),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        height: isMobile ? 42 : 48,
-        padding: EdgeInsets.symmetric(
-          horizontal: isMobile ? 14 : 24,
-          vertical: isMobile ? 6 : 0,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected ? activeColor : Colors.white,
-          borderRadius: BorderRadius.circular(25),
-          border: isSelected
-              ? null
-              : Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
-          boxShadow: isSelected
-              ? [
-                  BoxShadow(
-                    color: activeColor.withValues(alpha: 0.35),
-                    blurRadius: 14,
-                    offset: const Offset(0, 4),
-                  ),
-                ]
-              : [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.02),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: isMobile ? 14 : 16,
-              color: isSelected ? Colors.white : const Color(0xFF1E293B),
-            ),
-            SizedBox(width: isMobile ? 6 : 9),
-            Text(
-              label,
-              style: GoogleFonts.inter(
-                fontSize: isMobile ? 12.5 : 14,
-                fontWeight: FontWeight.w700,
-                color: isSelected ? Colors.white : const Color(0xFF1E293B),
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
