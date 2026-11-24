@@ -5,6 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../models/account_model.dart';
+import '../../../data/account_provider.dart';
+import '../../../data/repositories/storage_repository.dart';
 
 // ─── Storage Tabs ───────────────────────────────────────────────────────────
 enum _MobileStorageTab {
@@ -42,12 +45,26 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
   bool _showStorageAlerts = true;
   String _selectedTheme = 'System';
   String _storageAccess = 'only_me';
+  StorageQuota? _storageQuota;
+
+  /// Returns storage quota strictly scoped to active account
+  StorageQuota? get _effectiveQuota {
+    final activeEmail = ref.watch(activeAccountProvider).email;
+    if (_storageQuota != null &&
+        (_storageQuota!.email.isEmpty ||
+            _storageQuota!.email.trim().toLowerCase() ==
+                activeEmail.trim().toLowerCase())) {
+      return _storageQuota;
+    }
+    return StorageRepository.getCachedQuota(activeEmail);
+  }
 
   late List<_RecycleItem> _recycleItems;
 
   @override
   void initState() {
     super.initState();
+    _loadStorageQuota();
     _recycleItems = [
       _RecycleItem(
         name: 'Invoice_March_2024.pdf',
@@ -100,9 +117,21 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
     super.dispose();
   }
 
+  Future<void> _loadStorageQuota([String? targetEmail]) async {
+    final email = targetEmail ?? ref.read(activeAccountProvider).email;
+    try {
+      final quota = await StorageRepository.fetchStorageQuota(email);
+      if (mounted) setState(() => _storageQuota = quota);
+    } catch (_) {
+      if (mounted) setState(() => _storageQuota = StorageRepository.getCachedQuota(email));
+    }
+  }
+
   void _triggerRefresh() {
     setState(() => _isRefreshing = true);
-    Future.delayed(const Duration(milliseconds: 700), () {
+    final activeEmail = ref.read(activeAccountProvider).email;
+    StorageRepository.resetInFlight(activeEmail);
+    _loadStorageQuota(activeEmail).then((_) {
       if (mounted) {
         final now = DateTime.now();
         setState(() {
@@ -116,6 +145,13 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel?>(activeAccountProvider, (previous, next) {
+      if (next != null &&
+          previous?.email.trim().toLowerCase() !=
+              next.email.trim().toLowerCase()) {
+        _loadStorageQuota(next.email);
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: _buildAppBar(),
@@ -611,11 +647,11 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
                 ),
               ),
               const SizedBox(width: 10),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
+                    const Text(
                       'Cliks Business Storage',
                       style: TextStyle(
                         fontSize: 16,
@@ -625,8 +661,8 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
                       ),
                     ),
                     Text(
-                      'Track how your 1.00 GB storage is used',
-                      style: TextStyle(
+                      'Track how your ${_effectiveQuota?.limitFormatted ?? "5.00 GB"} storage is used',
+                      style: const TextStyle(
                         fontSize: 11.5,
                         color: Color(0xFF64748B),
                       ),
@@ -641,15 +677,27 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
           Row(
             children: [
               Expanded(
-                child: _statCard('921 MB', 'USED', const Color(0xFF7C3AED)),
+                child: _statCard(
+                  _effectiveQuota?.usedFormatted ?? '0 B',
+                  'USED',
+                  const Color(0xFF7C3AED),
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _statCard('103 MB', 'FREE', const Color(0xFF10B981)),
+                child: _statCard(
+                  _effectiveQuota?.availableFormatted ?? '5.00 GB',
+                  'FREE',
+                  const Color(0xFF10B981),
+                ),
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _statCard('1.00 GB', 'TOTAL', const Color(0xFF0F172A)),
+                child: _statCard(
+                  _effectiveQuota?.limitFormatted ?? '5.00 GB',
+                  'TOTAL',
+                  const Color(0xFF0F172A),
+                ),
               ),
             ],
           ),
@@ -669,24 +717,24 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
                   height: 80,
                   child: CustomPaint(
                     painter: _DonutPainter(
-                      progress: 0.90,
-                      color: const Color(0xFF6366F1),
+                      progress: _effectiveQuota?.fraction ?? 0.0,
+                      color: _effectiveQuota?.statusColor ?? const Color(0xFF6366F1),
                       bg: const Color(0xFFF1F5F9),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            '90%',
-                            style: TextStyle(
-                              fontSize: 17,
+                            _effectiveQuota?.percentageFormatted ?? '0%',
+                            style: const TextStyle(
+                              fontSize: 16,
                               fontWeight: FontWeight.w900,
                               color: Color(0xFF0F172A),
                               height: 1,
                             ),
                           ),
-                          Text(
+                          const Text(
                             'USED',
                             style: TextStyle(
                               fontSize: 8,
@@ -705,9 +753,15 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _dotLegend(const Color(0xFF6366F1), '921 MB used (90%)'),
+                      _dotLegend(
+                        _effectiveQuota?.statusColor ?? const Color(0xFF6366F1),
+                        '${_effectiveQuota?.usedFormatted ?? "0 B"} used (${_effectiveQuota?.percentageFormatted ?? "0%"})',
+                      ),
                       const SizedBox(height: 6),
-                      _dotLegend(const Color(0xFF10B981), '103 MB free (10%)'),
+                      _dotLegend(
+                        const Color(0xFF10B981),
+                        '${_effectiveQuota?.availableFormatted ?? "5 GB"} free',
+                      ),
                       const SizedBox(height: 8),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -973,20 +1027,24 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
             ),
             child: Column(
               children: [
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '1.00 GB Total',
-                      style: TextStyle(
+                      _effectiveQuota != null
+                          ? '${_effectiveQuota!.limitFormatted} Total'
+                          : '5.00 GB Total',
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF0F172A),
                       ),
                     ),
                     Text(
-                      '103 MB Free',
-                      style: TextStyle(
+                      _effectiveQuota != null
+                          ? '${_effectiveQuota!.availableFormatted} Free'
+                          : '5.00 GB Free',
+                      style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
                         fontWeight: FontWeight.w500,
@@ -997,28 +1055,32 @@ class _MobileStoragePageState extends ConsumerState<MobileStoragePage>
                 const SizedBox(height: 10),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(6),
-                  child: const LinearProgressIndicator(
-                    value: 0.90,
+                  child: LinearProgressIndicator(
+                    value: _effectiveQuota?.fraction ?? 0.0,
                     minHeight: 10,
-                    backgroundColor: Color(0xFFF1F5F9),
-                    color: Color(0xFF7C3AED),
+                    backgroundColor: const Color(0xFFF1F5F9),
+                    color: _effectiveQuota?.statusColor ?? const Color(0xFF7C3AED),
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      '921 MB Used',
+                      _effectiveQuota != null
+                          ? '${_effectiveQuota!.usedFormatted} Used'
+                          : '0 B Used',
                       style: TextStyle(
                         fontSize: 11.5,
-                        color: Color(0xFF7C3AED),
+                        color: _effectiveQuota?.statusColor ?? const Color(0xFF7C3AED),
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     Text(
-                      '90% Used',
-                      style: TextStyle(
+                      _effectiveQuota != null
+                          ? '${_effectiveQuota!.percentageFormatted} Used'
+                          : '0% Used',
+                      style: const TextStyle(
                         fontSize: 11.5,
                         color: Color(0xFF64748B),
                       ),

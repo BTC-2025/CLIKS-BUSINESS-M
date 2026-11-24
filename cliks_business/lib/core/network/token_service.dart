@@ -153,7 +153,38 @@ class TokenService {
     }
     _ensureFallbackLoaded();
     cachedAccessToken = await _safeRead(key: _kAccess);
-    return cachedAccessToken;
+    if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
+      return cachedAccessToken;
+    }
+
+    // Fallback: look in saved accounts registry for active or primary account token
+    final activeEmail = await getUserEmail();
+    final registry = await getSavedAccountsFromRegistry();
+    if (registry.isNotEmpty) {
+      if (activeEmail != null && activeEmail.isNotEmpty) {
+        final found = registry.firstWhere(
+          (a) =>
+              (a['email']?.toString() ?? '').toLowerCase() ==
+              activeEmail.toLowerCase(),
+          orElse: () => {},
+        );
+        final tok = found['accessToken']?.toString();
+        if (tok != null && tok.isNotEmpty) {
+          cachedAccessToken = tok;
+          await _safeWrite(key: _kAccess, value: tok);
+          return cachedAccessToken;
+        }
+      }
+      for (final a in registry) {
+        final tok = a['accessToken']?.toString();
+        if (tok != null && tok.isNotEmpty) {
+          cachedAccessToken = tok;
+          await _safeWrite(key: _kAccess, value: tok);
+          return cachedAccessToken;
+        }
+      }
+    }
+    return null;
   }
 
   static Future<String?> getRefreshToken() async =>
@@ -283,6 +314,42 @@ class TokenService {
       final merged = {...existing, ...data};
       await _safeWrite(key: _kSettingsKey(cleanEmail), value: jsonEncode(merged));
     }
+  }
+
+  /// Synchronous retrieval of user settings from preloaded fallback memory
+  static Map<String, dynamic>? getUserSettingsSync(String email) {
+    final cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.isEmpty) return null;
+    _ensureFallbackLoaded();
+    final str = _memoryFallback[_kSettingsKey(cleanEmail)];
+    if (str != null && str.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(str);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  /// Returns the specific access token for a given account email,
+  /// falling back to the active session token.
+  static Future<String?> getTokenForAccount(String email) async {
+    final clean = email.trim().toLowerCase();
+    if (clean.isEmpty) return getAccessToken();
+    final activeEmail = (await getUserEmail() ?? '').trim().toLowerCase();
+    if (activeEmail == clean) {
+      final token = await getAccessToken();
+      if (token != null && token.isNotEmpty) return token;
+    }
+    final registry = await getSavedAccountsFromRegistry();
+    final found = registry.firstWhere(
+      (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
+      orElse: () => {},
+    );
+    final tok = found['accessToken']?.toString();
+    if (tok != null && tok.isNotEmpty) return tok;
+    return getAccessToken();
   }
 
   // ── Multi-Account Registry ─────────────────────────────────────────────────

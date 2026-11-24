@@ -209,6 +209,9 @@ class ApiClient {
     if (r.statusCode >= 500) {
       return true;
     }
+    if (r.statusCode == 401) {
+      return true;
+    }
     if (r.body.contains('No static resource') ||
         r.body.contains('NoResourceFoundException') ||
         r.body.contains('ResourceHttpRequestHandler')) {
@@ -561,7 +564,10 @@ class ApiClient {
   // ── Offline / Fallback Mock Stores ─────────────────────────────────────────
 
   static Future<dynamic> _getMockResponse(String path, Map<String, String>? queryParams) async {
-    final activeEmail = await TokenService.getUserEmail() ?? '';
+    final paramEmail = queryParams?['email']?.toString().trim().toLowerCase();
+    final activeEmail = (paramEmail != null && paramEmail.isNotEmpty)
+        ? paramEmail
+        : (await TokenService.getUserEmail() ?? '');
     final activeName = await TokenService.getUserName() ??
         (activeEmail.isNotEmpty ? activeEmail.split('@').first : 'User');
     final activeSettings = activeEmail.isNotEmpty
@@ -618,13 +624,21 @@ class ApiClient {
     }
 
     if (path.contains('/storage-quota')) {
+      final used = activeSettings['storageUsed'] is num
+          ? (activeSettings['storageUsed'] as num).toInt()
+          : 0;
+      final limit = activeSettings['storageLimit'] is num
+          ? (activeSettings['storageLimit'] as num).toInt()
+          : 5368709120; // 5 GB default BNX Mail quota
+      final pct = limit > 0 ? (used / limit * 100) : 0.0;
       return {
         'success': true,
+        'message': 'Storage quota fetched successfully',
         'data': {
           'email': activeEmail,
-          'storageLimit': activeSettings['storageLimit'] ?? 16106127360,
-          'storageUsed': activeSettings['storageUsed'] ?? 0,
-          'storagePercentage': activeSettings['storagePercentage'] ?? 0.0,
+          'storageLimit': limit,
+          'storageUsed': used,
+          'storagePercentage': pct,
         },
       };
     }

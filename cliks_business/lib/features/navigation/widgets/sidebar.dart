@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../data/account_provider.dart';
+import '../../../data/repositories/storage_repository.dart';
 import '../../payments/widgets/add_money_dialog.dart';
 import '../pages/macos_storage_page.dart';
 import '../pages/mobile_storage_page.dart';
@@ -712,6 +714,22 @@ class Sidebar extends ConsumerWidget {
     WidgetRef ref,
     NavigationState navigation,
   ) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final activeEmail = activeAccount.email.trim().toLowerCase();
+    final storageQuotaAsync = ref.watch(storageQuotaProvider);
+    final quotaValue = storageQuotaAsync.value;
+    final storageQuota = (quotaValue != null &&
+            (quotaValue.email.isEmpty ||
+                quotaValue.email.trim().toLowerCase() == activeEmail))
+        ? quotaValue
+        : StorageRepository.getCachedQuota(activeEmail);
+    final storageUsageLabel = storageQuota != null
+        ? '${storageQuota.usedFormatted} of ${storageQuota.limitFormatted} used'
+        : '0 B of 5 GB used';
+    final storagePercentageLabel = storageQuota != null
+        ? storageQuota.percentageFormatted
+        : '0%';
+
     return Container(
       width: 260,
       decoration: const BoxDecoration(
@@ -1243,6 +1261,22 @@ class Sidebar extends ConsumerWidget {
     WidgetRef ref,
     NavigationState navigation,
   ) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final activeEmail = activeAccount.email.trim().toLowerCase();
+    final storageQuotaAsync = ref.watch(storageQuotaProvider);
+    final quotaValue = storageQuotaAsync.value;
+    final storageQuota = (quotaValue != null &&
+            (quotaValue.email.isEmpty ||
+                quotaValue.email.trim().toLowerCase() == activeEmail))
+        ? quotaValue
+        : StorageRepository.getCachedQuota(activeEmail);
+    final storageUsageLabel = storageQuota != null
+        ? '${storageQuota.usedFormatted} of ${storageQuota.limitFormatted} used'
+        : '0 B of 5 GB used';
+    final storagePercentageLabel = storageQuota != null
+        ? storageQuota.percentageFormatted
+        : '0%';
+
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -1298,12 +1332,12 @@ class Sidebar extends ConsumerWidget {
                         size: 15,
                       ),
                       const SizedBox(width: 8),
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text(
+                            const Text(
                               'Storage',
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
@@ -1311,10 +1345,10 @@ class Sidebar extends ConsumerWidget {
                                 color: Color(0xFF0F172A),
                               ),
                             ),
-                            SizedBox(height: 1),
+                            const SizedBox(height: 1),
                             Text(
-                              '0 KB of 1.00 GB used',
-                              style: TextStyle(
+                              storageUsageLabel,
+                              style: const TextStyle(
                                 fontSize: 9.5,
                                 color: Color(0xFF475569),
                               ),
@@ -1330,9 +1364,9 @@ class Sidebar extends ConsumerWidget {
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
-                        child: const Text(
-                          '0%',
-                          style: TextStyle(
+                        child: Text(
+                          storagePercentageLabel,
+                          style: const TextStyle(
                             fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF2563EB),
@@ -2079,6 +2113,22 @@ class _SidebarBottomFixed extends ConsumerWidget {
   }
 
   Widget _buildStorageCard(BuildContext context, WidgetRef ref) {
+    final activeAccount = ref.watch(activeAccountProvider);
+    final activeEmail = activeAccount.email.trim().toLowerCase();
+    final storageQuotaAsync = ref.watch(storageQuotaProvider);
+    final quotaValue = storageQuotaAsync.value;
+    final storageQuota = (quotaValue != null &&
+            (quotaValue.email.isEmpty ||
+                quotaValue.email.trim().toLowerCase() == activeEmail))
+        ? quotaValue
+        : StorageRepository.getCachedQuota(activeEmail);
+    final storageUsageLabel = storageQuota != null
+        ? '${storageQuota.usedFormatted} of ${storageQuota.limitFormatted} used'
+        : '0 B of 5 GB used';
+    final storagePercentageLabel = storageQuota != null
+        ? storageQuota.percentageFormatted
+        : '0%';
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2121,12 +2171,12 @@ class _SidebarBottomFixed extends ConsumerWidget {
             children: [
               const Icon(LucideIcons.cloud, color: Color(0xFF2563EB), size: 15),
               const SizedBox(width: 8),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       'Storage',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
@@ -2134,10 +2184,10 @@ class _SidebarBottomFixed extends ConsumerWidget {
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    SizedBox(height: 1),
+                    const SizedBox(height: 1),
                     Text(
-                      '0 KB of 1.00 GB used',
-                      style: TextStyle(
+                      storageUsageLabel,
+                      style: const TextStyle(
                         fontSize: 9.5,
                         fontWeight: FontWeight.w500,
                         color: Color(0xFF475569),
@@ -2154,9 +2204,9 @@ class _SidebarBottomFixed extends ConsumerWidget {
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
-                child: const Text(
-                  '0%',
-                  style: TextStyle(
+                child: Text(
+                  storagePercentageLabel,
+                  style: const TextStyle(
                     fontSize: 9.5,
                     fontWeight: FontWeight.bold,
                     color: Color(0xFF2563EB),

@@ -125,17 +125,18 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     _loadProfileSettings(email);
     _loadConnectedEmails();
     _loadSubIds();
-    _loadStorageQuota();
+    _loadStorageQuota(email);
     _loadSubscriptionData(email);
     ref.read(settingsProvider.notifier).loadAllSettings();
   }
 
   /// 2.2 Storage Quota (GET /api/mail/storage-quota)
-  Future<void> _loadStorageQuota() async {
+  Future<void> _loadStorageQuota([String? accountEmail]) async {
     if (!mounted) return;
+    final email = accountEmail ?? ref.read(activeAccountProvider).email;
     setState(() => _isLoadingStorageQuota = true);
     try {
-      final quota = await StorageRepository.fetchStorageQuota();
+      final quota = await StorageRepository.fetchStorageQuota(email);
       if (mounted) {
         setState(() {
           _storageQuota = quota;
@@ -144,7 +145,12 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
       }
     } catch (e) {
       print('[MANAGE_ACCOUNT] loadStorageQuota error: $e');
-      if (mounted) setState(() => _isLoadingStorageQuota = false);
+      if (mounted) {
+        setState(() {
+          _storageQuota = StorageRepository.getCachedQuota(email);
+          _isLoadingStorageQuota = false;
+        });
+      }
     }
   }
 
@@ -2150,6 +2156,20 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
     );
 
     // Card 4: Account storage -> Navigates to "Account storage" tab (Storage page)
+    final activeEmail = ref.watch(activeAccountProvider).email;
+    final effectiveQuota = (_storageQuota != null &&
+            (_storageQuota!.email.isEmpty ||
+                _storageQuota!.email.trim().toLowerCase() ==
+                    activeEmail.trim().toLowerCase()))
+        ? _storageQuota
+        : StorageRepository.getCachedQuota(activeEmail);
+    final String storageUsedText = effectiveQuota != null
+        ? '${effectiveQuota.usedFormatted} of ${effectiveQuota.limitFormatted} used'
+        : (_isLoadingStorageQuota ? 'Loading storage...' : '0 B of 5 GB used');
+    final double storageFraction = effectiveQuota != null
+        ? effectiveQuota.fraction
+        : 0.0;
+
     final card4 = _buildHomeCard(
       isDark: isDark,
       icon: Icons.inventory_2_outlined,
@@ -2162,19 +2182,19 @@ class _ManageAccountScreenState extends ConsumerState<ManageAccountScreen> {
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
-              value: 0.05,
+              value: storageFraction,
               minHeight: 4,
               backgroundColor: isDark
                   ? const Color(0xFF3C4043)
                   : const Color(0xFFE8EAED),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF1A73E8),
+              valueColor: AlwaysStoppedAnimation<Color>(
+                effectiveQuota?.statusColor ?? const Color(0xFF1A73E8),
               ),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            '8.88 MB of 5 GB used',
+            storageUsedText,
             style: TextStyle(
               fontSize: 12,
               color: isDark ? Colors.white60 : const Color(0xFF5F6368),

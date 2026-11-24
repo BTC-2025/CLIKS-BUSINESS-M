@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/navigation/navigation_provider.dart';
+import '../../../models/account_model.dart';
 import '../../../data/account_provider.dart';
+import '../../../data/repositories/storage_repository.dart';
 import '../../auth/notifiers/auth_notifier.dart';
 import '../../auth/pages/login_screen.dart';
 import '../../profile/presentation/manage_account_screen.dart';
@@ -65,11 +67,47 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   String _selectedTheme = 'System'; // 'Light', 'System', 'Dark'
   String _storageAccessOption = 'only_me'; // 'only_me', 'connected', 'shared'
   String _settingsStatusText = 'Preferences saved successfully';
+  StorageQuota? _storageQuota;
+  bool _isLoadingQuota = false;
+
+  /// Returns storage quota strictly scoped to the active account
+  StorageQuota? get _effectiveQuota {
+    final activeEmail = ref.watch(activeAccountProvider).email;
+    if (_storageQuota != null &&
+        (_storageQuota!.email.isEmpty ||
+            _storageQuota!.email.trim().toLowerCase() ==
+                activeEmail.trim().toLowerCase())) {
+      return _storageQuota;
+    }
+    return StorageRepository.getCachedQuota(activeEmail);
+  }
 
   @override
   void initState() {
     super.initState();
     _recycleItems = _createDefaultRecycleItems();
+    _loadStorageQuota();
+  }
+
+  Future<void> _loadStorageQuota([String? targetEmail]) async {
+    final email = targetEmail ?? ref.read(activeAccountProvider).email;
+    setState(() => _isLoadingQuota = true);
+    try {
+      final quota = await StorageRepository.fetchStorageQuota(email);
+      if (mounted) {
+        setState(() {
+          _storageQuota = quota;
+          _isLoadingQuota = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _storageQuota = StorageRepository.getCachedQuota(email);
+          _isLoadingQuota = false;
+        });
+      }
+    }
   }
 
   @override
@@ -84,7 +122,9 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
     setState(() {
       _isRefreshing = true;
     });
-    Future.delayed(const Duration(milliseconds: 600), () {
+    final activeEmail = ref.read(activeAccountProvider).email;
+    StorageRepository.resetInFlight(activeEmail);
+    _loadStorageQuota(activeEmail).then((_) {
       if (mounted) {
         setState(() {
           _isRefreshing = false;
@@ -98,6 +138,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel?>(activeAccountProvider, (previous, next) {
+      if (next != null &&
+          previous?.email.trim().toLowerCase() !=
+              next.email.trim().toLowerCase()) {
+        _loadStorageQuota(next.email);
+      }
+    });
     return Scaffold(
       backgroundColor: Colors.white,
       body: Stack(
@@ -713,6 +760,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
   // VIEW 1: CLIKS BUSINESS STORAGE (Image 1 & 4)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildCliksBusinessView() {
+    final bool isZeroUsed = (_effectiveQuota?.storageUsed ?? 0) == 0;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -772,7 +820,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Track how your 1.00 GB storage is used in Cliks Business.',
+                  'Track how your ${_effectiveQuota?.limitFormatted ?? '15 GB'} storage is used in Cliks Business.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF64748B),
@@ -842,25 +890,35 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
+              final quota = _effectiveQuota;
+              final double progress = quota?.fraction ?? 0.0;
+              final String pctText = quota?.percentageFormatted ?? '0%';
+              final String usedText = quota?.usedFormatted ?? '0 B';
+              final String availableText = quota?.availableFormatted ?? '5 GB';
+              final String limitText = quota?.limitFormatted ?? '5 GB';
+              final String statusText = quota?.status ?? 'Normal';
+              final Color statusColor = quota?.statusColor ?? const Color(0xFF10B981);
+              final String statusDesc = quota?.statusDescription ?? 'STORAGE HEALTHY.\nWITHIN ALLOCATED QUOTA.';
+
               final statsRow = Row(
                 children: [
-                  // Circular Donut Progress Meter (90% USED)
+                  // Circular Donut Progress Meter
                   SizedBox(
                     width: 90,
                     height: 90,
                     child: CustomPaint(
                       painter: _DonutRingPainter(
-                        progress: 0.90,
-                        color: const Color(0xFF6366F1),
+                        progress: progress,
+                        color: statusColor,
                       ),
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '90%',
+                              pctText,
                               style: GoogleFonts.inter(
-                                fontSize: 19,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w900,
                                 color: const Color(0xFF0F172A),
                                 height: 1.0,
@@ -883,13 +941,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   ),
                   const SizedBox(width: 28),
 
-                  // Stat 1: 921.00 MB USED
+                  // Stat 1: USED
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '921.00 MB',
+                          usedText,
                           style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -909,7 +967,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '90% Used',
+                          '$pctText Used',
                           style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
@@ -920,13 +978,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
 
-                  // Stat 2: 103.00 MB AVAILABLE
+                  // Stat 2: AVAILABLE
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '103.00 MB',
+                          availableText,
                           style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -948,13 +1006,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
 
-                  // Stat 3: 1.00 GB TOTAL CAPACITY
+                  // Stat 3: TOTAL CAPACITY
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '1.00 GB',
+                          limitText,
                           style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -976,7 +1034,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
 
-                  // Stat 4: Critical
+                  // Stat 4: Status
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -986,18 +1044,18 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                             Container(
                               width: 7,
                               height: 7,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFEF4444),
+                              decoration: BoxDecoration(
+                                color: statusColor,
                                 shape: BoxShape.circle,
                               ),
                             ),
                             const SizedBox(width: 5),
                             Text(
-                              'Critical',
+                              statusText,
                               style: GoogleFonts.inter(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w900,
-                                color: const Color(0xFFEF4444),
+                                color: statusColor,
                                 letterSpacing: -0.4,
                               ),
                             ),
@@ -1005,7 +1063,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                         const SizedBox(height: 3),
                         Text(
-                          'STORAGE CRITICALLY FULL.\nACTION REQUIRED.',
+                          statusDesc,
                           style: GoogleFonts.inter(
                             fontSize: 9,
                             fontWeight: FontWeight.w700,
@@ -1106,7 +1164,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildCategoryRow(
                 dotColor: const Color(0xFF2563EB),
                 name: 'Audit & Tax (FIN-PRO)',
-                percent: '9%',
+                percent: isZeroUsed ? '0%' : '9%',
                 badgeBg: const Color(0xFFEFF6FF),
                 badgeBorder: const Color(0xFFBFDBFE),
                 badgeText: const Color(0xFF2563EB),
@@ -1117,7 +1175,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildCategoryRow(
                 dotColor: const Color(0xFF10B981),
                 name: 'Sales & Purchases',
-                percent: '25%',
+                percent: isZeroUsed ? '0%' : '25%',
                 badgeBg: const Color(0xFFECFDF5),
                 badgeBorder: const Color(0xFFA7F3D0),
                 badgeText: const Color(0xFF059669),
@@ -1128,7 +1186,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildCategoryRow(
                 dotColor: const Color(0xFF7C3AED),
                 name: 'Expenses',
-                percent: '14%',
+                percent: isZeroUsed ? '0%' : '14%',
                 badgeBg: const Color(0xFFF5F3FF),
                 badgeBorder: const Color(0xFFDDD6FE),
                 badgeText: const Color(0xFF7C3AED),
@@ -1150,7 +1208,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
               _buildCategoryRow(
                 dotColor: const Color(0xFF0284C7),
                 name: 'Inventory & Media',
-                percent: '42%',
+                percent: isZeroUsed ? '0%' : '42%',
                 badgeBg: const Color(0xFFF0FDFA),
                 badgeBorder: const Color(0xFF99F6E4),
                 badgeText: const Color(0xFF0D9488),
@@ -1438,8 +1496,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     dotColor: const Color(0xFF2563EB),
                     iconWidget: _buildBnxMailLogo(size: 18),
                     name: 'BNX Mail',
-                    sizeText: '1.32 GB',
-                    pctText: '26% of total pool',
+                    sizeText: _effectiveQuota?.usedFormatted ?? '0 B',
+                    pctText: '${_effectiveQuota?.percentageFormatted ?? "0%"} of total pool',
                   ),
                   const Divider(height: 20, color: Color(0xFFF1F5F9)),
 
@@ -1519,7 +1577,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '5.00 GB',
+                      _effectiveQuota?.limitFormatted ?? '5.00 GB',
                       style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -1553,7 +1611,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '2.23 GB',
+                      _effectiveQuota?.availableFormatted ?? '5.00 GB',
                       style: GoogleFonts.inter(
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
@@ -1708,8 +1766,8 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
             _buildAppShortcutCard(
               title: 'BNX Mail',
               iconWidget: _buildBnxMailLogo(size: 24),
-              used: '1.32 GB',
-              total: '5.00 GB Pool',
+              used: _effectiveQuota?.usedFormatted ?? '0 B',
+              total: '${_effectiveQuota?.limitFormatted ?? "5.00 GB"} Pool',
               color: const Color(0xFF2563EB),
               onTap: () => setState(() => _activeTab = _StorageTab.bnxMail),
             ),
@@ -1864,7 +1922,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Track how your 1.00 GB storage is used in BNX Mail.',
+                  'Track how your ${_effectiveQuota?.limitFormatted ?? "5.00 GB"} storage is used in BNX Mail.',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF64748B),
@@ -1976,13 +2034,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                   ),
                   const SizedBox(width: 28),
 
-                  // Stat 1: 1.32 GB USED
+                  // Stat 1: USED
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '1.32 GB',
+                          _effectiveQuota?.usedFormatted ?? '0 B',
                           style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -2002,7 +2060,7 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '100% Used',
+                          '${_effectiveQuota?.percentageFormatted ?? "0%"} Used',
                           style: GoogleFonts.inter(
                             fontSize: 11.5,
                             fontWeight: FontWeight.w500,
@@ -2013,13 +2071,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
 
-                  // Stat 2: 0.00 MB AVAILABLE
+                  // Stat 2: AVAILABLE
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '0.00 MB',
+                          _effectiveQuota?.availableFormatted ?? '5.00 GB',
                           style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -2041,13 +2099,13 @@ class _MacOsStoragePageState extends ConsumerState<MacOsStoragePage> {
                     ),
                   ),
 
-                  // Stat 3: 1.00 GB TOTAL CAPACITY
+                  // Stat 3: TOTAL CAPACITY
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '1.00 GB',
+                          _effectiveQuota?.limitFormatted ?? '5.00 GB',
                           style: GoogleFonts.inter(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,

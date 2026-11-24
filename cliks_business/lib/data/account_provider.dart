@@ -9,6 +9,7 @@ import '../features/auth/notifiers/auth_notifier.dart';
 import '../features/auth/pages/login_screen.dart';
 import 'app_state_provider.dart';
 import 'settings_provider.dart';
+import 'repositories/storage_repository.dart';
 import '../features/navigation/providers/bit_tool_provider.dart';
 
 class AccountsNotifier extends StateNotifier<List<AccountModel>> {
@@ -220,24 +221,15 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
     }).toList();
 
     // 3. Invalidate settings and Bit Tool providers so they update for the new account
+    StorageRepository.resetInFlight(cleanId);
     if (ref != null) {
       ref.invalidate(settingsProvider);
       ref.read(appUiProvider.notifier).loadUserSettings(cleanId);
-      ref.invalidate(bitToolApiModuleProvider);
       ref.invalidate(bitToolContactsProvider);
       ref.invalidate(bitToolNotesProvider);
       ref.invalidate(bitToolCalendarProvider);
       ref.invalidate(bitToolCalculatorProvider);
       ref.invalidate(bitToolConnectionProvider);
-    } else if (this.ref != null) {
-      this.ref!.invalidate(settingsProvider);
-      this.ref!.read(appUiProvider.notifier).loadUserSettings(cleanId);
-      this.ref!.invalidate(bitToolApiModuleProvider);
-      this.ref!.invalidate(bitToolContactsProvider);
-      this.ref!.invalidate(bitToolNotesProvider);
-      this.ref!.invalidate(bitToolCalendarProvider);
-      this.ref!.invalidate(bitToolCalculatorProvider);
-      this.ref!.invalidate(bitToolConnectionProvider);
     }
 
     // 4. Non-blocking background call to update primary mailbox on backend
