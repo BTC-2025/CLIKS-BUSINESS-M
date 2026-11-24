@@ -108,7 +108,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         // Find all Upgrade Plan buttons
-        final upgradeButtons = find.widgetWithText(OutlinedButton, 'Upgrade Plan');
+        final upgradeButtons = find.widgetWithText(ElevatedButton, 'Upgrade Plan');
         expect(upgradeButtons, findsWidgets);
 
         // Scroll to button to ensure it is visible and hit-testable
@@ -173,14 +173,14 @@ void main() {
 
         // Verify active plan banner has Elite Suite by default
         expect(find.text('Elite Suite'), findsWidgets);
-        expect(find.text('Currently Active\nPlan'), findsOneWidget);
+        expect(find.text('Currently Active Plan'), findsWidgets);
 
         // Verify prices
-        expect(find.text('₹3,000'), findsWidgets);
-        expect(find.text('₹6,996'), findsWidgets);
-        expect(find.text('₹10,788'), findsWidgets);
-        expect(find.text('₹17,988'), findsWidgets);
-        expect(find.text('₹29,988'), findsWidgets);
+        expect(find.text('₹250'), findsWidgets);
+        expect(find.text('₹583'), findsWidgets);
+        expect(find.text('₹899'), findsWidgets);
+        expect(find.text('₹1,499'), findsWidgets);
+        expect(find.text('₹2,499'), findsWidgets);
 
         // Verify down table features comparison
         expect(find.text('Platform Features'), findsOneWidget);

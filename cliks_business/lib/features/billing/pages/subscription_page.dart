@@ -216,7 +216,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     ),
     _SubscriptionTierData(
       tierNumber: 3,
-      topTag: '',
+      topTag: 'RECOMMENDED',
       name: 'Standard Plan',
       headline:
           'Designed for multi-branch retail, full PO workflows & automated compliance.',
@@ -238,11 +238,12 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         '1 Godown / Warehouse & Price Lists',
       ],
       isCurrentPlan: false,
+      billingCycleText: 'Billed annually at ₹10,788 / yr',
       billingSubtext: '(Equivalent to ₹899 per month)',
     ),
     _SubscriptionTierData(
       tierNumber: 4,
-      topTag: '',
+      topTag: 'SCALING SMB',
       name: 'Growth Plan',
       headline:
           'Built for scaling businesses and multi-site operations.',
@@ -859,14 +860,21 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   // 2. FIVE SUBSCRIPTION CARDS (Strict Identical Height & Layout Uniformity)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildTierCards([bool isMobile = false]) {
+    final days = _remainingTime.inDays;
+    final hours = _remainingTime.inHours % 24;
+    final mins = _remainingTime.inMinutes % 60;
+
     final cards = _tiers
         .map(
-          (tier) => _buildBusinessTierCard(
+          (tier) => _buildSingleSubscriptionCard(
             tier: tier,
             activeTierNumber: _currentBusinessTier,
             onUpgrade: (newTier) {
               setState(() => _currentBusinessTier = newTier);
             },
+            days: days,
+            hours: hours,
+            mins: mins,
           ),
         )
         .toList();
@@ -886,20 +894,20 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // Responsive horizontal scroll guard on smaller window sizes (< 1350px) to avoid overflow
-        if (constraints.maxWidth < 1350) {
+        // Responsive horizontal scroll guard on smaller desktop window sizes (< 1440px) to avoid overflow
+        if (constraints.maxWidth < 1440) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 1350),
+              constraints: const BoxConstraints(minWidth: 1440),
               child: IntrinsicHeight(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: cards
                       .map(
                         (c) => SizedBox(
-                          width: 260,
+                          width: 276,
                           child: Padding(
                             padding: const EdgeInsets.only(right: 12.0),
                             child: c,
@@ -941,297 +949,16 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     required int activeTierNumber,
     required ValueChanged<int> onUpgrade,
   }) {
-    final int tierNum = tier.tierNumber;
-    final bool isCurrent = tierNum == activeTierNumber;
-    final bool isTier3 = tierNum == 3;
-    final bool isTier5 = tierNum == 5;
-
-    final Color primaryColor = isTier3
-        ? const Color(0xFF2563EB)
-        : const Color(0xFF0F766E);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: isCurrent || isTier5
-              ? const Color(0xFF0F766E)
-              : const Color(0xFFE2E8F0),
-          width: isCurrent || isTier5 ? 2.0 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // ─── 1. TOP BADGE (Only for Tier 5 Elite Suite) ───
-          Container(
-            height: 28,
-            alignment: Alignment.centerLeft,
-            child: isTier5
-                ? Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF0F766E),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      tier.topTag.isNotEmpty
-                          ? tier.topTag
-                          : 'TIER 5: ELITE (₹2,499/MO)',
-                      style: GoogleFonts.inter(
-                        fontSize: 9.5,
-                        fontWeight: FontWeight.w800,
-                        color: Colors.white,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  )
-                : const SizedBox(height: 28),
-          ),
-          const SizedBox(height: 14),
-
-          // ─── 2. TIER ICON ───
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isTier3
-                  ? const Color(0xFFEFF6FF)
-                  : const Color(0xFFF0FDF4),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Center(
-              child: Icon(
-                tier.icon,
-                size: 20,
-                color: primaryColor,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-
-          // ─── 3. TIER NAME ───
-          SizedBox(
-            height: 26,
-            child: Text(
-              tier.name,
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
-                letterSpacing: -0.3,
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-
-          // ─── 4. TIER HEADLINE ───
-          SizedBox(
-            height: 44,
-            child: Text(
-              tier.headline,
-              style: GoogleFonts.inter(
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
-                height: 1.35,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ─── 5. PRICING SECTION ───
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              children: [
-                Text(
-                  tier.originalMonthlyPrice,
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF94A3B8),
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: const Color(0xFF94A3B8),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 7,
-                    vertical: 2.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDCFCE7),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    tier.discountTag,
-                    style: GoogleFonts.inter(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: const Color(0xFF166534),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  tier.fullAnnualPrice,
-                  style: GoogleFonts.inter(
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF0F172A),
-                    letterSpacing: -0.5,
-                  ),
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '/ year',
-                  style: GoogleFonts.inter(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.centerLeft,
-            child: Text(
-              tier.billingSubtext ?? '',
-              style: GoogleFonts.inter(
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-                color: const Color(0xFF64748B),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          // ─── 6. ACTION CTA BUTTON ───
-          isCurrent
-              ? Container(
-                  height: 42,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF0F766E),
-                    borderRadius: BorderRadius.circular(21),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    'Currently Active\nPlan',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                      height: 1.15,
-                    ),
-                  ),
-                )
-              : SizedBox(
-                  height: 42,
-                  width: double.infinity,
-                  child: OutlinedButton(
-                    onPressed: () => _showPlanUpgradeDialog(tier, onUpgrade),
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(
-                        color: primaryColor,
-                        width: 1.4,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(21),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                    ),
-                    child: Text(
-                      'Upgrade Plan',
-                      style: GoogleFonts.inter(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        color: primaryColor,
-                      ),
-                    ),
-                  ),
-                ),
-          const SizedBox(height: 20),
-
-          // ─── 7. WHAT'S INCLUDED ───
-          Text(
-            "WHAT'S INCLUDED",
-            style: GoogleFonts.inter(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF0F172A),
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // ─── 8. FEATURES LIST ───
-          ...tier.features.map(
-            (f) => Padding(
-              padding: const EdgeInsets.only(bottom: 9.0),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2),
-                    child: Icon(
-                      LucideIcons.check,
-                      size: 13,
-                      color: isTier3
-                          ? const Color(0xFF2563EB)
-                          : const Color(0xFF10B981),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      f,
-                      style: GoogleFonts.inter(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w500,
-                        color: const Color(0xFF334155),
-                        height: 1.35,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    final days = _remainingTime.inDays;
+    final hours = _remainingTime.inHours % 24;
+    final mins = _remainingTime.inMinutes % 60;
+    return _buildSingleSubscriptionCard(
+      tier: tier,
+      activeTierNumber: activeTierNumber,
+      onUpgrade: onUpgrade,
+      days: days,
+      hours: hours,
+      mins: mins,
     );
   }
 
@@ -1252,6 +979,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     final bool isTier1 = tierNum == 1;
     final bool isTier2 = tierNum == 2;
     final bool isTier3 = tierNum == 3;
+    final bool isTier4 = tierNum == 4;
+    final bool isTier5 = tierNum == 5;
     final bool isCurrent = tierNum == activeTierNumber;
     final bool isGold = tier.isTopTier;
 
@@ -1259,12 +988,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     final Color accentColor = isGold
         ? const Color(0xFFB45309) // Rich Warm Gold / Amber for top tiers
         : (isTier1
-              ? const Color(0xFF475569) // Cool Slate Blue
+              ? const Color(0xFF0F766E) // Pine Green / Teal (Micro)
               : (isTier2
-                    ? const Color(0xFF0D9488) // Clean Teal / Emerald
+                    ? const Color(0xFF16A34A) // Clean Green (Starter)
                     : (isTier3
-                          ? const Color(0xFF2563EB) // Vibrant Royal Blue / Indigo
-                          : const Color(0xFFB45309))));
+                          ? const Color(0xFF2563EB) // Vibrant Royal Blue (Standard)
+                          : (isTier4
+                                ? const Color(0xFF0284C7) // Cyan / Sky Blue (Growth)
+                                : const Color(0xFFB45309)))));
 
     // Gold UI ONLY for higher plan (All Top Tiers)!
     // Currently active plan is normally highlighted (Clean Brand Green, ZERO gold)
@@ -1514,6 +1245,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         final double t = _blinkAnimation.value;
         // Gold UI for all Top Tiers (always gold)!
         final bool isGold = tier.isTopTier;
+        final bool isTier4 = tier.tierNumber == 4;
         final bool isTier3 = tier.tierNumber == 3;
         final bool isTier2 = tier.tierNumber == 2;
 
@@ -1523,7 +1255,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ? _darkForestGreen
                   : (isTier3
                         ? const Color(0xFF1D4ED8)
-                        : (isTier2 ? const Color(0xFF0F766E) : const Color(0xFF334155))));
+                        : (isTier4
+                              ? const Color(0xFF0284C7)
+                              : (isTier2 ? const Color(0xFF0F766E) : const Color(0xFF334155)))));
 
         final Color glowColor = isGold
             ? const Color(0xFFF59E0B)
@@ -1580,48 +1314,51 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ),
                 ],
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Blinking live pulse dot
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: dotColor.withValues(alpha: 0.3 + 0.7 * t),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: dotColor.withValues(alpha: 0.5 * t),
-                          blurRadius: 3 * t,
-                          spreadRadius: 0.8 * t,
-                        ),
-                      ],
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Blinking live pulse dot
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: dotColor.withValues(alpha: 0.3 + 0.7 * t),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: dotColor.withValues(alpha: 0.5 * t),
+                            blurRadius: 3 * t,
+                            spreadRadius: 0.8 * t,
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 5),
-                  Icon(
-                    LucideIcons.flame,
-                    size: 11.5,
-                    color: baseColor,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Offer • ${days}d left',
-                    style: GoogleFonts.inter(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
+                    const SizedBox(width: 5),
+                    Icon(
+                      LucideIcons.flame,
+                      size: 11.5,
                       color: baseColor,
-                      letterSpacing: 0.2,
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  Icon(
-                    LucideIcons.sparkles,
-                    size: 9.5,
-                    color: baseColor.withValues(alpha: 0.4 + 0.6 * t),
-                  ),
-                ],
+                    const SizedBox(width: 4),
+                    Text(
+                      'Offer • ${days}d left',
+                      style: GoogleFonts.inter(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                        color: baseColor,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Icon(
+                      LucideIcons.sparkles,
+                      size: 9.5,
+                      color: baseColor.withValues(alpha: 0.4 + 0.6 * t),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1649,21 +1386,25 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ),
             ],
           ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
-              const SizedBox(width: 5),
-              Text(
-                'CURRENTLY ACTIVE PLAN',
-                style: GoogleFonts.inter(
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 0.6,
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
+                const SizedBox(width: 5),
+                Text(
+                  'CURRENTLY ACTIVE PLAN',
+                  style: GoogleFonts.inter(
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.6,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       }
@@ -1682,13 +1423,15 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(LucideIcons.checkCheck, size: 12, color: Colors.white),
-            const SizedBox(width: 5),
-            Flexible(
-              child: Text(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.checkCheck, size: 12, color: Colors.white),
+              const SizedBox(width: 5),
+              Text(
                 'CURRENTLY ACTIVE PLAN',
                 style: GoogleFonts.inter(
                   fontSize: 9.5,
@@ -1696,15 +1439,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   color: Colors.white,
                   letterSpacing: 0.6,
                 ),
-                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
 
-    // Gold UI for all top tiers (Tier 4 Elite, Fin-Pro Firm, Pro Investor, Yearly Founder)
+    // Gold UI for all top tiers (Tier 5 Elite, Fin-Pro Firm, Pro Investor, Yearly Founder)
     if (tier.isTopTier) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 4.5),
@@ -1721,23 +1463,27 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
-            const SizedBox(width: 5),
-            Text(
-              tier.topTag.isNotEmpty && tier.topTag != 'CURRENTLY ACTIVE PLAN'
-                  ? tier.topTag
-                  : 'ELITE ENTERPRISE',
-              style: GoogleFonts.inter(
-                fontSize: 9.5,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.6,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
+              const SizedBox(width: 5),
+              Text(
+                tier.topTag.isNotEmpty && tier.topTag != 'CURRENTLY ACTIVE PLAN'
+                    ? tier.topTag
+                    : 'ELITE ENTERPRISE',
+                style: GoogleFonts.inter(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.6,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       );
     }
@@ -1756,21 +1502,45 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ),
           ],
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(LucideIcons.sparkles, size: 12, color: Colors.white),
-            const SizedBox(width: 5),
-            Text(
-              'MOST POPULAR',
-              style: GoogleFonts.inter(
-                fontSize: 10,
-                fontWeight: FontWeight.w800,
-                color: Colors.white,
-                letterSpacing: 0.6,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.sparkles, size: 12, color: Colors.white),
+              const SizedBox(width: 5),
+              Text(
+                tier.topTag.isNotEmpty ? tier.topTag : 'RECOMMENDED',
+                style: GoogleFonts.inter(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  letterSpacing: 0.6,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (tier.tierNumber == 4) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF0F9FF),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFBAE6FD)),
+        ),
+        child: Text(
+          tier.topTag.isNotEmpty ? tier.topTag : 'SCALING SMB',
+          style: GoogleFonts.inter(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF0284C7),
+            letterSpacing: 0.6,
+          ),
         ),
       );
     }
@@ -1779,40 +1549,44 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: const Color(0xFFF0FDFA),
+          color: const Color(0xFFF0FDF4),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFCCFBF1)),
+          border: Border.all(color: const Color(0xFFBBF7D0)),
         ),
         child: Text(
-          tier.topTag,
+          tier.topTag.isNotEmpty ? tier.topTag : 'GROWING SMB',
           style: GoogleFonts.inter(
-            fontSize: 10,
+            fontSize: 9.5,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF0D9488),
+            color: const Color(0xFF16A34A),
             letterSpacing: 0.6,
           ),
         ),
       );
     }
 
-    // Tier 1 (Starter / Solo / Basic)
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Text(
-        tier.topTag,
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
-          color: const Color(0xFF475569),
-          letterSpacing: 0.6,
+    // Tier 1 (Starter / Solo / Micro)
+    if (tier.topTag.isNotEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF1F5F9),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
-      ),
-    );
+        child: Text(
+          tier.topTag,
+          style: GoogleFonts.inter(
+            fontSize: 9.5,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF475569),
+            letterSpacing: 0.6,
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 
   Widget _buildTierIcon(_SubscriptionTierData tier, Color accentColor, bool isCurrent) {
@@ -2021,8 +1795,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   }) {
     final int tierNum = tier.tierNumber;
     final bool isCurrent = tierNum == activeTierNumber;
-    final bool isBelow = tierNum < activeTierNumber;
-    final bool isAbove = tierNum > activeTierNumber;
 
     if (isCurrent) {
       if (tier.isTopTier) {
@@ -2042,24 +1814,27 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ),
             ],
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                LucideIcons.checkCheck,
-                size: 16,
-                color: Color(0xFF78350F),
-              ),
-              const SizedBox(width: 7),
-              Text(
-                'Currently Active Plan',
-                style: GoogleFonts.inter(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF78350F),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  LucideIcons.checkCheck,
+                  size: 16,
+                  color: Color(0xFF78350F),
                 ),
-              ),
-            ],
+                const SizedBox(width: 7),
+                Text(
+                  'Currently Active Plan',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF78350F),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       }
@@ -2080,63 +1855,23 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              LucideIcons.checkCheck,
-              size: 16,
-              color: Color(0xFF065F46),
-            ),
-            const SizedBox(width: 7),
-            Flexible(
-              child: Text(
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                LucideIcons.checkCheck,
+                size: 16,
+                color: Color(0xFF065F46),
+              ),
+              const SizedBox(width: 7),
+              Text(
                 'Currently Active Plan',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: const Color(0xFF065F46),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (isBelow) {
-      // "the plan which is before it button should not work"
-      return SizedBox(
-        height: 44,
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: null, // Disabled - button does not work
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
-            backgroundColor: const Color(0xFFF8FAFC),
-            disabledForegroundColor: const Color(0xFF94A3B8),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.ban, size: 13, color: Color(0xFF94A3B8)),
-              const SizedBox(width: 5),
-              Flexible(
-                child: Text(
-                  'Downgrade Unavailable',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.inter(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF94A3B8),
-                  ),
                 ),
               ),
             ],
@@ -2145,7 +1880,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       );
     }
 
-    // isAbove: "the button above it can work" - Gold for all top tiers!
     final bool isGold = tier.isTopTier;
     return SizedBox(
       height: 44,
@@ -2164,20 +1898,23 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             borderRadius: BorderRadius.circular(10),
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              'Upgrade Plan',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Upgrade Plan',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            const Icon(LucideIcons.arrowRight, size: 14, color: Colors.white),
-          ],
+              const SizedBox(width: 6),
+              const Icon(LucideIcons.arrowRight, size: 14, color: Colors.white),
+            ],
+          ),
         ),
       ),
     );
