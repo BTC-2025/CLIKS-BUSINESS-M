@@ -169,7 +169,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     _SubscriptionTierData(
       tierNumber: 1,
       topTag: '',
-      name: 'Micro Plan',
+      name: 'Micro',
       headline:
           'Micro subscription for single-branch stores & small enterprises.',
       originalMonthlyPrice: '₹4,999',
@@ -193,7 +193,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     _SubscriptionTierData(
       tierNumber: 2,
       topTag: '',
-      name: 'Starter Plan',
+      name: 'Starter',
       headline:
           'Ideal for emerging single-branch retail & growing SMBs.',
       originalMonthlyPrice: '₹9,999',
@@ -217,7 +217,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     _SubscriptionTierData(
       tierNumber: 3,
       topTag: 'RECOMMENDED',
-      name: 'Standard Plan',
+      name: 'Standard',
       headline:
           'Designed for multi-branch retail, full PO workflows & automated compliance.',
       originalMonthlyPrice: '₹15,999',
@@ -244,7 +244,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     _SubscriptionTierData(
       tierNumber: 4,
       topTag: 'SCALING SMB',
-      name: 'Growth Plan',
+      name: 'Growth',
       headline:
           'Built for scaling businesses and multi-site operations.',
       originalMonthlyPrice: '₹24,999',
@@ -269,7 +269,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     _SubscriptionTierData(
       tierNumber: 5,
       topTag: 'TIER 5: ELITE (₹2,499/MO)',
-      name: 'Elite Suite',
+      name: 'Elite',
       headline:
           'Absolute control for national distribution networks.',
       originalMonthlyPrice: '₹39,999',

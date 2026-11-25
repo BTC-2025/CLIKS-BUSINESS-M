@@ -39,11 +39,11 @@ void main() {
 
         // Verify core workspace tiers are present
         expect(find.text('Upgrade Workspace Tier'), findsOneWidget);
-        expect(find.text('Micro Plan'), findsWidgets);
-        expect(find.text('Starter Plan'), findsWidgets);
-        expect(find.text('Standard Plan'), findsWidgets);
-        expect(find.text('Growth Plan'), findsWidgets);
-        expect(find.text('Elite Suite'), findsWidgets);
+        expect(find.text('Micro'), findsWidgets);
+        expect(find.text('Starter'), findsWidgets);
+        expect(find.text('Standard'), findsWidgets);
+        expect(find.text('Growth'), findsWidgets);
+        expect(find.text('Elite'), findsWidgets);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
@@ -122,7 +122,7 @@ void main() {
 
         // Confirmation dialog should appear
         expect(find.textContaining('Upgrade Plan -'), findsOneWidget);
-        final confirmButton = find.widgetWithText(ElevatedButton, 'Confirm Upgrade to Micro Plan');
+        final confirmButton = find.widgetWithText(ElevatedButton, 'Confirm Upgrade to Micro');
         expect(confirmButton, findsOneWidget);
 
         // Confirm upgrade
@@ -131,7 +131,7 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         // Dialog is dismissed and snackbar appears directly with success
-        expect(find.text('Successfully upgraded to Micro Plan!'), findsOneWidget);
+        expect(find.text('Successfully upgraded to Micro!'), findsOneWidget);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
@@ -165,14 +165,14 @@ void main() {
         await tester.pump(const Duration(milliseconds: 300));
 
         // Verify all 5 tiers exist
-        expect(find.text('Micro Plan'), findsWidgets);
-        expect(find.text('Starter Plan'), findsWidgets);
-        expect(find.text('Standard Plan'), findsWidgets);
-        expect(find.text('Growth Plan'), findsWidgets);
-        expect(find.text('Elite Suite'), findsWidgets);
+        expect(find.text('Micro'), findsWidgets);
+        expect(find.text('Starter'), findsWidgets);
+        expect(find.text('Standard'), findsWidgets);
+        expect(find.text('Growth'), findsWidgets);
+        expect(find.text('Elite'), findsWidgets);
 
-        // Verify active plan banner has Elite Suite by default
-        expect(find.text('Elite Suite'), findsWidgets);
+        // Verify active plan banner has Elite by default
+        expect(find.text('Elite'), findsWidgets);
         expect(find.text('Currently Active Plan'), findsWidgets);
 
         // Verify prices
