@@ -306,6 +306,11 @@ void main() {
       expect(container.read(navigationProvider).currentRoute, AppRoute.wallet);
       expect(container.read(navigationProvider).currentModule, AppModule.payments);
 
+      // 2b. Navigate to Planner (Payments module)
+      notifier.setRoute(AppRoute.planner);
+      expect(container.read(navigationProvider).currentRoute, AppRoute.planner);
+      expect(container.read(navigationProvider).currentModule, AppModule.payments);
+
       // 3. Navigate to Settings (Profile module)
       notifier.setRoute(AppRoute.settings);
       expect(container.read(navigationProvider).currentRoute, AppRoute.settings);

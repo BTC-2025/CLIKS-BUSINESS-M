@@ -25,126 +25,11 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
   final TextEditingController _searchController = TextEditingController();
 
   List<Map<String, dynamic>> _schedules = [];
-  bool _isLoading = false;
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // DEFAULT DATASET (Matches Image 1 Exactly: 9 Scheduled, ₹2,87,560 Outward, ₹6,000 Inward, 6 Monthly)
-  // ───────────────────────────────────────────────────────────────────────────
-  final List<Map<String, dynamic>> _defaultSchedules = [
-    {
-      'id': 'sch_1',
-      'name': 'Electricity / Internet Bill',
-      'amount': 67890.0,
-      'isSend': true,
-      'date': '12/02/2027',
-      'frequency': 'Monthly Recurring',
-      'category': 'Utilities',
-      'status': 'PENDING',
-      'autoNotified': true,
-      'description': 'High-speed fiber & datacenter power supply invoice',
-    },
-    {
-      'id': 'sch_2',
-      'name': 'Electricity / Internet Bill',
-      'amount': 67890.0,
-      'isSend': true,
-      'date': '12/01/2027',
-      'frequency': 'Monthly Recurring',
-      'category': 'Utilities',
-      'status': 'PAID',
-      'autoNotified': true,
-      'description': 'High-speed fiber & datacenter power supply invoice',
-    },
-    {
-      'id': 'sch_3',
-      'name': 'Electricity / Internet Bill',
-      'amount': 67890.0,
-      'isSend': true,
-      'date': '12/12/2026',
-      'frequency': 'Monthly Recurring',
-      'category': 'Utilities',
-      'status': 'PAID',
-      'autoNotified': true,
-      'description': 'High-speed fiber & datacenter power supply invoice',
-    },
-    {
-      'id': 'sch_4',
-      'name': 'Electricity / Internet Bill',
-      'amount': 67890.0,
-      'isSend': true,
-      'date': '12/11/2026',
-      'frequency': 'Monthly Recurring',
-      'category': 'Utilities',
-      'status': 'PAID',
-      'autoNotified': true,
-      'description': 'High-speed fiber & datacenter power supply invoice',
-    },
-    {
-      'id': 'sch_5',
-      'name': 'Office Space Rent',
-      'amount': 12000.0,
-      'isSend': true,
-      'date': '01/12/2026',
-      'frequency': 'Monthly Recurring',
-      'category': 'Rent (Monthly)',
-      'status': 'PENDING',
-      'autoNotified': true,
-      'description': 'Headquarters commercial lease rent',
-    },
-    {
-      'id': 'sch_6',
-      'name': 'Warehouse Lease Maintenance',
-      'amount': 4000.0,
-      'isSend': true,
-      'date': '05/12/2026',
-      'frequency': 'Monthly Recurring',
-      'category': 'Rent (Monthly)',
-      'status': 'PENDING',
-      'autoNotified': true,
-      'description': 'Storage and logistics facility lease',
-    },
-    {
-      'id': 'sch_7',
-      'name': 'Client Monthly Retainer - Alpha Corp',
-      'amount': 4000.0,
-      'isSend': false,
-      'date': '15/12/2026',
-      'frequency': 'Monthly Recurring',
-      'category': 'Client Retainer',
-      'status': 'PENDING',
-      'autoNotified': true,
-      'description': 'Strategic business advisory retainer',
-    },
-    {
-      'id': 'sch_8',
-      'name': 'Consulting Service Fee - Tech Hub',
-      'amount': 2000.0,
-      'isSend': false,
-      'date': '20/12/2026',
-      'frequency': 'One-Time',
-      'category': 'Client Retainer',
-      'status': 'PENDING',
-      'autoNotified': true,
-      'description': 'POS architecture integration consulting invoice',
-    },
-    {
-      'id': 'sch_9',
-      'name': 'Cloud Infrastructure Backup Server',
-      'amount': 0.0,
-      'isSend': true,
-      'date': '28/12/2026',
-      'frequency': 'One-Time',
-      'category': 'Utilities',
-      'status': 'PENDING',
-      'autoNotified': true,
-      'description': 'Annual failover server contingency retainer',
-    },
-  ];
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    _schedules = List<Map<String, dynamic>>.from(_defaultSchedules);
     _loadData();
   }
 
@@ -152,19 +37,32 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
     setState(() => _isLoading = true);
     try {
       final planned = await PaymentsRepository.getPlannedPayments();
-      if (mounted && planned.isNotEmpty) {
+      if (mounted) {
         setState(() {
           _schedules = planned.map((p) {
             final isMonthly = (p.frequency.toUpperCase().contains('MONTH')) ||
                 (p.category.toUpperCase().contains('RENT'));
+
+            // Format due date for UI: if YYYY-MM-DD, convert to DD/MM/YYYY for display
+            String displayDate = p.dueDate;
+            if (p.dueDate.contains('-')) {
+              final cleanDate = p.dueDate.contains('T') ? p.dueDate.split('T').first : p.dueDate;
+              final parts = cleanDate.split('-');
+              if (parts.length == 3) {
+                displayDate = '${parts[2]}/${parts[1]}/${parts[0]}';
+              }
+            }
+
             return {
               'id': p.id.toString(),
               'name': p.name,
               'amount': p.amount,
-              'isSend': p.type.toUpperCase() == 'SEND' || p.type.toUpperCase() == 'OUTWARD' || p.type.toUpperCase() == 'EXPENSE',
-              'date': p.dueDate.contains('T') ? p.dueDate.split('T').first : p.dueDate,
+              'isSend': p.isSend,
+              'date': displayDate,
+              'rawDate': p.dueDate,
               'status': p.status.toUpperCase(),
-              'description': p.description ?? '',
+              'description': p.description ?? p.notes ?? '',
+              'notes': p.notes ?? p.description ?? '',
               'category': p.category.isNotEmpty ? p.category : 'General',
               'frequency': isMonthly ? 'Monthly Recurring' : p.frequency,
               'autoNotified': true,
@@ -172,8 +70,8 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
           }).toList();
         });
       }
-    } catch (_) {
-      // Offline fallback: keep _schedules initialized with default dataset
+    } catch (e) {
+      debugPrint('[PLANNER API] Error loading planned payments: $e');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -229,125 +127,143 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // ACTIONS & DIALOGS
+  // ACTIONS & DIALOGS (Connected end-to-end with Backend API)
   // ══════════════════════════════════════════════════════════════════════════
 
   void _openScheduleDialog() {
+    final scaffoldContext = context;
     showDialog(
-      context: context,
-      builder: (context) => SchedulePaymentDialog(
+      context: scaffoldContext,
+      builder: (dialogCtx) => SchedulePaymentDialog(
         onScheduled: (newItem) async {
-          setState(() {
-            _schedules.insert(0, newItem);
-          });
-          AppSnackbar.show(
-            context,
-            "Payment for '${newItem['name']}' scheduled successfully!",
-            type: SnackType.success,
-          );
+          final isMonthly = (newItem['frequency'] as String? ?? '').toLowerCase().contains('monthly') ||
+              (newItem['category'] as String? ?? '').toLowerCase().contains('rent');
+
+          final rawDueDate = newItem['rawDate'] ?? newItem['date'] ?? DateTime.now().toIso8601String().split('T').first;
+
           try {
             final req = CreatePlannedPaymentRequest(
               name: newItem['name'] ?? 'Scheduled Payment',
               amount: (newItem['amount'] as num).toDouble(),
-              dueDate: newItem['date'] ?? DateTime.now().toIso8601String(),
+              dueDate: rawDueDate,
               type: (newItem['isSend'] == true) ? 'SEND' : 'RECEIVE',
               description: newItem['description'],
+              notes: newItem['notes'] ?? newItem['description'],
               category: newItem['category'] ?? 'General',
-              frequency: newItem['frequency'] ?? 'ONCE',
+              frequency: isMonthly ? 'Monthly' : (newItem['frequency'] ?? 'One-Time'),
+              status: 'PENDING',
             );
-            await PaymentsRepository.createPlannedPayment(req);
-          } catch (_) {}
+            final created = await PaymentsRepository.createPlannedPayment(req);
+            if (mounted) {
+              AppSnackbar.show(
+                scaffoldContext,
+                "Payment for '${created.name}' scheduled successfully!",
+                type: SnackType.success,
+              );
+              await _loadData();
+            }
+          } catch (e) {
+            if (mounted) {
+              AppSnackbar.show(
+                scaffoldContext,
+                "Failed to schedule payment: $e",
+                type: SnackType.error,
+              );
+            }
+          }
         },
       ),
     );
   }
 
   void _openEditDialog(Map<String, dynamic> item) {
+    final scaffoldContext = context;
     showDialog(
-      context: context,
-      builder: (context) => SchedulePaymentDialog(
+      context: scaffoldContext,
+      builder: (dialogCtx) => SchedulePaymentDialog(
         initialData: item,
         onScheduled: (updatedItem) async {
-          setState(() {
-            final index = _schedules.indexWhere((s) => s['id'] == item['id']);
-            if (index != -1) {
-              _schedules[index] = updatedItem;
+          final isMonthly = (updatedItem['frequency'] as String? ?? '').toLowerCase().contains('monthly') ||
+              (updatedItem['category'] as String? ?? '').toLowerCase().contains('rent');
+
+          final rawDueDate = updatedItem['rawDate'] ?? updatedItem['date'] ?? DateTime.now().toIso8601String().split('T').first;
+
+          try {
+            final updateFields = <String, dynamic>{
+              'name': updatedItem['name'],
+              'amount': (updatedItem['amount'] as num).toDouble(),
+              'due_date': rawDueDate,
+              'frequency': isMonthly ? 'Monthly' : (updatedItem['frequency'] ?? 'One-Time'),
+              'category': updatedItem['category'],
+              'type': (updatedItem['isSend'] == true) ? 'SEND' : 'RECEIVE',
+              if (updatedItem['description'] != null) 'description': updatedItem['description'],
+              if (updatedItem['notes'] != null || updatedItem['description'] != null)
+                'notes': updatedItem['notes'] ?? updatedItem['description'],
+            };
+            final updated = await PaymentsRepository.updatePlannedPayment(item['id'], updateFields);
+            if (mounted) {
+              AppSnackbar.show(
+                scaffoldContext,
+                "Schedule for '${updated.name}' updated successfully!",
+                type: SnackType.success,
+              );
+              await _loadData();
             }
-          });
-          AppSnackbar.show(
-            context,
-            "Schedule for '${updatedItem['name']}' updated successfully!",
-            type: SnackType.success,
-          );
+          } catch (e) {
+            if (mounted) {
+              AppSnackbar.show(
+                scaffoldContext,
+                "Failed to update schedule: $e",
+                type: SnackType.error,
+              );
+            }
+          }
         },
       ),
     );
   }
 
-  void _toggleStatus(Map<String, dynamic> item) {
-    final isCurrentlyPending = item['status'] == 'PENDING';
-    final isMonthly = (item['frequency'] as String? ?? '').toLowerCase().contains('monthly') ||
-        (item['category'] as String? ?? '').toLowerCase().contains('rent');
-
-    setState(() {
-      item['status'] = isCurrentlyPending ? 'PAID' : 'PENDING';
-
-      // Auto-Roll Forward for Monthly Recurring Payments!
-      if (isCurrentlyPending && isMonthly) {
-        // Parse date and roll forward by 1 month
-        final dateStr = item['date'] as String? ?? '';
-        final parts = dateStr.split('/');
-        if (parts.length == 3) {
-          int day = int.tryParse(parts[0]) ?? 12;
-          int month = int.tryParse(parts[1]) ?? 2;
-          int year = int.tryParse(parts[2]) ?? 2027;
-
-          month++;
-          if (month > 12) {
-            month = 1;
-            year++;
-          }
-
-          final nextDateStr =
-              '${day.toString().padLeft(2, '0')}/${month.toString().padLeft(2, '0')}/$year';
-
-          // Insert new rolling schedule cycle
-          _schedules.insert(0, {
-            'id': 'sch_${DateTime.now().millisecondsSinceEpoch}',
-            'name': item['name'],
-            'amount': item['amount'],
-            'isSend': item['isSend'],
-            'date': nextDateStr,
-            'frequency': item['frequency'],
-            'category': item['category'],
-            'status': 'PENDING',
-            'autoNotified': true,
-            'description': item['description'],
-          });
-
+  Future<void> _toggleStatus(Map<String, dynamic> item) async {
+    final scaffoldContext = context;
+    final isCurrentlyPending = (item['status'] as String? ?? '').toUpperCase() == 'PENDING';
+    final id = item['id'];
+    try {
+      if (isCurrentlyPending) {
+        await PaymentsRepository.markPlannedPaymentPaid(id);
+        if (mounted) {
           AppSnackbar.show(
-            context,
-            "Payment marked as PAID! Next cycle automatically rolled forward to $nextDateStr.",
+            scaffoldContext,
+            "Payment for '${item['name']}' marked as PAID!",
             type: SnackType.success,
           );
-          return;
+        }
+      } else {
+        await PaymentsRepository.updatePlannedPayment(id, {'status': 'PENDING'});
+        if (mounted) {
+          AppSnackbar.show(
+            scaffoldContext,
+            "Payment for '${item['name']}' reset to PENDING.",
+            type: SnackType.info,
+          );
         }
       }
-    });
-
-    AppSnackbar.show(
-      context,
-      isCurrentlyPending
-          ? "Payment for '${item['name']}' marked as PAID!"
-          : "Payment for '${item['name']}' reset to PENDING.",
-      type: SnackType.info,
-    );
+      await _loadData();
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.show(
+          scaffoldContext,
+          "Failed to update status: $e",
+          type: SnackType.error,
+        );
+      }
+    }
   }
 
   void _deleteSchedule(Map<String, dynamic> item) {
+    final scaffoldContext = context;
     final name = item['name'];
     showDialog(
-      context: context,
+      context: scaffoldContext,
       builder: (ctx) => AlertDialog(
         backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -356,12 +272,19 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B)))),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              setState(() {
-                _schedules.removeWhere((s) => s['id'] == item['id']);
-              });
-              AppSnackbar.show(context, "Schedule for '$name' deleted.", type: SnackType.info);
+              try {
+                await PaymentsRepository.deletePlannedPayment(item['id']);
+                if (mounted) {
+                  AppSnackbar.show(scaffoldContext, "Schedule for '$name' deleted.", type: SnackType.info);
+                  await _loadData();
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(scaffoldContext, "Failed to delete schedule: $e", type: SnackType.error);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFEF4444),
@@ -579,7 +502,14 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
             const SizedBox(height: 20),
 
             // 4. Schedules Cards List
-            if (_filteredSchedules.isEmpty)
+            if (_isLoading)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 48),
+                  child: CircularProgressIndicator(color: Color(0xFF166534)),
+                ),
+              )
+            else if (_filteredSchedules.isEmpty)
               _buildEmptyStateCard(context, isMobile)
             else
               _buildSchedulesList(context, isMobile),
@@ -692,6 +622,12 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
             ],
           ),
         ),
+        IconButton(
+          tooltip: 'Refresh Schedules',
+          icon: const Icon(LucideIcons.refreshCw, size: 18, color: Color(0xFF166534)),
+          onPressed: _loadData,
+        ),
+        const SizedBox(width: 8),
         ElevatedButton.icon(
           onPressed: _openScheduleDialog,
           icon: const Icon(LucideIcons.plus, size: 16),

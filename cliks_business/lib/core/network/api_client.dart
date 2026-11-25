@@ -264,7 +264,7 @@ class ApiClient {
 
     if (_shouldFallback(path, r)) {
       final mock = await _getMockResponse(path, queryParams);
-      if (mock is Map && mock['success'] == true) {
+      if (mock != null && mock is Map && mock['success'] != false) {
         return mock;
       }
     }
@@ -319,7 +319,7 @@ class ApiClient {
 
     if (_shouldFallback(path, r)) {
       final mock = await _postMockResponse(path, body, queryParams);
-      if (mock is Map && mock['success'] == true) {
+      if (mock != null && mock is Map && mock['success'] != false) {
         return mock;
       }
     }
@@ -427,7 +427,7 @@ class ApiClient {
 
     if (_shouldFallback(path, r)) {
       final mock = await _patchMockResponse(path, body);
-      if (mock is Map && mock['success'] == true) {
+      if (mock != null && mock is Map && mock['success'] != false) {
         return mock;
       }
     }
@@ -477,7 +477,7 @@ class ApiClient {
 
     if (_shouldFallback(path, r)) {
       final mock = await _deleteMockResponse(path);
-      if (mock is Map && mock['success'] == true) {
+      if (mock != null && mock is Map && mock['success'] != false) {
         return mock;
       }
     }
@@ -840,11 +840,39 @@ class ApiClient {
       };
     }
 
+    if (path.contains('/planned-payments/') && !path.endsWith('/mark-paid')) {
+      final id = Uri.parse(path).pathSegments.last;
+      final item = store.plannedPayments.firstWhere(
+        (p) => p['id'].toString() == id.toString(),
+        orElse: () => {},
+      );
+      return {
+        'status': 'success',
+        'success': true,
+        'data': item,
+      };
+    }
+
     if (path.contains('/planned-payments')) {
       var list = List<Map<String, dynamic>>.from(store.plannedPayments);
       final status = queryParams?['status'];
       if (status != null && status.isNotEmpty) {
-        list = list.where((p) => (p['status'] ?? '').toString().toUpperCase() == status.toUpperCase()).toList();
+        final target = status.toLowerCase();
+        list = list.where((p) {
+          final s = (p['status'] ?? '').toString().toLowerCase();
+          if (target == 'paid' || target == 'completed') {
+            return s == 'paid' || s == 'completed';
+          }
+          return s == target;
+        }).toList();
+      }
+      final category = queryParams?['category'];
+      if (category != null && category.isNotEmpty) {
+        list = list.where((p) => (p['category'] ?? '').toString().toLowerCase() == category.toLowerCase()).toList();
+      }
+      final accountId = queryParams?['account_id'];
+      if (accountId != null && accountId.isNotEmpty) {
+        list = list.where((p) => (p['account_id'] ?? '').toString() == accountId).toList();
       }
       final type = queryParams?['type'];
       if (type != null && type.isNotEmpty) {
@@ -855,10 +883,12 @@ class ApiClient {
         final q = search.toLowerCase();
         list = list.where((p) =>
           (p['name'] ?? '').toString().toLowerCase().contains(q) ||
-          (p['description'] ?? '').toString().toLowerCase().contains(q)
+          (p['description'] ?? '').toString().toLowerCase().contains(q) ||
+          (p['notes'] ?? '').toString().toLowerCase().contains(q)
         ).toList();
       }
       return {
+        'status': 'success',
         'success': true,
         'message': 'Planned payments fetched successfully',
         'data': list,
@@ -1166,22 +1196,25 @@ class ApiClient {
       };
     }
 
-    if (path.contains('/planned-payments') && body is Map<String, dynamic>) {
+    if (path.contains('/planned-payments') && body is Map) {
+      final bodyMap = Map<String, dynamic>.from(body);
       final newPlan = {
         'id': 'plan_${DateTime.now().millisecondsSinceEpoch}',
-        'name': body['name'] ?? 'Scheduled Payment',
-        'amount': (body['amount'] as num?)?.toDouble() ?? 0.0,
-        'due_date': body['due_date'] ?? DateTime.now().toIso8601String(),
-        'account_id': body['account_id'],
-        'frequency': body['frequency'] ?? 'ONCE',
-        'category': body['category'] ?? 'Vendor Payment',
-        'type': (body['type'] ?? 'SEND').toString().toUpperCase(),
-        'description': body['description'] ?? '',
-        'status': 'PENDING',
+        'name': bodyMap['name'] ?? 'Scheduled Payment',
+        'amount': (bodyMap['amount'] as num?)?.toDouble() ?? 0.0,
+        'due_date': bodyMap['due_date'] ?? DateTime.now().toIso8601String().split('T').first,
+        'account_id': bodyMap['account_id'] ?? 1,
+        'frequency': bodyMap['frequency'] ?? 'Monthly',
+        'category': bodyMap['category'] ?? 'Utilities',
+        'type': (bodyMap['type'] ?? 'SEND').toString().toUpperCase(),
+        'description': bodyMap['description'] ?? bodyMap['notes'] ?? '',
+        'notes': bodyMap['notes'] ?? bodyMap['description'] ?? '',
+        'status': (bodyMap['status'] ?? 'PENDING').toString().toUpperCase(),
         'created_at': DateTime.now().toIso8601String(),
       };
-      store.plannedPayments.add(newPlan);
+      store.plannedPayments.insert(0, newPlan);
       return {
+        'status': 'success',
         'success': true,
         'message': 'Planned payment scheduled successfully',
         'data': newPlan,
@@ -1205,15 +1238,28 @@ class ApiClient {
       final pIdx = store.plannedPayments.indexWhere((p) => p['id'].toString() == id.toString());
       if (pIdx != -1) {
         store.plannedPayments[pIdx]['status'] = 'COMPLETED';
+        final freq = (store.plannedPayments[pIdx]['frequency'] ?? '').toString().toLowerCase();
+        String? nextDue;
+        if (freq.contains('month') || (store.plannedPayments[pIdx]['category'] ?? '').toString().toLowerCase().contains('rent')) {
+          final due = (store.plannedPayments[pIdx]['due_date'] ?? '').toString();
+          final parsed = DateTime.tryParse(due.split('T').first);
+          if (parsed != null) {
+            final nextMonth = DateTime(parsed.year, parsed.month + 1, parsed.day);
+            nextDue = '${nextMonth.year}-${nextMonth.month.toString().padLeft(2, '0')}-${nextMonth.day.toString().padLeft(2, '0')}';
+            store.plannedPayments[pIdx]['next_due_date'] = nextDue;
+          }
+        }
         return {
+          'status': 'success',
           'success': true,
-          'message': 'Payment marked as completed',
+          'message': 'Planned payment marked as paid',
           'data': store.plannedPayments[pIdx],
         };
       }
       return {
+        'status': 'success',
         'success': true,
-        'message': 'Payment marked as completed',
+        'message': 'Planned payment marked as paid',
         'data': {'id': id, 'status': 'COMPLETED'},
       };
     }
@@ -1221,15 +1267,21 @@ class ApiClient {
     if (path.contains('/planned-payments/')) {
       final id = Uri.parse(path).pathSegments.last;
       final pIdx = store.plannedPayments.indexWhere((p) => p['id'].toString() == id.toString());
-      if (pIdx != -1 && body is Map<String, dynamic>) {
-        store.plannedPayments[pIdx].addAll(body);
+      if (pIdx != -1 && body is Map) {
+        store.plannedPayments[pIdx].addAll(Map<String, dynamic>.from(body));
         return {
+          'status': 'success',
           'success': true,
           'message': 'Planned payment updated successfully',
           'data': store.plannedPayments[pIdx],
         };
       }
-      return {'success': true, 'message': 'Updated', 'data': body ?? {}};
+      return {
+        'status': 'success',
+        'success': true,
+        'message': 'Updated',
+        'data': body is Map ? Map<String, dynamic>.from(body) : {},
+      };
     }
 
     if (body is Map<String, dynamic>) {
@@ -1245,7 +1297,11 @@ class ApiClient {
     if (path.contains('/planned-payments/')) {
       final id = Uri.parse(path).pathSegments.last;
       store.plannedPayments.removeWhere((p) => p['id'].toString() == id.toString());
-      return {'success': true, 'message': 'Planned payment deleted successfully'};
+      return {
+        'status': 'success',
+        'success': true,
+        'message': 'Planned payment deleted successfully',
+      };
     }
 
     if (path.contains('/subid/')) {
@@ -1354,27 +1410,120 @@ class _BusinessPaymentStore {
       ],
       plannedPayments: [
         {
-          'id': 'plan_rent_1',
-          'name': 'Commercial Office Rent',
-          'description': 'November rent for 3rd floor office',
-          'amount': 45000.0,
-          'due_date': '2026-11-01',
-          'frequency': 'monthly',
-          'category': 'Rent',
-          'status': 'PENDING',
-          'type': 'SEND',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'plan_util_2',
-          'name': 'Internet Leased Line Bill',
-          'description': 'Airtel fiber static IP line',
-          'amount': 4200.0,
-          'due_date': '2026-11-10',
-          'frequency': 'monthly',
+          'id': 'sch_1',
+          'name': 'Electricity / Internet Bill',
+          'amount': 67890.0,
+          'due_date': '2027-02-12',
+          'frequency': 'Monthly Recurring',
           'category': 'Utilities',
           'status': 'PENDING',
           'type': 'SEND',
+          'description': 'High-speed fiber & datacenter power supply invoice',
+          'notes': 'High-speed fiber & datacenter power supply invoice',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_2',
+          'name': 'Electricity / Internet Bill',
+          'amount': 67890.0,
+          'due_date': '2027-01-12',
+          'frequency': 'Monthly Recurring',
+          'category': 'Utilities',
+          'status': 'PAID',
+          'type': 'SEND',
+          'description': 'High-speed fiber & datacenter power supply invoice',
+          'notes': 'High-speed fiber & datacenter power supply invoice',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_3',
+          'name': 'Electricity / Internet Bill',
+          'amount': 67890.0,
+          'due_date': '2026-12-12',
+          'frequency': 'Monthly Recurring',
+          'category': 'Utilities',
+          'status': 'PAID',
+          'type': 'SEND',
+          'description': 'High-speed fiber & datacenter power supply invoice',
+          'notes': 'High-speed fiber & datacenter power supply invoice',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_4',
+          'name': 'Electricity / Internet Bill',
+          'amount': 67890.0,
+          'due_date': '2026-11-12',
+          'frequency': 'Monthly Recurring',
+          'category': 'Utilities',
+          'status': 'PAID',
+          'type': 'SEND',
+          'description': 'High-speed fiber & datacenter power supply invoice',
+          'notes': 'High-speed fiber & datacenter power supply invoice',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_5',
+          'name': 'Office Space Rent',
+          'amount': 12000.0,
+          'due_date': '2026-12-01',
+          'frequency': 'Monthly Recurring',
+          'category': 'Rent (Monthly)',
+          'status': 'PENDING',
+          'type': 'SEND',
+          'description': 'Headquarters commercial lease rent',
+          'notes': 'Headquarters commercial lease rent',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_6',
+          'name': 'Warehouse Lease Maintenance',
+          'amount': 4000.0,
+          'due_date': '2026-12-05',
+          'frequency': 'Monthly Recurring',
+          'category': 'Rent (Monthly)',
+          'status': 'PENDING',
+          'type': 'SEND',
+          'description': 'Storage and logistics facility lease',
+          'notes': 'Storage and logistics facility lease',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_7',
+          'name': 'Client Monthly Retainer - Alpha Corp',
+          'amount': 4000.0,
+          'due_date': '2026-12-15',
+          'frequency': 'Monthly Recurring',
+          'category': 'Client Retainer',
+          'status': 'PENDING',
+          'type': 'RECEIVE',
+          'description': 'Strategic business advisory retainer',
+          'notes': 'Strategic business advisory retainer',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_8',
+          'name': 'Consulting Service Fee - Tech Hub',
+          'amount': 2000.0,
+          'due_date': '2026-12-20',
+          'frequency': 'One-Time',
+          'category': 'Client Retainer',
+          'status': 'PENDING',
+          'type': 'RECEIVE',
+          'description': 'POS architecture integration consulting invoice',
+          'notes': 'POS architecture integration consulting invoice',
+          'created_at': DateTime.now().toIso8601String(),
+        },
+        {
+          'id': 'sch_9',
+          'name': 'Cloud Infrastructure Backup Server',
+          'amount': 0.0,
+          'due_date': '2026-12-28',
+          'frequency': 'One-Time',
+          'category': 'Utilities',
+          'status': 'PENDING',
+          'type': 'SEND',
+          'description': 'Annual failover server contingency retainer',
+          'notes': 'Annual failover server contingency retainer',
           'created_at': DateTime.now().toIso8601String(),
         },
       ],

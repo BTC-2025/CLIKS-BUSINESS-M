@@ -117,6 +117,7 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       case AppRoute.transaction:
       case AppRoute.segregation:
       case AppRoute.splitCollect:
+      case AppRoute.planner:
       case AppRoute.referral:
         module = AppModule.payments;
         break;

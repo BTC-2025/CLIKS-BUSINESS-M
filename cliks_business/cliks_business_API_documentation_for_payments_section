@@ -1,0 +1,1375 @@
+# Cliks Business OS — Payments Section Complete API Reference
+
+This comprehensive API documentation covers all 5 sub-modules located under the `/payments` route in **Cliks Business OS**:
+
+- **Sub-Module 1: Transactions & Cash Flow Engine** (`/payments/transaction`)
+- **Sub-Module 2: People Network & Escrow** (`/payments/people`)
+- **Sub-Module 3: Purpose Wallets & Goal Segregation** (`/payments/wallet` & `/payments/segregation`)
+- **Sub-Module 4: Split & Collect (Splitwise)** (`/payments/split-collect`)
+- **Sub-Module 5: Payment Planner & Scheduled Outlays** (`/payments/planner` & `/payments/plan`)
+
+---
+
+## Global Authentication & Headers
+
+All requests require Bearer token authentication in the HTTP header:
+
+```http
+Authorization: Bearer <jwt_token>
+Content-Type: application/json
+```
+
+Standard Error Response Envelope:
+
+```json
+{
+  "status": "error",
+  "message": "Detailed error description",
+  "code": "BAD_REQUEST | NOT_FOUND | UNAUTHORIZED | INTERNAL_SERVER_ERROR"
+}
+```
+
+---
+
+# Sub-Module 1: Transactions & Cash Flow Engine (`/payments/transaction`)
+
+**UI Route:** `/payments/transaction`  
+**Frontend Component:** `src/pages/payments/Transaction.jsx` & `src/pages/BusinessPayments.jsx`  
+**Backend Routes:** `/api/v1/payments/*` & `/api/v1/transactions/*`
+
+---
+
+### 1.1 Receive Customer Payment / Receipt
+
+- **Method & Route:** `POST /api/v1/payments/receive` (Alias: `POST /api/v1/payments/customer-receipts`)
+- **Description:** Records an incoming settlement from a customer against an existing invoice or as an on-account receipt, adjusting receivables and bank account ledger balances.
+
+#### Request Body
+
+```json
+{
+  "customer_name": "Acme Retail Ltd",
+  "invoice_id": 1042,
+  "amount": 15000.00,
+  "paidAmount": 15000.00,
+  "payment_mode": "UPI",
+  "reference_number": "UPI-984729184",
+  "account_id": 1,
+  "notes": "Settlement of invoice INV-1042"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "message": "Payment received successfully",
+  "data": {
+    "id": 85,
+    "paidAmount": 15000.00,
+    "amount": 15000.00,
+    "customer_name": "Acme Retail Ltd",
+    "invoice_id": 1042,
+    "status": "completed",
+    "reconciliation_status": "matched"
+  }
+}
+```
+
+---
+
+### 1.2 Pay Supplier / Vendor Outlay
+
+- **Method & Route:** `POST /api/v1/payments/pay`
+- **Description:** Records an outgoing payment to a vendor/supplier for purchases, updating vendor balances and decrementing account balances.
+
+#### Request Body
+
+```json
+{
+  "supplier_name": "Apex Fabricators",
+  "purchase_id": "PUR-2026-089",
+  "amount": 28500.00,
+  "payment_mode": "Bank Transfer",
+  "reference_number": "NEFT-88492041",
+  "account_id": 2,
+  "notes": "Settlement for PO #108 raw materials"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "message": "Payment to supplier recorded successfully",
+  "data": {
+    "id": 92,
+    "amount": 28500.00
+  }
+}
+```
+
+---
+
+### 1.3 Vault / Inter-Account Fund Transfer
+
+- **Method & Route:** `POST /api/v1/payments/transfer`
+- **Description:** Transfers funds between internal business vaults / bank accounts.
+
+#### Request Body
+
+```json
+{
+  "from_acc_id": 1,
+  "to_acc_id": 2,
+  "amount": 50000.00
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Funds transferred successfully",
+  "data": {
+    "transfer_id": "TRF-1732442400000",
+    "from_account": "HDFC Current Account",
+    "to_account": "ICICI Operating Account",
+    "amount": 50000.00
+  }
+}
+```
+
+---
+
+### 1.4 Get Payment Reports & Combined Ledger
+
+- **Method & Route:** `GET /api/v1/payments/reports`
+- **Description:** Fetches all unified business payment records, bank account summaries, and transaction history.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "ledger": [
+      {
+        "id": 92,
+        "type": "pay",
+        "amount": 28500.00,
+        "party_name": "Apex Fabricators",
+        "invoice_id": 89,
+        "payment_mode": "Bank Transfer",
+        "reference_number": "NEFT-88492041",
+        "status": "completed",
+        "created_at": "2026-11-24T10:00:00.000Z"
+      }
+    ],
+    "accounts": [
+      {
+        "id": 1,
+        "bank_name": "HDFC Bank",
+        "account_holder": "Cliks Business",
+        "account_number": "XXXX9876",
+        "balance": 245000.00
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 1.5 Get Outstanding Summary Stats
+
+- **Method & Route:** `GET /api/v1/payments/outstanding`
+- **Description:** Aggregates total incoming receipts vs outgoing supplier settlements.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Outstanding aggregated",
+  "data": {
+    "receivables": 0,
+    "payables": 0,
+    "total_processed": 43500.00
+  }
+}
+```
+
+---
+
+### 1.6 Create Cashfree Payment Gateway Order
+
+- **Method & Route:** `POST /api/v1/payments/create-order`
+- **Description:** Generates a Cashfree payment session order token for digital customer checkouts.
+
+#### Request Body
+
+```json
+{
+  "amount": 4999.00,
+  "orderId": "ORDER_20261124_001",
+  "currency": "INR"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "payment_session_id": "session_8Xh92jKl0293",
+    "order_id": "ORDER_20261124_001",
+    "order_status": "ACTIVE"
+  }
+}
+```
+
+---
+
+### 1.7 List Cash Flow Transactions
+
+- **Method & Route:** `GET /api/v1/transactions`
+- **Query Parameters:**
+  - `type` (optional): `income` | `expense`
+  - `account_id` (optional): filter by bank/vault account ID
+  - `category` (optional): filter by category
+  - `startDate`, `endDate` (optional): date filters (YYYY-MM-DD)
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 105,
+      "type": "income",
+      "amount": 15000.00,
+      "category": "Direct Sales",
+      "date": "2026-11-24",
+      "description": "Counter POS settlement",
+      "account_id": 1,
+      "reference": "POS-2026-11"
+    }
+  ]
+}
+```
+
+---
+
+### 1.8 Create Cash Flow Transaction
+
+- **Method & Route:** `POST /api/v1/transactions`
+- **Description:** Manually logs an income or expense transaction in the cash flow ledger.
+
+#### Request Body
+
+```json
+{
+  "type": "expense",
+  "amount": 3500.00,
+  "category": "Office Utilities",
+  "date": "2026-11-24",
+  "description": "High-speed internet bill",
+  "account_id": 1,
+  "reference": "ACT-84920"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 106,
+    "type": "expense",
+    "amount": 3500.00,
+    "category": "Office Utilities",
+    "date": "2026-11-24"
+  }
+}
+```
+
+---
+
+### 1.9 Get Transaction by ID
+
+- **Method & Route:** `GET /api/v1/transactions/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 106,
+    "type": "expense",
+    "amount": 3500.00,
+    "category": "Office Utilities",
+    "date": "2026-11-24",
+    "description": "High-speed internet bill",
+    "account_id": 1,
+    "reference": "ACT-84920"
+  }
+}
+```
+
+---
+
+### 1.10 Update Transaction
+
+- **Method & Route:** `PATCH /api/v1/transactions/:id` (Alias: `PUT /api/v1/transactions/:id`)
+
+#### Request Body
+
+```json
+{
+  "amount": 3800.00,
+  "description": "High-speed internet bill + router lease"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 106,
+    "amount": 3800.00,
+    "description": "High-speed internet bill + router lease"
+  }
+}
+```
+
+---
+
+### 1.11 Delete Transaction
+
+- **Method & Route:** `DELETE /api/v1/transactions/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Transaction deleted successfully"
+}
+```
+
+---
+
+# Sub-Module 2: People Network & Escrow (`/payments/people`)
+
+**UI Route:** `/payments/people`  
+**Frontend Component:** `src/pages/BusinessPeople.jsx`  
+**Backend Routes:** `/api/v1/people/*`
+
+---
+
+### 2.1 List People & Contacts
+
+- **Method & Route:** `GET /api/v1/people`
+- **Description:** Returns contacts list with computed balances (total lent, borrowed, and net balance).
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 5,
+      "name": "Kiran Kumar",
+      "role_type": "Partner",
+      "relationship": "Investor",
+      "phone": "+919876543210",
+      "email": "kiran@bnxmail.com",
+      "company": "Kiran Ventures",
+      "total_lent": 100000.00,
+      "total_borrowed": 25000.00,
+      "net_balance": 75000.00
+    }
+  ]
+}
+```
+
+---
+
+### 2.2 Create Contact / Person
+
+- **Method & Route:** `POST /api/v1/people`
+- **Description:** Creates a new person in the business network. Note: email must end with `@bnxmail.com`.
+
+#### Request Body
+
+```json
+{
+  "name": "Kiran Kumar",
+  "role_type": "Partner",
+  "relationship": "Investor",
+  "phone": "+919876543210",
+  "email": "kiran@bnxmail.com",
+  "company": "Kiran Ventures",
+  "notes": "Angel investor and equity partner"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 5,
+    "name": "Kiran Kumar",
+    "role_type": "Partner",
+    "email": "kiran@bnxmail.com"
+  }
+}
+```
+
+---
+
+### 2.3 Get Person Details
+
+- **Method & Route:** `GET /api/v1/people/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 5,
+    "name": "Kiran Kumar",
+    "role_type": "Partner",
+    "relationship": "Investor",
+    "phone": "+919876543210",
+    "email": "kiran@bnxmail.com",
+    "company": "Kiran Ventures",
+    "total_lent": 100000.00,
+    "total_borrowed": 25000.00,
+    "net_balance": 75000.00,
+    "transactions": []
+  }
+}
+```
+
+---
+
+### 2.4 Update Person
+
+- **Method & Route:** `PATCH /api/v1/people/:id`
+
+#### Request Body
+
+```json
+{
+  "phone": "+919876543211",
+  "relationship": "Senior Partner"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 5,
+    "name": "Kiran Kumar",
+    "phone": "+919876543211",
+    "relationship": "Senior Partner"
+  }
+}
+```
+
+---
+
+### 2.5 Delete Person
+
+- **Method & Route:** `DELETE /api/v1/people/:id`
+- **Description:** Deletes a person and cascaded transactions, reminders, and activity records.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Person and associated records deleted successfully"
+}
+```
+
+---
+
+### 2.6 List All People Transactions
+
+- **Method & Route:** `GET /api/v1/people/transactions`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 34,
+      "person_id": 5,
+      "person_name": "Kiran Kumar",
+      "type": "lent",
+      "amount": 50000.00,
+      "date": "2026-11-20",
+      "status": "active",
+      "notes": "Short term liquidity loan"
+    }
+  ]
+}
+```
+
+---
+
+### 2.7 List Repayment Alerts
+
+- **Method & Route:** `GET /api/v1/people/reminders` (Alias: `GET /api/v1/people/repayment-alerts`)
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 14,
+      "contact_id": 5,
+      "target_contact": "Kiran Kumar",
+      "claim_cap": 25000.00,
+      "maturity_date": "2026-12-15",
+      "memo_label": "Q4 Short-term Bridge Repayment",
+      "status": "Pending"
+    }
+  ]
+}
+```
+
+---
+
+### 2.8 Create Repayment Alert
+
+- **Method & Route:** `POST /api/v1/people/reminders` (Alias: `POST /api/v1/people/repayment-alerts`)
+
+#### Request Body
+
+```json
+{
+  "contact_id": 5,
+  "target_contact": "Kiran Kumar",
+  "claim_cap": 25000.00,
+  "maturity_date": "2026-12-15",
+  "memo_label": "Q4 Short-term Bridge Repayment",
+  "status": "Pending"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 14,
+    "target_contact": "Kiran Kumar",
+    "claim_cap": 25000.00,
+    "maturity_date": "2026-12-15",
+    "memo_label": "Q4 Short-term Bridge Repayment",
+    "status": "Pending"
+  }
+}
+```
+
+---
+
+### 2.9 Update Repayment Alert Status
+
+- **Method & Route:** `PATCH /api/v1/people/reminders/:id` (Alias: `PATCH /api/v1/people/repayment-alerts/:id`)
+
+#### Request Body
+
+```json
+{
+  "status": "Settled"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Alert status updated successfully"
+}
+```
+
+---
+
+### 2.10 Delete / Dismiss Repayment Alert
+
+- **Method & Route:** `DELETE /api/v1/people/reminders/:id` (Alias: `DELETE /api/v1/people/repayment-alerts/:id`)
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Repayment alert removed"
+}
+```
+
+---
+
+### 2.11 Connection Requests Workflow
+
+- **Get Incoming Connection Requests:** `GET /api/v1/people/requests/incoming`
+
+  ```json
+  {
+    "status": "success",
+    "data": [
+      {
+        "id": 8,
+        "from_user_id": 22,
+        "from_name": "Suresh Raina",
+        "from_email": "suresh@bnxmail.com",
+        "created_at": "2026-11-22T08:00:00.000Z"
+      }
+    ]
+  }
+  ```
+
+- **Respond to Connection Request:** `PATCH /api/v1/people/requests/:id/respond`
+
+  ```json
+  {
+    "action": "accept" 
+  }
+  ```
+
+---
+
+### 2.12 Financial Groups Workflow
+
+- **List Groups:** `GET /api/v1/people/groups`
+- **Create Group:** `POST /api/v1/people/groups`
+
+  ```json
+  {
+    "title": "Store Renovation Group",
+    "currency": "INR",
+    "description": "Shared expense pool for flagship store renovation"
+  }
+  ```
+
+- **Get Group Details:** `GET /api/v1/people/groups/:id`
+- **Update Group:** `PUT /api/v1/people/groups/:id`
+- **Delete Group:** `DELETE /api/v1/people/groups/:id`
+- **Invite Member:** `POST /api/v1/people/groups/:id/members`
+
+  ```json
+  {
+    "email": "partner@bnxmail.com",
+    "role": "member"
+  }
+  ```
+
+- **Remove Member:** `DELETE /api/v1/people/groups/:id/members/:memberId`
+- **Add Group Transaction:** `POST /api/v1/people/groups/:id/transactions`
+
+  ```json
+  {
+    "title": "Architectural Blueprint Fee",
+    "amount": 40000.00,
+    "category": "Design",
+    "split_type": "equal"
+  }
+  ```
+
+- **Delete Group Transaction:** `DELETE /api/v1/people/groups/:id/transactions/:txId`
+- **Set Private Member Note:** `POST /api/v1/people/groups/:id/members/:memberId/private-note`
+
+  ```json
+  {
+    "note": "Private internal accounting note"
+  }
+  ```
+
+- **Delete Private Member Note:** `DELETE /api/v1/people/groups/:id/members/:memberId/private-note`
+
+---
+
+# Sub-Module 3: Purpose Wallets & Goal Segregation (`/payments/wallet` & `/payments/segregation`)
+
+**UI Route:** `/payments/wallet` & `/payments/segregation`  
+**Frontend Component:** `src/pages/BusinessPurposeWallet.jsx` & `src/pages/payments/Segregation.jsx`  
+**Backend Routes:** `/api/v1/goal-wallets/*`
+
+---
+
+### 3.1 List Goal Wallets
+
+- **Method & Route:** `GET /api/v1/goal-wallets`
+- **Description:** Lists all isolated purpose vaults with target amounts, current saved balances, and completion progress.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 3,
+      "name": "Advance Tax Q4",
+      "target_amount": 100000.00,
+      "current_amount": 65000.00,
+      "description": "Income tax advance deposit segregation",
+      "status": "active",
+      "created_at": "2026-10-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+### 3.2 Create Goal Wallet
+
+- **Method & Route:** `POST /api/v1/goal-wallets`
+
+#### Request Body
+
+```json
+{
+  "name": "Advance Tax Q4",
+  "target_amount": 100000.00,
+  "description": "Income tax advance deposit segregation"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 3,
+    "name": "Advance Tax Q4",
+    "target_amount": 100000.00,
+    "current_amount": 0.00,
+    "status": "active"
+  }
+}
+```
+
+---
+
+### 3.3 Get Goal Wallet Details
+
+- **Method & Route:** `GET /api/v1/goal-wallets/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 3,
+    "name": "Advance Tax Q4",
+    "target_amount": 100000.00,
+    "current_amount": 65000.00,
+    "description": "Income tax advance deposit segregation",
+    "status": "active"
+  }
+}
+```
+
+---
+
+### 3.4 Update Goal Wallet
+
+- **Method & Route:** `PATCH /api/v1/goal-wallets/:id`
+
+#### Request Body
+
+```json
+{
+  "name": "Advance Tax Q4 - Revised",
+  "target_amount": 120000.00,
+  "description": "Revised projected advance tax liability"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 3,
+    "name": "Advance Tax Q4 - Revised",
+    "target_amount": 120000.00
+  }
+}
+```
+
+---
+
+### 3.5 Add Money / Isolate Funds
+
+- **Method & Route:** `POST /api/v1/goal-wallets/:id/add-money`
+- **Description:** Allocates funds into the targeted goal wallet.
+
+#### Request Body
+
+```json
+{
+  "amount": 25000.00
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Money added successfully",
+  "data": {
+    "id": 3,
+    "name": "Advance Tax Q4",
+    "current_amount": 90000.00,
+    "target_amount": 100000.00
+  }
+}
+```
+
+---
+
+### 3.6 Claim / Release Segregated Vault Funds
+
+- **Method & Route:** `POST /api/v1/goal-wallets/:id/claim`
+- **Description:** Claims and releases isolated funds back to the operational pool upon goal realization.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Wallet funds claimed successfully",
+  "data": {
+    "id": 3,
+    "claimed_amount": 90000.00,
+    "status": "claimed"
+  }
+}
+```
+
+---
+
+### 3.7 Delete Goal Wallet
+
+- **Method & Route:** `DELETE /api/v1/goal-wallets/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Wallet deleted successfully"
+}
+```
+
+---
+
+# Sub-Module 4: Split & Collect (Splitwise) (`/payments/split-collect`)
+
+**UI Route:** `/payments/split-collect`  
+**Frontend Component:** `src/pages/BusinessSplitCollect.jsx`  
+**Backend Routes:** `/api/v1/split-expenses/*`
+
+---
+
+### 4.1 List All Split Expenses
+
+- **Method & Route:** `GET /api/v1/split-expenses`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 12,
+      "title": "Vendor Dinner & Hospitality",
+      "total_amount": 6000.00,
+      "created_by": 1,
+      "participants": [
+        { "id": 1, "name": "Ravi Kumar", "share_amount": 2000.00, "settled": 1 },
+        { "id": 2, "name": "Arun Kumar", "share_amount": 2000.00, "settled": 0 },
+        { "id": 3, "name": "Self", "share_amount": 2000.00, "settled": 1 }
+      ]
+    }
+  ]
+}
+```
+
+---
+
+### 4.2 Create Split Expense Ticket
+
+- **Method & Route:** `POST /api/v1/split-expenses`
+
+#### Request Body
+
+```json
+{
+  "title": "Vendor Dinner & Hospitality",
+  "total_amount": 6000.00,
+  "category": "Food & Dining",
+  "split_type": "equal",
+  "participants": [
+    { "name": "Ravi Kumar", "share_amount": 2000.00 },
+    { "name": "Arun Kumar", "share_amount": 2000.00 }
+  ]
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 12,
+    "title": "Vendor Dinner & Hospitality",
+    "total_amount": 6000.00
+  }
+}
+```
+
+---
+
+### 4.3 Get Split Expense Details
+
+- **Method & Route:** `GET /api/v1/split-expenses/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 12,
+    "title": "Vendor Dinner & Hospitality",
+    "total_amount": 6000.00,
+    "category": "Food & Dining",
+    "participants": [
+      { "id": 1, "name": "Ravi Kumar", "share_amount": 2000.00, "settled": 1 },
+      { "id": 2, "name": "Arun Kumar", "share_amount": 2000.00, "settled": 0 }
+    ],
+    "expenses": []
+  }
+}
+```
+
+---
+
+### 4.4 Update Split Expense
+
+- **Method & Route:** `PATCH /api/v1/split-expenses/:id`
+
+#### Request Body
+
+```json
+{
+  "title": "Vendor Dinner & Hospitality (Updated)",
+  "category": "Client Relations"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 12,
+    "title": "Vendor Dinner & Hospitality (Updated)"
+  }
+}
+```
+
+---
+
+### 4.5 Delete Split Expense
+
+- **Method & Route:** `DELETE /api/v1/split-expenses/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Split expense deleted successfully"
+}
+```
+
+---
+
+### 4.6 Per-Friend Owed Summary
+
+- **Method & Route:** `GET /api/v1/split-expenses/summary`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "name": "Arun Kumar",
+      "total_owed": 2000.00,
+      "unsettled_splits_count": 1
+    }
+  ]
+}
+```
+
+---
+
+### 4.7 Settle All Shares for Friend
+
+- **Method & Route:** `PATCH /api/v1/split-expenses/settle-friend`
+
+#### Request Body
+
+```json
+{
+  "name": "Arun Kumar"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "All pending shares for Arun Kumar settled successfully"
+}
+```
+
+---
+
+### 4.8 Upload Receipt Attachment
+
+- **Method & Route:** `POST /api/v1/split-expenses/upload`
+- **Content-Type:** `multipart/form-data`
+
+#### Request Payload
+
+- `file`: Binary file (JPEG/PNG/PDF)
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "url": "/uploads/split-receipt-1732442400.pdf",
+    "filename": "split-receipt-1732442400.pdf"
+  }
+}
+```
+
+---
+
+### 4.9 Add Participant
+
+- **Method & Route:** `POST /api/v1/split-expenses/:id/participants`
+
+#### Request Body
+
+```json
+{
+  "name": "Suresh",
+  "share_amount": 1500.00
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 4,
+    "name": "Suresh",
+    "share_amount": 1500.00,
+    "settled": 0
+  }
+}
+```
+
+---
+
+### 4.10 Settle Participant Share
+
+- **Method & Route:** `PATCH /api/v1/split-expenses/:id/participants/:participantId/settle`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Participant share marked as settled"
+}
+```
+
+---
+
+### 4.11 Remove Participant
+
+- **Method & Route:** `DELETE /api/v1/split-expenses/:id/participants/:participantId`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Participant removed successfully"
+}
+```
+
+---
+
+### 4.12 Expense Sub-Items inside a Split Ticket
+
+- **Add Expense Item:** `POST /api/v1/split-expenses/:id/expenses`
+
+  ```json
+  {
+    "description": "Starters & Mocktails",
+    "amount": 2500.00,
+    "paid_by": "Ravi Kumar"
+  }
+  ```
+
+- **Update Expense Item:** `PATCH /api/v1/split-expenses/:id/expenses/:expenseId`
+- **Delete Expense Item:** `DELETE /api/v1/split-expenses/:id/expenses/:expenseId`
+
+---
+
+### 4.13 Invitations & Member Roles
+
+- **Invite Member:** `POST /api/v1/split-expenses/:id/invite`
+
+  ```json
+  {
+    "email": "colleague@bnxmail.com",
+    "role": "editor"
+  }
+  ```
+
+- **Respond to Invite:** `PATCH /api/v1/split-expenses/:id/respond-invite`
+
+  ```json
+  {
+    "action": "accept"
+  }
+  ```
+
+- **Update Member Role:** `PATCH /api/v1/split-expenses/:id/member-role`
+
+  ```json
+  {
+    "member_id": 14,
+    "role": "viewer"
+  }
+  ```
+
+---
+
+# Sub-Module 5: Payment Planner & Scheduled Outlays (`/payments/planner` & `/payments/plan`)
+
+**UI Route:** `/payments/planner` & `/payments/plan`  
+**Frontend Component:** `src/pages/BusinessPaymentPlan.jsx`  
+**Backend Routes:** `/api/v1/planned-payments/*`
+
+---
+
+### 5.1 List Planned Payments
+
+- **Method & Route:** `GET /api/v1/planned-payments`
+- **Query Parameters:**
+  - `status` (optional): `pending` | `paid`
+  - `category` (optional): filter by category
+  - `account_id` (optional): filter by account
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 7,
+      "name": "Office Space Lease",
+      "amount": 75000.00,
+      "due_date": "2026-12-01",
+      "frequency": "Monthly",
+      "category": "Rent",
+      "status": "pending",
+      "notes": "Floor 3 Tech Park Rent"
+    }
+  ]
+}
+```
+
+---
+
+### 5.2 Create Planned Payment
+
+- **Method & Route:** `POST /api/v1/planned-payments`
+
+#### Request Body
+
+```json
+{
+  "name": "Office Space Lease",
+  "amount": 75000.00,
+  "due_date": "2026-12-01",
+  "frequency": "Monthly",
+  "category": "Rent",
+  "description": "Floor 3 Tech Park Rent",
+  "status": "pending",
+  "account_id": 1,
+  "notes": "Recurring on the 1st of every month"
+}
+```
+
+#### Response (201 Created)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 7,
+    "name": "Office Space Lease",
+    "amount": 75000.00,
+    "due_date": "2026-12-01",
+    "frequency": "Monthly",
+    "category": "Rent",
+    "status": "pending"
+  }
+}
+```
+
+---
+
+### 5.3 Get Planned Payment Details
+
+- **Method & Route:** `GET /api/v1/planned-payments/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 7,
+    "name": "Office Space Lease",
+    "amount": 75000.00,
+    "due_date": "2026-12-01",
+    "frequency": "Monthly",
+    "category": "Rent",
+    "status": "pending",
+    "description": "Floor 3 Tech Park Rent",
+    "account_id": 1,
+    "notes": "Recurring on the 1st of every month"
+  }
+}
+```
+
+---
+
+### 5.4 Update Planned Payment
+
+- **Method & Route:** `PATCH /api/v1/planned-payments/:id`
+
+#### Request Body
+
+```json
+{
+  "amount": 80000.00,
+  "notes": "Rent revised for FY26"
+}
+```
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "data": {
+    "id": 7,
+    "name": "Office Space Lease",
+    "amount": 80000.00,
+    "due_date": "2026-12-01"
+  }
+}
+```
+
+---
+
+### 5.5 Mark Planned Payment as Paid
+
+- **Method & Route:** `PATCH /api/v1/planned-payments/:id/mark-paid`
+- **Description:** Sets the status to `paid` and, if recurring (e.g., Monthly/Quarterly), automatically generates the next scheduled due date.
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Planned payment marked as paid",
+  "data": {
+    "id": 7,
+    "status": "paid",
+    "paid_date": "2026-11-24T10:00:00.000Z",
+    "next_due_date": "2027-01-01"
+  }
+}
+```
+
+---
+
+### 5.6 Delete Planned Payment
+
+- **Method & Route:** `DELETE /api/v1/planned-payments/:id`
+
+#### Response (200 OK)
+
+```json
+{
+  "status": "success",
+  "message": "Planned payment deleted successfully"
+}
+```

@@ -586,11 +586,14 @@ class PlannedPayment {
   final String status;
   final String frequency;
   final String category;
-  final String type; // 'bill', 'expense', 'subscription', 'loan'
+  final String type; // 'bill', 'expense', 'subscription', 'loan', 'SEND', 'RECEIVE'
   final String? description;
+  final String? notes;
   final dynamic accountId;
   final dynamic personId;
   final String? personName;
+  final String? paidDate;
+  final String? nextDueDate;
   final String? createdAt;
   final String? updatedAt;
 
@@ -599,35 +602,60 @@ class PlannedPayment {
     required this.name,
     required this.amount,
     required this.dueDate,
-    this.status = 'pending',
+    this.status = 'PENDING',
     this.frequency = 'monthly',
     this.category = 'General',
-    this.type = 'bill',
+    this.type = 'SEND',
     this.description,
+    this.notes,
     this.accountId,
     this.personId,
     this.personName,
+    this.paidDate,
+    this.nextDueDate,
     this.createdAt,
     this.updatedAt,
   });
 
-  bool get isPaid => status.toLowerCase() == 'paid';
-  bool get isSend => type.toLowerCase() != 'receive';
+  bool get isPaid =>
+      status.toLowerCase() == 'paid' || status.toLowerCase() == 'completed';
+
+  bool get isSend =>
+      type.toLowerCase() == 'send' ||
+      type.toLowerCase() == 'outward' ||
+      type.toLowerCase() == 'expense' ||
+      type.toLowerCase() == 'bill';
 
   factory PlannedPayment.fromJson(Map<String, dynamic> json) {
+    final rawAmount = json['amount'];
+    double parseAmount(dynamic val) {
+      if (val is num) return val.toDouble();
+      if (val is String) return double.tryParse(val) ?? 0.0;
+      return 0.0;
+    }
+
+    final rawType = (json['type'] ?? '').toString();
+    final cat = (json['category'] ?? 'General').toString();
+    final inferredType = rawType.isNotEmpty
+        ? rawType
+        : (cat.toLowerCase().contains('retainer') ? 'RECEIVE' : 'SEND');
+
     return PlannedPayment(
       id: json['id'],
       name: (json['name'] ?? 'Scheduled Item').toString(),
-      amount: ((json['amount'] ?? 0) as num).toDouble(),
+      amount: parseAmount(rawAmount),
       dueDate: (json['due_date'] ?? json['dueDate'] ?? '').toString(),
       status: (json['status'] ?? 'pending').toString(),
       frequency: (json['frequency'] ?? 'monthly').toString(),
-      category: (json['category'] ?? 'General').toString(),
-      type: (json['type'] ?? 'bill').toString(),
-      description: json['description']?.toString(),
+      category: cat,
+      type: inferredType,
+      description: json['description']?.toString() ?? json['notes']?.toString(),
+      notes: json['notes']?.toString() ?? json['description']?.toString(),
       accountId: json['account_id'] ?? json['accountId'],
       personId: json['person_id'] ?? json['personId'],
       personName: json['person_name']?.toString() ?? json['personName']?.toString(),
+      paidDate: json['paid_date']?.toString() ?? json['paidDate']?.toString(),
+      nextDueDate: json['next_due_date']?.toString() ?? json['nextDueDate']?.toString(),
       createdAt: json['created_at']?.toString() ?? json['createdAt']?.toString(),
       updatedAt: json['updated_at']?.toString() ?? json['updatedAt']?.toString(),
     );
@@ -643,9 +671,12 @@ class PlannedPayment {
     'category': category,
     'type': type,
     if (description != null) 'description': description,
+    if (notes != null) 'notes': notes,
     if (accountId != null) 'account_id': accountId,
     if (personId != null) 'person_id': personId,
     if (personName != null) 'person_name': personName,
+    if (paidDate != null) 'paid_date': paidDate,
+    if (nextDueDate != null) 'next_due_date': nextDueDate,
   };
 }
 
@@ -659,16 +690,20 @@ class CreatePlannedPaymentRequest {
   final String category;
   final String type;
   final String? description;
+  final String? notes;
+  final String status;
 
   CreatePlannedPaymentRequest({
     required this.name,
     required this.amount,
     required this.dueDate,
     this.accountId,
-    this.frequency = 'monthly',
+    this.frequency = 'Monthly',
     this.category = 'General',
-    this.type = 'bill',
+    this.type = 'SEND',
     this.description,
+    this.notes,
+    this.status = 'PENDING',
   });
 
   Map<String, dynamic> toJson() {
@@ -679,10 +714,16 @@ class CreatePlannedPaymentRequest {
       'frequency': frequency,
       'category': category,
       'type': type,
+      'status': status,
     };
     if (accountId != null) map['account_id'] = accountId;
     if (description != null && description!.trim().isNotEmpty) {
       map['description'] = description!.trim();
+    }
+    if (notes != null && notes!.trim().isNotEmpty) {
+      map['notes'] = notes!.trim();
+    } else if (description != null && description!.trim().isNotEmpty) {
+      map['notes'] = description!.trim();
     }
     return map;
   }

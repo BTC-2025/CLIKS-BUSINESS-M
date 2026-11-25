@@ -148,33 +148,45 @@ class TokenService {
   }
 
   static Future<String?> getAccessToken() async {
+    _ensureFallbackLoaded();
+    final activeEmail = await getUserEmail();
+
+    // 1. If active account has a token in registry or user settings, check if it's a real JWT
+    if (activeEmail != null && activeEmail.isNotEmpty) {
+      final registry = await getSavedAccountsFromRegistry();
+      final found = registry.firstWhere(
+        (a) =>
+            (a['email']?.toString() ?? '').toLowerCase() ==
+            activeEmail.toLowerCase(),
+        orElse: () => {},
+      );
+      final activeTok = found['accessToken']?.toString();
+      if (activeTok != null && activeTok.isNotEmpty) {
+        if (activeTok.startsWith('ey') || cachedAccessToken == null || cachedAccessToken!.isEmpty) {
+          cachedAccessToken = activeTok;
+          return cachedAccessToken;
+        }
+      }
+
+      final settings = await getUserSettings(activeEmail);
+      final settingsTok = settings?['accessToken']?.toString();
+      if (settingsTok != null && settingsTok.isNotEmpty && settingsTok.startsWith('ey')) {
+        cachedAccessToken = settingsTok;
+        return cachedAccessToken;
+      }
+    }
+
     if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
       return cachedAccessToken;
     }
-    _ensureFallbackLoaded();
     cachedAccessToken = await _safeRead(key: _kAccess);
     if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
       return cachedAccessToken;
     }
 
-    // Fallback: look in saved accounts registry for active or primary account token
-    final activeEmail = await getUserEmail();
+    // Fallback: look in saved accounts registry for any available token
     final registry = await getSavedAccountsFromRegistry();
     if (registry.isNotEmpty) {
-      if (activeEmail != null && activeEmail.isNotEmpty) {
-        final found = registry.firstWhere(
-          (a) =>
-              (a['email']?.toString() ?? '').toLowerCase() ==
-              activeEmail.toLowerCase(),
-          orElse: () => {},
-        );
-        final tok = found['accessToken']?.toString();
-        if (tok != null && tok.isNotEmpty) {
-          cachedAccessToken = tok;
-          await _safeWrite(key: _kAccess, value: tok);
-          return cachedAccessToken;
-        }
-      }
       for (final a in registry) {
         final tok = a['accessToken']?.toString();
         if (tok != null && tok.isNotEmpty) {

@@ -262,6 +262,7 @@ class PaymentsRepository {
     String? category,
     String? search,
     String? type,
+    dynamic accountId,
     int? page,
     int? limit,
     String? sort,
@@ -272,6 +273,7 @@ class PaymentsRepository {
     if (category != null && category.isNotEmpty) queryParams['category'] = category;
     if (search != null && search.isNotEmpty) queryParams['search'] = search;
     if (type != null && type.isNotEmpty) queryParams['type'] = type;
+    if (accountId != null) queryParams['account_id'] = accountId.toString();
     if (page != null) queryParams['page'] = page.toString();
     if (limit != null) queryParams['limit'] = limit.toString();
     if (sort != null && sort.isNotEmpty) queryParams['sort'] = sort;
@@ -282,15 +284,34 @@ class PaymentsRepository {
       queryParams: queryParams.isNotEmpty ? queryParams : null,
     );
     if (res is Map<String, dynamic>) {
-      final data = res['data'];
+      final data = res['data'] ?? res['plans'] ?? res['items'];
       if (data is List) {
         return data
             .whereType<Map<String, dynamic>>()
             .map((e) => PlannedPayment.fromJson(e))
             .toList();
       }
+    } else if (res is List) {
+      return res
+          .whereType<Map<String, dynamic>>()
+          .map((e) => PlannedPayment.fromJson(e))
+          .toList();
     }
     return [];
+  }
+
+  /// Fetches a specific planned payment by ID.
+  /// Calls: `GET /api/v1/planned-payments/:id`
+  static Future<PlannedPayment?> getPlannedPaymentById(dynamic id) async {
+    final res = await ApiClient.get('/api/v1/planned-payments/$id');
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      final data = map['data'];
+      if (data is Map) {
+        return PlannedPayment.fromJson(Map<String, dynamic>.from(data));
+      }
+    }
+    return null;
   }
 
   /// Creates a planned/scheduled payment.
@@ -300,16 +321,17 @@ class PaymentsRepository {
       '/api/v1/planned-payments',
       body: req.toJson(),
     );
-    if (res is Map<String, dynamic>) {
-      if (res['success'] == false) {
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] == false && map['status'] != 'success') {
         throw ApiException(
           statusCode: 400,
-          message: res['message']?.toString() ?? 'Failed to create planned payment',
+          message: map['message']?.toString() ?? 'Failed to create planned payment',
         );
       }
-      final data = res['data'];
-      if (data is Map<String, dynamic>) {
-        return PlannedPayment.fromJson(data);
+      final data = map['data'];
+      if (data is Map) {
+        return PlannedPayment.fromJson(Map<String, dynamic>.from(data));
       }
     }
     throw ApiException(statusCode: 500, message: 'Invalid response creating planned payment');
@@ -325,10 +347,11 @@ class PaymentsRepository {
       '/api/v1/planned-payments/$id',
       body: fields,
     );
-    if (res is Map<String, dynamic>) {
-      final data = res['data'];
-      if (data is Map<String, dynamic>) {
-        return PlannedPayment.fromJson(data);
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      final data = map['data'];
+      if (data is Map) {
+        return PlannedPayment.fromJson(Map<String, dynamic>.from(data));
       }
     }
     throw ApiException(statusCode: 500, message: 'Failed to update planned payment');

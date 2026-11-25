@@ -58,15 +58,46 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
     _nameController = TextEditingController(text: init?['name'] ?? '');
     _amountController = TextEditingController(
       text: init != null && init['amount'] != null
-          ? ((init['amount'] as num).toDouble() == 0 ? '0.00' : (init['amount'] as num).toDouble().toStringAsFixed(2))
+          ? ((init['amount'] as num).toDouble() == 0
+                ? '0.00'
+                : (init['amount'] as num).toDouble().toStringAsFixed(2))
           : '0.00',
     );
-    _descriptionController = TextEditingController(text: init?['description'] ?? '');
+    _descriptionController = TextEditingController(
+      text: init?['description'] ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: init?['description'] ?? init?['notes'] ?? '',
+    );
     _isSending = init?['isSend'] ?? true;
     _selectedFrequency = init?['frequency'] ?? 'Monthly (e.g. Rent, EMI)';
     _selectedCategory = init?['category'] ?? 'Rent (Monthly)';
     _selectedPerson = init?['person'] ?? 'Select Person / Payee...';
     _selectedDate = DateTime.now();
+
+    DateTime initialDate = DateTime.now();
+    if (init != null) {
+      final rawDate =
+          init['rawDate'] ??
+          init['due_date'] ??
+          init['dueDate'] ??
+          init['date'];
+      if (rawDate != null) {
+        final str = rawDate.toString().split('T').first;
+        if (str.contains('-')) {
+          initialDate = DateTime.tryParse(str) ?? DateTime.now();
+        } else if (str.contains('/')) {
+          final parts = str.split('/');
+          if (parts.length == 3) {
+            final d = int.tryParse(parts[0]) ?? 1;
+            final m = int.tryParse(parts[1]) ?? 1;
+            final y = int.tryParse(parts[2]) ?? DateTime.now().year;
+            initialDate = DateTime(y, m, d);
+          }
+        }
+      }
+    }
+    _selectedDate = initialDate;
   }
 
   @override
@@ -121,8 +152,11 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final dialogWidth = screenWidth < 580 ? screenWidth - 32 : 520.0;
-    final amountVal = double.tryParse(_amountController.text.trim().replaceAll(',', '')) ?? 0.0;
-    final isSubmitDisabled = amountVal <= 0 || _nameController.text.trim().isEmpty;
+    final amountVal =
+        double.tryParse(_amountController.text.trim().replaceAll(',', '')) ??
+        0.0;
+    final isSubmitDisabled =
+        amountVal <= 0 || _nameController.text.trim().isEmpty;
 
     final dateFormatted =
         '${_selectedDate.day.toString().padLeft(2, '0')}/${_selectedDate.month.toString().padLeft(2, '0')}/${_selectedDate.year}';
@@ -152,7 +186,9 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.initialData != null ? 'Edit Scheduled Payment' : 'Schedule Payment',
+                          widget.initialData != null
+                              ? 'Edit Scheduled Payment'
+                              : 'Schedule Payment',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -183,7 +219,11 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                         shape: BoxShape.circle,
                       ),
                       child: const Center(
-                        child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
+                        child: Icon(
+                          LucideIcons.x,
+                          size: 14,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
                     ),
                   ),
@@ -235,7 +275,11 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                   children: [
                     const Row(
                       children: [
-                        Icon(LucideIcons.zap, size: 12, color: Color(0xFFD97706)),
+                        Icon(
+                          LucideIcons.zap,
+                          size: 12,
+                          color: Color(0xFFD97706),
+                        ),
                         SizedBox(width: 5),
                         Text(
                           'QUICK TEMPLATE PRESETS',
@@ -315,8 +359,14 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
               TextFormField(
                 controller: _nameController,
                 onChanged: (_) => setState(() {}),
-                style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
-                decoration: _inputDecoration('e.g. Monthly Rent, Client Retainer, Vendor Bill'),
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  color: Color(0xFF0F172A),
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: _inputDecoration(
+                  'e.g. Monthly Rent, Client Retainer, Vendor Bill',
+                ),
               ),
               const SizedBox(height: 16),
 
@@ -339,20 +389,34 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: _frequencies.contains(_selectedFrequency) ? _selectedFrequency : _frequencies.first,
+                              value: _frequencies.contains(_selectedFrequency)
+                                  ? _selectedFrequency
+                                  : _frequencies.first,
                               isExpanded: true,
-                              icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                              icon: const Icon(
+                                LucideIcons.chevronDown,
+                                size: 14,
+                                color: Color(0xFF64748B),
+                              ),
                               items: _frequencies.map((freq) {
                                 return DropdownMenuItem(
                                   value: freq,
                                   child: Row(
                                     children: [
-                                      const Icon(LucideIcons.repeat, size: 12, color: Color(0xFF7E22CE)),
+                                      const Icon(
+                                        LucideIcons.repeat,
+                                        size: 12,
+                                        color: Color(0xFF7E22CE),
+                                      ),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           freq,
-                                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+                                          style: const TextStyle(
+                                            fontSize: 12.5,
+                                            color: Color(0xFF0F172A),
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -361,7 +425,8 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                                 );
                               }).toList(),
                               onChanged: (v) {
-                                if (v != null) setState(() => _selectedFrequency = v);
+                                if (v != null)
+                                  setState(() => _selectedFrequency = v);
                               },
                             ),
                           ),
@@ -385,20 +450,34 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                           ),
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<String>(
-                              value: _categories.contains(_selectedCategory) ? _selectedCategory : _categories.first,
+                              value: _categories.contains(_selectedCategory)
+                                  ? _selectedCategory
+                                  : _categories.first,
                               isExpanded: true,
-                              icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                              icon: const Icon(
+                                LucideIcons.chevronDown,
+                                size: 14,
+                                color: Color(0xFF64748B),
+                              ),
                               items: _categories.map((cat) {
                                 return DropdownMenuItem(
                                   value: cat,
                                   child: Row(
                                     children: [
-                                      const Icon(LucideIcons.tag, size: 12, color: Color(0xFFD97706)),
+                                      const Icon(
+                                        LucideIcons.tag,
+                                        size: 12,
+                                        color: Color(0xFFD97706),
+                                      ),
                                       const SizedBox(width: 6),
                                       Expanded(
                                         child: Text(
                                           cat,
-                                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w600),
+                                          style: const TextStyle(
+                                            fontSize: 12.5,
+                                            color: Color(0xFF0F172A),
+                                            fontWeight: FontWeight.w600,
+                                          ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
@@ -407,7 +486,8 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                                 );
                               }).toList(),
                               onChanged: (v) {
-                                if (v != null) setState(() => _selectedCategory = v);
+                                if (v != null)
+                                  setState(() => _selectedCategory = v);
                               },
                             ),
                           ),
@@ -431,15 +511,25 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                 ),
                 child: DropdownButtonHideUnderline(
                   child: DropdownButton<String>(
-                    value: _people.contains(_selectedPerson) ? _selectedPerson : _people.first,
+                    value: _people.contains(_selectedPerson)
+                        ? _selectedPerson
+                        : _people.first,
                     isExpanded: true,
-                    icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                    icon: const Icon(
+                      LucideIcons.chevronDown,
+                      size: 14,
+                      color: Color(0xFF64748B),
+                    ),
                     items: _people.map((p) {
                       return DropdownMenuItem(
                         value: p,
                         child: Text(
                           p,
-                          style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A), fontWeight: FontWeight.w500),
+                          style: const TextStyle(
+                            fontSize: 12.5,
+                            color: Color(0xFF0F172A),
+                            fontWeight: FontWeight.w500,
+                          ),
                           overflow: TextOverflow.ellipsis,
                         ),
                       );
@@ -463,13 +553,22 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                         _buildInputLabel('AMOUNT (₹) *'),
                         TextFormField(
                           controller: _amountController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           inputFormatters: [
-                            const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                            const CurrencyInputFormatter(
+                              integerDigits: 12,
+                              decimalDigits: 2,
+                            ),
                             LengthLimitingTextInputFormatter(15),
                           ],
                           onChanged: (_) => setState(() {}),
-                          style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A), fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            color: Color(0xFF0F172A),
+                            fontWeight: FontWeight.bold,
+                          ),
                           decoration: _inputDecoration('0.00'),
                         ),
                       ],
@@ -489,16 +588,26 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                              border: Border.all(
+                                color: const Color(0xFFCBD5E1),
+                              ),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
                                   dateFormatted,
-                                  style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF0F172A),
+                                  ),
                                 ),
-                                const Icon(LucideIcons.calendar, size: 16, color: Color(0xFF0F172A)),
+                                const Icon(
+                                  LucideIcons.calendar,
+                                  size: 16,
+                                  color: Color(0xFF0F172A),
+                                ),
                               ],
                             ),
                           ),
@@ -549,32 +658,63 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                       ? null
                       : () {
                           final name = _nameController.text.trim();
-                          final amount = double.tryParse(_amountController.text.trim().replaceAll(',', '')) ?? 0.0;
+                          final amount =
+                              double.tryParse(
+                                _amountController.text.trim().replaceAll(
+                                  ',',
+                                  '',
+                                ),
+                              ) ??
+                              0.0;
 
                           if (amount <= 0) {
-                            AppSnackbar.show(context, 'Please enter an amount greater than ₹0', type: SnackType.warning);
+                            AppSnackbar.show(
+                              context,
+                              'Please enter an amount greater than ₹0',
+                              type: SnackType.warning,
+                            );
                             return;
                           }
                           if (amount > kMaxAllowedAmount) {
-                            AppSnackbar.show(context, 'Amount cannot exceed $kMaxAllowedAmountText', type: SnackType.warning);
+                            AppSnackbar.show(
+                              context,
+                              'Amount cannot exceed $kMaxAllowedAmountText',
+                              type: SnackType.warning,
+                            );
                             return;
                           }
 
-                          final isMonthly = _selectedFrequency.toLowerCase().contains('monthly') ||
+                          final isMonthly =
+                              _selectedFrequency.toLowerCase().contains(
+                                'monthly',
+                              ) ||
                               _selectedCategory.toLowerCase().contains('rent');
 
+                          final isoDate =
+                              '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+
                           final newSchedule = {
-                            'id': widget.initialData?['id'] ?? 'sch_${DateTime.now().millisecondsSinceEpoch}',
+                            'id':
+                                widget.initialData?['id'] ??
+                                'sch_${DateTime.now().millisecondsSinceEpoch}',
                             'name': name,
                             'amount': amount,
                             'isSend': _isSending,
                             'date': dateFormatted,
-                            'frequency': isMonthly ? 'Monthly Recurring' : _selectedFrequency,
+                            'rawDate': isoDate,
+                            'frequency': isMonthly
+                                ? 'Monthly Recurring'
+                                : _selectedFrequency,
                             'category': _selectedCategory,
-                            'status': widget.initialData?['status'] ?? 'PENDING',
+                            'status':
+                                widget.initialData?['status'] ?? 'PENDING',
                             'autoNotified': true,
-                            'person': _selectedPerson != 'Select Person / Payee...' ? _selectedPerson : null,
+                            'person':
+                                _selectedPerson != 'Select Person / Payee...'
+                                ? _selectedPerson
+                                : null,
                             'description': _descriptionController.text.trim(),
+                            'notes': _descriptionController.text.trim(),
                           };
 
                           if (widget.onScheduled != null) {
@@ -588,11 +728,18 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                     foregroundColor: Colors.white,
                     disabledForegroundColor: Colors.white,
                     elevation: 0,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   child: Text(
-                    widget.initialData != null ? 'Update Payment' : '+ Schedule Payment',
-                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                    widget.initialData != null
+                        ? 'Update Payment'
+                        : '+ Schedule Payment',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
@@ -629,7 +776,11 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 15, color: isSelected ? selectedColor : const Color(0xFF64748B)),
+            Icon(
+              icon,
+              size: 15,
+              color: isSelected ? selectedColor : const Color(0xFF64748B),
+            ),
             const SizedBox(width: 8),
             Text(
               label,
