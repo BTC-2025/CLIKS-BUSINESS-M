@@ -425,8 +425,9 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                                 );
                               }).toList(),
                               onChanged: (v) {
-                                if (v != null)
+                                if (v != null) {
                                   setState(() => _selectedFrequency = v);
+                                }
                               },
                             ),
                           ),
@@ -486,8 +487,9 @@ class _SchedulePaymentDialogState extends State<SchedulePaymentDialog> {
                                 );
                               }).toList(),
                               onChanged: (v) {
-                                if (v != null)
+                                if (v != null) {
                                   setState(() => _selectedCategory = v);
+                                }
                               },
                             ),
                           ),

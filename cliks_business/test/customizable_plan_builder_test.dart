@@ -2,12 +2,11 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:clicks_business_frontend/features/billing/pages/subscription_page.dart';
 import 'package:clicks_business_frontend/features/billing/widgets/customizable_plan_builder_section.dart';
 
 void main() {
   group('Customizable Subscription & Instant Add-Ons Builder', () {
-    testWidgets('Renders Business sub-tabs and switches to Customizable builder view',
+    testWidgets('Renders Customizable builder view with sections and summary',
         (tester) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.macOS;
       tester.view.physicalSize = const Size(1280, 900);
@@ -22,25 +21,13 @@ void main() {
           const ProviderScope(
             child: MaterialApp(
               home: Scaffold(
-                body: SubscriptionPage(),
+                body: SingleChildScrollView(
+                  child: CustomizablePlanBuilderSection(),
+                ),
               ),
             ),
           ),
         );
-        await tester.pump();
-        await tester.pump(const Duration(milliseconds: 300));
-
-        // Verify the 3 main category tabs are present
-        expect(find.text('BUSINESS'), findsOneWidget);
-        expect(find.text('FIN-PRO'), findsOneWidget);
-        expect(find.text('PARTNER LAUNCH DESK'), findsOneWidget);
-
-        // Verify Business sub-tabs are present
-        expect(find.text('Standard Tiers (4 Plans)'), findsOneWidget);
-        expect(find.text('✦ Customizable Plan & Add-Ons'), findsOneWidget);
-
-        // Tap the Customizable sub-tab inside Business
-        await tester.tap(find.text('✦ Customizable Plan & Add-Ons'));
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 300));
 

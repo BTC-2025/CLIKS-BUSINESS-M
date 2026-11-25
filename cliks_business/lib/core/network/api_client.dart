@@ -8,7 +8,7 @@ import 'api_exception.dart';
 import 'token_service.dart';
 
 /// Central HTTP Client for all BNX Mail & Cliks Business API calls.
-/// 
+///
 /// Communicates with:
 /// - Real live BNX API: https://api.bnxmail.com
 /// - Local developer backend: http://localhost:8080 (auto-detected when active)
@@ -43,10 +43,7 @@ class ApiClient {
   ];
 
   static final List<Map<String, dynamic>> _blockedContacts = [
-    {
-      'email': 'spam@promotions-feed.com',
-      'blockedAt': '2026-02-10T14:30:00Z',
-    },
+    {'email': 'spam@promotions-feed.com', 'blockedAt': '2026-02-10T14:30:00Z'},
   ];
 
   static final List<Map<String, dynamic>> _sessions = [
@@ -81,7 +78,8 @@ class ApiClient {
     {
       'id': 'sig_1',
       'name': 'Default Business Signature',
-      'content': 'Warm Regards,\nRavi Kumar C\nExecutive Director | Cliks Business',
+      'content':
+          'Warm Regards,\nRavi Kumar C\nExecutive Director | Cliks Business',
       'isDefault': true,
     },
   ];
@@ -89,20 +87,26 @@ class ApiClient {
   static final Map<String, _BusinessPaymentStore> _paymentStores = {};
 
   static Future<_BusinessPaymentStore> _getPaymentStore() async {
-    final email = (await TokenService.getUserEmail() ?? 'default').trim().toLowerCase();
-    return _paymentStores.putIfAbsent(email, () => _BusinessPaymentStore.createDefault(email));
+    final email = (await TokenService.getUserEmail() ?? 'default')
+        .trim()
+        .toLowerCase();
+    return _paymentStores.putIfAbsent(
+      email,
+      () => _BusinessPaymentStore.createDefault(email),
+    );
   }
-
 
   /// Resolves the base URL, checking local backend port 8080 first if active,
   /// otherwise using the production BNX API.
   static Future<String> _resolveBaseUrl() async {
-    if (_activeBaseUrl != _defaultRemoteBase && _activeBaseUrl != 'http://localhost:8080') {
+    if (_activeBaseUrl != _defaultRemoteBase &&
+        _activeBaseUrl != 'http://localhost:8080') {
       return _activeBaseUrl;
     }
 
     final now = DateTime.now();
-    if (_lastLocalCheck == null || now.difference(_lastLocalCheck!).inSeconds > 30) {
+    if (_lastLocalCheck == null ||
+        now.difference(_lastLocalCheck!).inSeconds > 30) {
       _lastLocalCheck = now;
       try {
         final r = await http
@@ -120,9 +124,107 @@ class ApiClient {
     return _activeBaseUrl;
   }
 
+  static const String paymentsBaseUrl = 'https://cliks.beta-softnet.com/api';
+  static final Map<String, String> _cachedCliksTokens = {};
+
+  /// Returns true if the path belongs to the Cliks Payments backend.
+  static bool _isPaymentsPath(String path) {
+    return path.contains('/planned-payments');
+  }
+
+  /// Exchanges active account's BNX token for Cliks Business JWT token via SSO.
+  static Future<String?> _getCliksAuthToken([String? email]) async {
+    final activeEmail = (email != null && email.trim().isNotEmpty)
+        ? email.trim().toLowerCase()
+        : (await TokenService.getUserEmail() ?? '').trim().toLowerCase();
+    if (activeEmail.isEmpty) return null;
+
+    if (_cachedCliksTokens.containsKey(activeEmail) &&
+        _cachedCliksTokens[activeEmail]!.isNotEmpty) {
+      return _cachedCliksTokens[activeEmail];
+    }
+    final storedToken = await TokenService.getCliksAccessToken(activeEmail);
+    if (storedToken != null && storedToken.isNotEmpty) {
+      _cachedCliksTokens[activeEmail] = storedToken;
+      return storedToken;
+    }
+    final bnxToken = await TokenService.getTokenForAccount(activeEmail);
+    if (bnxToken == null || bnxToken.isEmpty) return null;
+
+    final jwtEmail = TokenService.getEmailFromJwt(bnxToken);
+    if (jwtEmail != null && jwtEmail.isNotEmpty && jwtEmail != activeEmail) {
+      return null;
+    }
+    try {
+      final res = await http
+          .post(
+            Uri.parse('https://cliks.beta-softnet.com/api/v1/auth/sso'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: json.encode({'bnxToken': bnxToken}),
+          )
+          .timeout(const Duration(seconds: 10));
+      if (res.statusCode == 200) {
+        final body = json.decode(res.body);
+        final token = body['data']?['accessToken']?.toString();
+        if (token != null && token.isNotEmpty) {
+          _cachedCliksTokens[activeEmail] = token;
+          await TokenService.saveCliksAccessToken(token, activeEmail);
+          return token;
+        }
+      } else {
+        print(
+          '[CLIKS SSO ERROR] SSO failed for $activeEmail (${res.statusCode}): ${res.body}',
+        );
+      }
+    } catch (e) {
+      print('[CLIKS SSO ERROR] $e');
+    }
+    return null;
+  }
+
+  /// Clears the in-memory Cliks SSO token cache.
+  static void clearCliksToken([String? email]) {
+    if (email != null && email.isNotEmpty) {
+      _cachedCliksTokens.remove(email.trim().toLowerCase());
+    } else {
+      _cachedCliksTokens.clear();
+    }
+  }
+
+  /// Explicitly clears persisted Cliks access tokens when logging out or on 401.
+  static void invalidateCliksToken([String? email]) {
+    clearCliksToken(email);
+    TokenService.clearCliksAccessToken(email);
+  }
+
+  /// Resolves the full URI for any request path.
+  static Future<Uri> _resolveUri(
+    String path, [
+    Map<String, String>? queryParams,
+  ]) async {
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return Uri.parse(path).replace(queryParameters: queryParams);
+    }
+    if (_isPaymentsPath(path)) {
+      final subPath = path.startsWith('/api/')
+          ? path.substring(4)
+          : (path.startsWith('/') ? path : '/$path');
+      final targetPath = subPath.startsWith('/v1/') ? subPath : '/v1$subPath';
+      final fullUrl = '$paymentsBaseUrl$targetPath';
+      return Uri.parse(fullUrl).replace(queryParameters: queryParams);
+    }
+    final base = await _resolveBaseUrl();
+    return Uri.parse('$base$path').replace(queryParameters: queryParams);
+  }
+
   static Future<Map<String, String>> _buildHeaders({
+    String? path,
     bool auth = true,
     String? tempToken,
+    String? email,
   }) async {
     final headers = <String, String>{
       'Content-Type': 'application/json',
@@ -131,7 +233,19 @@ class ApiClient {
     if (tempToken != null && tempToken.isNotEmpty) {
       headers['Authorization'] = 'Bearer $tempToken';
     } else if (auth) {
-      final token = await TokenService.getAccessToken();
+      if (path != null && _isPaymentsPath(path)) {
+        final cliksToken = await _getCliksAuthToken(email);
+        if (cliksToken != null && cliksToken.isNotEmpty) {
+          headers['Authorization'] = 'Bearer $cliksToken';
+        } else {
+          final generalToken = await TokenService.getTokenForAccount(email ?? '');
+          if (generalToken != null && generalToken.isNotEmpty) {
+            headers['Authorization'] = 'Bearer $generalToken';
+          }
+        }
+        return headers;
+      }
+      final token = await TokenService.getTokenForAccount(email ?? '');
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
@@ -154,7 +268,8 @@ class ApiClient {
 
   static ApiException _toException(http.Response r) {
     final body = _parseBody(r);
-    final msg = body['message']?.toString() ??
+    final msg =
+        body['message']?.toString() ??
         body['error']?.toString() ??
         (body['data'] is Map ? body['data']['message']?.toString() : null) ??
         'Request failed (${r.statusCode})';
@@ -200,6 +315,9 @@ class ApiClient {
   }
 
   static bool _shouldFallback(String path, http.Response r) {
+    if (_isPaymentsPath(path)) {
+      return false;
+    }
     if (r.statusCode == 404 || r.statusCode == 405 || r.statusCode == 501) {
       return true;
     }
@@ -227,14 +345,23 @@ class ApiClient {
     Map<String, String>? queryParams,
     bool auth = true,
     String? tempToken,
+    String? email,
   }) async {
-    final base = await _resolveBaseUrl();
-    final uri = path.startsWith('http')
-        ? Uri.parse(path).replace(queryParameters: queryParams)
-        : Uri.parse('$base$path').replace(queryParameters: queryParams);
-
-    final headers = await _buildHeaders(auth: auth, tempToken: tempToken);
+    final uri = await _resolveUri(path, queryParams);
+    final headers = await _buildHeaders(
+      path: path,
+      auth: auth,
+      tempToken: tempToken,
+      email: email,
+    );
     print('[API REQUEST] GET $uri');
+
+    if (_isPaymentsPath(path) && !headers.containsKey('Authorization')) {
+      print(
+        '[CLIKS PAYMENTS] No valid Cliks token for account: $email - returning empty dataset',
+      );
+      return {'success': true, 'data': [], 'message': 'No planned payments'};
+    }
 
     http.Response r;
     try {
@@ -249,12 +376,27 @@ class ApiClient {
     }
 
     if (r.statusCode == 401 && auth && tempToken == null) {
-      final refreshed = await _tryRefresh();
-      if (refreshed) {
-        final retryHeaders = await _buildHeaders(auth: true);
-        try {
-          r = await http.get(uri, headers: retryHeaders).timeout(_timeout);
-        } catch (_) {}
+      if (_isPaymentsPath(path)) {
+        clearCliksToken(email);
+        final refreshedToken = await _getCliksAuthToken(email);
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          final retryHeaders = await _buildHeaders(
+            path: path,
+            auth: true,
+            email: email,
+          );
+          try {
+            r = await http.get(uri, headers: retryHeaders).timeout(_timeout);
+          } catch (_) {}
+        }
+      } else {
+        final refreshed = await _tryRefresh();
+        if (refreshed) {
+          final retryHeaders = await _buildHeaders(auth: true);
+          try {
+            r = await http.get(uri, headers: retryHeaders).timeout(_timeout);
+          } catch (_) {}
+        }
       }
     }
 
@@ -279,13 +421,15 @@ class ApiClient {
     Map<String, String>? queryParams,
     bool auth = true,
     String? tempToken,
+    String? email,
   }) async {
-    final base = await _resolveBaseUrl();
-    final uri = path.startsWith('http')
-        ? Uri.parse(path).replace(queryParameters: queryParams)
-        : Uri.parse('$base$path').replace(queryParameters: queryParams);
-
-    final headers = await _buildHeaders(auth: auth, tempToken: tempToken);
+    final uri = await _resolveUri(path, queryParams);
+    final headers = await _buildHeaders(
+      path: path,
+      auth: auth,
+      tempToken: tempToken,
+      email: email,
+    );
     final encodedBody = body != null ? json.encode(body) : null;
     print('[API REQUEST] POST $uri | Body: $encodedBody');
 
@@ -294,7 +438,9 @@ class ApiClient {
       r = await http
           .post(uri, headers: headers, body: encodedBody)
           .timeout(_timeout);
-      print('[API RESPONSE] POST $uri | Status: ${r.statusCode} | Body: ${r.body}');
+      print(
+        '[API RESPONSE] POST $uri | Status: ${r.statusCode} | Body: ${r.body}',
+      );
     } on SocketException catch (_) {
       return await _postMockResponse(path, body, queryParams);
     } on TimeoutException catch (_) {
@@ -304,12 +450,31 @@ class ApiClient {
     }
 
     if (r.statusCode == 401 && auth && tempToken == null) {
-      final refreshed = await _tryRefresh();
-      if (refreshed) {
-        final retryHeaders = await _buildHeaders(auth: true);
-        try {
-          r = await http.post(uri, headers: retryHeaders, body: encodedBody).timeout(_timeout);
-        } catch (_) {}
+      if (_isPaymentsPath(path)) {
+        clearCliksToken(email);
+        final refreshedToken = await _getCliksAuthToken(email);
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          final retryHeaders = await _buildHeaders(
+            path: path,
+            auth: true,
+            email: email,
+          );
+          try {
+            r = await http
+                .post(uri, headers: retryHeaders, body: encodedBody)
+                .timeout(_timeout);
+          } catch (_) {}
+        }
+      } else {
+        final refreshed = await _tryRefresh();
+        if (refreshed) {
+          final retryHeaders = await _buildHeaders(auth: true);
+          try {
+            r = await http
+                .post(uri, headers: retryHeaders, body: encodedBody)
+                .timeout(_timeout);
+          } catch (_) {}
+        }
       }
     }
 
@@ -333,13 +498,15 @@ class ApiClient {
     dynamic body,
     bool auth = true,
     String? tempToken,
+    String? email,
   }) async {
-    final base = await _resolveBaseUrl();
-    final uri = path.startsWith('http')
-        ? Uri.parse(path)
-        : Uri.parse('$base$path');
-
-    final headers = await _buildHeaders(auth: auth, tempToken: tempToken);
+    final uri = await _resolveUri(path);
+    final headers = await _buildHeaders(
+      path: path,
+      auth: auth,
+      tempToken: tempToken,
+      email: email,
+    );
     final encodedBody = body != null ? json.encode(body) : null;
     print('[API REQUEST] PUT $uri');
 
@@ -362,7 +529,9 @@ class ApiClient {
       if (refreshed) {
         final retryHeaders = await _buildHeaders(auth: true);
         try {
-          r = await http.put(uri, headers: retryHeaders, body: encodedBody).timeout(_timeout);
+          r = await http
+              .put(uri, headers: retryHeaders, body: encodedBody)
+              .timeout(_timeout);
         } catch (_) {}
       }
     }
@@ -387,13 +556,15 @@ class ApiClient {
     dynamic body,
     bool auth = true,
     String? tempToken,
+    String? email,
   }) async {
-    final base = await _resolveBaseUrl();
-    final uri = path.startsWith('http')
-        ? Uri.parse(path)
-        : Uri.parse('$base$path');
-
-    final headers = await _buildHeaders(auth: auth, tempToken: tempToken);
+    final uri = await _resolveUri(path);
+    final headers = await _buildHeaders(
+      path: path,
+      auth: auth,
+      tempToken: tempToken,
+      email: email,
+    );
     final encodedBody = body != null ? json.encode(body) : null;
     print('[API REQUEST] PATCH $uri');
 
@@ -412,12 +583,31 @@ class ApiClient {
     }
 
     if (r.statusCode == 401 && auth && tempToken == null) {
-      final refreshed = await _tryRefresh();
-      if (refreshed) {
-        final retryHeaders = await _buildHeaders(auth: true);
-        try {
-          r = await http.patch(uri, headers: retryHeaders, body: encodedBody).timeout(_timeout);
-        } catch (_) {}
+      if (_isPaymentsPath(path)) {
+        clearCliksToken(email);
+        final refreshedToken = await _getCliksAuthToken(email);
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          final retryHeaders = await _buildHeaders(
+            path: path,
+            auth: true,
+            email: email,
+          );
+          try {
+            r = await http
+                .patch(uri, headers: retryHeaders, body: encodedBody)
+                .timeout(_timeout);
+          } catch (_) {}
+        }
+      } else {
+        final refreshed = await _tryRefresh();
+        if (refreshed) {
+          final retryHeaders = await _buildHeaders(auth: true);
+          try {
+            r = await http
+                .patch(uri, headers: retryHeaders, body: encodedBody)
+                .timeout(_timeout);
+          } catch (_) {}
+        }
       }
     }
 
@@ -440,13 +630,10 @@ class ApiClient {
     String path, {
     Map<String, String>? queryParams,
     bool auth = true,
+    String? email,
   }) async {
-    final base = await _resolveBaseUrl();
-    final uri = path.startsWith('http')
-        ? Uri.parse(path).replace(queryParameters: queryParams)
-        : Uri.parse('$base$path').replace(queryParameters: queryParams);
-
-    final headers = await _buildHeaders(auth: auth);
+    final uri = await _resolveUri(path, queryParams);
+    final headers = await _buildHeaders(path: path, auth: auth, email: email);
     print('[API REQUEST] DELETE $uri');
 
     http.Response r;
@@ -462,12 +649,27 @@ class ApiClient {
     }
 
     if (r.statusCode == 401 && auth) {
-      final refreshed = await _tryRefresh();
-      if (refreshed) {
-        final retryHeaders = await _buildHeaders(auth: true);
-        try {
-          r = await http.delete(uri, headers: retryHeaders).timeout(_timeout);
-        } catch (_) {}
+      if (_isPaymentsPath(path)) {
+        clearCliksToken(email);
+        final refreshedToken = await _getCliksAuthToken(email);
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          final retryHeaders = await _buildHeaders(
+            path: path,
+            auth: true,
+            email: email,
+          );
+          try {
+            r = await http.delete(uri, headers: retryHeaders).timeout(_timeout);
+          } catch (_) {}
+        }
+      } else {
+        final refreshed = await _tryRefresh();
+        if (refreshed) {
+          final retryHeaders = await _buildHeaders(auth: true);
+          try {
+            r = await http.delete(uri, headers: retryHeaders).timeout(_timeout);
+          } catch (_) {}
+        }
       }
     }
 
@@ -500,7 +702,8 @@ class ApiClient {
       final request = http.MultipartRequest('POST', uri);
       request.headers.addAll(headers);
 
-      final resolvedFilename = filename ??
+      final resolvedFilename =
+          filename ??
           (filePath != null && filePath.contains('.')
               ? filePath.split(Platform.pathSeparator).last
               : 'avatar.png');
@@ -508,36 +711,47 @@ class ApiClient {
       final mediaType = MediaType('image', ext == 'png' ? 'png' : 'jpeg');
 
       if (bytes != null && bytes.isNotEmpty) {
-        request.files.add(http.MultipartFile.fromBytes(
-          'file',
-          bytes,
-          filename: resolvedFilename,
-          contentType: mediaType,
-        ));
-      } else if (filePath != null && filePath.isNotEmpty) {
-        if (filePath.startsWith('data:image/') || filePath.contains(';base64,')) {
-          final commaIndex = filePath.indexOf(',');
-          final base64Str = commaIndex != -1 ? filePath.substring(commaIndex + 1) : filePath;
-          request.files.add(http.MultipartFile.fromBytes(
+        request.files.add(
+          http.MultipartFile.fromBytes(
             'file',
-            base64Decode(base64Str.trim()),
+            bytes,
             filename: resolvedFilename,
             contentType: mediaType,
-          ));
+          ),
+        );
+      } else if (filePath != null && filePath.isNotEmpty) {
+        if (filePath.startsWith('data:image/') ||
+            filePath.contains(';base64,')) {
+          final commaIndex = filePath.indexOf(',');
+          final base64Str = commaIndex != -1
+              ? filePath.substring(commaIndex + 1)
+              : filePath;
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              'file',
+              base64Decode(base64Str.trim()),
+              filename: resolvedFilename,
+              contentType: mediaType,
+            ),
+          );
         } else {
           final file = File(filePath);
           if (file.existsSync()) {
-            request.files.add(await http.MultipartFile.fromPath(
-              'file',
-              filePath,
-              filename: resolvedFilename,
-              contentType: mediaType,
-            ));
+            request.files.add(
+              await http.MultipartFile.fromPath(
+                'file',
+                filePath,
+                filename: resolvedFilename,
+                contentType: mediaType,
+              ),
+            );
           }
         }
       }
 
-      final streamedResponse = await request.send().timeout(const Duration(seconds: 30));
+      final streamedResponse = await request.send().timeout(
+        const Duration(seconds: 30),
+      );
       final response = await http.Response.fromStream(streamedResponse);
       if (response.statusCode >= 200 && response.statusCode < 300) {
         return _parseBody(response);
@@ -552,10 +766,7 @@ class ApiClient {
       await TokenService.saveUserAvatar(email, base64Str);
       return {
         'success': true,
-        'data': {
-          'avatarUrl': base64Str,
-          'profilePictureUrl': base64Str,
-        },
+        'data': {'avatarUrl': base64Str, 'profilePictureUrl': base64Str},
       };
     }
     return {'success': true};
@@ -563,12 +774,16 @@ class ApiClient {
 
   // ── Offline / Fallback Mock Stores ─────────────────────────────────────────
 
-  static Future<dynamic> _getMockResponse(String path, Map<String, String>? queryParams) async {
+  static Future<dynamic> _getMockResponse(
+    String path,
+    Map<String, String>? queryParams,
+  ) async {
     final paramEmail = queryParams?['email']?.toString().trim().toLowerCase();
     final activeEmail = (paramEmail != null && paramEmail.isNotEmpty)
         ? paramEmail
         : (await TokenService.getUserEmail() ?? '');
-    final activeName = await TokenService.getUserName() ??
+    final activeName =
+        await TokenService.getUserName() ??
         (activeEmail.isNotEmpty ? activeEmail.split('@').first : 'User');
     final activeSettings = activeEmail.isNotEmpty
         ? await TokenService.getUserSettings(activeEmail) ?? {}
@@ -579,14 +794,16 @@ class ApiClient {
 
     if (path.contains('/emails/check-handle')) {
       final handle = queryParams?['handle'] ?? 'user';
-      final isAvailable = !handle.contains('admin') && !handle.contains('support');
+      final isAvailable =
+          !handle.contains('admin') && !handle.contains('support');
       return {
         'success': true,
         'data': {'available': isAvailable, 'handle': handle},
       };
     }
 
-    if (path.contains('/username-suggestions') || path.contains('/emails/suggestions')) {
+    if (path.contains('/username-suggestions') ||
+        path.contains('/emails/suggestions')) {
       final first = (queryParams?['firstName'] ?? 'user').toLowerCase();
       final last = (queryParams?['lastName'] ?? 'cliks').toLowerCase();
       final base7 = (first + last).padRight(7, 'x').substring(0, 7);
@@ -603,14 +820,12 @@ class ApiClient {
     if (path.contains('/business/status')) {
       return {
         'success': true,
-        'data': {
-          'isCompleted': false,
-          'shouldShowOnboarding': true,
-        },
+        'data': {'isCompleted': false, 'shouldShowOnboarding': true},
       };
     }
 
-    if (path.contains('/business/gstin-lookup') || path.contains('/auth/fetch-gstins')) {
+    if (path.contains('/business/gstin-lookup') ||
+        path.contains('/auth/fetch-gstins')) {
       final pan = queryParams?['pan'] ?? 'AAACB1234K';
       return {
         'success': true,
@@ -646,12 +861,19 @@ class ApiClient {
     if (path.contains('/users/me') ||
         path.contains('/users/settings') ||
         path.contains('/users/profile')) {
-      final firstName = activeSettings['firstName'] ??
+      final firstName =
+          activeSettings['firstName'] ??
           (activeName.contains(' ') ? activeName.split(' ').first : activeName);
-      final lastName = activeSettings['lastName'] ??
-          (activeName.contains(' ') ? activeName.split(' ').sublist(1).join(' ') : '');
-      final username = activeSettings['username'] ??
-          (activeEmail.contains('@') ? activeEmail.split('@').first : activeEmail);
+      final lastName =
+          activeSettings['lastName'] ??
+          (activeName.contains(' ')
+              ? activeName.split(' ').sublist(1).join(' ')
+              : '');
+      final username =
+          activeSettings['username'] ??
+          (activeEmail.contains('@')
+              ? activeEmail.split('@').first
+              : activeEmail);
 
       return {
         'success': true,
@@ -671,9 +893,11 @@ class ApiClient {
           'workAddress': activeSettings['workAddress'],
           'occupation': activeSettings['occupation'],
           'bio': activeSettings['bio'],
-          'profilePictureUrl': activeAvatar ?? activeSettings['profilePictureUrl'],
+          'profilePictureUrl':
+              activeAvatar ?? activeSettings['profilePictureUrl'],
           'avatarUrl': activeAvatar ?? activeSettings['avatarUrl'],
-          'phoneNumber': activeSettings['phoneNumber'] ?? activeSettings['phone'] ?? '',
+          'phoneNumber':
+              activeSettings['phoneNumber'] ?? activeSettings['phone'] ?? '',
           'recoveryEmail': activeSettings['recoveryEmail'] ?? '',
           'backupPhone': activeSettings['backupPhone'] ?? '',
           'twoFactorEnabled': activeSettings['twoFactorEnabled'] ?? false,
@@ -736,7 +960,11 @@ class ApiClient {
     }
 
     if (path.contains('/settings/language')) {
-      return {'success': true, 'data': {'language': 'en'}, 'language': 'en'};
+      return {
+        'success': true,
+        'data': {'language': 'en'},
+        'language': 'en',
+      };
     }
 
     if (path.contains('/settings/composing')) {
@@ -779,7 +1007,8 @@ class ApiClient {
     if (path.contains('/payments/outstanding')) {
       double totalReceivables = 0.0;
       for (final r in store.receivables) {
-        totalReceivables += ((r['pending_amount'] ?? r['amount'] ?? 0) as num).toDouble();
+        totalReceivables += ((r['pending_amount'] ?? r['amount'] ?? 0) as num)
+            .toDouble();
       }
       double totalPayables = 0.0;
       for (final p in store.payables) {
@@ -821,7 +1050,9 @@ class ApiClient {
     if (path.contains('/billing/') && path.contains('/payments')) {
       final segments = Uri.parse(path).pathSegments;
       final idx = segments.indexOf('billing');
-      final invId = (idx != -1 && segments.length > idx + 1) ? segments[idx + 1] : '';
+      final invId = (idx != -1 && segments.length > idx + 1)
+          ? segments[idx + 1]
+          : '';
       return {
         'success': true,
         'message': 'Invoice payments fetched successfully',
@@ -832,7 +1063,9 @@ class ApiClient {
     if (path.contains('/purchases/') && path.contains('/payments')) {
       final segments = Uri.parse(path).pathSegments;
       final idx = segments.indexOf('purchases');
-      final purId = (idx != -1 && segments.length > idx + 1) ? segments[idx + 1] : '';
+      final purId = (idx != -1 && segments.length > idx + 1)
+          ? segments[idx + 1]
+          : '';
       return {
         'success': true,
         'message': 'Purchase payment fetched successfully',
@@ -846,11 +1079,7 @@ class ApiClient {
         (p) => p['id'].toString() == id.toString(),
         orElse: () => {},
       );
-      return {
-        'status': 'success',
-        'success': true,
-        'data': item,
-      };
+      return {'status': 'success', 'success': true, 'data': item};
     }
 
     if (path.contains('/planned-payments')) {
@@ -868,24 +1097,43 @@ class ApiClient {
       }
       final category = queryParams?['category'];
       if (category != null && category.isNotEmpty) {
-        list = list.where((p) => (p['category'] ?? '').toString().toLowerCase() == category.toLowerCase()).toList();
+        list = list
+            .where(
+              (p) =>
+                  (p['category'] ?? '').toString().toLowerCase() ==
+                  category.toLowerCase(),
+            )
+            .toList();
       }
       final accountId = queryParams?['account_id'];
       if (accountId != null && accountId.isNotEmpty) {
-        list = list.where((p) => (p['account_id'] ?? '').toString() == accountId).toList();
+        list = list
+            .where((p) => (p['account_id'] ?? '').toString() == accountId)
+            .toList();
       }
       final type = queryParams?['type'];
       if (type != null && type.isNotEmpty) {
-        list = list.where((p) => (p['type'] ?? '').toString().toLowerCase() == type.toLowerCase()).toList();
+        list = list
+            .where(
+              (p) =>
+                  (p['type'] ?? '').toString().toLowerCase() ==
+                  type.toLowerCase(),
+            )
+            .toList();
       }
       final search = queryParams?['search'];
       if (search != null && search.isNotEmpty) {
         final q = search.toLowerCase();
-        list = list.where((p) =>
-          (p['name'] ?? '').toString().toLowerCase().contains(q) ||
-          (p['description'] ?? '').toString().toLowerCase().contains(q) ||
-          (p['notes'] ?? '').toString().toLowerCase().contains(q)
-        ).toList();
+        list = list
+            .where(
+              (p) =>
+                  (p['name'] ?? '').toString().toLowerCase().contains(q) ||
+                  (p['description'] ?? '').toString().toLowerCase().contains(
+                    q,
+                  ) ||
+                  (p['notes'] ?? '').toString().toLowerCase().contains(q),
+            )
+            .toList();
       }
       return {
         'status': 'success',
@@ -898,7 +1146,11 @@ class ApiClient {
     return {'success': true, 'data': {}};
   }
 
-  static Future<dynamic> _postMockResponse(String path, dynamic body, Map<String, String>? queryParams) async {
+  static Future<dynamic> _postMockResponse(
+    String path,
+    dynamic body,
+    Map<String, String>? queryParams,
+  ) async {
     if (path.contains('/auth/login') && body is Map<String, dynamic>) {
       final email = body['email']?.toString() ?? 'user@bnxmail.com';
       final username = email.contains('@') ? email.split('@').first : email;
@@ -910,8 +1162,10 @@ class ApiClient {
           'username': username,
           'email': email.contains('@') ? email : '$email@bnxmail.com',
           'accountType': 'BUSINESS',
-          'accessToken': 'offline_token_${DateTime.now().millisecondsSinceEpoch}',
-          'refreshToken': 'offline_refresh_${DateTime.now().millisecondsSinceEpoch}',
+          'accessToken':
+              'offline_token_${DateTime.now().millisecondsSinceEpoch}',
+          'refreshToken':
+              'offline_refresh_${DateTime.now().millisecondsSinceEpoch}',
           'user': {
             'userId': 100,
             'username': username,
@@ -966,7 +1220,8 @@ class ApiClient {
       return {'success': true, 'data': newSub};
     }
 
-    if (path.contains('/send-mobile-otp') || path.contains('/send-parent-otp')) {
+    if (path.contains('/send-mobile-otp') ||
+        path.contains('/send-parent-otp')) {
       return {
         'success': true,
         'message': 'OTP sent successfully',
@@ -974,7 +1229,8 @@ class ApiClient {
       };
     }
 
-    if (path.contains('/verify-mobile-otp') || path.contains('/verify-parent-otp')) {
+    if (path.contains('/verify-mobile-otp') ||
+        path.contains('/verify-parent-otp')) {
       return {
         'success': true,
         'message': 'OTP verified successfully',
@@ -996,7 +1252,8 @@ class ApiClient {
         'success': true,
         'data': {
           'secret': 'JBSWY3DPEHPK3PXP',
-          'otpauthUrl': 'otpauth://totp/CliksBusiness:$email?secret=JBSWY3DPEHPK3PXP&issuer=CliksBusiness',
+          'otpauthUrl':
+              'otpauth://totp/CliksBusiness:$email?secret=JBSWY3DPEHPK3PXP&issuer=CliksBusiness',
           'qrCode': '',
         },
       };
@@ -1008,13 +1265,15 @@ class ApiClient {
 
     final store = await _getPaymentStore();
 
-    if ((path.contains('/payments/receive') || path.contains('/payments/customer-receipts')) &&
+    if ((path.contains('/payments/receive') ||
+            path.contains('/payments/customer-receipts')) &&
         body is Map<String, dynamic>) {
       final amount = (body['amount'] as num?)?.toDouble() ?? 0.0;
       final accId = body['account_id'];
       final newRec = {
         'id': store.receivables.length + 1,
-        'receipt_id': 'REC-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+        'receipt_id':
+            'REC-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
         'customer_name': body['customer_name'] ?? 'Customer',
         'party_name': body['customer_name'] ?? 'Customer',
         'invoice_id': body['invoice_id'],
@@ -1029,9 +1288,12 @@ class ApiClient {
       };
       store.receivables.insert(0, newRec);
 
-      final accIdx = store.accounts.indexWhere((a) => a['id'].toString() == accId.toString());
+      final accIdx = store.accounts.indexWhere(
+        (a) => a['id'].toString() == accId.toString(),
+      );
       if (accIdx != -1) {
-        final cur = (store.accounts[accIdx]['current_balance'] as num).toDouble();
+        final cur = (store.accounts[accIdx]['current_balance'] as num)
+            .toDouble();
         store.accounts[accIdx]['current_balance'] = cur + amount;
       }
 
@@ -1047,7 +1309,8 @@ class ApiClient {
       final accId = body['account_id'];
       final newPay = {
         'id': store.payables.length + 1,
-        'disbursement_id': 'DISB-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
+        'disbursement_id':
+            'DISB-${DateTime.now().year}-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}',
         'supplier_name': body['supplier_name'] ?? 'Supplier',
         'party_name': body['supplier_name'] ?? 'Supplier',
         'purchase_id': body['purchase_id'],
@@ -1061,10 +1324,16 @@ class ApiClient {
       };
       store.payables.insert(0, newPay);
 
-      final accIdx = store.accounts.indexWhere((a) => a['id'].toString() == accId.toString());
+      final accIdx = store.accounts.indexWhere(
+        (a) => a['id'].toString() == accId.toString(),
+      );
       if (accIdx != -1) {
-        final cur = (store.accounts[accIdx]['current_balance'] as num).toDouble();
-        store.accounts[accIdx]['current_balance'] = (cur - amount).clamp(0.0, double.infinity);
+        final cur = (store.accounts[accIdx]['current_balance'] as num)
+            .toDouble();
+        store.accounts[accIdx]['current_balance'] = (cur - amount).clamp(
+          0.0,
+          double.infinity,
+        );
       }
 
       return {
@@ -1079,15 +1348,24 @@ class ApiClient {
       final fromId = body['from_acc_id'];
       final toId = body['to_acc_id'];
 
-      final fromIdx = store.accounts.indexWhere((a) => a['id'].toString() == fromId.toString());
-      final toIdx = store.accounts.indexWhere((a) => a['id'].toString() == toId.toString());
+      final fromIdx = store.accounts.indexWhere(
+        (a) => a['id'].toString() == fromId.toString(),
+      );
+      final toIdx = store.accounts.indexWhere(
+        (a) => a['id'].toString() == toId.toString(),
+      );
 
       if (fromIdx != -1) {
-        final cur = (store.accounts[fromIdx]['current_balance'] as num).toDouble();
-        store.accounts[fromIdx]['current_balance'] = (cur - amount).clamp(0.0, double.infinity);
+        final cur = (store.accounts[fromIdx]['current_balance'] as num)
+            .toDouble();
+        store.accounts[fromIdx]['current_balance'] = (cur - amount).clamp(
+          0.0,
+          double.infinity,
+        );
       }
       if (toIdx != -1) {
-        final cur = (store.accounts[toIdx]['current_balance'] as num).toDouble();
+        final cur = (store.accounts[toIdx]['current_balance'] as num)
+            .toDouble();
         store.accounts[toIdx]['current_balance'] = cur + amount;
       }
 
@@ -1095,16 +1373,23 @@ class ApiClient {
         'success': true,
         'message': 'Internal fund transfer settled successfully',
         'data': {
-          'from_account': fromIdx != -1 ? store.accounts[fromIdx]['bank_account_name'] : 'Source Account',
-          'to_account': toIdx != -1 ? store.accounts[toIdx]['bank_account_name'] : 'Destination Account',
+          'from_account': fromIdx != -1
+              ? store.accounts[fromIdx]['bank_account_name']
+              : 'Source Account',
+          'to_account': toIdx != -1
+              ? store.accounts[toIdx]['bank_account_name']
+              : 'Destination Account',
           'amount': amount,
         },
       };
     }
 
-    if (path.contains('/payments/create-order') && body is Map<String, dynamic>) {
+    if (path.contains('/payments/create-order') &&
+        body is Map<String, dynamic>) {
       final amount = (body['amount'] as num?)?.toDouble() ?? 0.0;
-      final orderId = body['orderId']?.toString() ?? 'ORDER_${DateTime.now().millisecondsSinceEpoch}';
+      final orderId =
+          body['orderId']?.toString() ??
+          'ORDER_${DateTime.now().millisecondsSinceEpoch}';
       return {
         'success': true,
         'message': 'Payment provider session established securely',
@@ -1114,7 +1399,8 @@ class ApiClient {
           'entity': 'order',
           'order_currency': body['currency'] ?? 'INR',
           'order_amount': amount,
-          'payment_session_id': 'session_live_${DateTime.now().millisecondsSinceEpoch}',
+          'payment_session_id':
+              'session_live_${DateTime.now().millisecondsSinceEpoch}',
           'order_status': 'ACTIVE',
           'mode': 'production',
           'cf_environment': 'production',
@@ -1125,7 +1411,8 @@ class ApiClient {
     if (path.contains('/bank-accounts') && body is Map<String, dynamic>) {
       final newAcc = {
         'id': store.accounts.length + 1,
-        'bank_account_name': body['bank_name'] ?? body['account_holder'] ?? 'Bank Account',
+        'bank_account_name':
+            body['bank_name'] ?? body['account_holder'] ?? 'Bank Account',
         'bank_name': body['bank_name'] ?? '',
         'account_holder': body['account_holder'] ?? '',
         'account_number': body['account_number'] ?? '',
@@ -1147,8 +1434,12 @@ class ApiClient {
         path.contains('/payments') &&
         body is Map<String, dynamic>) {
       final segments = Uri.parse(path).pathSegments;
-      final idx = segments.contains('billing') ? segments.indexOf('billing') : segments.indexOf('invoices');
-      final invId = (idx != -1 && segments.length > idx + 1) ? segments[idx + 1] : 'INV';
+      final idx = segments.contains('billing')
+          ? segments.indexOf('billing')
+          : segments.indexOf('invoices');
+      final invId = (idx != -1 && segments.length > idx + 1)
+          ? segments[idx + 1]
+          : 'INV';
       final amount = (body['amount'] as num?)?.toDouble() ?? 0.0;
       final invPayment = {
         'id': 'INV-PAY-${DateTime.now().millisecondsSinceEpoch}',
@@ -1160,7 +1451,9 @@ class ApiClient {
         'created_at': DateTime.now().toIso8601String(),
         'status': 'COMPLETED',
       };
-      store.invoicePayments.putIfAbsent(invId.toString(), () => []).add(invPayment);
+      store.invoicePayments
+          .putIfAbsent(invId.toString(), () => [])
+          .add(invPayment);
       return {
         'success': true,
         'message': 'Invoice payment recorded successfully',
@@ -1168,11 +1461,16 @@ class ApiClient {
       };
     }
 
-    if (path.contains('/purchases/') && path.contains('/payments') && body is Map<String, dynamic>) {
+    if (path.contains('/purchases/') &&
+        path.contains('/payments') &&
+        body is Map<String, dynamic>) {
       final segments = Uri.parse(path).pathSegments;
       final idx = segments.indexOf('purchases');
-      final purId = (idx != -1 && segments.length > idx + 1) ? segments[idx + 1] : 'PUR';
-      final amount = (body['paid_amount'] as num?)?.toDouble() ??
+      final purId = (idx != -1 && segments.length > idx + 1)
+          ? segments[idx + 1]
+          : 'PUR';
+      final amount =
+          (body['paid_amount'] as num?)?.toDouble() ??
           (body['amount'] as num?)?.toDouble() ??
           0.0;
       final purPayment = {
@@ -1202,7 +1500,9 @@ class ApiClient {
         'id': 'plan_${DateTime.now().millisecondsSinceEpoch}',
         'name': bodyMap['name'] ?? 'Scheduled Payment',
         'amount': (bodyMap['amount'] as num?)?.toDouble() ?? 0.0,
-        'due_date': bodyMap['due_date'] ?? DateTime.now().toIso8601String().split('T').first,
+        'due_date':
+            bodyMap['due_date'] ??
+            DateTime.now().toIso8601String().split('T').first,
         'account_id': bodyMap['account_id'] ?? 1,
         'frequency': bodyMap['frequency'] ?? 'Monthly',
         'category': bodyMap['category'] ?? 'Utilities',
@@ -1234,18 +1534,34 @@ class ApiClient {
     if (path.contains('/planned-payments/') && path.endsWith('/mark-paid')) {
       final segments = Uri.parse(path).pathSegments;
       final idx = segments.indexOf('planned-payments');
-      final id = (idx != -1 && segments.length > idx + 1) ? segments[idx + 1] : '';
-      final pIdx = store.plannedPayments.indexWhere((p) => p['id'].toString() == id.toString());
+      final id = (idx != -1 && segments.length > idx + 1)
+          ? segments[idx + 1]
+          : '';
+      final pIdx = store.plannedPayments.indexWhere(
+        (p) => p['id'].toString() == id.toString(),
+      );
       if (pIdx != -1) {
         store.plannedPayments[pIdx]['status'] = 'COMPLETED';
-        final freq = (store.plannedPayments[pIdx]['frequency'] ?? '').toString().toLowerCase();
+        final freq = (store.plannedPayments[pIdx]['frequency'] ?? '')
+            .toString()
+            .toLowerCase();
         String? nextDue;
-        if (freq.contains('month') || (store.plannedPayments[pIdx]['category'] ?? '').toString().toLowerCase().contains('rent')) {
-          final due = (store.plannedPayments[pIdx]['due_date'] ?? '').toString();
+        if (freq.contains('month') ||
+            (store.plannedPayments[pIdx]['category'] ?? '')
+                .toString()
+                .toLowerCase()
+                .contains('rent')) {
+          final due = (store.plannedPayments[pIdx]['due_date'] ?? '')
+              .toString();
           final parsed = DateTime.tryParse(due.split('T').first);
           if (parsed != null) {
-            final nextMonth = DateTime(parsed.year, parsed.month + 1, parsed.day);
-            nextDue = '${nextMonth.year}-${nextMonth.month.toString().padLeft(2, '0')}-${nextMonth.day.toString().padLeft(2, '0')}';
+            final nextMonth = DateTime(
+              parsed.year,
+              parsed.month + 1,
+              parsed.day,
+            );
+            nextDue =
+                '${nextMonth.year}-${nextMonth.month.toString().padLeft(2, '0')}-${nextMonth.day.toString().padLeft(2, '0')}';
             store.plannedPayments[pIdx]['next_due_date'] = nextDue;
           }
         }
@@ -1266,7 +1582,9 @@ class ApiClient {
 
     if (path.contains('/planned-payments/')) {
       final id = Uri.parse(path).pathSegments.last;
-      final pIdx = store.plannedPayments.indexWhere((p) => p['id'].toString() == id.toString());
+      final pIdx = store.plannedPayments.indexWhere(
+        (p) => p['id'].toString() == id.toString(),
+      );
       if (pIdx != -1 && body is Map) {
         store.plannedPayments[pIdx].addAll(Map<String, dynamic>.from(body));
         return {
@@ -1296,7 +1614,9 @@ class ApiClient {
 
     if (path.contains('/planned-payments/')) {
       final id = Uri.parse(path).pathSegments.last;
-      store.plannedPayments.removeWhere((p) => p['id'].toString() == id.toString());
+      store.plannedPayments.removeWhere(
+        (p) => p['id'].toString() == id.toString(),
+      );
       return {
         'status': 'success',
         'success': true,
@@ -1333,7 +1653,9 @@ class _BusinessPaymentStore {
   });
 
   static _BusinessPaymentStore createDefault(String email) {
-    final holder = email.isNotEmpty ? email.split('@').first : 'Primary Account Holder';
+    final holder = email.isNotEmpty
+        ? email.split('@').first
+        : 'Primary Account Holder';
     return _BusinessPaymentStore(
       accounts: [
         {
@@ -1373,7 +1695,9 @@ class _BusinessPaymentStore {
           'account_id': 1,
           'status': 'completed',
           'reconciliation_status': 'matched',
-          'created_at': DateTime.now().subtract(const Duration(hours: 3)).toIso8601String(),
+          'created_at': DateTime.now()
+              .subtract(const Duration(hours: 3))
+              .toIso8601String(),
         },
       ],
       payables: [
@@ -1392,7 +1716,9 @@ class _BusinessPaymentStore {
           'account_id': 1,
           'status': 'completed',
           'reconciliation_status': 'matched',
-          'created_at': DateTime.now().subtract(const Duration(hours: 6)).toIso8601String(),
+          'created_at': DateTime.now()
+              .subtract(const Duration(hours: 6))
+              .toIso8601String(),
         },
       ],
       overdueInvoices: [
@@ -1408,128 +1734,9 @@ class _BusinessPaymentStore {
           'status': 'Partially Paid',
         },
       ],
-      plannedPayments: [
-        {
-          'id': 'sch_1',
-          'name': 'Electricity / Internet Bill',
-          'amount': 67890.0,
-          'due_date': '2027-02-12',
-          'frequency': 'Monthly Recurring',
-          'category': 'Utilities',
-          'status': 'PENDING',
-          'type': 'SEND',
-          'description': 'High-speed fiber & datacenter power supply invoice',
-          'notes': 'High-speed fiber & datacenter power supply invoice',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_2',
-          'name': 'Electricity / Internet Bill',
-          'amount': 67890.0,
-          'due_date': '2027-01-12',
-          'frequency': 'Monthly Recurring',
-          'category': 'Utilities',
-          'status': 'PAID',
-          'type': 'SEND',
-          'description': 'High-speed fiber & datacenter power supply invoice',
-          'notes': 'High-speed fiber & datacenter power supply invoice',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_3',
-          'name': 'Electricity / Internet Bill',
-          'amount': 67890.0,
-          'due_date': '2026-12-12',
-          'frequency': 'Monthly Recurring',
-          'category': 'Utilities',
-          'status': 'PAID',
-          'type': 'SEND',
-          'description': 'High-speed fiber & datacenter power supply invoice',
-          'notes': 'High-speed fiber & datacenter power supply invoice',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_4',
-          'name': 'Electricity / Internet Bill',
-          'amount': 67890.0,
-          'due_date': '2026-11-12',
-          'frequency': 'Monthly Recurring',
-          'category': 'Utilities',
-          'status': 'PAID',
-          'type': 'SEND',
-          'description': 'High-speed fiber & datacenter power supply invoice',
-          'notes': 'High-speed fiber & datacenter power supply invoice',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_5',
-          'name': 'Office Space Rent',
-          'amount': 12000.0,
-          'due_date': '2026-12-01',
-          'frequency': 'Monthly Recurring',
-          'category': 'Rent (Monthly)',
-          'status': 'PENDING',
-          'type': 'SEND',
-          'description': 'Headquarters commercial lease rent',
-          'notes': 'Headquarters commercial lease rent',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_6',
-          'name': 'Warehouse Lease Maintenance',
-          'amount': 4000.0,
-          'due_date': '2026-12-05',
-          'frequency': 'Monthly Recurring',
-          'category': 'Rent (Monthly)',
-          'status': 'PENDING',
-          'type': 'SEND',
-          'description': 'Storage and logistics facility lease',
-          'notes': 'Storage and logistics facility lease',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_7',
-          'name': 'Client Monthly Retainer - Alpha Corp',
-          'amount': 4000.0,
-          'due_date': '2026-12-15',
-          'frequency': 'Monthly Recurring',
-          'category': 'Client Retainer',
-          'status': 'PENDING',
-          'type': 'RECEIVE',
-          'description': 'Strategic business advisory retainer',
-          'notes': 'Strategic business advisory retainer',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_8',
-          'name': 'Consulting Service Fee - Tech Hub',
-          'amount': 2000.0,
-          'due_date': '2026-12-20',
-          'frequency': 'One-Time',
-          'category': 'Client Retainer',
-          'status': 'PENDING',
-          'type': 'RECEIVE',
-          'description': 'POS architecture integration consulting invoice',
-          'notes': 'POS architecture integration consulting invoice',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-        {
-          'id': 'sch_9',
-          'name': 'Cloud Infrastructure Backup Server',
-          'amount': 0.0,
-          'due_date': '2026-12-28',
-          'frequency': 'One-Time',
-          'category': 'Utilities',
-          'status': 'PENDING',
-          'type': 'SEND',
-          'description': 'Annual failover server contingency retainer',
-          'notes': 'Annual failover server contingency retainer',
-          'created_at': DateTime.now().toIso8601String(),
-        },
-      ],
+      plannedPayments: [],
       invoicePayments: {},
       purchasePayments: {},
     );
   }
 }
-

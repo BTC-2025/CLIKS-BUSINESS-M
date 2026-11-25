@@ -256,7 +256,7 @@ class PaymentsRepository {
   }
 
   /// Fetches scheduled/planned payments with optional query filters.
-  /// Calls: `GET /api/v1/planned-payments`
+  /// Calls: `GET /v1/planned-payments` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments`)
   static Future<List<PlannedPayment>> getPlannedPayments({
     String? status,
     String? category,
@@ -267,6 +267,7 @@ class PaymentsRepository {
     int? limit,
     String? sort,
     String? order,
+    String? email,
   }) async {
     final queryParams = <String, String>{};
     if (status != null && status.isNotEmpty) queryParams['status'] = status;
@@ -280,46 +281,53 @@ class PaymentsRepository {
     if (order != null && order.isNotEmpty) queryParams['order'] = order;
 
     final res = await ApiClient.get(
-      '/api/v1/planned-payments',
+      '/v1/planned-payments',
       queryParams: queryParams.isNotEmpty ? queryParams : null,
+      email: email,
     );
-    if (res is Map<String, dynamic>) {
-      final data = res['data'] ?? res['plans'] ?? res['items'];
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      final data = map['data'] ?? map['plans'] ?? map['items'];
       if (data is List) {
         return data
-            .whereType<Map<String, dynamic>>()
-            .map((e) => PlannedPayment.fromJson(e))
+            .whereType<Map>()
+            .map((e) => PlannedPayment.fromJson(Map<String, dynamic>.from(e)))
             .toList();
       }
     } else if (res is List) {
       return res
-          .whereType<Map<String, dynamic>>()
-          .map((e) => PlannedPayment.fromJson(e))
+          .whereType<Map>()
+          .map((e) => PlannedPayment.fromJson(Map<String, dynamic>.from(e)))
           .toList();
     }
     return [];
   }
 
   /// Fetches a specific planned payment by ID.
-  /// Calls: `GET /api/v1/planned-payments/:id`
-  static Future<PlannedPayment?> getPlannedPaymentById(dynamic id) async {
-    final res = await ApiClient.get('/api/v1/planned-payments/$id');
-    if (res is Map) {
-      final map = Map<String, dynamic>.from(res);
-      final data = map['data'];
-      if (data is Map) {
-        return PlannedPayment.fromJson(Map<String, dynamic>.from(data));
+  /// Calls: GET /v1/planned-payments/:id
+  static Future<PlannedPayment?> getPlannedPaymentById(dynamic id, {String? email}) async {
+    try {
+      final res = await ApiClient.get('/v1/planned-payments/$id', email: email);
+      if (res is Map) {
+        final map = Map<String, dynamic>.from(res);
+        final data = map['data'];
+        if (data is Map) {
+          return PlannedPayment.fromJson(Map<String, dynamic>.from(data));
+        }
       }
+    } catch (_) {
+      return null;
     }
     return null;
   }
 
   /// Creates a planned/scheduled payment.
-  /// Calls: `POST /api/v1/planned-payments`
-  static Future<PlannedPayment> createPlannedPayment(CreatePlannedPaymentRequest req) async {
+  /// Calls: POST /v1/planned-payments
+  static Future<PlannedPayment> createPlannedPayment(CreatePlannedPaymentRequest req, {String? email}) async {
     final res = await ApiClient.post(
-      '/api/v1/planned-payments',
+      '/v1/planned-payments',
       body: req.toJson(),
+      email: email,
     );
     if (res is Map) {
       final map = Map<String, dynamic>.from(res);
@@ -338,14 +346,16 @@ class PaymentsRepository {
   }
 
   /// Updates an existing scheduled payment.
-  /// Calls: `PATCH /api/v1/planned-payments/:id`
+  /// Calls: PATCH /v1/planned-payments/:id
   static Future<PlannedPayment> updatePlannedPayment(
     dynamic id,
-    Map<String, dynamic> fields,
-  ) async {
+    Map<String, dynamic> fields, {
+    String? email,
+  }) async {
     final res = await ApiClient.patch(
-      '/api/v1/planned-payments/$id',
+      '/v1/planned-payments/$id',
       body: fields,
+      email: email,
     );
     if (res is Map) {
       final map = Map<String, dynamic>.from(res);
@@ -358,11 +368,12 @@ class PaymentsRepository {
   }
 
   /// Marks a scheduled payment as paid.
-  /// Calls: `PATCH /api/v1/planned-payments/:id/mark-paid`
-  static Future<void> markPlannedPaymentPaid(dynamic id) async {
+  /// Calls: PATCH /v1/planned-payments/:id/mark-paid
+  static Future<void> markPlannedPaymentPaid(dynamic id, {String? email}) async {
     final res = await ApiClient.patch(
-      '/api/v1/planned-payments/$id/mark-paid',
+      '/v1/planned-payments/$id/mark-paid',
       body: {},
+      email: email,
     );
     if (res is Map<String, dynamic> && res['success'] == false) {
       throw ApiException(
@@ -373,9 +384,9 @@ class PaymentsRepository {
   }
 
   /// Deletes a scheduled payment.
-  /// Calls: `DELETE /api/v1/planned-payments/:id`
-  static Future<void> deletePlannedPayment(dynamic id) async {
-    final res = await ApiClient.delete('/api/v1/planned-payments/$id');
+  /// Calls: DELETE /v1/planned-payments/:id
+  static Future<void> deletePlannedPayment(dynamic id, {String? email}) async {
+    final res = await ApiClient.delete('/v1/planned-payments/$id', email: email);
     if (res is Map<String, dynamic> && res['success'] == false) {
       throw ApiException(
         statusCode: 400,

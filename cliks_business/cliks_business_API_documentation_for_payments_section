@@ -2,6 +2,8 @@
 
 This comprehensive API documentation covers all 5 sub-modules located under the `/payments` route in **Cliks Business OS**:
 
+base url :- "<https://cliks.beta-softnet.com/api>"
+
 - **Sub-Module 1: Transactions & Cash Flow Engine** (`/payments/transaction`)
 - **Sub-Module 2: People Network & Escrow** (`/payments/people`)
 - **Sub-Module 3: Purpose Wallets & Goal Segregation** (`/payments/wallet` & `/payments/segregation`)
@@ -1209,15 +1211,16 @@ Standard Error Response Envelope:
 
 # Sub-Module 5: Payment Planner & Scheduled Outlays (`/payments/planner` & `/payments/plan`)
 
+**Base URL:** `https://cliks.beta-softnet.com/api`  
 **UI Route:** `/payments/planner` & `/payments/plan`  
 **Frontend Component:** `src/pages/BusinessPaymentPlan.jsx`  
-**Backend Routes:** `/api/v1/planned-payments/*`
+**Backend Routes:** `/v1/planned-payments/*` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments/*`)
 
 ---
 
 ### 5.1 List Planned Payments
 
-- **Method & Route:** `GET /api/v1/planned-payments`
+- **Method & Route:** `GET /v1/planned-payments` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments`)
 - **Query Parameters:**
   - `status` (optional): `pending` | `paid`
   - `category` (optional): filter by category
@@ -1247,7 +1250,7 @@ Standard Error Response Envelope:
 
 ### 5.2 Create Planned Payment
 
-- **Method & Route:** `POST /api/v1/planned-payments`
+- **Method & Route:** `POST /v1/planned-payments` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments`)
 
 #### Request Body
 
@@ -1286,7 +1289,7 @@ Standard Error Response Envelope:
 
 ### 5.3 Get Planned Payment Details
 
-- **Method & Route:** `GET /api/v1/planned-payments/:id`
+- **Method & Route:** `GET /v1/planned-payments/:id` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments/:id`)
 
 #### Response (200 OK)
 
@@ -1312,7 +1315,7 @@ Standard Error Response Envelope:
 
 ### 5.4 Update Planned Payment
 
-- **Method & Route:** `PATCH /api/v1/planned-payments/:id`
+- **Method & Route:** `PATCH /v1/planned-payments/:id` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments/:id`)
 
 #### Request Body
 
@@ -1341,7 +1344,7 @@ Standard Error Response Envelope:
 
 ### 5.5 Mark Planned Payment as Paid
 
-- **Method & Route:** `PATCH /api/v1/planned-payments/:id/mark-paid`
+- **Method & Route:** `PATCH /v1/planned-payments/:id/mark-paid` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments/:id/mark-paid`)
 - **Description:** Sets the status to `paid` and, if recurring (e.g., Monthly/Quarterly), automatically generates the next scheduled due date.
 
 #### Response (200 OK)
@@ -1363,9 +1366,9 @@ Standard Error Response Envelope:
 
 ### 5.6 Delete Planned Payment
 
-- **Method & Route:** `DELETE /api/v1/planned-payments/:id`
+- **Method & Route:** `DELETE /v1/planned-payments/:id` (Full URL: `https://cliks.beta-softnet.com/api/v1/planned-payments/:id`)
 
-#### Response (200 OK)
+#### Response (204 No Content / 200 OK)
 
 ```json
 {

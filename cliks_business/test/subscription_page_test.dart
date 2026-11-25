@@ -176,7 +176,7 @@ void main() {
         expect(find.text('Currently Active Plan'), findsWidgets);
 
         // Verify prices
-        expect(find.text('₹250'), findsWidgets);
+        expect(find.text('₹249'), findsWidgets);
         expect(find.text('₹583'), findsWidgets);
         expect(find.text('₹899'), findsWidgets);
         expect(find.text('₹1,499'), findsWidgets);

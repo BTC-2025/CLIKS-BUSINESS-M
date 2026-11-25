@@ -60,7 +60,129 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
   // Section Navigation Tabs (BUSINESS, FIN-PRO, PARTNER LAUNCH DESK)
   int _selectedMainTab = 0; // 0: BUSINESS, 1: FIN-PRO, 2: PARTNER LAUNCH DESK
+  int _selectedBusinessSubTab = 0; // 0: Standard Tiers, 1: ✦ Customizable Plan & Add-Ons
   int _selectedPartnerTab = 0; // 0: Investor Club, 1: Products & Ideas
+
+  // Active optional capability add-ons
+  final Set<String> _activeAddOns = {};
+  final Map<String, int> _activeAddOnQuantities = {};
+  final Map<String, bool> _activeAddOnIsAnnual = {};
+
+  // Formats currency amounts with commas
+  String _formatCurrency(int amount) {
+    final str = amount.toString();
+    if (str.length <= 3) return str;
+    final last3 = str.substring(str.length - 3);
+    final remaining = str.substring(0, str.length - 3);
+    final formatted = remaining.replaceAllMapped(
+      RegExp(r'(\d)(?=(\d\d)+$)'),
+      (m) => '${m[1]},',
+    );
+    return '$formatted,$last3';
+  }
+
+  // Specifications and constraints for Optional Capability Add-ons
+  static final Map<String, Map<String, dynamic>> _addOnSpecs = {
+    'Extra Sub IDs': {
+      'unit': 'user',
+      'unitPlural': 'users',
+      'monthlyRate': 199,
+      'annualRate': 2388,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 50,
+      'step': 1,
+      'isQuantifiable': true,
+    },
+    'Extra Branches': {
+      'unit': 'branch',
+      'unitPlural': 'branches',
+      'monthlyRate': 399,
+      'annualRate': 4788,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 20,
+      'step': 1,
+      'isQuantifiable': true,
+    },
+    'Cloud Storage': {
+      'unit': 'pack (50 GB)',
+      'unitPlural': 'packs (50 GB)',
+      'monthlyRate': 149,
+      'annualRate': 1788,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 20,
+      'step': 1,
+      'isQuantifiable': true,
+    },
+    'E-Way Bill Packs': {
+      'unit': 'pack (500 APIs)',
+      'unitPlural': 'packs (500 APIs)',
+      'monthlyRate': 299,
+      'annualRate': 299,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 50,
+      'step': 1,
+      'isQuantifiable': true,
+    },
+    'Sales E-Invoice': {
+      'unit': 'pack (500 APIs)',
+      'unitPlural': 'packs (500 APIs)',
+      'monthlyRate': 299,
+      'annualRate': 299,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 50,
+      'step': 1,
+      'isQuantifiable': true,
+    },
+    'Priority Support': {
+      'unit': 'seat',
+      'unitPlural': 'seats',
+      'monthlyRate': 799,
+      'annualRate': 9588,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 1,
+      'step': 1,
+      'isQuantifiable': false,
+    },
+    'Advanced Analytics': {
+      'unit': 'workspace',
+      'unitPlural': 'workspaces',
+      'monthlyRate': 599,
+      'annualRate': 7188,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 1,
+      'step': 1,
+      'isQuantifiable': false,
+    },
+    'Custom Domain Portals': {
+      'unit': 'portal',
+      'unitPlural': 'portals',
+      'monthlyRate': 999,
+      'annualRate': 11988,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 1,
+      'step': 1,
+      'isQuantifiable': false,
+    },
+    'Employees (HR Headcount)': {
+      'unit': 'employee',
+      'unitPlural': 'employees',
+      'monthlyRate': 60,
+      'annualRate': 720,
+      'defaultQty': 10,
+      'minQty': 5,
+      'maxQty': 500,
+      'step': 5,
+      'isQuantifiable': true,
+    },
+  };
 
   // Tier tracking for Upgrade logic:
   int _currentBusinessTier = 5; // 1: Micro, 2: Starter, 3: Standard, 4: Growth, 5: Elite Suite (Active in screenshot)
@@ -173,9 +295,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       headline:
           'Micro subscription for single-branch stores & small enterprises.',
       originalMonthlyPrice: '₹4,999',
-      offerMonthlyPrice: '₹250',
-      fullAnnualPrice: '₹3,000',
-      discountTag: 'Save ₹1,999',
+      offerMonthlyPrice: '₹249',
+      fullAnnualPrice: '₹2,988',
+      discountTag: 'Save ₹2,011',
       icon: LucideIcons.store,
       features: [
         '1 Branch / Godown',
@@ -188,7 +310,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         'Custom Chart of Accounts & Item-wise Expenses',
       ],
       isCurrentPlan: false,
-      billingSubtext: '(Equivalent to ₹250 per month)',
+      billingSubtext: '(Equivalent to ₹249 per month)',
     ),
     _SubscriptionTierData(
       tierNumber: 2,
@@ -2032,7 +2154,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 _currentBusinessTier = tier.tierNumber;
               });
               onUpgrade(tier.tierNumber);
-              ScaffoldMessenger.of(context).showSnackBar(
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.hideCurrentSnackBar();
+              messenger.showSnackBar(
                 SnackBar(
                   content: Text(
                     'Successfully upgraded to ${tier.name}!',
@@ -2173,43 +2297,667 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // BUSINESS SECTION (Standard 5 Tiers + Features Comparison Table)
+  // BUSINESS SECTION (Standard 5 Tiers + Customizable Plan Builder)
   // ═══════════════════════════════════════════════════════════════
   Widget _buildBusinessSection(bool isMobile) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
-        Container(
-          key: _upgradeTiersKey,
-          child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
-        ),
-        const SizedBox(height: 18),
-
-        // ─── 5. FIVE SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
-        _buildTierCards(isMobile),
-        SizedBox(height: isMobile ? 26 : 36),
-
-        // ─── 6. PLAN FEATURES COMPARISON TABLE (94 FEATURES x 5 TIERS MATRIX) ───
-        Container(
-          key: _featuresComparisonKey,
-          child: PlanFeaturesComparisonTable(
-            isMobile: isMobile,
-            activeTierNumber: _currentBusinessTier,
-            onUpgrade: (newTier) {
-              setState(() => _currentBusinessTier = newTier);
-            },
+        // Sub-selector tabs: [ Standard Tiers ] [ ✦ Customizable Plan & Add-Ons ]
+        Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildBusinessSubTab(
+                  index: 0,
+                  label: 'Standard Tiers',
+                  icon: LucideIcons.layers,
+                  isMobile: isMobile,
+                ),
+                SizedBox(width: isMobile ? 8 : 14),
+                _buildBusinessSubTab(
+                  index: 1,
+                  label: '✦ Customizable Plan & Add-Ons',
+                  icon: LucideIcons.sliders,
+                  isMobile: isMobile,
+                ),
+              ],
+            ),
           ),
         ),
-        SizedBox(height: isMobile ? 26 : 36),
+        SizedBox(height: isMobile ? 18 : 24),
 
-        // ─── 7. OPTIONAL CAPABILITY ADD-ONS ───
-        _buildAddOnsSection(isMobile),
-        SizedBox(height: isMobile ? 26 : 36),
+        if (_selectedBusinessSubTab == 0) ...[
+          // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
+          Container(
+            key: _upgradeTiersKey,
+            child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
+          ),
+          const SizedBox(height: 18),
 
-        // ─── 8. WHY INDIAN BUSINESSES CHOOSE CLIKS OVER ZOHO BOOKS ───
-        _buildZohoComparisonSection(isMobile),
+          // ─── 5. FIVE SUBSCRIPTION CARDS (SIDE-BY-SIDE WITH UPGRADE PLAN LOGIC) ───
+          _buildTierCards(isMobile),
+          SizedBox(height: isMobile ? 26 : 36),
+
+          // ─── 6. PLAN FEATURES COMPARISON TABLE (94 FEATURES x 5 TIERS MATRIX) ───
+          Container(
+            key: _featuresComparisonKey,
+            child: PlanFeaturesComparisonTable(
+              isMobile: isMobile,
+              activeTierNumber: _currentBusinessTier,
+              onUpgrade: (newTier) {
+                setState(() => _currentBusinessTier = newTier);
+              },
+            ),
+          ),
+          SizedBox(height: isMobile ? 26 : 36),
+
+          // ─── 7. OPTIONAL CAPABILITY ADD-ONS ───
+          _buildAddOnsSection(isMobile),
+          SizedBox(height: isMobile ? 26 : 36),
+
+          // ─── 8. WHY INDIAN BUSINESSES CHOOSE CLIKS OVER ZOHO BOOKS ───
+          _buildZohoComparisonSection(isMobile),
+        ] else ...[
+          // ─── 4. OPTIONAL CAPABILITY ADD-ONS ALONE (NO BOOSTERS OR EXTRA SECTIONS) ───
+          _buildAddOnsSection(isMobile),
+        ],
       ],
+    );
+  }
+
+  Widget _buildBusinessSubTab({
+    required int index,
+    required String label,
+    required IconData icon,
+    bool isMobile = false,
+  }) {
+    final bool isSelected = _selectedBusinessSubTab == index;
+    final Color activeColor = _darkForestGreen;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedBusinessSubTab = index;
+        });
+      },
+      borderRadius: BorderRadius.circular(25),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: isMobile ? 42 : 48,
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 14 : 24,
+          vertical: isMobile ? 6 : 0,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(25),
+          border: isSelected
+              ? null
+              : Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: activeColor.withValues(alpha: 0.35),
+                    blurRadius: 14,
+                    offset: const Offset(0, 4),
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.02),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: isMobile ? 14 : 16,
+              color: isSelected ? Colors.white : const Color(0xFF1E293B),
+            ),
+            SizedBox(width: isMobile ? 6 : 9),
+            Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: isMobile ? 12.5 : 14,
+                fontWeight: FontWeight.w700,
+                color: isSelected ? Colors.white : const Color(0xFF1E293B),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showTier3RequiredDialog(String moduleName) {
+    final activeTierData = _tiers.firstWhere(
+      (t) => t.tierNumber == _currentBusinessTier,
+      orElse: () => _tiers.first,
+    );
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+        actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF3C7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                LucideIcons.lock,
+                size: 20,
+                color: Color(0xFFD97706),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Tier 3 Required for Add-ons',
+                style: GoogleFonts.inter(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF0F172A),
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Customizable add-ons ($moduleName) are only applicable from Standard (Tier 3) and above.',
+              style: GoogleFonts.inter(
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF1E293B),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Your workspace is currently on ${activeTierData.name} (Tier $_currentBusinessTier). Before Tier 3, customizable add-ons cannot be provisioned. Upgrade to Tier 3 (Standard) to enable multi-branch, extra users, cloud storage, and compliance add-on packs.',
+              style: GoogleFonts.inter(
+                fontSize: 12.5,
+                color: const Color(0xFF64748B),
+                height: 1.45,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              setState(() {
+                _currentBusinessTier = 3;
+              });
+              final messenger = ScaffoldMessenger.of(context);
+              messenger.hideCurrentSnackBar();
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Successfully upgraded to Standard (Tier 3)! Customizable add-ons are now unlocked.',
+                    style: GoogleFonts.inter(),
+                  ),
+                  backgroundColor: const Color(0xFF135029),
+                  behavior: SnackBarBehavior.floating,
+                  width: 460,
+                ),
+              );
+            },
+            icon: const Icon(LucideIcons.arrowUpRight, size: 16, color: Colors.white),
+            label: Text(
+              'Upgrade to Standard (Tier 3)',
+              style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF135029),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddOnDetailsDialog(Map<String, String> item) {
+    final String moduleName = item['module']!;
+    final bool isAdded = _activeAddOns.contains(moduleName);
+    final spec = _addOnSpecs[moduleName] ?? {
+      'unit': 'unit',
+      'unitPlural': 'units',
+      'monthlyRate': 199,
+      'annualRate': 2388,
+      'defaultQty': 1,
+      'minQty': 1,
+      'maxQty': 50,
+      'step': 1,
+      'isQuantifiable': false,
+    };
+    final bool isQuantifiable = spec['isQuantifiable'] as bool? ?? false;
+    final int minQty = spec['minQty'] as int? ?? 1;
+    final int maxQty = spec['maxQty'] as int? ?? 50;
+    final int step = spec['step'] as int? ?? 1;
+    final String unit = spec['unit'] as String? ?? 'unit';
+    final String unitPlural = spec['unitPlural'] as String? ?? 'units';
+    final int monthlyRate = spec['monthlyRate'] as int? ?? 199;
+    final int annualRate = spec['annualRate'] as int? ?? 2388;
+
+    int selectedQty = _activeAddOnQuantities[moduleName] ?? (spec['defaultQty'] as int? ?? 1);
+    bool isAnnual = _activeAddOnIsAnnual[moduleName] ?? false;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          final int unitPrice = isAnnual ? annualRate : monthlyRate;
+          final int calculatedTotal = isQuantifiable ? (unitPrice * selectedQty) : unitPrice;
+          final String billingPeriodText = isAnnual ? '/ yr' : '/ mo';
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCFCE7),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    LucideIcons.plusCircle,
+                    size: 20,
+                    color: Color(0xFF16A34A),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isAdded ? 'Manage $moduleName' : 'Add $moduleName',
+                    style: GoogleFonts.inter(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 480),
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      item['includes']!,
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        color: const Color(0xFF475569),
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Billing Cycle Choice
+                    Text(
+                      'Choose Billing Frequency:',
+                      style: GoogleFonts.inter(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setDialogState(() => isAnnual = false),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: !isAnnual ? const Color(0xFFDCFCE7) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: !isAnnual ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+                                  width: !isAnnual ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        !isAnnual ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                                        size: 14,
+                                        color: !isAnnual ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Monthly',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: !isAnnual ? const Color(0xFF15803D) : const Color(0xFF475569),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item['monthly']!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => setDialogState(() => isAnnual = true),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: isAnnual ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: isAnnual ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                                  width: isAnnual ? 1.5 : 1.0,
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isAnnual ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                                        size: 14,
+                                        color: isAnnual ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Annual',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: isAnnual ? const Color(0xFF1E40AF) : const Color(0xFF475569),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item['annual']!,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF2563EB),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Quantity Stepper (for quantifiable items)
+                    if (isQuantifiable) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Select Quantity:',
+                            style: GoogleFonts.inter(
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFF334155),
+                            ),
+                          ),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  onPressed: selectedQty > minQty
+                                      ? () => setDialogState(() => selectedQty -= step)
+                                      : null,
+                                  icon: const Icon(LucideIcons.minus, size: 14),
+                                  padding: const EdgeInsets.all(6),
+                                  constraints: const BoxConstraints(),
+                                  splashRadius: 18,
+                                  color: const Color(0xFF475569),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  child: Text(
+                                    '$selectedQty ${selectedQty == 1 ? unit : unitPlural}',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: const Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+                                IconButton(
+                                  onPressed: selectedQty < maxQty
+                                      ? () => setDialogState(() => selectedQty += step)
+                                      : null,
+                                  icon: const Icon(LucideIcons.plus, size: 14),
+                                  padding: const EdgeInsets.all(6),
+                                  constraints: const BoxConstraints(),
+                                  splashRadius: 18,
+                                  color: const Color(0xFF475569),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+
+                    // Total Calculation Box
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Calculated Cost:',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFF64748B),
+                                ),
+                              ),
+                              Text(
+                                '₹${_formatCurrency(calculatedTotal)} $billingPeriodText',
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF135029),
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (isQuantifiable && selectedQty > 1) ...[
+                            const SizedBox(height: 4),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '($selectedQty × ₹${_formatCurrency(unitPrice)} $billingPeriodText)',
+                                style: GoogleFonts.inter(
+                                  fontSize: 11,
+                                  color: const Color(0xFF94A3B8),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.checkCircle2, size: 14, color: Color(0xFF16A34A)),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            'Active on your workspace tier (Tier $_currentBusinessTier)',
+                            style: GoogleFonts.inter(
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                              color: const Color(0xFF16A34A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(
+                  'Close',
+                  style: GoogleFonts.inter(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF64748B),
+                  ),
+                ),
+              ),
+              if (isAdded)
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(ctx).pop();
+                    setState(() {
+                      _activeAddOns.remove(moduleName);
+                      _activeAddOnQuantities.remove(moduleName);
+                      _activeAddOnIsAnnual.remove(moduleName);
+                    });
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.hideCurrentSnackBar();
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'Removed $moduleName add-on from workspace.',
+                          style: GoogleFonts.inter(),
+                        ),
+                        backgroundColor: const Color(0xFF475569),
+                        behavior: SnackBarBehavior.floating,
+                        width: 380,
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFFDC2626),
+                    side: const BorderSide(color: Color(0xFFFCA5A5)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: Text(
+                    'Remove Add-On',
+                    style: GoogleFonts.inter(fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(ctx).pop();
+                  setState(() {
+                    _activeAddOns.add(moduleName);
+                    _activeAddOnQuantities[moduleName] = selectedQty;
+                    _activeAddOnIsAnnual[moduleName] = isAnnual;
+                  });
+                  final messenger = ScaffoldMessenger.of(context);
+                  messenger.hideCurrentSnackBar();
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        isAdded
+                            ? 'Updated $moduleName to $selectedQty ${selectedQty == 1 ? unit : unitPlural}!'
+                            : 'Successfully activated $moduleName ($selectedQty ${selectedQty == 1 ? unit : unitPlural}) for your workspace!',
+                        style: GoogleFonts.inter(),
+                      ),
+                      backgroundColor: const Color(0xFF135029),
+                      behavior: SnackBarBehavior.floating,
+                      width: 440,
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF135029),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                child: Text(
+                  isAdded ? 'Update Add-on' : 'Confirm & Add to Plan',
+                  style: GoogleFonts.inter(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
@@ -2274,6 +3022,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       },
     ];
 
+    final bool isApplicable = _currentBusinessTier >= 3;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -2311,24 +3061,125 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Cliks Business — Optional Capability Add-ons',
-                        style: GoogleFonts.inter(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF0F172A),
-                          letterSpacing: -0.3,
-                        ),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            'Cliks Business — Optional Capability Add-ons',
+                            style: GoogleFonts.inter(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: isApplicable
+                                  ? const Color(0xFFDCFCE7)
+                                  : const Color(0xFFFEF3C7),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isApplicable
+                                    ? const Color(0xFF86EFAC)
+                                    : const Color(0xFFFDE68A),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  isApplicable
+                                      ? LucideIcons.checkCircle2
+                                      : LucideIcons.lock,
+                                  size: 12,
+                                  color: isApplicable
+                                      ? const Color(0xFF15803D)
+                                      : const Color(0xFFB45309),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isApplicable
+                                      ? 'Tier $_currentBusinessTier Active'
+                                      : 'Tier 3+ Only',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: isApplicable
+                                        ? const Color(0xFF15803D)
+                                        : const Color(0xFFB45309),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Scale seats, locations, or compliance calls on demand without having to force-upgrade your core subscription.',
+                        'Scale seats, locations, or compliance calls on demand without having to force-upgrade your core subscription. Customizable add-ons are applicable starting from Standard (Tier 3) and above.',
                         style: GoogleFonts.inter(
                           fontSize: 12.5,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF64748B),
                         ),
                       ),
+                      if (_activeAddOns.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF0FDF4),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFBBF7D0)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(LucideIcons.checkCheck, size: 16, color: Color(0xFF16A34A)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Wrap(
+                                  spacing: 8,
+                                  runSpacing: 4,
+                                  crossAxisAlignment: WrapCrossAlignment.center,
+                                  children: [
+                                    Text(
+                                      'Active Add-ons (${_activeAddOns.length}):',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w700,
+                                        color: const Color(0xFF15803D),
+                                      ),
+                                    ),
+                                    ..._activeAddOns.map((name) {
+                                      final qty = _activeAddOnQuantities[name] ?? 1;
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0xFF86EFAC)),
+                                        ),
+                                        child: Text(
+                                          qty > 1 ? '$name (${qty}x)' : name,
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF166534),
+                                          ),
+                                        ),
+                                      );
+                                    }),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -2339,7 +3190,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           // Table
           LayoutBuilder(
             builder: (context, constraints) {
-              const double minWidth = 840;
+              const double minWidth = 1060;
               final bool shouldScroll = constraints.maxWidth < minWidth;
 
               final tableContent = SizedBox(
@@ -2360,45 +3211,71 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                         children: [
                           Expanded(
                             flex: 3,
-                            child: Text(
-                              'Add-on Module',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF475569),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                'Add-on Module',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF475569),
+                                ),
                               ),
                             ),
                           ),
                           Expanded(
                             flex: 3,
-                            child: Text(
-                              'Monthly Rate',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF475569),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Text(
+                                'Monthly Rate',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF475569),
+                                ),
                               ),
                             ),
                           ),
                           Expanded(
                             flex: 3,
-                            child: Text(
-                              'Annual Rate',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF475569),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: Text(
+                                'Annual Rate',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF475569),
+                                ),
                               ),
                             ),
                           ),
                           Expanded(
                             flex: 6,
-                            child: Text(
-                              'What it Includes',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: const Color(0xFF475569),
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 16),
+                              child: Text(
+                                'What it Includes',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                'Action',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF475569),
+                                ),
                               ),
                             ),
                           ),
@@ -2410,6 +3287,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     ...addOns.asMap().entries.map((entry) {
                       final item = entry.value;
                       final isLast = entry.key == addOns.length - 1;
+                      final bool isAdded = _activeAddOns.contains(item['module']);
+
                       return Container(
                         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
                         decoration: BoxDecoration(
@@ -2421,50 +3300,135 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                 ),
                         ),
                         child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             Expanded(
                               flex: 3,
-                              child: Text(
-                                item['module']!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF0F172A),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Text(
+                                  item['module']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF0F172A),
+                                  ),
                                 ),
                               ),
                             ),
                             Expanded(
                               flex: 3,
-                              child: Text(
-                                item['monthly']!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFF0F172A),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 12),
+                                child: Text(
+                                  item['monthly']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF0F172A),
+                                  ),
                                 ),
                               ),
                             ),
                             Expanded(
                               flex: 3,
-                              child: Text(
-                                item['annual']!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: const Color(0xFF2563EB),
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Text(
+                                  item['annual']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: const Color(0xFF2563EB),
+                                  ),
                                 ),
                               ),
                             ),
                             Expanded(
                               flex: 6,
-                              child: Text(
-                                item['includes']!,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: const Color(0xFF64748B),
-                                  height: 1.35,
+                              child: Padding(
+                                padding: const EdgeInsets.only(right: 16),
+                                child: Text(
+                                  item['includes']!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: const Color(0xFF64748B),
+                                    height: 1.35,
+                                  ),
                                 ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Align(
+                                alignment: Alignment.centerRight,
+                                child: !isApplicable
+                                    ? OutlinedButton.icon(
+                                        onPressed: () => _showTier3RequiredDialog(item['module']!),
+                                        icon: const Icon(LucideIcons.lock, size: 12, color: Color(0xFF64748B)),
+                                        label: Text(
+                                          'Requires Tier 3+',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: const Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          backgroundColor: const Color(0xFFF8FAFC),
+                                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(7),
+                                          ),
+                                        ),
+                                      )
+                                    : isAdded
+                                        ? ElevatedButton.icon(
+                                            onPressed: () => _showAddOnDetailsDialog(item),
+                                            icon: const Icon(LucideIcons.check, size: 12, color: Colors.white),
+                                            label: Text(
+                                              (_activeAddOnQuantities[item['module']] ?? 1) > 1
+                                                  ? 'Added (${_activeAddOnQuantities[item['module']]}x) ✓'
+                                                  : 'Added ✓',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF16A34A),
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(7),
+                                              ),
+                                              elevation: 0,
+                                            ),
+                                          )
+                                        : ElevatedButton.icon(
+                                            onPressed: () => _showAddOnDetailsDialog(item),
+                                            icon: const Icon(LucideIcons.plus, size: 12, color: Colors.white),
+                                            label: Text(
+                                              'Add to Plan',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF135029),
+                                              foregroundColor: Colors.white,
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(7),
+                                              ),
+                                              elevation: 0,
+                                            ),
+                                          ),
                               ),
                             ),
                           ],

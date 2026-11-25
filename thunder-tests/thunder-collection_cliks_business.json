@@ -341,7 +341,7 @@
       "colId": "col-cliks-business-main",
       "containerId": "fol-planned-payments",
       "name": "List Planned Payments",
-      "url": "{{baseUrl}}/planned-payments?status=all&page=1&limit=20",
+      "url": "{{baseUrl}}/planned-payments",
       "method": "GET",
       "sortNum": 40000,
       "created": "2026-11-17T14:47:53.827Z",
@@ -353,11 +353,6 @@
         }
       ],
       "params": [
-        {
-          "name": "status",
-          "value": "all",
-          "isPath": false
-        },
         {
           "name": "page",
           "value": "1",

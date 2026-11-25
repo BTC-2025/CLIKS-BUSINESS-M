@@ -5,6 +5,7 @@ import '../models/account_model.dart';
 import 'repositories/user_repository.dart';
 import 'repositories/auth_repository.dart';
 import '../core/network/token_service.dart';
+import '../core/network/api_client.dart';
 import '../features/auth/notifiers/auth_notifier.dart';
 import '../features/auth/pages/login_screen.dart';
 import 'app_state_provider.dart';
@@ -191,6 +192,7 @@ class AccountsNotifier extends StateNotifier<List<AccountModel>> {
 
     // 1. Instantly update tokens locally
     await TokenService.switchActiveAccountSession(cleanId);
+    ApiClient.clearCliksToken();
 
     final cached = await TokenService.getUserSettings(cleanId);
     final phone = (cached?['phoneNumber'] ?? cached?['phone'])?.toString();

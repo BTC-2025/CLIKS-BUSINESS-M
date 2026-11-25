@@ -1668,8 +1668,8 @@ class _PlanFeaturesComparisonTableState
             child: _buildTierHeaderColumn(
               tierNumber: 1,
               title: 'Micro',
-              annualPrice: '₹3,000 / yr',
-              monthlySubtext: '₹250 / mo',
+              annualPrice: '₹2,988 / yr',
+              monthlySubtext: '₹249 / mo',
               buttonText: 'Select Micro',
               backgroundColor: const Color(0xFF0F766E),
               isCurrent: widget.activeTierNumber == 1,

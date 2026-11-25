@@ -9,6 +9,7 @@ import 'package:flutter/foundation.dart';
 class TokenService {
   static const _kAccess = 'bnx_access_token';
   static const _kRefresh = 'bnx_refresh_token';
+  static const _kCliksAccess = 'cliks_business_access_token';
   static const _kEmail = 'bnx_user_email';
   static const _kName = 'bnx_user_name';
   static const _kGlobalAvatar = 'bnx_user_avatar_global';
@@ -147,44 +148,62 @@ class TokenService {
     await _safeWrite(key: _kRefresh, value: refreshToken);
   }
 
+  static String? getEmailFromJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length == 3) {
+        final normalized = base64Url.normalize(parts[1]);
+        final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
+        if (payload is Map) {
+          final sub = payload['sub']?.toString().trim().toLowerCase();
+          final email = payload['email']?.toString().trim().toLowerCase();
+          return email ?? sub;
+        }
+      }
+    } catch (_) {}
+    return null;
+  }
+
   static Future<String?> getAccessToken() async {
     _ensureFallbackLoaded();
-    final activeEmail = await getUserEmail();
+    final activeEmail = (await getUserEmail() ?? '').trim().toLowerCase();
 
-    // 1. If active account has a token in registry or user settings, check if it's a real JWT
-    if (activeEmail != null && activeEmail.isNotEmpty) {
+    // 1. If active account has a token in registry or user settings, use it
+    if (activeEmail.isNotEmpty) {
       final registry = await getSavedAccountsFromRegistry();
       final found = registry.firstWhere(
-        (a) =>
-            (a['email']?.toString() ?? '').toLowerCase() ==
-            activeEmail.toLowerCase(),
+        (a) {
+          final email = (a['email']?.toString() ?? '').trim().toLowerCase();
+          final id = (a['id']?.toString() ?? '').trim().toLowerCase();
+          return email == activeEmail || id == activeEmail;
+        },
         orElse: () => {},
       );
       final activeTok = found['accessToken']?.toString();
       if (activeTok != null && activeTok.isNotEmpty) {
-        if (activeTok.startsWith('ey') || cachedAccessToken == null || cachedAccessToken!.isEmpty) {
-          cachedAccessToken = activeTok;
-          return cachedAccessToken;
-        }
+        cachedAccessToken = activeTok;
+        return activeTok;
       }
 
       final settings = await getUserSettings(activeEmail);
       final settingsTok = settings?['accessToken']?.toString();
       if (settingsTok != null && settingsTok.isNotEmpty && settingsTok.startsWith('ey')) {
         cachedAccessToken = settingsTok;
-        return cachedAccessToken;
+        return settingsTok;
       }
     }
 
     if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
       return cachedAccessToken;
     }
-    cachedAccessToken = await _safeRead(key: _kAccess);
-    if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
-      return cachedAccessToken;
+
+    final stored = await _safeRead(key: _kAccess);
+    if (stored != null && stored.isNotEmpty) {
+      cachedAccessToken = stored;
+      return stored;
     }
 
-    // Fallback: look in saved accounts registry for any available token
+    // Fallback: look in saved accounts registry for any available primary token
     final registry = await getSavedAccountsFromRegistry();
     if (registry.isNotEmpty) {
       for (final a in registry) {
@@ -196,6 +215,7 @@ class TokenService {
         }
       }
     }
+
     return null;
   }
 
@@ -211,6 +231,34 @@ class TokenService {
   static Future<void> clearAll() async {
     cachedAccessToken = null;
     await _safeDeleteAll();
+  }
+
+  static String _kCliksAccessKey(String email) =>
+      'cliks_business_access_token_${email.trim().toLowerCase()}';
+
+  static Future<String?> getCliksAccessToken([String? email]) async {
+    _ensureFallbackLoaded();
+    final target = (email ?? await getUserEmail() ?? '').trim().toLowerCase();
+    if (target.isEmpty) return null;
+    final tok = await _safeRead(key: _kCliksAccessKey(target));
+    if (tok != null && tok.isNotEmpty) return tok;
+    return null;
+  }
+
+  static Future<void> saveCliksAccessToken(String token, [String? email]) async {
+    _ensureFallbackLoaded();
+    final target = (email ?? await getUserEmail() ?? '').trim().toLowerCase();
+    if (target.isNotEmpty) {
+      await _safeWrite(key: _kCliksAccessKey(target), value: token);
+    }
+  }
+
+  static Future<void> clearCliksAccessToken([String? email]) async {
+    _ensureFallbackLoaded();
+    final target = (email ?? await getUserEmail() ?? '').trim().toLowerCase();
+    if (target.isNotEmpty) {
+      await _safeDelete(key: _kCliksAccessKey(target));
+    }
   }
 
   static Future<bool> isLoggedIn() async {
@@ -356,12 +404,14 @@ class TokenService {
     }
     final registry = await getSavedAccountsFromRegistry();
     final found = registry.firstWhere(
-      (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
+      (a) =>
+          (a['email']?.toString() ?? '').trim().toLowerCase() == clean ||
+          (a['id']?.toString() ?? '').trim().toLowerCase() == clean,
       orElse: () => {},
     );
     final tok = found['accessToken']?.toString();
     if (tok != null && tok.isNotEmpty) return tok;
-    return getAccessToken();
+    return null;
   }
 
   // ── Multi-Account Registry ─────────────────────────────────────────────────
@@ -393,7 +443,10 @@ class TokenService {
     if (token == null || token.isEmpty) {
       final currentToken = await getAccessToken();
       if (currentToken != null && currentToken.isNotEmpty) {
-        token = currentToken;
+        final jwtEmail = _getEmailFromJwt(currentToken);
+        if (jwtEmail == email) {
+          token = currentToken;
+        }
       }
     }
 
@@ -420,7 +473,12 @@ class TokenService {
     cachedAccessToken = null;
     final accounts = await getSavedAccountsFromRegistry();
     final target = accounts.firstWhere(
-      (a) => (a['email']?.toString() ?? '').toLowerCase() == clean,
+      (a) {
+        final email = (a['email']?.toString() ?? '').trim().toLowerCase();
+        final accId = (a['id']?.toString() ?? '').trim().toLowerCase();
+        final username = email.contains('@') ? email.split('@').first : email;
+        return email == clean || accId == clean || username == clean;
+      },
       orElse: () => {},
     );
     if (target.isNotEmpty) {
@@ -428,25 +486,17 @@ class TokenService {
       String refreshToken = target['refreshToken']?.toString() ?? '';
       final name = target['name']?.toString() ?? clean.split('@').first;
 
-      // If target does not have its own accessToken stored, inspect available registry tokens for a matching sub/email
       if (accessToken.isEmpty) {
         for (final acc in accounts) {
           final tok = acc['accessToken']?.toString() ?? '';
           if (tok.isNotEmpty) {
-            try {
-              final parts = tok.split('.');
-              if (parts.length == 3) {
-                final normalized = base64Url.normalize(parts[1]);
-                final payload = jsonDecode(utf8.decode(base64Url.decode(normalized)));
-                if (payload is Map && (payload['sub']?.toString().toLowerCase() == clean ||
-                    payload['email']?.toString().toLowerCase() == clean)) {
-                  accessToken = tok;
-                  refreshToken = acc['refreshToken']?.toString() ?? '';
-                  target['accessToken'] = tok;
-                  break;
-                }
-              }
-            } catch (_) {}
+            final jwtEmail = getEmailFromJwt(tok);
+            if (jwtEmail == clean) {
+              accessToken = tok;
+              refreshToken = acc['refreshToken']?.toString() ?? '';
+              target['accessToken'] = tok;
+              break;
+            }
           }
         }
       }
@@ -462,7 +512,12 @@ class TokenService {
 
     final updated = accounts.map((acc) {
       final accEmail = (acc['email']?.toString() ?? '').toLowerCase();
-      return {...acc, 'isPrimary': accEmail == clean};
+      final accId = (acc['id']?.toString() ?? '').toLowerCase();
+      final username = accEmail.contains('@') ? accEmail.split('@').first : accEmail;
+      return {
+        ...acc,
+        'isPrimary': (accEmail == clean || accId == clean || username == clean),
+      };
     }).toList();
     await _safeWrite(key: _kSavedAccountsRegistry, value: jsonEncode(updated));
   }

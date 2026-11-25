@@ -18,11 +18,11 @@
       },
       {
         "name": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mjh9"
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzMsInVzZXJuYW1lIjoicmF2aW5ldzIwMDQiLCJlbWFpbCI6InJhdmluZXcyMDA0QGJueG1haWwuY29tIiwicm9sZSI6ImJ1c2luZXNzIiwiYWNjb3VudF90eXBlIjoiYnVzaW5lc3MiLCJhY2NvdW50VHlwZSI6IkJVU0lORVNTIiwiYnVzaW5lc3MiOnRydWUsImlhdCI6MTc5NTU5OTY0MCwiZXhwIjoxNzk4MTkxNjQwfQ.NbQFc9V4nswt9fVxgEJVzofZyMKv9A3kaTeDjPoGhBQ"
       },
       {
         "name": "bnx_auth_token",
-        "value": "dummy_bnx_auth_token"
+        "value": "eyJhbGciOiJIUzI1NiJ9.eyJhcHBfbmFtZSI6IkJOWCBNYWlsIiwic3ViIjoicmF2aW5ldzIwMDRAYm54bWFpbC5jb20iLCJpYXQiOjE3OTMwODM2MTEsImV4cCI6MTc5NTY3NTYxMX0.neyvYkB7aY5zXgI-ehOp36vlaAeuI5BPR0Ho_X1OlV4"
       },
       {
         "name": "userEmail",
@@ -49,11 +49,11 @@
       },
       {
         "name": "token",
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Mjh9"
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzMsInVzZXJuYW1lIjoicmF2aW5ldzIwMDQiLCJlbWFpbCI6InJhdmluZXcyMDA0QGJueG1haWwuY29tIiwicm9sZSI6ImJ1c2luZXNzIiwiYWNjb3VudF90eXBlIjoiYnVzaW5lc3MiLCJhY2NvdW50VHlwZSI6IkJVU0lORVNTIiwiYnVzaW5lc3MiOnRydWUsImlhdCI6MTc5NTU5OTY0MCwiZXhwIjoxNzk4MTkxNjQwfQ.NbQFc9V4nswt9fVxgEJVzofZyMKv9A3kaTeDjPoGhBQ"
       },
       {
         "name": "bnx_auth_token",
-        "value": "dummy_bnx_auth_token"
+        "value": "eyJhbGciOiJIUzI1NiJ9.eyJhcHBfbmFtZSI6IkJOWCBNYWlsIiwic3ViIjoicmF2aW5ldzIwMDRAYm54bWFpbC5jb20iLCJpYXQiOjE3OTMwODM2MTEsImV4cCI6MTc5NTY3NTYxMX0.neyvYkB7aY5zXgI-ehOp36vlaAeuI5BPR0Ho_X1OlV4"
       },
       {
         "name": "userEmail",
