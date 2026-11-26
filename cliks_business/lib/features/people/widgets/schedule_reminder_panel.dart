@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../data/models/people_models.dart';
+import '../providers/people_providers.dart';
 
 class ScheduleReturnReminderPanel extends ConsumerStatefulWidget {
   const ScheduleReturnReminderPanel({super.key});
@@ -15,10 +17,21 @@ class ScheduleReturnReminderPanel extends ConsumerStatefulWidget {
 }
 
 class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnReminderPanel> {
-  String _selectedContact = 'Select contact...';
+  PersonContact? _selectedContact;
   final TextEditingController _titleController = TextEditingController(text: 'Repayment of Friendly Loan');
   final TextEditingController _capValueController = TextEditingController(text: '0.00');
-  final TextEditingController _dateController = TextEditingController(text: '17-07-2026');
+  final TextEditingController _dateController = TextEditingController(text: '2026-12-15');
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (ref.read(peopleProvider).contacts.isEmpty) {
+        ref.read(peopleProvider.notifier).loadContacts();
+      }
+    });
+  }
 
   @override
   void dispose() {
@@ -33,95 +46,90 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
     final isMobile = screenWidth < 768;
-
     final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+
+    final contacts = ref.watch(peopleProvider).contacts;
+
     final panelContent = Container(
-          constraints: BoxConstraints(
-            maxWidth: isMobile ? double.infinity : 550,
-            maxHeight: isMobile ? screenHeight * 0.65 : 520,
+      constraints: BoxConstraints(
+        maxWidth: isMobile ? double.infinity : 550,
+        maxHeight: isMobile ? screenHeight * 0.75 : 560,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: isMobile
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              )
+            : BorderRadius.circular(28),
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (isMobile) _buildDragHandle(),
+          Padding(
+            padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
+            child: _buildHeader('Schedule Return Reminder'),
           ),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: isMobile
-                ? const BorderRadius.only(
-                    topLeft: Radius.circular(32),
-                    topRight: Radius.circular(32),
-                  )
-                : BorderRadius.circular(28),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, blurRadius: 30, offset: Offset(0, 10)),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (isMobile) _buildDragHandle(),
-              Padding(
-                padding: const EdgeInsets.only(left: 24, right: 24, top: 24, bottom: 8),
-                child: _buildHeader('Schedule Return Reminder'),
-              ),
-              const Divider(height: 16, color: AppColors.border),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+          const Divider(height: 16, color: AppColors.border),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildLabel('Dispatch to Contact *'),
+                  _buildContactDropdown(contacts),
+                  const SizedBox(height: 20),
+                  Row(
                     children: [
-                      _buildLabel('Dispatch to Contact'),
-                      _buildDropdown(
-                        ['Select contact...', 'Acme Corp', 'Wayne Enterprises', 'Rahul Dev'],
-                        _selectedContact,
-                        (val) => setState(() => _selectedContact = val!),
+                      Expanded(
+                        flex: 3,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Reminder Title *'),
+                            _buildTextField(_titleController, 'Reminder Title'),
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 20),
-                      
-                      Row(
-                        children: [
-                          Expanded(
-                            flex: 3,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Reminder Title'),
-                                _buildTextField(_titleController, 'Reminder Title'),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('Cap Value *'),
+                            _buildTextField(
+                              _capValueController,
+                              '0.00',
+                              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                              inputFormatters: [
+                                const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                                LengthLimitingTextInputFormatter(15),
                               ],
                             ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            flex: 2,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildLabel('Cap Value'),
-                                _buildTextField(
-                                  _capValueController,
-                                  '0.00',
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  inputFormatters: [
-                                    const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
-                                    LengthLimitingTextInputFormatter(15),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      
-                      const SizedBox(height: 20),
-                      _buildLabel('Execution Maturity Date'),
-                      _buildDateField(_dateController, 'Select date...'),
-                      
-                      const SizedBox(height: 32),
-                      _buildActionButton('Commit Reminder Flow', AppColors.darkGreen),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 20),
+                  _buildLabel('Execution Maturity Date *'),
+                  _buildDateField(_dateController, 'Select date...'),
+                  const SizedBox(height: 32),
+                  _buildActionButton('Commit Reminder Flow', AppColors.darkGreen),
+                ],
               ),
-            ],
+            ),
           ),
-        );
+        ],
+      ),
+    );
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -129,7 +137,11 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
         alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
         child: isMacOS
             ? panelContent
-            : panelContent.animate().fadeIn(duration: 400.ms).scale(begin: const Offset(0.95, 0.95), end: const Offset(1.0, 1.0), duration: 400.ms),
+            : panelContent.animate().fadeIn(duration: 400.ms).scale(
+                begin: const Offset(0.95, 0.95),
+                end: const Offset(1.0, 1.0),
+                duration: 400.ms,
+              ),
       ),
     );
   }
@@ -153,24 +165,17 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20, 
-              fontWeight: FontWeight.bold, 
-              color: Color(0xFF004D40),
-            ),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF0F172A),
           ),
         ),
         IconButton(
           onPressed: () => ref.read(navigationProvider.notifier).setRoute(AppRoute.people),
-          icon: const Icon(LucideIcons.x, size: 18, color: AppColors.secondaryText),
-          style: IconButton.styleFrom(
-            backgroundColor: Colors.grey.shade100,
-            shape: const CircleBorder(),
-            padding: const EdgeInsets.all(8),
-          ),
+          icon: const Icon(LucideIcons.x, size: 20, color: Color(0xFF64748B)),
         ),
       ],
     );
@@ -178,40 +183,59 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
 
   Widget _buildLabel(String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8, left: 4),
+      padding: const EdgeInsets.only(bottom: 8),
       child: Text(
-        text.toUpperCase(),
-        style: TextStyle(
-          fontSize: 9, 
-          fontWeight: FontWeight.bold, 
-          color: Colors.grey.shade600, 
-          letterSpacing: 0.5,
+        text,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF334155),
         ),
       ),
     );
   }
 
-  Widget _buildDropdown(List<String> items, String value, ValueChanged<String?> onChanged) {
+  Widget _buildContactDropdown(List<PersonContact> contacts) {
+    if (contacts.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: const Text(
+          'No contacts enrolled yet. Add contacts from People Network first.',
+          style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+        ),
+      );
+    }
+
+    final selected = _selectedContact ?? contacts.first;
+
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: value,
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item, style: const TextStyle(fontSize: 13, color: AppColors.darkText)),
+        child: DropdownButton<PersonContact>(
+          value: contacts.contains(selected) ? selected : contacts.first,
+          isExpanded: true,
+          items: contacts.map((c) {
+            return DropdownMenuItem(
+              value: c,
+              child: Text(
+                '${c.name} (${c.roleType})',
+                style: const TextStyle(fontSize: 13, color: AppColors.darkText),
+              ),
             );
           }).toList(),
-          onChanged: onChanged,
-          icon: const Icon(LucideIcons.chevronDown, size: 16, color: AppColors.secondaryText),
-          isExpanded: true,
+          onChanged: (val) {
+            if (val != null) setState(() => _selectedContact = val);
+          },
         ),
       ),
     );
@@ -220,12 +244,12 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
   Widget _buildTextField(
     TextEditingController controller,
     String hint, {
-    TextInputType keyboardType = TextInputType.text,
+    TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
@@ -248,7 +272,7 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
   Widget _buildDateField(TextEditingController controller, String hint) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: AppColors.border),
       ),
@@ -256,16 +280,15 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
         controller: controller,
         readOnly: true,
         onTap: () async {
-          final date = await showDatePicker(
+          final picked = await showDatePicker(
             context: context,
-            initialDate: DateTime.now(),
-            firstDate: DateTime(2000),
-            lastDate: DateTime(2100),
+            initialDate: DateTime.now().add(const Duration(days: 15)),
+            firstDate: DateTime(2020),
+            lastDate: DateTime(2035),
           );
-          if (date != null) {
-            setState(() {
-              controller.text = '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
-            });
+          if (picked != null) {
+            controller.text =
+                '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
           }
         },
         style: const TextStyle(fontSize: 13, color: AppColors.darkText),
@@ -285,18 +308,70 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton(
-        onPressed: () {
-          final val = double.tryParse(_capValueController.text.trim()) ?? 0.0;
-          if (val > kMaxAllowedAmount) {
-            AppSnackbar.show(
-              context,
-              'Cap Value cannot exceed $kMaxAllowedAmountText',
-              type: SnackType.warning,
-            );
-            return;
-          }
-          ref.read(navigationProvider.notifier).setRoute(AppRoute.people);
-        },
+        onPressed: _isSubmitting
+            ? null
+            : () async {
+                final contacts = ref.read(peopleProvider).contacts;
+                if (contacts.isEmpty) {
+                  AppSnackbar.show(
+                    context,
+                    'Please add a contact before scheduling reminders',
+                    type: SnackType.warning,
+                  );
+                  return;
+                }
+
+                final target = _selectedContact ?? contacts.first;
+                final memo = _titleController.text.trim();
+                final val = double.tryParse(_capValueController.text.replaceAll(',', '').trim()) ?? 0.0;
+                final dateStr = _dateController.text.trim();
+
+                if (memo.isEmpty) {
+                  AppSnackbar.show(context, 'Please enter a reminder title', type: SnackType.warning);
+                  return;
+                }
+
+                if (val <= 0) {
+                  AppSnackbar.show(context, 'Please enter a valid cap amount greater than ₹0', type: SnackType.warning);
+                  return;
+                }
+
+                if (val > kMaxAllowedAmount) {
+                  AppSnackbar.show(
+                    context,
+                    'Cap Value cannot exceed $kMaxAllowedAmountText',
+                    type: SnackType.warning,
+                  );
+                  return;
+                }
+
+                final req = CreateRepaymentAlertRequest(
+                  contactId: target.id,
+                  targetContact: target.name,
+                  claimCap: val,
+                  maturityDate: dateStr.isNotEmpty ? dateStr : '2026-12-15',
+                  memoLabel: memo,
+                  status: 'Pending',
+                );
+
+                setState(() => _isSubmitting = true);
+                try {
+                  await ref.read(peopleProvider.notifier).createRepaymentAlert(req);
+                  if (mounted) {
+                    AppSnackbar.show(
+                      context,
+                      "Repayment reminder scheduled for '${target.name}'!",
+                      type: SnackType.success,
+                    );
+                    ref.read(navigationProvider.notifier).setRoute(AppRoute.people);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    setState(() => _isSubmitting = false);
+                    AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                  }
+                }
+              },
         style: ElevatedButton.styleFrom(
           backgroundColor: color,
           foregroundColor: Colors.white,
@@ -304,7 +379,13 @@ class _ScheduleReturnReminderPanelState extends ConsumerState<ScheduleReturnRemi
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           elevation: 0,
         ),
-        child: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              )
+            : Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
       ),
     );
   }

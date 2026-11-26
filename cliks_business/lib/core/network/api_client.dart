@@ -133,6 +133,7 @@ class ApiClient {
         path.contains('/split-expenses') ||
         path.contains('/goal-wallets') ||
         path.contains('/transactions') ||
+        path.contains('/people') ||
         path.contains('cliks.beta-softnet.com');
   }
 
@@ -539,14 +540,31 @@ class ApiClient {
     }
 
     if (r.statusCode == 401 && auth && tempToken == null) {
-      final refreshed = await _tryRefresh();
-      if (refreshed) {
-        final retryHeaders = await _buildHeaders(auth: true);
-        try {
-          r = await http
-              .put(uri, headers: retryHeaders, body: encodedBody)
-              .timeout(_timeout);
-        } catch (_) {}
+      if (_isPaymentsPath(path)) {
+        clearCliksToken(email);
+        final refreshedToken = await _getCliksAuthToken(email);
+        if (refreshedToken != null && refreshedToken.isNotEmpty) {
+          final retryHeaders = await _buildHeaders(
+            path: path,
+            auth: true,
+            email: email,
+          );
+          try {
+            r = await http
+                .put(uri, headers: retryHeaders, body: encodedBody)
+                .timeout(_timeout);
+          } catch (_) {}
+        }
+      } else {
+        final refreshed = await _tryRefresh();
+        if (refreshed) {
+          final retryHeaders = await _buildHeaders(auth: true);
+          try {
+            r = await http
+                .put(uri, headers: retryHeaders, body: encodedBody)
+                .timeout(_timeout);
+          } catch (_) {}
+        }
       }
     }
 

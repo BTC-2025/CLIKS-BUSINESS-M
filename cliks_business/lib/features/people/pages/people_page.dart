@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../data/models/people_models.dart';
+import '../providers/people_providers.dart';
 import '../widgets/enroll_contact_dialog.dart';
 
 /// People Network & Escrow Page
@@ -17,201 +18,23 @@ class PeoplePage extends ConsumerStatefulWidget {
 
 class _PeoplePageState extends ConsumerState<PeoplePage> {
   // Active Tab Index:
-  // 0: Contacts, 1: Financial Groups (1), 2: Requests, 3: Global Ledger, 4: Repayment Alerts
+  // 0: Contacts, 1: Financial Groups, 2: Requests, 3: Global Ledger, 4: Repayment Alerts
   int _activeTab = 0;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
   bool _isSearchVisible = false;
 
   // Sub-page navigation: if non-null, shows full Contact Ledger detail view
-  Map<String, dynamic>? _selectedContactForDetail;
+  PersonContact? _selectedContactForDetail;
 
-  // ───────────────────────────────────────────────────────────────────────────
-  // CONTACTS DATASET (Exactly matching Image 2)
-  // ───────────────────────────────────────────────────────────────────────────
-  final List<Map<String, dynamic>> _contacts = [
-    {
-      'id': 'c_kamesh',
-      'name': 'kamesh',
-      'connected': true,
-      'classification': 'COLLEAGUE',
-      'company': 'kamesh mmotors',
-      'phone': '8124512392',
-      'email': 'itsokletssee123@bnxmail.com',
-      'ledgerStand': 20000.0,
-      'avatarBg': const Color(0xFFF3E8FF),
-      'avatarColor': const Color(0xFF7C3AED),
-      'transactions': <Map<String, dynamic>>[
-        {
-          'id': 'tx_k1',
-          'isLent': true,
-          'amount': 20000.0,
-          'date': '12/11/2026',
-          'memo': 'advance for super market',
-          'classification': 'LENT',
-        },
-      ],
-      'repaymentAlerts': <Map<String, dynamic>>[
-        {
-          'id': 'alt_k1',
-          'date': '12/11/2026',
-          'memo': 'loan which is gave you 20iuiw',
-          'amount': 20000.0,
-          'status': 'Pending',
-        },
-      ],
-    },
-    {
-      'id': 'c_sridharan',
-      'name': 'sridharan',
-      'connected': true,
-      'classification': 'COLLEAGUE',
-      'company': 'dsfsadfasasdfasdsdff',
-      'phone': '+919360521158',
-      'email': 'sridharan@bnxmail.com',
-      'ledgerStand': 0.0,
-      'avatarBg': const Color(0xFFFCE7F3),
-      'avatarColor': const Color(0xFFDB2777),
-      'transactions': <Map<String, dynamic>>[],
-      'repaymentAlerts': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'c_virat',
-      'name': 'virat kholi',
-      'connected': true,
-      'classification': 'CHITHAPPA',
-      'company': 'cricket RCB',
-      'phone': '8984724747',
-      'email': 'aruntest@bnxmail.com',
-      'ledgerStand': 0.0,
-      'avatarBg': const Color(0xFFFEF3C7),
-      'avatarColor': const Color(0xFFD97706),
-      'transactions': <Map<String, dynamic>>[],
-      'repaymentAlerts': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'c_monica_1',
-      'name': 'monica',
-      'connected': true,
-      'classification': 'COLLEAGUE',
-      'company': 'dfd',
-      'phone': '9090909033',
-      'email': 'monica@bnxmail.com',
-      'ledgerStand': 0.0,
-      'avatarBg': const Color(0xFFFFE4E6),
-      'avatarColor': const Color(0xFFE11D48),
-      'transactions': <Map<String, dynamic>>[],
-      'repaymentAlerts': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'c_monica_2',
-      'name': 'monica',
-      'connected': true,
-      'classification': 'COLLEAGUE',
-      'company': 'dsfdsf',
-      'phone': '9090909033',
-      'email': 'monica@bnxmail.com',
-      'ledgerStand': 0.0,
-      'avatarBg': const Color(0xFFFFE4E6),
-      'avatarColor': const Color(0xFFE11D48),
-      'transactions': <Map<String, dynamic>>[],
-      'repaymentAlerts': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'c_rahul',
-      'name': 'Rahul tewatiya',
-      'connected': false,
-      'classification': 'FRIEND',
-      'company': 'rahul bats',
-      'phone': '8072960208',
-      'email': 'connectwithravi2004@gmail.com',
-      'ledgerStand': 500056.0,
-      'avatarBg': const Color(0xFFD1FAE5),
-      'avatarColor': const Color(0xFF059669),
-      'transactions': <Map<String, dynamic>>[
-        {
-          'id': 'tx_r1',
-          'isLent': true,
-          'amount': 500000.0,
-          'date': '18/9/2026',
-          'memo': 'efnierfnijer',
-          'classification': 'LENT',
-        },
-        {
-          'id': 'tx_r2',
-          'isLent': true,
-          'amount': 56.0,
-          'date': '11/9/2026',
-          'memo': '',
-          'classification': 'LENT',
-        },
-      ],
-      'repaymentAlerts': <Map<String, dynamic>>[],
-    },
-  ];
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // FINANCIAL GROUPS DATASET (Exactly matching Images 3, 4, 5)
-  // ───────────────────────────────────────────────────────────────────────────
-  final List<Map<String, dynamic>> _financialGroups = [
-    {
-      'id': 'grp_1',
-      'tag': 'PROJECT OUTLAYS',
-      'activeMembers': 2,
-      'name': 'new grp',
-      'description': 'lets see its working correctly',
-      'targetPool': 50000.0,
-      'contributed': 10000.0,
-      'expenses': 0.0,
-      'netFundInHand': 10000.0,
-      'toGivePrivate': 0.0,
-      'members': [
-        {
-          'name': 'ravinew2004',
-          'email': 'ravinew2004@bnxmail.com',
-          'role': 'admin',
-          'status': 'Active',
-          'totalPaid': 0.0,
-          'contributed': 5000.0,
-          'owed': 0.0,
-          'netBalance': 5000.0,
-        },
-        {
-          'name': 'kamesh',
-          'email': 'itsokletssee123@bnxmail.com',
-          'role': 'manager',
-          'status': 'Active',
-          'totalPaid': 0.0,
-          'contributed': 5000.0,
-          'owed': 0.0,
-          'netBalance': 5000.0,
-        },
-      ],
-      'transactions': [
-        {
-          'id': 'tx_g1',
-          'date': '10 Nov 2026',
-          'member': 'ravinew2004',
-          'amount': 5000.0,
-          'type': 'Initial Capital Contribution',
-          'memo': 'Seed pool deposit',
-        },
-        {
-          'id': 'tx_g2',
-          'date': '12 Nov 2026',
-          'member': 'kamesh',
-          'amount': 5000.0,
-          'type': 'Partner Pool Contribution',
-          'memo': 'Syndicate share buy-in',
-        },
-      ],
-    },
-  ];
-
-  // ───────────────────────────────────────────────────────────────────────────
-  // REQUESTS DATASET (Direct Requests matching Image 5)
-  // ───────────────────────────────────────────────────────────────────────────
-  final List<Map<String, dynamic>> _requests = [];
+  @override
+  void initState() {
+    super.initState();
+    // Load live data from the backend APIs on page initialization
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(peopleProvider.notifier).loadAll();
+    });
+  }
 
   @override
   void dispose() {
@@ -219,71 +42,61 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     super.dispose();
   }
 
-  // Calculated Real-Time Aggregates
-  double get _netReceivables => _contacts
-      .where((c) => (c['ledgerStand'] as num).toDouble() > 0)
-      .fold(0.0, (sum, c) => sum + (c['ledgerStand'] as num).toDouble());
+  // ══════════════════════════════════════════════════════════════════════════
+  // FILTERED GETTERS FROM RIVERPOD LIVE STATE
+  // ══════════════════════════════════════════════════════════════════════════
 
-  double get _netPayables => _contacts
-      .where((c) => (c['ledgerStand'] as num).toDouble() < 0)
-      .fold(0.0, (sum, c) => sum + (c['ledgerStand'] as num).toDouble().abs());
-
-  List<Map<String, dynamic>> get _filteredContacts {
-    if (_searchQuery.trim().isEmpty) return _contacts;
+  List<PersonContact> _getFilteredContacts(List<PersonContact> contacts) {
+    if (_searchQuery.trim().isEmpty) return contacts;
     final q = _searchQuery.toLowerCase();
-    return _contacts.where((c) {
-      final name = (c['name'] as String).toLowerCase();
-      final company = (c['company'] as String).toLowerCase();
-      final phone = (c['phone'] as String).toLowerCase();
-      final email = (c['email'] as String).toLowerCase();
-      final cat = (c['classification'] as String).toLowerCase();
+    return contacts.where((c) {
+      final name = c.name.toLowerCase();
+      final company = (c.company ?? '').toLowerCase();
+      final phone = c.phone.toLowerCase();
+      final email = c.email.toLowerCase();
+      final cat = c.classification.toLowerCase();
+      final role = c.roleType.toLowerCase();
       return name.contains(q) ||
           company.contains(q) ||
           phone.contains(q) ||
           email.contains(q) ||
-          cat.contains(q);
+          cat.contains(q) ||
+          role.contains(q);
     }).toList();
   }
 
-  List<Map<String, dynamic>> get _allGlobalTransactions {
-    final List<Map<String, dynamic>> list = [];
-    for (var c in _contacts) {
-      final txs = c['transactions'] as List<Map<String, dynamic>>;
-      for (var t in txs) {
-        list.add({
-          ...t,
-          'contactId': c['id'],
-          'contactName': c['name'],
-          'contactClassification': c['classification'],
-        });
-      }
-    }
-    if (_searchQuery.trim().isEmpty) return list;
+  List<PersonTransaction> _getFilteredTransactions(List<PersonTransaction> txs) {
+    if (_searchQuery.trim().isEmpty) return txs;
     final q = _searchQuery.toLowerCase();
-    return list.where((t) {
-      final name = (t['contactName'] as String? ?? '').toLowerCase();
-      final memo = (t['memo'] as String? ?? '').toLowerCase();
-      final date = (t['date'] as String? ?? '').toLowerCase();
-      final classification = (t['classification'] as String? ?? '').toLowerCase();
-      return name.contains(q) || memo.contains(q) || date.contains(q) || classification.contains(q);
+    return txs.where((t) {
+      final name = t.personName.toLowerCase();
+      final memo = (t.notes ?? '').toLowerCase();
+      final date = t.date.toLowerCase();
+      final type = t.type.toLowerCase();
+      return name.contains(q) || memo.contains(q) || date.contains(q) || type.contains(q);
     }).toList();
   }
 
-  List<Map<String, dynamic>> get _allRepaymentAlerts {
-    final List<Map<String, dynamic>> list = [];
-    for (var c in _contacts) {
-      final alerts = c['repaymentAlerts'] as List<Map<String, dynamic>>;
-      for (var a in alerts) {
-        list.add({...a, 'contactId': c['id'], 'contactName': c['name']});
-      }
-    }
-    if (_searchQuery.trim().isEmpty) return list;
+  List<RepaymentAlert> _getFilteredAlerts(List<RepaymentAlert> alerts) {
+    if (_searchQuery.trim().isEmpty) return alerts;
     final q = _searchQuery.toLowerCase();
-    return list.where((a) {
-      final name = (a['contactName'] as String? ?? '').toLowerCase();
-      final memo = (a['memo'] as String? ?? a['purpose'] as String? ?? '').toLowerCase();
-      final date = (a['date'] as String? ?? '').toLowerCase();
-      return name.contains(q) || memo.contains(q) || date.contains(q);
+    return alerts.where((a) {
+      final name = a.targetContact.toLowerCase();
+      final memo = a.memoLabel.toLowerCase();
+      final date = a.maturityDate.toLowerCase();
+      final status = a.status.toLowerCase();
+      return name.contains(q) || memo.contains(q) || date.contains(q) || status.contains(q);
+    }).toList();
+  }
+
+  List<FinancialGroup> _getFilteredGroups(List<FinancialGroup> groups) {
+    if (_searchQuery.trim().isEmpty) return groups;
+    final q = _searchQuery.toLowerCase();
+    return groups.where((g) {
+      final name = g.name.toLowerCase();
+      final desc = (g.description ?? '').toLowerCase();
+      final tag = g.groupType.toLowerCase();
+      return name.contains(q) || desc.contains(q) || tag.contains(q);
     }).toList();
   }
 
@@ -292,6 +105,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
+    final peopleState = ref.watch(peopleProvider);
+
     if (_selectedContactForDetail != null) {
       return _buildContactDetailView(_selectedContactForDetail!);
     }
@@ -307,38 +122,59 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         return Scaffold(
           backgroundColor: const Color(0xFFF8F9FB),
           body: SafeArea(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(
-                horizontalPadding,
-                20,
-                horizontalPadding,
-                isMobile ? 100 : 40,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // 1. Top Header Row (Matching Image 2)
-                  _buildHeaderRow(context, isMobile),
-                  const SizedBox(height: 22),
+            child: RefreshIndicator(
+              onRefresh: () => ref.read(peopleProvider.notifier).loadAll(isRefresh: true),
+              color: const Color(0xFF166534),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+                padding: EdgeInsets.fromLTRB(
+                  horizontalPadding,
+                  20,
+                  horizontalPadding,
+                  isMobile ? 100 : 40,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 1. Top Header Row (Matching Image 2)
+                    _buildHeaderRow(context, isMobile, peopleState),
+                    const SizedBox(height: 22),
 
-                  // 2. Top Metric KPI Cards (TO RECEIVE / TO PAY)
-                  _buildTopMetricsRow(availableWidth),
-                  const SizedBox(height: 22),
+                    // 2. Top Metric KPI Cards (TO RECEIVE / TO PAY)
+                    _buildTopMetricsRow(availableWidth, peopleState),
+                    const SizedBox(height: 20),
 
-                  // 3. Segmented Tabs Row + Search Icon Button
-                  _buildTabsRow(isMobile),
-                  const SizedBox(height: 18),
+                    // Pending Invitations Banner (Matching Image 2)
+                    if (peopleState.incomingRequests.isNotEmpty) ...[
+                      _buildPendingInvitationsBanner(peopleState.incomingRequests, isMobile),
+                      const SizedBox(height: 20),
+                    ],
 
-                  // Search Bar if expanded
-                  if (_isSearchVisible) ...[
-                    _buildExpandedSearchBar(),
-                    const SizedBox(height: 14),
+                    // 3. Segmented Tabs Row + Search Icon Button
+                    _buildTabsRow(isMobile, peopleState),
+                    const SizedBox(height: 18),
+
+                    // Search Bar if expanded
+                    if (_isSearchVisible) ...[
+                      _buildExpandedSearchBar(),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // Global Error Notification Banner (if any)
+                    if (peopleState.errorMessage != null &&
+                        peopleState.contacts.isEmpty &&
+                        !peopleState.isLoading) ...[
+                      _buildErrorBanner(peopleState.errorMessage!),
+                      const SizedBox(height: 14),
+                    ],
+
+                    // 4. Tab Content Body
+                    if (peopleState.isLoading && peopleState.contacts.isEmpty)
+                      _buildLoadingIndicator()
+                    else
+                      _buildTabContent(availableWidth, isMobile, peopleState),
                   ],
-
-                  // 4. Tab Content Body
-                  _buildTabContent(availableWidth, isMobile),
-                ],
+                ),
               ),
             ),
           ),
@@ -350,7 +186,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // 1. HEADER ROW (Matching Image 2)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildHeaderRow(BuildContext context, bool isMobile) {
+  Widget _buildHeaderRow(BuildContext context, bool isMobile, PeopleState state) {
     final titleWidget = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -490,17 +326,25 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // 2. TOP METRICS ROW (Matching Image 2)
+  // 2. TOP METRICS ROW (Matching Image 2 - Dynamic Backend Values)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildTopMetricsRow(double availableWidth) {
+  Widget _buildTopMetricsRow(double availableWidth, PeopleState state) {
+    final summary = state.summary;
+    final toReceive = summary.totalReceivables;
+    final toPay = summary.totalPayables;
+    final totalLent = summary.totalLent > 0 ? summary.totalLent : toReceive;
+    final totalBorrowed = summary.totalBorrowed > 0 ? summary.totalBorrowed : toPay;
+    final received = (totalLent - toReceive).clamp(0.0, totalLent);
+    final paid = (totalBorrowed - toPay).clamp(0.0, totalBorrowed);
+
     final cardReceive = _buildKpiCard(
       label: 'TO RECEIVE',
-      badgeText: '0% Collected',
+      badgeText: '${summary.collectionPercentage.toStringAsFixed(0)}% Collected',
       badgeBg: const Color(0xFFDCFCE7),
       badgeFg: const Color(0xFF15803D),
-      amount: '₹${_fmt(_netReceivables)}',
-      totalText: 'Total: ₹${_fmt(_netReceivables)}',
-      subText: 'Received: ₹0',
+      amount: '₹${_fmt(toReceive)}',
+      totalText: 'Total: ₹${_fmt(totalLent)}',
+      subText: 'Received: ₹${_fmt(received)}',
       subColor: const Color(0xFF10B981),
       iconBg: const Color(0xFFECFDF5),
       iconWidget: const Icon(
@@ -512,12 +356,12 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
 
     final cardPay = _buildKpiCard(
       label: 'TO PAY',
-      badgeText: '0% Settled',
+      badgeText: '${summary.settlementPercentage.toStringAsFixed(0)}% Settled',
       badgeBg: const Color(0xFFFEE2E2),
       badgeFg: const Color(0xFFDC2626),
-      amount: '₹${_fmt(_netPayables)}',
-      totalText: 'Total: ₹${_fmt(_netPayables)}',
-      subText: 'Paid: ₹0',
+      amount: '₹${_fmt(toPay)}',
+      totalText: 'Total: ₹${_fmt(totalBorrowed)}',
+      subText: 'Paid: ₹${_fmt(paid)}',
       subColor: const Color(0xFFEF4444),
       iconBg: const Color(0xFFFEE2E2),
       iconWidget: const Icon(
@@ -654,19 +498,17 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                 totalText,
                 style: const TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: Color(0xFF64748B),
-                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 2),
               Text(
                 subText,
                 style: TextStyle(
                   fontSize: 11,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: subColor,
-                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
               ),
             ],
@@ -677,153 +519,466 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // 3. SEGMENTED TABS ROW (Matching Images 2 & 3)
+  // PENDING INVITATIONS BANNER (Matching Image 2)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildTabsRow(bool isMobile) {
-    final tabs = [
-      {'label': 'Contacts', 'icon': LucideIcons.users},
-      {'label': 'Financial Groups (${_financialGroups.length})', 'icon': LucideIcons.walletCards},
-      {'label': 'Requests', 'icon': LucideIcons.userPlus},
-      {'label': 'Global Ledger', 'icon': LucideIcons.arrowLeftRight},
-      {'label': 'Repayment Alerts', 'icon': LucideIcons.bell},
-    ];
+  Widget _buildPendingInvitationsBanner(List<ConnectionRequest> requests, bool isMobile) {
+    if (requests.isEmpty) return const SizedBox.shrink();
 
-    return Row(
-      children: [
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
-              children: List.generate(tabs.length, (index) {
-                final isSelected = _activeTab == index;
-                final t = tabs[index];
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: InkWell(
-                    onTap: () => setState(() => _activeTab = index),
-                    borderRadius: BorderRadius.circular(10),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 160),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 9.5,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0F7FF), // Soft pleasant light blue tint from Image 2
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFBFDBFE), width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Header Row
+          Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFDBEAFE),
+                  shape: BoxShape.circle,
+                ),
+                child: const Center(
+                  child: Icon(
+                    LucideIcons.userPlus,
+                    size: 18,
+                    color: Color(0xFF2563EB),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Pending Invitations (${requests.length})',
+                      style: const TextStyle(
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
                       ),
-                      decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF166534) : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: isSelected
-                              ? const Color(0xFF166534)
-                              : const Color(0xFFE2E8F0),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${requests.length} contact request(s) sent to your @bnxmail.com address.',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                onTap: () {
+                  setState(() {
+                    _activeTab = 2; // Switch to Requests Tab
+                  });
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6.5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDBEAFE),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    'Review All (${requests.length})',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E40AF),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Request cards inside banner
+          ...requests.map((req) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x04000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E40AF), // Deep Blue from screenshot
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Center(
+                      child: Text(
+                        req.fromName.isNotEmpty ? req.fromName[0].toUpperCase() : 'U',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
                         ),
-                        boxShadow: isSelected
-                            ? [
-                                BoxShadow(
-                                  color: const Color(0xFF166534).withValues(alpha: 0.22),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ]
-                            : null,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            t['icon'] as IconData,
-                            size: 14,
-                            color: isSelected
-                                ? Colors.white
-                                : const Color(0xFF475569),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            t['label'] as String,
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: isSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w600,
-                              color: isSelected
-                                  ? Colors.white
-                                  : const Color(0xFF475569),
-                              letterSpacing: -0.1,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ),
-                );
-              }),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          req.fromName,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          req.fromEmail,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: () => _handleRespondRequest(req, 'accept'),
+                    icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
+                    label: const Text(
+                      'Accept',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF16A34A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () => _handleRespondRequest(req, 'reject'),
+                    icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
+                    label: const Text(
+                      'Decline',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
-        // Search Action Icon Button (Far Right)
-        InkWell(
-          onTap: () {
-            setState(() {
-              _isSearchVisible = !_isSearchVisible;
-              if (!_isSearchVisible) {
-                _searchController.clear();
-                _searchQuery = '';
-              }
-            });
-          },
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            width: 38,
-            height: 38,
-            decoration: BoxDecoration(
-              color: _isSearchVisible ? const Color(0xFFF1F5F9) : Colors.white,
+  Future<void> _handleRespondRequest(ConnectionRequest req, String action) async {
+    try {
+      final success = await ref
+          .read(peopleProvider.notifier)
+          .respondConnectionRequest(req.id, action);
+      if (success && mounted) {
+        if (action == 'accept') {
+          AppSnackbar.show(
+            context,
+            "Connected with ${req.fromName}!",
+            type: SnackType.success,
+          );
+        } else {
+          AppSnackbar.show(
+            context,
+            "Declined connection request",
+            type: SnackType.info,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        AppSnackbar.show(
+          context,
+          e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', ''),
+          type: SnackType.error,
+        );
+      }
+    }
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // 3. SEGMENTED TABS ROW + SEARCH BUTTON (Matching Image 1, 2, 3)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildTabsRow(bool isMobile, PeopleState state) {
+    final groupCount = state.groups.length;
+    final requestCount = state.incomingRequests.length;
+
+    final tabs = [
+      const _TabDef(
+        title: 'Contacts',
+        icon: LucideIcons.user,
+      ),
+      _TabDef(
+        title: groupCount > 0 ? 'Financial Groups ($groupCount)' : 'Financial Groups',
+        icon: LucideIcons.walletCards,
+      ),
+      _TabDef(
+        title: requestCount > 0 ? 'Requests ($requestCount)' : 'Requests',
+        icon: LucideIcons.userPlus,
+        hasNotificationBadge: requestCount > 0,
+      ),
+      const _TabDef(
+        title: 'Global Ledger',
+        icon: LucideIcons.arrowLeftRight,
+      ),
+      const _TabDef(
+        title: 'Repayment Alerts',
+        icon: LucideIcons.bell,
+      ),
+    ];
+
+    final tabsListWidget = SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(tabs.length, (idx) {
+          final t = tabs[idx];
+          final isSelected = _activeTab == idx;
+
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  _activeTab = idx;
+                });
+              },
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: Center(
-              child: Icon(
-                _isSearchVisible ? LucideIcons.x : LucideIcons.search,
-                size: 16,
-                color: const Color(0xFF475569),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9.5),
+                decoration: BoxDecoration(
+                  color: isSelected ? const Color(0xFF166534) : Colors.white,
+                  borderRadius: BorderRadius.circular(10),
+                  border: isSelected
+                      ? null
+                      : Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: isSelected
+                      ? const [
+                          BoxShadow(
+                            color: Color(0x20166534),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      t.icon,
+                      size: 14.5,
+                      color: isSelected ? Colors.white : const Color(0xFF64748B),
+                    ),
+                    const SizedBox(width: 7),
+                    Text(
+                      t.title,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                        color: isSelected ? Colors.white : const Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    if (t.hasNotificationBadge) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 7,
+                        height: 7,
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFDC2626), // Red notification dot from Image 2
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
+          );
+        }),
+      ),
+    );
+
+    // Search Toggle Button (Matching Image 1, 2, 3)
+    final searchButton = InkWell(
+      onTap: () {
+        setState(() {
+          _isSearchVisible = !_isSearchVisible;
+          if (!_isSearchVisible) {
+            _searchQuery = '';
+            _searchController.clear();
+          }
+        });
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Center(
+          child: Icon(
+            _isSearchVisible ? LucideIcons.x : LucideIcons.search,
+            size: 16,
+            color: const Color(0xFF64748B),
           ),
         ),
+      ),
+    );
+
+    if (isMobile) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          tabsListWidget,
+          const SizedBox(height: 8),
+          searchButton,
+        ],
+      );
+    }
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(child: tabsListWidget),
+        const SizedBox(width: 12),
+        searchButton,
       ],
     );
   }
 
   Widget _buildExpandedSearchBar() {
     return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFFE2E8F0)),
       ),
+      child: TextField(
+        controller: _searchController,
+        onChanged: (val) {
+          setState(() {
+            _searchQuery = val.trim();
+          });
+        },
+        style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
+        decoration: InputDecoration(
+          hintText: 'Search people, groups, alerts, or ledger records...',
+          hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
+          prefixIcon: const Icon(LucideIcons.search, size: 16, color: Color(0xFF94A3B8)),
+          suffixIcon: _searchQuery.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFF94A3B8)),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    });
+                  },
+                )
+              : null,
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorBanner(String message) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFEF2F2),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
+      ),
       child: Row(
         children: [
-          const Icon(LucideIcons.search, size: 15, color: Color(0xFF94A3B8)),
-          const SizedBox(width: 8),
+          const Icon(LucideIcons.alertCircle, color: Color(0xFFDC2626), size: 18),
+          const SizedBox(width: 10),
           Expanded(
-            child: TextField(
-              controller: _searchController,
-              autofocus: true,
-              onChanged: (v) => setState(() => _searchQuery = v),
-              style: const TextStyle(fontSize: 13),
-              decoration: const InputDecoration(
-                hintText: 'Search people, classification, phone or email...',
-                hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 12.5),
-                border: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
+            child: Text(
+              message,
+              style: const TextStyle(fontSize: 12.5, color: Color(0xFF991B1B), fontWeight: FontWeight.w500),
             ),
           ),
+          TextButton(
+            onPressed: () => ref.read(peopleProvider.notifier).loadAll(),
+            child: const Text('Retry', style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingIndicator() {
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 60),
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF166534)),
+        ),
       ),
     );
   }
@@ -831,28 +986,143 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // 4. TAB CONTENT ROUTING
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildTabContent(double availableWidth, bool isMobile) {
+  Widget _buildTabContent(double availableWidth, bool isMobile, PeopleState state) {
     switch (_activeTab) {
       case 0:
-        return _buildContactsTableCard(availableWidth);
+        return _buildContactsTableCard(availableWidth, state);
       case 1:
-        return _buildFinancialGroupsView(availableWidth, isMobile);
+        return _buildFinancialGroupsView(availableWidth, isMobile, state);
       case 2:
-        return _buildRequestsView(availableWidth, isMobile);
+        return _buildRequestsView(availableWidth, isMobile, state);
       case 3:
-        return _buildGlobalLedgerView(availableWidth, isMobile);
+        return _buildGlobalLedgerView(availableWidth, isMobile, state);
       case 4:
-        return _buildRepaymentAlertsView(availableWidth, isMobile);
+        return _buildRepaymentAlertsView(availableWidth, isMobile, state);
       default:
-        return _buildContactsTableCard(availableWidth);
+        return _buildContactsTableCard(availableWidth, state);
     }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 0: CONTACTS TABLE CARD (Matching Image 2 exactly)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildContactsTableCard(double availableWidth) {
-    final list = _filteredContacts;
+  Widget _buildContactsTableCard(double availableWidth, PeopleState state) {
+    final list = _getFilteredContacts(state.contacts);
+
+    if (list.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x04000000),
+              blurRadius: 10,
+              offset: Offset(0, 3),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minWidth: availableWidth >= 900 ? availableWidth - 64 : 880,
+                ),
+                child: DataTable(
+                  headingRowHeight: 48,
+                  horizontalMargin: 20,
+                  columnSpacing: 24,
+                  border: const TableBorder(
+                    bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                  ),
+                  headingTextStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF64748B),
+                    letterSpacing: 0.6,
+                  ),
+                  columns: [
+                    DataColumn(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('PROFILE CONTACT'),
+                          SizedBox(width: 4),
+                          Icon(LucideIcons.arrowUpDown, size: 12, color: Color(0xFF94A3B8)),
+                        ],
+                      ),
+                    ),
+                    DataColumn(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('CLASSIFICATION'),
+                          SizedBox(width: 4),
+                          Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                        ],
+                      ),
+                    ),
+                    DataColumn(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('COMPANY / LINK'),
+                          SizedBox(width: 4),
+                          Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                        ],
+                      ),
+                    ),
+                    DataColumn(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('PHONE / EMAIL'),
+                          SizedBox(width: 4),
+                          Icon(LucideIcons.filter, size: 12, color: Color(0xFF94A3B8)),
+                        ],
+                      ),
+                    ),
+                    DataColumn(
+                      numeric: true,
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Text('NET EXPOSURE'),
+                          SizedBox(width: 4),
+                          Icon(LucideIcons.arrowUpDown, size: 12, color: Color(0xFF94A3B8)),
+                        ],
+                      ),
+                    ),
+                    const DataColumn(label: SizedBox(width: 24)),
+                  ],
+                  rows: const [],
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 20),
+              alignment: Alignment.center,
+              child: Text(
+                _searchQuery.isNotEmpty
+                    ? "No contact matches '$_searchQuery'. Try clearing the search."
+                    : 'Zero network contacts found. Start adding!',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -950,23 +1220,29 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   const DataColumn(label: SizedBox(width: 24)),
                 ],
                 rows: list.map((c) {
-                  final name = c['name'] as String;
-                  final connected = c['connected'] == true;
-                  final classification = c['classification'] as String;
-                  final company = c['company'] as String;
-                  final phone = c['phone'] as String;
-                  final email = c['email'] as String;
-                  final stand = (c['ledgerStand'] as num).toDouble();
-                  final avatarBg = (c['avatarBg'] as Color?) ?? const Color(0xFFF1F5F9);
-                  final avatarFg = (c['avatarColor'] as Color?) ?? const Color(0xFF475569);
-                  final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
+                  final name = c.name;
+                  final connected = c.isConnected;
+                  final classification = c.classification;
+                  final company = c.displayCompany;
+                  final phone = c.formattedPhone;
+                  final email = c.email;
+                  final stand = c.netBalance;
+                  final avatarBg = c.avatarBg;
+                  final avatarFg = c.avatarColor;
+                  final initial = c.initials;
+
+                  final exposureColor = stand < 0 ? const Color(0xFFDC2626) : const Color(0xFF15803D);
+                  final exposureLabel = stand < 0 ? 'PAYABLE' : 'RECEIVABLE';
 
                   return DataRow(
                     cells: [
-                      // 1. Profile Contact (Avatar + Name + ✓ Connected Badge)
+                      // 1. Profile Contact (Avatar + Name + Status Badge)
                       DataCell(
                         InkWell(
-                          onTap: () => setState(() => _selectedContactForDetail = c),
+                          onTap: () async {
+                            final detail = await ref.read(peopleProvider.notifier).selectContactForDetail(c.id);
+                            setState(() => _selectedContactForDetail = detail ?? c);
+                          },
                           borderRadius: BorderRadius.circular(8),
                           child: Padding(
                             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -1018,6 +1294,30 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                             ),
                                           ),
                                         ],
+                                      ),
+                                    ] else ...[
+                                      const SizedBox(height: 2),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFFEF3C7),
+                                          borderRadius: BorderRadius.circular(4),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Icon(LucideIcons.clock, size: 9, color: Color(0xFFB45309)),
+                                            SizedBox(width: 3),
+                                            Text(
+                                              'Pending Request',
+                                              style: TextStyle(
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFFB45309),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ],
                                   ],
@@ -1090,25 +1390,25 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                         ),
                       ),
 
-                      // 5. Net Exposure (Amount + RECEIVABLE)
+                      // 5. Net Exposure (Amount + RECEIVABLE/PAYABLE)
                       DataCell(
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '₹${_fmt(stand)}',
-                              style: const TextStyle(
+                              '₹${_fmt(stand.abs())}',
+                              style: TextStyle(
                                 fontSize: 14,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
-                                fontFeatures: [FontFeature.tabularFigures()],
+                                color: exposureColor,
+                                fontFeatures: const [FontFeature.tabularFigures()],
                               ),
                             ),
                             const SizedBox(height: 1),
-                            const Text(
-                              'RECEIVABLE',
-                              style: TextStyle(
+                            Text(
+                              exposureLabel,
+                              style: const TextStyle(
                                 fontSize: 9.5,
                                 fontWeight: FontWeight.w700,
                                 color: Color(0xFF64748B),
@@ -1130,20 +1430,14 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          onSelected: (val) {
+                          onSelected: (val) async {
                             if (val == 'ledger') {
-                              setState(() => _selectedContactForDetail = c);
-                            } else if (val == 'log') {
-                              _openLogForSpecificContact(c);
+                              final detail = await ref.read(peopleProvider.notifier).selectContactForDetail(c.id);
+                              setState(() => _selectedContactForDetail = detail ?? c);
+                            } else if (val == 'edit') {
+                              _openEditContactDialog(c);
                             } else if (val == 'delete') {
-                              setState(() {
-                                _contacts.removeWhere((item) => item['id'] == c['id']);
-                              });
-                              AppSnackbar.show(
-                                context,
-                                "Contact '$name' removed from registry",
-                                type: SnackType.info,
-                              );
+                              _confirmDeletePerson(c);
                             }
                           },
                           itemBuilder: (ctx) => [
@@ -1158,12 +1452,12 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                               ),
                             ),
                             const PopupMenuItem(
-                              value: 'log',
+                              value: 'edit',
                               child: Row(
                                 children: [
-                                  Icon(LucideIcons.plus, size: 14, color: Color(0xFF2563EB)),
+                                  Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
                                   SizedBox(width: 8),
-                                  Text('Log Transaction', style: TextStyle(fontSize: 12.5)),
+                                  Text('Edit Contact', style: TextStyle(fontSize: 12.5)),
                                 ],
                               ),
                             ),
@@ -1194,7 +1488,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 1: FINANCIAL GROUPS & SYNDICATES (Matching Images 3 & 4)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildFinancialGroupsView(double availableWidth, bool isMobile) {
+  Widget _buildFinancialGroupsView(double availableWidth, bool isMobile, PeopleState state) {
+    final list = _getFilteredGroups(state.groups);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1345,273 +1641,275 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               ),
               const SizedBox(height: 22),
 
-              // Group Cards List / Grid
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
-                children: _financialGroups.map((grp) {
-                  final targetPool = (grp['targetPool'] as num).toDouble();
-                  final contributed = (grp['contributed'] as num).toDouble();
-                  final expenses = (grp['expenses'] as num).toDouble();
-                  final double pct = targetPool > 0
-                      ? (contributed / targetPool).clamp(0.0, 1.0)
-                      : 0.0;
-                  final pctString = '${(pct * 100).toInt()}%';
+              if (list.isEmpty)
+                _buildEmptyState(
+                  icon: LucideIcons.walletCards,
+                  title: 'No Financial Groups Yet',
+                  subtitle: _searchQuery.isNotEmpty
+                      ? "No group matches '$_searchQuery'."
+                      : 'Create your first joint pool or shared syndicate to manage peer expenses.',
+                  actionLabel: 'Create Group',
+                  onAction: _openNewGroupModal,
+                )
+              else
+                // Group Cards List / Grid
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: list.map((grp) {
+                    final targetPool = grp.targetAmount;
+                    final contributed = grp.totalContributed;
+                    final expenses = grp.totalExpenses;
+                    final double pct = grp.completionPercentage / 100.0;
+                    final pctString = '${grp.completionPercentage.toStringAsFixed(0)}%';
 
-                  return Container(
-                    width: isMobile ? double.infinity : 360,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: const Color(0xFFE2E8F0)),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x04000000),
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Card Top Row (Tag + 2 active)
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3.5,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3E8FF), // Purple Tint
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                grp['tag'] as String,
-                                style: const TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF7C3AED),
-                                  letterSpacing: 0.5,
+                    return Container(
+                      width: isMobile ? double.infinity : 360,
+                      padding: const EdgeInsets.all(18),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x04000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Card Top Row (Tag + members active)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 3.5,
                                 ),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                const Icon(
-                                  LucideIcons.users,
-                                  size: 13,
-                                  color: Color(0xFF64748B),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3E8FF), // Purple Tint
+                                  borderRadius: BorderRadius.circular(6),
                                 ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  '${grp['activeMembers']} active',
+                                child: Text(
+                                  grp.groupType.toUpperCase(),
                                   style: const TextStyle(
-                                    fontSize: 11.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF64748B),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF7C3AED),
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-
-                        // Title & Note
-                        Text(
-                          grp['name'] as String,
-                          style: const TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          grp['description'] as String,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        const SizedBox(height: 14),
-
-                        // Progress Section
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              'Pool Goal (₹${_fmt(targetPool)})',
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF334155),
                               ),
-                            ),
-                            Text(
-                              pctString,
-                              style: const TextStyle(
-                                fontSize: 11.5,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF166534),
+                              Row(
+                                children: [
+                                  const Icon(
+                                    LucideIcons.users,
+                                    size: 13,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${grp.memberCount} active',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(4),
-                          child: LinearProgressIndicator(
-                            value: pct,
-                            minHeight: 6,
-                            backgroundColor: const Color(0xFFE2E8F0),
-                            valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF10B981),
-                            ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 14),
+                          const SizedBox(height: 12),
 
-                        // Metrics Box (Contributed / Expenses)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
+                          // Title & Note
+                          Text(
+                            grp.name,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
                           ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF8FAFC),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: const Color(0xFFF1F5F9)),
+                          const SizedBox(height: 3),
+                          Text(
+                            grp.description ?? 'Shared business capital and collaborative expense pool',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          child: Row(
+                          const SizedBox(height: 14),
+
+                          // Progress Section
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'CONTRIBUTED',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF64748B),
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '₹${_fmt(contributed)}',
-                                      style: const TextStyle(
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF0F172A),
-                                        fontFeatures: [FontFeature.tabularFigures()],
-                                      ),
-                                    ),
-                                  ],
+                              Text(
+                                'Pool Goal (₹${_fmt(targetPool)})',
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF334155),
                                 ),
                               ),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'EXPENSES',
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        fontWeight: FontWeight.w700,
-                                        color: Color(0xFF64748B),
-                                        letterSpacing: 0.5,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '₹${_fmt(expenses)}',
-                                      style: const TextStyle(
-                                        fontSize: 14.5,
-                                        fontWeight: FontWeight.w800,
-                                        color: Color(0xFF0F172A),
-                                        fontFeatures: [FontFeature.tabularFigures()],
-                                      ),
-                                    ),
-                                  ],
+                              Text(
+                                pctString,
+                                style: const TextStyle(
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF166534),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                        const SizedBox(height: 14),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: LinearProgressIndicator(
+                              value: pct.clamp(0.0, 1.0),
+                              minHeight: 6,
+                              backgroundColor: const Color(0xFFE2E8F0),
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                Color(0xFF10B981),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
 
-                        // Action Buttons: Open Ledger & Trash
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ElevatedButton.icon(
-                                onPressed: () => _openGroupLedgerModal(grp),
-                                icon: const Icon(
-                                  LucideIcons.bookOpen,
-                                  size: 14,
-                                  color: Colors.white,
+                          // Metrics Box (Contributed / Expenses)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: const Color(0xFFF1F5F9)),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'CONTRIBUTED',
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64748B),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '₹${_fmt(contributed)}',
+                                        style: const TextStyle(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0F172A),
+                                          fontFeatures: [FontFeature.tabularFigures()],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                                label: const Text(
-                                  'Open Ledger',
-                                  style: TextStyle(
-                                    fontSize: 12.5,
-                                    fontWeight: FontWeight.w700,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'EXPENSES',
+                                        style: TextStyle(
+                                          fontSize: 9.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF64748B),
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        '₹${_fmt(expenses)}',
+                                        style: const TextStyle(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0F172A),
+                                          fontFeatures: [FontFeature.tabularFigures()],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+
+                          // Action Buttons: Open Ledger & Trash
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () => _openGroupLedgerModal(grp),
+                                  icon: const Icon(
+                                    LucideIcons.bookOpen,
+                                    size: 14,
                                     color: Colors.white,
                                   ),
+                                  label: const Text(
+                                    'Open Ledger',
+                                    style: TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF166534),
+                                    elevation: 0,
+                                    padding: const EdgeInsets.symmetric(vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF166534),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(vertical: 10),
-                                  shape: RoundedRectangleBorder(
+                              ),
+                              const SizedBox(width: 8),
+                              InkWell(
+                                onTap: () => _confirmDeleteGroup(grp),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF2F2),
                                     borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: const Color(0xFFFEE2E8)),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      LucideIcons.trash2,
+                                      size: 15,
+                                      color: Color(0xFFEF4444),
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 8),
-                            InkWell(
-                              onTap: () {
-                                setState(() {
-                                  _financialGroups.removeWhere((g) => g['id'] == grp['id']);
-                                });
-                                AppSnackbar.show(
-                                  context,
-                                  "Financial group '${grp['name']}' deleted",
-                                  type: SnackType.info,
-                                );
-                              },
-                              borderRadius: BorderRadius.circular(8),
-                              child: Container(
-                                width: 36,
-                                height: 36,
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFFEF2F2),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(color: const Color(0xFFFEE2E2)),
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    LucideIcons.trash2,
-                                    size: 15,
-                                    color: Color(0xFFEF4444),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                }).toList(),
-              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
             ],
           ),
         ),
@@ -1620,24 +1918,31 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // OPEN GROUP LEDGER MODAL DIALOG (Matching Images 1 & 2 exactly with Zero Overflows)
+  // OPEN GROUP LEDGER MODAL DIALOG (Matching Images 1 & 2 exactly)
   // ══════════════════════════════════════════════════════════════════════════
-  void _openGroupLedgerModal(Map<String, dynamic> grp) {
+  Future<void> _openGroupLedgerModal(FinancialGroup initialGroup) async {
+    // Fetch full group details (with members, splits, transactions) from backend
+    final detailedGroup = await ref.read(peopleProvider.notifier).selectGroupForDetail(initialGroup.id);
+    final grp = detailedGroup ?? initialGroup;
+
+    if (!mounted) return;
+
     int subTab = 0; // 0: Net Balances, 1: Transactions, 2: Members
 
     showDialog(
       context: context,
       barrierColor: Colors.black.withValues(alpha: 0.5),
       builder: (dialogCtx) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            final targetPool = (grp['targetPool'] as num).toDouble();
-            final contributed = (grp['contributed'] as num).toDouble();
-            final expenses = (grp['expenses'] as num).toDouble();
-            final netFund = (grp['netFundInHand'] as num).toDouble();
-            final toGive = (grp['toGivePrivate'] as num).toDouble();
-            final members = (grp['members'] as List<dynamic>?) ?? [];
-            final transactions = (grp['transactions'] as List<dynamic>?) ?? [];
+        return Consumer(
+          builder: (context, cRef, _) {
+            final activeGrp = cRef.watch(peopleProvider).selectedGroup ?? grp;
+
+            final targetPool = activeGrp.targetAmount;
+            final contributed = activeGrp.totalContributed;
+            final expenses = activeGrp.totalExpenses;
+            final netFund = activeGrp.netFundInHand;
+            final members = activeGrp.members;
+            final transactions = activeGrp.transactions;
 
             final screenWidth = MediaQuery.of(context).size.width;
             final modalWidth = screenWidth >= 960 ? 880.0 : (screenWidth - 32.0).clamp(320.0, 880.0);
@@ -1693,7 +1998,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                   Row(
                                     children: [
                                       Text(
-                                        grp['name'] as String,
+                                        activeGrp.name,
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 18,
@@ -1710,9 +2015,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                           color: Colors.white.withValues(alpha: 0.22),
                                           borderRadius: BorderRadius.circular(4),
                                         ),
-                                        child: const Text(
-                                          'PROJECT',
-                                          style: TextStyle(
+                                        child: Text(
+                                          activeGrp.groupType.toUpperCase(),
+                                          style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 9.5,
                                             fontWeight: FontWeight.w700,
@@ -1723,7 +2028,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                   ),
                                   const SizedBox(height: 2),
                                   Text(
-                                    grp['description'] as String,
+                                    activeGrp.description ?? 'Shared business capital and collaborative expense pool',
                                     style: const TextStyle(
                                       color: Colors.white70,
                                       fontSize: 11.5,
@@ -1738,54 +2043,41 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           Row(
                             children: [
                               ElevatedButton.icon(
-                                onPressed: () {
-                                  _openRecordGroupEntryModal(grp, () {
-                                    setModalState(() {});
-                                    setState(() {});
-                                  });
-                                },
+                                onPressed: () => _openRecordGroupEntryModal(activeGrp),
                                 icon: const Icon(LucideIcons.plus, size: 13, color: Colors.white),
                                 label: const Text(
                                   'Record Entry',
                                   style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF10B981),
+                                  backgroundColor: const Color(0xFF15803D),
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  _openInviteMemberModal(grp, () {
-                                    setModalState(() {});
-                                    setState(() {});
-                                  });
-                                },
+                              ElevatedButton.icon(
+                                onPressed: () => _openInviteMemberModal(activeGrp),
                                 icon: const Icon(LucideIcons.userPlus, size: 13, color: Colors.white),
                                 label: const Text(
-                                  'Invite Member',
-                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                  'Invite Partner',
+                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                                 ),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Colors.white54),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF15803D),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                                 ),
                               ),
                               const SizedBox(width: 8),
                               IconButton(
-                                onPressed: () => Navigator.pop(dialogCtx),
                                 icon: const Icon(LucideIcons.x, color: Colors.white, size: 18),
-                                padding: EdgeInsets.zero,
-                                constraints: const BoxConstraints(),
+                                onPressed: () => Navigator.pop(dialogCtx),
+                                tooltip: 'Close',
                               ),
                             ],
                           ),
@@ -1793,54 +2085,55 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                       ),
                     ),
 
-                    // Sub Tabs Bar
+                    // Top 4 Metrics Strip
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                      color: const Color(0xFFF8FAFC),
+                      child: Row(
+                        children: [
+                          _buildGroupMetricItem('POOL GOAL', '₹${_fmt(targetPool)}', const Color(0xFF0F172A)),
+                          _buildGroupMetricItem('CONTRIBUTED', '₹${_fmt(contributed)}', const Color(0xFF15803D)),
+                          _buildGroupMetricItem('EXPENSES', '₹${_fmt(expenses)}', const Color(0xFFDC2626)),
+                          _buildGroupMetricItem('NET IN HAND', '₹${_fmt(netFund)}', const Color(0xFF2563EB)),
+                        ],
                       ),
+                    ),
+                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                    // Segmented Sub-Tabs
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                       child: Row(
                         children: [
                           _buildModalTabItem('Net Balances & Overview', LucideIcons.clock, subTab == 0, () {
-                            setModalState(() => subTab = 0);
+                            subTab = 0;
+                            (context as Element).markNeedsBuild();
                           }),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 8),
                           _buildModalTabItem('Transactions (${transactions.length})', LucideIcons.arrowLeftRight, subTab == 1, () {
-                            setModalState(() => subTab = 1);
+                            subTab = 1;
+                            (context as Element).markNeedsBuild();
                           }),
-                          const SizedBox(width: 20),
+                          const SizedBox(width: 8),
                           _buildModalTabItem('Members (${members.length})', LucideIcons.users, subTab == 2, () {
-                            setModalState(() => subTab = 2);
+                            subTab = 2;
+                            (context as Element).markNeedsBuild();
                           }),
                         ],
                       ),
                     ),
+                    const Divider(height: 16, color: Color(0xFFE2E8F0)),
 
-                    // Body Scrollable Area
+                    // Sub-Tab Content
                     Expanded(
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
-                        physics: const BouncingScrollPhysics(),
-                        child: subTab == 0
-                            ? _buildModalOverviewTab(
-                                contributed: contributed,
-                                expenses: expenses,
-                                netFund: netFund,
-                                targetPool: targetPool,
-                                toGive: toGive,
-                                members: members,
-                                onNoteToGiveTap: () {
-                                  _openNoteToGiveModal(grp, () {
-                                    setModalState(() {});
-                                    setState(() {});
-                                  });
-                                },
-                              )
-                            : (subTab == 1
-                                ? _buildModalTransactionsTab(transactions)
-                                : _buildModalMembersTab(members)),
-                      ),
+                      child: subTab == 0
+                          ? _buildModalOverviewTab(
+                              members: members,
+                              grp: activeGrp,
+                            )
+                          : (subTab == 1
+                              ? _buildModalTransactionsTab(activeGrp, transactions)
+                              : _buildModalMembersTab(activeGrp, members)),
                     ),
                   ],
                 ),
@@ -1852,33 +2145,62 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
+  Widget _buildGroupMetricItem(String label, String value, Color valueColor) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: valueColor,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildModalTabItem(String label, IconData icon, bool isSelected, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
         decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(
-              color: isSelected ? const Color(0xFF166534) : Colors.transparent,
-              width: 2.5,
-            ),
-          ),
+          color: isSelected ? const Color(0xFFECFDF5) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: isSelected ? Border.all(color: const Color(0xFFA7F3D0)) : null,
         ),
         child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
               icon,
               size: 14,
-              color: isSelected ? const Color(0xFF166534) : const Color(0xFF64748B),
+              color: isSelected ? const Color(0xFF065F46) : const Color(0xFF64748B),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 6),
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                color: isSelected ? const Color(0xFF166534) : const Color(0xFF64748B),
+                color: isSelected ? const Color(0xFF065F46) : const Color(0xFF64748B),
               ),
             ),
           ],
@@ -1888,467 +2210,219 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   Widget _buildModalOverviewTab({
-    required double contributed,
-    required double expenses,
-    required double netFund,
-    required double targetPool,
-    required double toGive,
-    required List<dynamic> members,
-    required VoidCallback onNoteToGiveTap,
+    required List<GroupMember> members,
+    required FinancialGroup grp,
   }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 4 KPI Summary Cards Row (Matching Images 1, 2, 5)
-        Row(
-          children: [
-            Expanded(
-              child: _buildModalStatCard(
-                label: 'TOTAL CONTRIBUTED',
-                value: '₹${_fmt(contributed)}',
-                valueColor: const Color(0xFF15803D),
-                borderColor: const Color(0xFF86EFAC),
-                bgColor: const Color(0xFFF0FDF4),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildModalStatCard(
-                label: 'TOTAL EXPENSES',
-                value: '₹${_fmt(expenses)}',
-                valueColor: const Color(0xFFDC2626),
-                borderColor: const Color(0xFFFECDD3),
-                bgColor: const Color(0xFFFEF2F2),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildModalStatCard(
-                label: 'NET FUND IN HAND',
-                value: '₹${_fmt(netFund)}',
-                valueColor: const Color(0xFF2563EB),
-                borderColor: const Color(0xFFBFDBFE),
-                bgColor: const Color(0xFFEFF6FF),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildModalStatCard(
-                label: 'TARGET POOL',
-                value: '₹${_fmt(targetPool)}',
-                valueColor: const Color(0xFF1E293B),
-                borderColor: const Color(0xFFE2E8F0),
-                bgColor: Colors.white,
-              ),
-            ),
-          ],
+    if (members.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text('No members registered in this group yet.', style: TextStyle(color: Color(0xFF64748B))),
         ),
-        const SizedBox(height: 14),
+      );
+    }
 
-        // 5th Card Below: TO GIVE (PRIVATE)
-        Container(
-          width: 220,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF0FDF4),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFF86EFAC)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'TO GIVE (PRIVATE)',
-                    style: TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF15803D),
-                      letterSpacing: 0.5,
-                    ),
+    return SingleChildScrollView(
+      physics: const BouncingScrollPhysics(),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: DataTable(
+          headingRowHeight: 40,
+          dataRowMinHeight: 52,
+          dataRowMaxHeight: 52,
+          horizontalMargin: 20,
+          columnSpacing: 20,
+          headingTextStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
+          columns: const [
+            DataColumn(label: Text('Member')),
+            DataColumn(label: Text('Role / Status')),
+            DataColumn(label: Text('Total Paid')),
+            DataColumn(label: Text('Contributed')),
+            DataColumn(label: Text('Owed')),
+            DataColumn(label: Text('Net Balance')),
+            DataColumn(label: Text('🔒 Private Note')),
+          ],
+          rows: members.map((m) {
+            final privateNoteText = m.privateNote != null && m.privateNote!.notes.isNotEmpty
+                ? m.privateNote!.notes
+                : (m.privateNote != null && m.privateNote!.amount > 0 ? '₹${_fmt(m.privateNote!.amount)}' : 'Set Note');
+
+            return DataRow(
+              cells: [
+                DataCell(
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(m.name, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
+                      Text(m.email, style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B))),
+                    ],
                   ),
+                ),
+                DataCell(
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFDCFCE7),
+                      color: m.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(LucideIcons.lock, size: 9, color: Color(0xFF15803D)),
-                        SizedBox(width: 2),
-                        Text(
-                          'Only You',
-                          style: TextStyle(fontSize: 8.5, color: Color(0xFF15803D), fontWeight: FontWeight.bold),
-                        ),
-                      ],
+                    child: Text(
+                      '${m.role.toUpperCase()} • ${m.status.toUpperCase()}',
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.bold,
+                        color: m.isAdmin ? const Color(0xFFD97706) : const Color(0xFF2563EB),
+                      ),
                     ),
                   ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '₹${_fmt(toGive)}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF15803D),
-                  fontFeatures: [FontFeature.tabularFigures()],
                 ),
+                DataCell(Text('₹${_fmt(m.totalPaid)}', style: const TextStyle(fontSize: 12.5))),
+                DataCell(Text('₹${_fmt(m.totalContributed)}', style: const TextStyle(fontSize: 12.5))),
+                DataCell(Text('₹${_fmt(m.totalOwed)}', style: const TextStyle(fontSize: 12.5))),
+                DataCell(
+                  Text(
+                    '${m.netBalance >= 0 ? '+' : '-'}₹${_fmt(m.netBalance.abs())}',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: m.netBalance >= 0 ? const Color(0xFF15803D) : const Color(0xFFDC2626),
+                    ),
+                  ),
+                ),
+                DataCell(
+                  InkWell(
+                    onTap: () => _openNoteToGiveModal(grp, m),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(LucideIcons.lock, size: 11, color: Color(0xFF64748B)),
+                          const SizedBox(width: 4),
+                          Text(
+                            privateNoteText,
+                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModalTransactionsTab(FinancialGroup grp, List<GroupTransaction> txs) {
+    if (txs.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('No transactions recorded in this group yet.', style: TextStyle(color: Color(0xFF64748B))),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: () => _openRecordGroupEntryModal(grp),
+                icon: const Icon(LucideIcons.plus, size: 14),
+                label: const Text('Record First Entry'),
+                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534)),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 22),
-
-        // Section: Member Financial Positions & Net Dues
-        Row(
-          children: const [
-            Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF475569)),
-            SizedBox(width: 8),
-            Text(
-              'Member Financial Positions & Net Dues',
-              style: TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Members Dues Table wrapped with horizontal scroll and safe flex widths
-        Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          clipBehavior: Clip.antiAlias,
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 820),
-              child: Table(
-                defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                columnWidths: const {
-                  0: FlexColumnWidth(2.6),
-                  1: FlexColumnWidth(1.8),
-                  2: FlexColumnWidth(1.1),
-                  3: FlexColumnWidth(1.3),
-                  4: FlexColumnWidth(1.0),
-                  5: FlexColumnWidth(1.3),
-                  6: FlexColumnWidth(1.6),
-                },
-                children: [
-                  // Table Header
-                  TableRow(
-                    decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
-                    children: [
-                      _buildTableHeadCell('Member'),
-                      _buildTableHeadCell('Role / Status'),
-                      _buildTableHeadCell('Total Paid'),
-                      _buildTableHeadCell('Contributed'),
-                      _buildTableHeadCell('Owed'),
-                      _buildTableHeadCell('Net Balance'),
-                      _buildTableHeadCell('🔒 Money to Give'),
-                    ],
-                  ),
-                  // Member Rows
-                  ...members.map((m) {
-                    final net = (m['netBalance'] as num).toDouble();
-                    final netStr = net >= 0 ? '+₹${_fmt(net)}' : '-₹${_fmt(net.abs())}';
-
-                    return TableRow(
-                      decoration: const BoxDecoration(
-                        border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
-                      ),
-                      children: [
-                        // 1. Member (Name + Email on 1 line with ellipsis)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                m['name'] as String,
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                              const SizedBox(height: 1),
-                              Text(
-                                m['email'] as String,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // 2. Role / Status (Wrap so it never overflows)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                          child: Wrap(
-                            spacing: 4,
-                            runSpacing: 4,
-                            crossAxisAlignment: WrapCrossAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  m['role'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF475569),
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFDCFCE7),
-                                  borderRadius: BorderRadius.circular(4),
-                                ),
-                                child: Text(
-                                  m['status'] as String,
-                                  style: const TextStyle(
-                                    fontSize: 9.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF15803D),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // 3. Total Paid
-                        _buildTableTextCell('₹${_fmt((m['totalPaid'] as num).toDouble())}'),
-
-                        // 4. Contributed
-                        _buildTableTextCell('₹${_fmt((m['contributed'] as num).toDouble())}'),
-
-                        // 5. Owed
-                        _buildTableTextCell('₹${_fmt((m['owed'] as num).toDouble())}'),
-
-                        // 6. Net Balance
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                          child: Text(
-                            netStr,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF16A34A),
-                              fontFeatures: [FontFeature.tabularFigures()],
-                            ),
-                          ),
-                        ),
-
-                        // 7. + Note to Give button (FittedBox to prevent any wrap/overflow)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                          child: Align(
-                            alignment: Alignment.centerLeft,
-                            child: FittedBox(
-                              fit: BoxFit.scaleDown,
-                              child: OutlinedButton(
-                                onPressed: onNoteToGiveTap,
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: Color(0xFF86EFAC)),
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                ),
-                                child: const Text(
-                                  '+ Note to Give',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF15803D),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTableHeadCell(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF64748B),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableTextCell(String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF334155),
-          fontFeatures: [FontFeature.tabularFigures()],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildModalStatCard({
-    required String label,
-    required String value,
-    required Color valueColor,
-    required Color borderColor,
-    required Color bgColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: borderColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 9.5,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF64748B),
-              letterSpacing: 0.5,
-            ),
-          ),
-          const SizedBox(height: 6),
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              value,
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.w800,
-                color: valueColor,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildModalTransactionsTab(List<dynamic> txs) {
-    if (txs.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(32),
-          child: Text('No group transactions logged yet.', style: TextStyle(color: Color(0xFF64748B))),
-        ),
       );
     }
-    return Column(
-      children: txs.map((t) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(t['type'] as String, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
-                  const SizedBox(height: 2),
-                  Text('${t['member']} • ${t['date']} • ${t['memo']}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                ],
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: txs.length,
+      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
+      itemBuilder: (ctx, i) {
+        final t = txs[i];
+        final isContribution = t.type.toLowerCase() == 'contribution';
+        final color = isContribution ? const Color(0xFF15803D) : const Color(0xFFDC2626);
+
+        return ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          leading: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: isContribution ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Icon(
+                isContribution ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft,
+                size: 16,
+                color: color,
               ),
+            ),
+          ),
+          title: Text(t.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          subtitle: Text('${t.category ?? 'General'} • ${t.type.toUpperCase()}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
-                '₹${_fmt((t['amount'] as num).toDouble())}',
-                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14, color: Color(0xFF15803D)),
+                '${isContribution ? '+' : '-'}₹${_fmt(t.amount)}',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFF94A3B8)),
+                onPressed: () async {
+                  final ok = await ref.read(peopleProvider.notifier).deleteGroupTransaction(grp.id, t.id);
+                  if (ok && mounted) {
+                    AppSnackbar.show(context, 'Group transaction deleted', type: SnackType.info);
+                  }
+                },
               ),
             ],
           ),
         );
-      }).toList(),
+      },
     );
   }
 
-  Widget _buildModalMembersTab(List<dynamic> members) {
-    return Column(
-      children: members.map((m) {
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+  Widget _buildModalMembersTab(FinancialGroup grp, List<GroupMember> members) {
+    if (members.isEmpty) {
+      return const Center(child: Text('No members found', style: TextStyle(color: Color(0xFF64748B))));
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: members.length,
+      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
+      itemBuilder: (ctx, i) {
+        final m = members[i];
+        return ListTile(
+          dense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          leading: CircleAvatar(
+            radius: 16,
+            backgroundColor: const Color(0xFFE0E7FF),
+            child: Text(
+              m.name.isNotEmpty ? m.name[0].toUpperCase() : 'M',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
+            ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          title: Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+          subtitle: Text(m.email, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 16,
-                    backgroundColor: const Color(0xFFDCFCE7),
-                    child: Text(
-                      (m['name'] as String)[0].toUpperCase(),
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF15803D)),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(m['name'] as String, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                      Text(m['email'] as String, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-                    ],
-                  ),
-                ],
-              ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
@@ -2356,27 +2430,41 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  (m['role'] as String).toUpperCase(),
+                  '${m.role.toUpperCase()} • ${m.status.toUpperCase()}',
                   style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
                 ),
               ),
+              const SizedBox(width: 8),
+              if (!m.isAdmin)
+                IconButton(
+                  icon: const Icon(LucideIcons.userMinus, size: 15, color: Color(0xFFDC2626)),
+                  tooltip: 'Remove Member',
+                  onPressed: () async {
+                    final ok = await ref.read(peopleProvider.notifier).removeGroupMember(grp.id, m.id);
+                    if (ok && mounted) {
+                      AppSnackbar.show(context, 'Member removed from group', type: SnackType.info);
+                    }
+                  },
+                ),
             ],
           ),
         );
-      }).toList(),
+      },
     );
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 2: REQUESTS VIEW (Matching Image 5 exactly)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildRequestsView(double availableWidth, bool isMobile) {
+  Widget _buildRequestsView(double availableWidth, bool isMobile, PeopleState state) {
+    final list = state.incomingRequests;
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [
           BoxShadow(
@@ -2389,7 +2477,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row (Incoming Requests & Invitations + 0 Pending badge)
+          // Header Row (Incoming Requests & Invitations + Pending badge from Image 3)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2401,17 +2489,17 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     Text(
                       'Incoming Requests & Invitations',
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: 17,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF0F172A),
                         letterSpacing: -0.3,
                       ),
                     ),
-                    SizedBox(height: 3),
+                    SizedBox(height: 4),
                     Text(
                       'Contact connections and financial group invitations sent to your @bnxmail.com address.',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 12.5,
                         color: Color(0xFF64748B),
                       ),
                     ),
@@ -2420,15 +2508,15 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF), // Soft Blue
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  '0 Pending',
-                  style: TextStyle(
-                    fontSize: 11,
+                child: Text(
+                  '${list.length} Pending',
+                  style: const TextStyle(
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF2563EB),
                   ),
@@ -2438,15 +2526,15 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           ),
           const SizedBox(height: 22),
 
-          // Sub-heading: Direct Contact Requests (0)
+          // Sub-heading: Direct Contact Requests (Image 3)
           Row(
-            children: const [
-              Icon(LucideIcons.userPlus, size: 15, color: Color(0xFF0F172A)),
-              SizedBox(width: 8),
+            children: [
+              const Icon(LucideIcons.userPlus, size: 16, color: Color(0xFF0F172A)),
+              const SizedBox(width: 8),
               Text(
-                'Direct Contact Requests (0)',
-                style: TextStyle(
-                  fontSize: 13,
+                'Direct Contact Requests (${list.length})',
+                style: const TextStyle(
+                  fontSize: 13.5,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
                 ),
@@ -2455,59 +2543,238 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           ),
           const SizedBox(height: 14),
 
-          // Empty State Box (Matching Image 5)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1.0,
+          if (list.isEmpty)
+            // Empty State Box (Matching Image 3 & 5)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.0,
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF1F5F9),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Center(
-                    child: Icon(
-                      LucideIcons.userPlus,
-                      color: Color(0xFF94A3B8),
-                      size: 22,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 46,
+                    height: 46,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF1F5F9),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.userPlus,
+                        color: Color(0xFF94A3B8),
+                        size: 22,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  'No Pending Requests',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No Pending Requests',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'When someone adds your @bnxmail.com address or invites you to a financial group, you can accept or decline here.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: Color(0xFF64748B),
-                    height: 1.35,
+                  const SizedBox(height: 4),
+                  const Text(
+                    'When someone adds your @bnxmail.com address or invites you to a financial group, you can accept or decline here.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Color(0xFF64748B),
+                      height: 1.35,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            )
+          else
+            Column(
+              children: list.map((req) {
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x04000000),
+                        blurRadius: 8,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Top Row: Avatar + Info + Badges (Image 3)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E40AF), // Deep Blue square from Image 3
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Center(
+                              child: Text(
+                                req.fromName.isNotEmpty ? req.fromName[0].toUpperCase() : 'U',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  req.fromName,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(height: 3),
+                                Row(
+                                  children: [
+                                    const Icon(LucideIcons.mail, size: 12, color: Color(0xFF94A3B8)),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      req.fromEmail,
+                                      style: const TextStyle(
+                                        fontSize: 12.5,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: const Text(
+                                        'COLLEAGUE',
+                                        style: TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFFEF3C7),
+                                        borderRadius: BorderRadius.circular(6),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(LucideIcons.clock, size: 10, color: Color(0xFFD97706)),
+                                          SizedBox(width: 4),
+                                          Text(
+                                            'Pending',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFFD97706),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Action Buttons Row (Image 3: Wide Accept button + Decline button)
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: isMobile ? 1 : 3,
+                            child: ElevatedButton.icon(
+                              onPressed: () => _handleRespondRequest(req, 'accept'),
+                              icon: const Icon(LucideIcons.check, size: 15, color: Colors.white),
+                              label: const Text(
+                                'Accept Request',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF10B981), // Vibrant Green from Image 3
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                minimumSize: const Size(0, 42),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            flex: 1,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _handleRespondRequest(req, 'reject'),
+                              icon: const Icon(LucideIcons.x, size: 15, color: Color(0xFFEF4444)),
+                              label: const Text(
+                                'Decline',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFFEF4444),
+                                ),
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                minimumSize: const Size(0, 42),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
             ),
-          ),
         ],
       ),
     );
@@ -2516,15 +2783,16 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 3: GLOBAL LEDGER VIEW (Matching Image 1)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildGlobalLedgerView(double availableWidth, bool isMobile) {
-    final list = _allGlobalTransactions;
+  Widget _buildGlobalLedgerView(double availableWidth, bool isMobile, PeopleState state) {
+    final list = _getFilteredTransactions(state.transactions);
+
     if (list.isEmpty) {
       return _buildEmptyState(
         icon: LucideIcons.arrowLeftRight,
         title: 'Zero Transactions Recorded',
         subtitle: _searchQuery.isNotEmpty
             ? 'No transaction matches your search query.'
-            : 'Log your first friendly loan or advance transaction.',
+            : 'Transactions logged between peer network members will display in this centralized ledger.',
         actionLabel: 'Log Transaction',
         onAction: () => _openGeneralLogModal(isMobile),
       );
@@ -2623,18 +2891,18 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               ),
             ],
             rows: list.map((tx) {
-              final isLent = tx['isLent'] == true;
-              final classification = (tx['classification'] as String? ?? (isLent ? 'LENT' : 'BORROWED')).toUpperCase();
+              final isLent = tx.isLent;
+              final classification = (isLent ? 'LENT' : 'BORROWED').toUpperCase();
               final flowSign = isLent ? '+' : '-';
               final flowColor = isLent ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
-              final amt = (tx['amount'] as num).toDouble();
+              final amt = tx.amount;
 
               return DataRow(
                 cells: [
                   // 1. EXECUTION DATE
                   DataCell(
                     Text(
-                      tx['date'] as String? ?? '',
+                      tx.date,
                       style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
@@ -2646,7 +2914,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   // 2. NETWORK CONTACT
                   DataCell(
                     Text(
-                      tx['contactName'] as String? ?? 'Peer Contact',
+                      tx.personName.isNotEmpty ? tx.personName : 'Peer Contact',
                       style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -2658,7 +2926,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   // 3. ACTIVITY DESCRIPTION
                   DataCell(
                     Text(
-                      tx['memo'] as String? ?? '',
+                      tx.notes ?? '-',
                       style: const TextStyle(
                         fontSize: 12.5,
                         fontWeight: FontWeight.w500,
@@ -2672,15 +2940,15 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFDCFCE7),
+                        color: isLent ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
                         borderRadius: BorderRadius.circular(5),
                       ),
                       child: Text(
                         classification,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF15803D),
+                          color: isLent ? const Color(0xFF15803D) : const Color(0xFFDC2626),
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -2700,11 +2968,19 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     ),
                   ),
 
-                  // 6. Action: Delete Trash
+                  // 6. Action: Delete action
                   DataCell(
                     IconButton(
-                      onPressed: () => _confirmDeleteTransaction(tx),
-                      icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFF94A3B8)),
+                      onPressed: () {
+                        // Section 9 constraint: Backend does not expose DELETE /people/transactions
+                        AppSnackbar.show(
+                          context,
+                          'People ledger transactions are immutable records and cannot be directly deleted.',
+                          type: SnackType.info,
+                        );
+                      },
+                      icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFFCBD5E1)),
+                      tooltip: 'Immutable ledger record',
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),
@@ -2721,8 +2997,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 4: REPAYMENT ALERTS VIEW (Matching Image 2)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildRepaymentAlertsView(double availableWidth, bool isMobile) {
-    final list = _allRepaymentAlerts;
+  Widget _buildRepaymentAlertsView(double availableWidth, bool isMobile, PeopleState state) {
+    final list = _getFilteredAlerts(state.reminders);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2752,7 +3028,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             ),
             const SizedBox(width: 8),
             InkWell(
-              onTap: () => _openDispatchAlertModal(isMobile),
+              onTap: () => _openDispatchAlertModal(isMobile, state.contacts),
               borderRadius: BorderRadius.circular(10),
               child: Container(
                 height: 38,
@@ -2791,7 +3067,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                 ? 'No alert matched your search keyword.'
                 : 'Set repayment maturity alerts to receive scheduled reminder prompts.',
             actionLabel: 'Dispatch Alert',
-            onAction: () => _openDispatchAlertModal(isMobile),
+            onAction: () => _openDispatchAlertModal(isMobile, state.contacts),
           )
         else
           Container(
@@ -2877,10 +3153,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     ),
                   ],
                   rows: list.map((alert) {
-                    final amt = (alert['amount'] as num).toDouble();
-                    final contactName = alert['contactName'] as String? ?? 'Peer Contact';
-                    final memo = alert['memo'] as String? ?? 'Repayment Reminder';
-                    final date = alert['date'] as String? ?? '12/11/2026';
+                    final amt = alert.claimCap;
+                    final contactName = alert.targetContact;
+                    final memo = alert.memoLabel;
+                    final date = alert.maturityDate;
 
                     return DataRow(
                       cells: [
@@ -2903,7 +3179,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           ),
                         ),
 
-                        // 2. TARGET CONTACT (Bold black text)
+                        // 2. TARGET CONTACT
                         DataCell(
                           Text(
                             contactName,
@@ -2922,7 +3198,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                             style: const TextStyle(
                               fontSize: 12.5,
                               fontWeight: FontWeight.w500,
-                              color: Color(0xFF334155),
+                              color: Color(0xFF475569),
                             ),
                           ),
                         ),
@@ -2940,18 +3216,18 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           ),
                         ),
 
-                        // 5. Actions: Send button + Trash icon + Circle check icon
+                        // 5. Actions: Send + Trash + Settle
                         DataCell(
                           Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               InkWell(
                                 onTap: () {
-                                  HapticFeedback.lightImpact();
+                                  // Section 10 constraint: External message dispatch endpoint not exposed
                                   AppSnackbar.show(
                                     context,
-                                    "Payment reminder dispatched to '$contactName'!",
-                                    type: SnackType.success,
+                                    "Notification dispatch (SMS/Push) is not yet exposed by the backend for reminder ID ${alert.id}.",
+                                    type: SnackType.info,
                                   );
                                 },
                                 borderRadius: BorderRadius.circular(6),
@@ -2977,13 +3253,19 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                 icon: const Icon(LucideIcons.trash2, size: 16, color: Color(0xFF94A3B8)),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
+                                tooltip: 'Delete Reminder',
                               ),
                               const SizedBox(width: 10),
                               IconButton(
                                 onPressed: () => _confirmSettleAlert(alert),
-                                icon: const Icon(LucideIcons.circleCheck, size: 16, color: Color(0xFF10B981)),
+                                icon: Icon(
+                                  alert.isSettled ? LucideIcons.checkCheck : LucideIcons.circleCheck,
+                                  size: 16,
+                                  color: const Color(0xFF10B981),
+                                ),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
+                                tooltip: alert.isSettled ? 'Already Settled' : 'Mark Settled',
                               ),
                             ],
                           ),
@@ -3002,9 +3284,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // DEDICATED CONTACT DETAIL / LEDGER SUB-VIEW
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildContactDetailView(Map<String, dynamic> contact) {
-    final stand = (contact['ledgerStand'] as num).toDouble();
-    final transactions = contact['transactions'] as List<Map<String, dynamic>>;
+  Widget _buildContactDetailView(PersonContact contact) {
+    final stand = contact.netBalance;
+    final transactions = contact.transactions;
     final standText = stand == 0
         ? '₹0 SETTLED'
         : (stand > 0 ? '+₹${_fmt(stand)} RECEIVABLE' : '-₹${_fmt(stand.abs())} PAYABLE');
@@ -3012,12 +3294,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         ? const Color(0xFF64748B)
         : (stand > 0 ? const Color(0xFF059669) : const Color(0xFFEF4444));
 
-    final totalLent = transactions
-        .where((t) => t['isLent'] == true)
-        .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
-    final totalBorrowed = transactions
-        .where((t) => t['isLent'] == false)
-        .fold(0.0, (sum, t) => sum + (t['amount'] as num).toDouble());
+    final totalLent = contact.totalLent;
+    final totalBorrowed = contact.totalBorrowed;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -3026,17 +3304,20 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(LucideIcons.arrowLeft, color: Color(0xFF111827), size: 20),
-          onPressed: () => setState(() => _selectedContactForDetail = null),
+          onPressed: () {
+            ref.read(peopleProvider.notifier).clearSelectedContact();
+            setState(() => _selectedContactForDetail = null);
+          },
         ),
         title: Text(
-          '${contact['name']} • Ledger',
+          '${contact.name} • Ledger',
           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF111827)),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.plus, color: Color(0xFF166534), size: 20),
-            tooltip: 'Log Transaction',
-            onPressed: () => _openLogForSpecificContact(contact),
+            icon: const Icon(LucideIcons.pencil, color: Color(0xFF166534), size: 18),
+            tooltip: 'Edit Contact',
+            onPressed: () => _openEditContactDialog(contact),
           ),
         ],
       ),
@@ -3063,15 +3344,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                         children: [
                           CircleAvatar(
                             radius: 24,
-                            backgroundColor: (contact['avatarBg'] as Color?) ?? const Color(0xFFDCFCE7),
+                            backgroundColor: contact.avatarBg,
                             child: Text(
-                              (contact['name'] as String).isNotEmpty
-                                  ? (contact['name'] as String)[0].toUpperCase()
-                                  : 'P',
+                              contact.initials,
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: (contact['avatarColor'] as Color?) ?? const Color(0xFF166534),
+                                color: contact.avatarColor,
                               ),
                             ),
                           ),
@@ -3081,16 +3360,16 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  contact['name'] as String,
+                                  contact.name,
                                   style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                                 ),
                                 const SizedBox(height: 2),
                                 Text(
-                                  '${contact['company']} • ${contact['phone']}',
+                                  '${contact.displayCompany} • ${contact.formattedPhone}',
                                   style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
                                 ),
                                 Text(
-                                  contact['email'] as String? ?? 'No email',
+                                  contact.email,
                                   style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
                                 ),
                               ],
@@ -3148,17 +3427,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                       'Transactions (${transactions.length})',
                       style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
                     ),
-                    ElevatedButton.icon(
-                      onPressed: () => _openLogForSpecificContact(contact),
-                      icon: const Icon(LucideIcons.plus, size: 13, color: Colors.white),
-                      label: const Text('Add Entry', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF166534),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
                   ],
                 ),
                 const SizedBox(height: 12),
@@ -3168,11 +3436,11 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   _buildEmptyState(
                     icon: LucideIcons.bookOpen,
                     title: 'No Transactions for this Contact',
-                    subtitle: 'Log your first friendly loan or advance entry above.',
+                    subtitle: 'Transactions involving this contact will appear here in chronological order.',
                   )
                 else
                   ...transactions.map((t) {
-                    final isLent = t['isLent'] == true;
+                    final isLent = t.isLent;
                     final color = isLent ? const Color(0xFF059669) : const Color(0xFFEF4444);
 
                     return Container(
@@ -3189,13 +3457,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(t['memo'] as String? ?? 'Peer transfer', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                              Text(t.notes ?? 'Peer transfer', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
                               const SizedBox(height: 2),
-                              Text('Date: ${t['date']} • ${t['classification']}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
+                              Text('Date: ${t.date} • ${t.type.toUpperCase()}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
                             ],
                           ),
                           Text(
-                            '${isLent ? '+' : '-'}₹${_fmt((t['amount'] as num).toDouble())}',
+                            '${isLent ? '+' : '-'}₹${_fmt(t.amount)}',
                             style: TextStyle(fontSize: 14.5, fontWeight: FontWeight.w800, color: color),
                           ),
                         ],
@@ -3213,205 +3481,151 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // HELPER MODALS & HANDLERS
   // ══════════════════════════════════════════════════════════════════════════
+
   void _openAddContactDialog() {
     showDialog(
       context: context,
       builder: (context) => EnrollContactDialog(
-        onContactCreated: (newContact) {
-          setState(() {
-            _contacts.insert(0, {
-              ...newContact,
-              'connected': false,
-              'avatarBg': const Color(0xFFD1FAE5),
-              'avatarColor': const Color(0xFF059669),
-              'ledgerStand': 0.0,
-              'transactions': <Map<String, dynamic>>[],
-              'repaymentAlerts': <Map<String, dynamic>>[],
-            });
-          });
-          AppSnackbar.show(
-            context,
-            "Contact '${newContact['name']}' added to registry!",
-            type: SnackType.success,
-          );
+        onSubmit: (req) async {
+          final created = await ref.read(peopleProvider.notifier).createContact(req);
+          if (created != null && mounted) {
+            AppSnackbar.show(
+              context,
+              "Contact '${created.name}' added to registry!",
+              type: SnackType.success,
+            );
+          }
         },
       ),
     );
   }
 
-  void _openGeneralLogModal(bool isMobile) {
-    final amountCtrl = TextEditingController();
-    final memoCtrl = TextEditingController();
-    String targetUser = _contacts.isNotEmpty ? _contacts.first['name'] : 'Select contact';
-    String entryDirection = 'I Lent Assets / Money';
-    DateTime selectedDate = DateTime.now();
-
-    final userList = _contacts.map((c) => c['name'] as String).toList();
+  void _openEditContactDialog(PersonContact contact) {
+    final phoneCtrl = TextEditingController(text: contact.phone);
+    final relationCtrl = TextEditingController(text: contact.relationship ?? contact.roleType);
+    final companyCtrl = TextEditingController(text: contact.company ?? '');
+    final notesCtrl = TextEditingController(text: contact.notes ?? '');
 
     showDialog(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            void submit() {
-              final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
-              if (amt <= 0) {
-                AppSnackbar.show(context, 'Please enter a valid amount greater than ₹0', type: SnackType.warning);
-                return;
-              }
-              final isLent = entryDirection.contains('Lent');
-              final memo = memoCtrl.text.trim().isEmpty ? 'Direct peer transfer' : memoCtrl.text.trim();
-
-              if (_contacts.isNotEmpty) {
-                final contact = _contacts.firstWhere(
-                  (c) => (c['name'] as String).toLowerCase() == targetUser.toLowerCase(),
-                  orElse: () => _contacts.first,
-                );
-                final stand = (contact['ledgerStand'] as num).toDouble();
-                setState(() {
-                  contact['ledgerStand'] = isLent ? stand + amt : stand - amt;
-                  (contact['transactions'] as List<Map<String, dynamic>>).insert(0, {
-                    'id': 'tx_${DateTime.now().millisecondsSinceEpoch}',
-                    'isLent': isLent,
-                    'amount': amt,
-                    'date': '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}',
-                    'memo': memo,
-                    'classification': isLent ? 'LENT' : 'BORROWED',
-                  });
-                });
-              }
-
-              Navigator.pop(context);
-              AppSnackbar.show(context, "Transaction of ₹${_fmt(amt)} logged for '$targetUser'!", type: SnackType.success);
-            }
-
-            return Dialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              child: Container(
-                width: 440,
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Record Peer Transaction', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
-                        IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(LucideIcons.x, size: 18)),
-                      ],
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                    const SizedBox(height: 14),
-
-                    const Text('Target Contact', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                    const SizedBox(height: 5),
-                    Container(
-                      height: 40,
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      decoration: BoxDecoration(border: Border.all(color: const Color(0xFFCBD5E1)), borderRadius: BorderRadius.circular(8)),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: userList.contains(targetUser) ? targetUser : (userList.isNotEmpty ? userList.first : ''),
-                          isExpanded: true,
-                          items: userList.map((String item) => DropdownMenuItem(value: item, child: Text(item, style: const TextStyle(fontSize: 12.5)))).toList(),
-                          onChanged: (v) { if (v != null) setModalState(() => targetUser = v); },
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    const Text('Amount (₹)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                    const SizedBox(height: 5),
-                    TextField(
-                      controller: amountCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. 5000',
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-
-                    const Text('Memo / Notes', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B))),
-                    const SizedBox(height: 5),
-                    TextField(
-                      controller: memoCtrl,
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Supply credit advance',
-                        isDense: true,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: submit,
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-                        child: const Text('Record Transaction'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _openLogForSpecificContact(Map<String, dynamic> contact) {
-    final amountCtrl = TextEditingController();
-    final memoCtrl = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Log Entry for ${contact['name']}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+      builder: (ctx) => AlertDialog(
+        title: Text('Edit ${contact.name}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
-              controller: amountCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Amount (₹)'),
+              controller: phoneCtrl,
+              decoration: const InputDecoration(labelText: 'Mobile Number'),
+              keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 10),
             TextField(
-              controller: memoCtrl,
-              decoration: const InputDecoration(labelText: 'Memo / Description'),
+              controller: relationCtrl,
+              decoration: const InputDecoration(labelText: 'Relationship / Role'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: companyCtrl,
+              decoration: const InputDecoration(labelText: 'Company'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: notesCtrl,
+              decoration: const InputDecoration(labelText: 'Notes'),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () {
-              final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
-              if (amt <= 0) return;
-              final stand = (contact['ledgerStand'] as num).toDouble();
-              setState(() {
-                contact['ledgerStand'] = stand + amt;
-                (contact['transactions'] as List<Map<String, dynamic>>).insert(0, {
-                  'id': 'tx_${DateTime.now().millisecondsSinceEpoch}',
-                  'isLent': true,
-                  'amount': amt,
-                  'date': '${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year}',
-                  'memo': memoCtrl.text.trim().isEmpty ? 'Direct peer transfer' : memoCtrl.text.trim(),
-                  'classification': 'LENT',
-                });
-              });
-              Navigator.pop(context);
-              AppSnackbar.show(context, 'Transaction recorded successfully!', type: SnackType.success);
+            onPressed: () async {
+              final req = UpdatePersonRequest(
+                phone: phoneCtrl.text.trim(),
+                relationship: relationCtrl.text.trim(),
+                company: companyCtrl.text.trim(),
+                notes: notesCtrl.text.trim(),
+              );
+              try {
+                final updated = await ref.read(peopleProvider.notifier).updateContact(contact.id, req);
+                if (mounted) {
+                  Navigator.pop(ctx);
+                  if (_selectedContactForDetail?.id == contact.id) {
+                    setState(() => _selectedContactForDetail = updated);
+                  }
+                  AppSnackbar.show(context, 'Contact updated successfully!', type: SnackType.success);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-            child: const Text('Submit'),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeletePerson(PersonContact contact) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Confirm Contact Deletion', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+        content: Text(
+          "Are you sure you want to permanently delete '${contact.name}'? This action will cascade delete all linked ledger transactions, activity records, and repayment reminders from the system.",
+          style: const TextStyle(fontSize: 13, color: Color(0xFF475569)),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final ok = await ref.read(peopleProvider.notifier).deleteContact(contact.id);
+                if (ok && mounted) {
+                  if (_selectedContactForDetail?.id == contact.id) {
+                    setState(() => _selectedContactForDetail = null);
+                  }
+                  AppSnackbar.show(context, "Contact '${contact.name}' removed from registry", type: SnackType.info);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626), foregroundColor: Colors.white),
+            child: const Text('Delete Permanently'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openGeneralLogModal(bool isMobile) {
+    // Section 6 restriction: The People API does not document POST /people/transactions
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(LucideIcons.info, size: 20, color: Color(0xFF166534)),
+            SizedBox(width: 8),
+            Text('Log Transaction Notice', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        content: const Text(
+          'Individual People direct transaction creation is not currently exposed by the backend People API. Peer ledger movements are recorded through verified business settlements, order transactions, or group pools.',
+          style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
+            child: const Text('Understood'),
           ),
         ],
       ),
@@ -3440,39 +3654,27 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         actions: [
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               final name = nameCtrl.text.trim();
               if (name.isEmpty) return;
               final target = double.tryParse(targetPoolCtrl.text.trim()) ?? 50000.0;
-              setState(() {
-                _financialGroups.add({
-                  'id': 'grp_${DateTime.now().millisecondsSinceEpoch}',
-                  'tag': 'PROJECT OUTLAYS',
-                  'activeMembers': 1,
-                  'name': name,
-                  'description': descCtrl.text.trim().isEmpty ? 'Collaborative enterprise syndicate pool' : descCtrl.text.trim(),
-                  'targetPool': target,
-                  'contributed': 0.0,
-                  'expenses': 0.0,
-                  'netFundInHand': 0.0,
-                  'toGivePrivate': 0.0,
-                  'members': [
-                    {
-                      'name': 'ravinew2004',
-                      'email': 'ravinew2004@bnxmail.com',
-                      'role': 'admin',
-                      'status': 'Active',
-                      'totalPaid': 0.0,
-                      'contributed': 0.0,
-                      'owed': 0.0,
-                      'netBalance': 0.0,
-                    },
-                  ],
-                  'transactions': [],
-                });
-              });
-              Navigator.pop(ctx);
-              AppSnackbar.show(context, "Group '$name' created successfully!", type: SnackType.success);
+              final req = CreateFinancialGroupRequest(
+                name: name,
+                description: descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : null,
+                targetAmount: target,
+                currency: 'INR',
+              );
+              try {
+                final grp = await ref.read(peopleProvider.notifier).createFinancialGroup(req);
+                if (mounted) {
+                  Navigator.pop(ctx);
+                  AppSnackbar.show(context, "Group '${grp.name}' created successfully!", type: SnackType.success);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
             child: const Text('Create'),
@@ -3482,15 +3684,41 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // RECORD GROUP TRANSACTION MODAL (Matching Image 4 exactly)
-  // ══════════════════════════════════════════════════════════════════════════
-  void _openRecordGroupEntryModal(Map<String, dynamic> grp, VoidCallback onDone) {
-    String entryType = 'Group Expense';
+  void _confirmDeleteGroup(FinancialGroup grp) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Financial Group', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+        content: Text("Are you sure you want to delete '${grp.name}'? All member pool records will be cleared."),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final ok = await ref.read(peopleProvider.notifier).deleteFinancialGroup(grp.id);
+                if (ok && mounted) {
+                  AppSnackbar.show(context, "Financial group '${grp.name}' deleted", type: SnackType.info);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626), foregroundColor: Colors.white),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openRecordGroupEntryModal(FinancialGroup grp) {
+    String entryType = 'expense';
     final amtCtrl = TextEditingController();
     final titleCtrl = TextEditingController();
     final categoryCtrl = TextEditingController(text: 'General');
-    DateTime selectedDate = DateTime(2026, 11, 16);
 
     showDialog(
       context: context,
@@ -3509,72 +3737,36 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           'Record Group Transaction',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.3,
-                          ),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                         ),
                         InkWell(
                           onTap: () => Navigator.pop(ctx),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF1F5F9),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
-                            ),
-                          ),
+                          child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Row 1: Entry Type & Amount
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Entry Type', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+                              const Text('Entry Type', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
-                              Container(
-                                height: 44,
-                                padding: const EdgeInsets.symmetric(horizontal: 12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(10),
-                                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                                ),
-                                child: DropdownButtonHideUnderline(
-                                  child: DropdownButton<String>(
-                                    value: entryType,
-                                    isExpanded: true,
-                                    icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
-                                    items: const [
-                                      DropdownMenuItem(value: 'Group Expense', child: Text('Group Expense', style: TextStyle(fontSize: 12.5))),
-                                      DropdownMenuItem(value: 'Pool Contribution', child: Text('Pool Contribution', style: TextStyle(fontSize: 12.5))),
-                                      DropdownMenuItem(value: 'Vendor Payout', child: Text('Vendor Payout', style: TextStyle(fontSize: 12.5))),
-                                      DropdownMenuItem(value: 'Partner Advance', child: Text('Partner Advance', style: TextStyle(fontSize: 12.5))),
-                                    ],
-                                    onChanged: (v) {
-                                      if (v != null) setModalState(() => entryType = v);
-                                    },
-                                  ),
-                                ),
+                              DropdownButtonFormField<String>(
+                                value: entryType,
+                                decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                                items: const [
+                                  DropdownMenuItem(value: 'expense', child: Text('Group Expense')),
+                                  DropdownMenuItem(value: 'contribution', child: Text('Capital Contribution')),
+                                ],
+                                onChanged: (v) => setModalState(() => entryType = v!),
                               ),
                             ],
                           ),
@@ -3584,199 +3776,66 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Amount *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+                              const Text('Amount (₹) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: amtCtrl,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                                decoration: InputDecoration(
-                                  hintText: '0.00',
-                                  hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                                  ),
-                                ),
+                                decoration: const InputDecoration(border: OutlineInputBorder(), hintText: '0.00', contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
                               ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-
-                    // Row 2: Title / Description *
-                    const Text('Title / Description *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
+                    const SizedBox(height: 14),
+                    const Text('Title / Description *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: titleCtrl,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Supplier Batch Payment or Initial Capital',
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                        ),
-                      ),
+                      decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'e.g. Architectural Blueprint Fee', contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
                     ),
-                    const SizedBox(height: 16),
-
-                    // Row 3: Category & Date
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
-                              const SizedBox(height: 6),
-                              TextField(
-                                controller: categoryCtrl,
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                                decoration: InputDecoration(
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text('Date', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
-                              const SizedBox(height: 6),
-                              InkWell(
-                                onTap: () async {
-                                  final p = await showDatePicker(
-                                    context: context,
-                                    initialDate: selectedDate,
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2100),
-                                  );
-                                  if (p != null) {
-                                    setModalState(() => selectedDate = p);
-                                  }
-                                },
-                                borderRadius: BorderRadius.circular(10),
-                                child: Container(
-                                  height: 44,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}',
-                                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
-                                      ),
-                                      const Icon(LucideIcons.calendar, size: 16, color: Color(0xFF64748B)),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 14),
+                    const Text('Category', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: categoryCtrl,
+                      decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'e.g. Design, Supply, Operations', contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
                     ),
-                    const SizedBox(height: 24),
-
-                    // Actions
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const Text('Cancel', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155))),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final amt = double.tryParse(amtCtrl.text.trim()) ?? 0.0;
-                              final desc = titleCtrl.text.trim().isNotEmpty ? titleCtrl.text.trim() : 'Group Transaction';
-                              if (amt <= 0) {
-                                AppSnackbar.show(context, 'Please enter a valid amount', type: SnackType.warning);
-                                return;
-                              }
-                              final isContribution = entryType == 'Pool Contribution';
-                              if (isContribution) {
-                                grp['contributed'] = (grp['contributed'] as num).toDouble() + amt;
-                                grp['netFundInHand'] = (grp['netFundInHand'] as num).toDouble() + amt;
-                              } else {
-                                grp['expenses'] = (grp['expenses'] as num).toDouble() + amt;
-                                grp['netFundInHand'] = (grp['netFundInHand'] as num).toDouble() - amt;
-                              }
-
-                              (grp['transactions'] as List<dynamic>).insert(0, {
-                                'id': 'gtx_${DateTime.now().millisecondsSinceEpoch}',
-                                'date': '${selectedDate.day} Nov ${selectedDate.year}',
-                                'member': 'ravinew2004',
-                                'amount': amt,
-                                'type': entryType,
-                                'memo': desc,
-                              });
-
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final amt = double.tryParse(amtCtrl.text.trim()) ?? 0.0;
+                          final title = titleCtrl.text.trim();
+                          if (title.isEmpty || amt <= 0) {
+                            AppSnackbar.show(context, 'Please enter a valid title and amount greater than 0', type: SnackType.warning);
+                            return;
+                          }
+                          final req = AddGroupTransactionRequest(
+                            title: title,
+                            amount: amt,
+                            type: entryType,
+                            category: categoryCtrl.text.trim(),
+                            splitType: 'equal',
+                          );
+                          try {
+                            await ref.read(peopleProvider.notifier).addGroupTransaction(grp.id, req);
+                            if (mounted) {
                               Navigator.pop(ctx);
-                              onDone();
                               AppSnackbar.show(context, 'Transaction saved successfully!', type: SnackType.success);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF166534),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const Text('Save Entry', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)),
-                          ),
-                        ),
-                      ],
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
+                        child: const Text('Save Entry', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ],
                 ),
@@ -3788,13 +3847,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
-  // ══════════════════════════════════════════════════════════════════════════
-  // INVITE PARTNER TO GROUP MODAL (Matching Image 3 exactly)
-  // ══════════════════════════════════════════════════════════════════════════
-  void _openInviteMemberModal(Map<String, dynamic> grp, VoidCallback onDone) {
-    final nameCtrl = TextEditingController();
+  void _openInviteMemberModal(FinancialGroup grp) {
     final emailCtrl = TextEditingController();
-    String selectedRole = 'Member (Can view ledger & contribute)';
+    String selectedRole = 'member';
 
     showDialog(
       context: context,
@@ -3813,104 +3868,22 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Invite Partner to Group',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.3,
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => Navigator.pop(ctx),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF1F5F9),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
-                            ),
-                          ),
-                        ),
+                        const Text('Invite Partner to Group', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
+                        InkWell(onTap: () => Navigator.pop(ctx), child: const Icon(LucideIcons.x, size: 16)),
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Partner Name
-                    const Text(
-                      'Partner Name',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    TextField(
-                      controller: nameCtrl,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Ramesh Patel',
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Partner Email
-                    const Text(
-                      'Partner @bnxmail.com Email *',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
+                    const Text('Partner @bnxmail.com Email *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     TextField(
                       controller: emailCtrl,
-                      style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
+                        border: OutlineInputBorder(),
                         hintText: 'partner@bnxmail.com',
-                        hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                        ),
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -3919,113 +3892,45 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                       style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
                     ),
                     const SizedBox(height: 16),
-
-                    // Assigned Access Role
-                    const Text(
-                      'Assigned Access Role',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
+                    const Text('Assigned Access Role', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
-                    Container(
-                      height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedRole,
-                          isExpanded: true,
-                          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
-                          items: const [
-                            DropdownMenuItem(
-                              value: 'Member (Can view ledger & contribute)',
-                              child: Text('Member (Can view ledger & contribute)', style: TextStyle(fontSize: 12.5, color: Color(0xFF0F172A))),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Manager (Can manage group operations)',
-                              child: Text('Manager (Can manage group operations)', style: TextStyle(fontSize: 12.5, color: Color(0xFF0F172A))),
-                            ),
-                            DropdownMenuItem(
-                              value: 'Admin (Full ledger & pool control)',
-                              child: Text('Admin (Full ledger & pool control)', style: TextStyle(fontSize: 12.5, color: Color(0xFF0F172A))),
-                            ),
-                          ],
-                          onChanged: (v) {
-                            if (v != null) setModalState(() => selectedRole = v);
-                          },
-                        ),
-                      ),
+                    DropdownButtonFormField<String>(
+                      value: selectedRole,
+                      decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                      items: const [
+                        DropdownMenuItem(value: 'member', child: Text('Member (Can view ledger & contribute)')),
+                        DropdownMenuItem(value: 'manager', child: Text('Manager (Can manage group operations)')),
+                        DropdownMenuItem(value: 'admin', child: Text('Admin (Full ledger & pool control)')),
+                      ],
+                      onChanged: (v) => setModalState(() => selectedRole = v!),
                     ),
                     const SizedBox(height: 24),
-
-                    // Actions
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.pop(ctx),
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: Color(0xFFCBD5E1)),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const Text(
-                              'Cancel',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF334155)),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: () {
-                              final email = emailCtrl.text.trim();
-                              final name = nameCtrl.text.trim().isNotEmpty
-                                  ? nameCtrl.text.trim()
-                                  : (email.isNotEmpty ? email.split('@').first : 'Partner');
-                              if (email.isEmpty) {
-                                AppSnackbar.show(context, 'Please enter a valid @bnxmail.com email', type: SnackType.warning);
-                                return;
-                              }
-                              final roleShort = selectedRole.contains('Admin')
-                                  ? 'admin'
-                                  : (selectedRole.contains('Manager') ? 'manager' : 'member');
-                              (grp['members'] as List<dynamic>).add({
-                                'name': name,
-                                'email': email,
-                                'role': roleShort,
-                                'status': 'Active',
-                                'totalPaid': 0.0,
-                                'contributed': 0.0,
-                                'owed': 0.0,
-                                'netBalance': 0.0,
-                              });
-                              grp['activeMembers'] = (grp['activeMembers'] as num).toInt() + 1;
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final email = emailCtrl.text.trim().toLowerCase();
+                          if (!email.endsWith('@bnxmail.com')) {
+                            AppSnackbar.show(context, 'Please enter a valid @bnxmail.com email address', type: SnackType.warning);
+                            return;
+                          }
+                          final req = InviteGroupMemberRequest(email: email, role: selectedRole);
+                          try {
+                            await ref.read(peopleProvider.notifier).inviteGroupMember(grp.id, req);
+                            if (mounted) {
                               Navigator.pop(ctx);
-                              onDone();
                               AppSnackbar.show(context, "Invitation dispatched to '$email'!", type: SnackType.success);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF166534),
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            ),
-                            child: const Text(
-                              'Dispatch Invitation',
-                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                            ),
-                          ),
-                        ),
-                      ],
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                            }
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
+                        child: const Text('Dispatch Invitation', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
                     ),
                   ],
                 ),
@@ -4037,41 +3942,77 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
-  void _openNoteToGiveModal(Map<String, dynamic> grp, VoidCallback onDone) {
-    final amtCtrl = TextEditingController();
+  void _openNoteToGiveModal(FinancialGroup grp, GroupMember member) {
+    final noteCtrl = TextEditingController(text: member.privateNote?.notes ?? '');
+    final amtCtrl = TextEditingController(text: (member.privateNote?.amount ?? 0.0) > 0 ? member.privateNote!.amount.toString() : '');
 
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Private Note to Give', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: TextField(
-          controller: amtCtrl,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: const InputDecoration(labelText: 'Private Due Amount (₹)', hintText: 'Only visible to you'),
+        title: Text('Private Note for ${member.name}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: noteCtrl,
+              decoration: const InputDecoration(labelText: 'Internal Note', hintText: 'Confidential note only visible to you'),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: amtCtrl,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(labelText: 'Private Due / Commitment (₹)', hintText: '0.00'),
+            ),
+          ],
         ),
         actions: [
+          if (member.privateNote != null)
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await ref.read(peopleProvider.notifier).deletePrivateMemberNote(grp.id, member.id);
+                if (mounted) {
+                  AppSnackbar.show(context, 'Private note removed', type: SnackType.info);
+                }
+              },
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
           TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
+              final note = noteCtrl.text.trim();
               final amt = double.tryParse(amtCtrl.text.trim()) ?? 0.0;
-              grp['toGivePrivate'] = amt;
-              Navigator.pop(ctx);
-              onDone();
-              AppSnackbar.show(context, 'Private due updated!', type: SnackType.success);
+              final req = SetPrivateNoteRequest(note: note, amount: amt);
+              try {
+                await ref.read(peopleProvider.notifier).setPrivateMemberNote(grp.id, member.id, req);
+                if (mounted) {
+                  Navigator.pop(ctx);
+                  AppSnackbar.show(context, 'Private note saved!', type: SnackType.success);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
             },
             style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-            child: const Text('Save'),
+            child: const Text('Save Note'),
           ),
         ],
       ),
     );
   }
 
-  void _openDispatchAlertModal(bool isMobile) {
-    String? selectedContact;
-    final memoCtrl = TextEditingController();
-    final claimCapCtrl = TextEditingController();
-    DateTime selectedDate = DateTime(2026, 11, 16);
+  void _openDispatchAlertModal(bool isMobile, List<PersonContact> contacts) {
+    if (contacts.isEmpty) {
+      AppSnackbar.show(context, 'Please enroll at least one contact before scheduling repayment alerts.', type: SnackType.warning);
+      return;
+    }
+
+    PersonContact selected = contacts.first;
+    final memoCtrl = TextEditingController(text: 'Q4 Short-term Bridge Repayment');
+    final claimCapCtrl = TextEditingController(text: '25000.00');
+    DateTime selectedDate = DateTime(2026, 12, 15);
 
     showDialog(
       context: context,
@@ -4090,121 +4031,44 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         const Text(
                           'Schedule Repayment Alert',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                            letterSpacing: -0.3,
-                          ),
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A)),
                         ),
                         InkWell(
                           onTap: () => Navigator.pop(ctx),
-                          borderRadius: BorderRadius.circular(20),
-                          child: Container(
-                            width: 28,
-                            height: 28,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFFF1F5F9),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Center(
-                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
-                            ),
-                          ),
+                          child: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
                         ),
                       ],
                     ),
                     const SizedBox(height: 20),
-
-                    // Target Contact *
-                    const Text(
-                      'Target Contact *',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
+                    const Text('Target Contact *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
-                    Container(
-                      height: 44,
-                      padding: const EdgeInsets.symmetric(horizontal: 14),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: selectedContact,
-                          hint: const Text(
-                            'Select contact...',
-                            style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                          ),
-                          isExpanded: true,
-                          icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
-                          items: _contacts.map((c) {
-                            return DropdownMenuItem<String>(
-                              value: c['name'] as String,
-                              child: Text(
-                                c['name'] as String,
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                              ),
-                            );
-                          }).toList(),
-                          onChanged: (v) {
-                            setModalState(() => selectedContact = v);
-                          },
-                        ),
-                      ),
+                    DropdownButtonFormField<PersonContact>(
+                      value: selected,
+                      decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+                      items: contacts.map((c) {
+                        return DropdownMenuItem(value: c, child: Text(c.name));
+                      }).toList(),
+                      onChanged: (v) {
+                        if (v != null) setModalState(() => selected = v);
+                      },
                     ),
                     const SizedBox(height: 16),
-
-                    // Row: Memo Label * & Claim Cap (₹)
                     Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Memo Label *',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
+                              const Text('Memo Label *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: memoCtrl,
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                                decoration: InputDecoration(
-                                  hintText: 'e.g. Loan Repayment Due',
-                                  hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                                  ),
-                                ),
+                                decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
                               ),
                             ],
                           ),
@@ -4214,38 +4078,12 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text(
-                                'Claim Cap (₹)',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
+                              const Text('Claim Cap (₹) *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                               const SizedBox(height: 6),
                               TextField(
                                 controller: claimCapCtrl,
                                 keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                                decoration: InputDecoration(
-                                  hintText: '0.00',
-                                  hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
-                                  filled: true,
-                                  fillColor: Colors.white,
-                                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  enabledBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                                  ),
-                                  focusedBorder: OutlineInputBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
-                                  ),
-                                ),
+                                decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12)),
                               ),
                             ],
                           ),
@@ -4253,16 +4091,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                       ],
                     ),
                     const SizedBox(height: 16),
-
-                    // Maturity / Due Date *
-                    const Text(
-                      'Maturity / Due Date *',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
+                    const Text('Maturity / Due Date *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 6),
                     InkWell(
                       onTap: () async {
@@ -4276,7 +4105,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           setModalState(() => selectedDate = picked);
                         }
                       },
-                      borderRadius: BorderRadius.circular(10),
                       child: Container(
                         height: 44,
                         padding: const EdgeInsets.symmetric(horizontal: 14),
@@ -4288,65 +4116,47 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}',
-                              style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                            ),
-                            const Icon(LucideIcons.calendar, size: 16, color: Color(0xFF0F172A)),
+                            Text('${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}'),
+                            const Icon(LucideIcons.calendar, size: 16),
                           ],
                         ),
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // Bottom Solid Action: Dispatch Repayment Alert (Matching Image 3)
                     SizedBox(
                       width: double.infinity,
                       height: 46,
                       child: ElevatedButton(
-                        onPressed: () {
-                          final target = selectedContact ?? (_contacts.isNotEmpty ? _contacts.first['name'] as String : 'kamesh');
-                          final memo = memoCtrl.text.trim().isEmpty ? 'loan which is gave you 20iuiw' : memoCtrl.text.trim();
+                        onPressed: () async {
+                          final memo = memoCtrl.text.trim();
                           final amt = double.tryParse(claimCapCtrl.text.trim()) ?? 0.0;
-                          final dateStr = '${selectedDate.day.toString().padLeft(2, '0')}/${selectedDate.month.toString().padLeft(2, '0')}/${selectedDate.year}';
-
-                          final contact = _contacts.firstWhere(
-                            (c) => c['name'] == target,
-                            orElse: () => _contacts.first,
+                          final dateStr = '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
+                          if (memo.isEmpty || amt <= 0) {
+                            AppSnackbar.show(context, 'Please enter a valid memo and claim amount', type: SnackType.warning);
+                            return;
+                          }
+                          final req = CreateRepaymentAlertRequest(
+                            contactId: selected.id,
+                            targetContact: selected.name,
+                            claimCap: amt,
+                            maturityDate: dateStr,
+                            memoLabel: memo,
+                            status: 'Pending',
                           );
-                          setState(() {
-                            (contact['repaymentAlerts'] as List<Map<String, dynamic>>).insert(0, {
-                              'id': 'alt_${DateTime.now().millisecondsSinceEpoch}',
-                              'date': dateStr,
-                              'memo': memo,
-                              'amount': amt > 0 ? amt : 20000.0,
-                              'status': 'Pending',
-                            });
-                          });
-
-                          Navigator.pop(ctx);
-                          AppSnackbar.show(
-                            context,
-                            "Repayment alert scheduled for '$target'!",
-                            type: SnackType.success,
-                          );
+                          try {
+                            await ref.read(peopleProvider.notifier).createRepaymentAlert(req);
+                            if (mounted) {
+                              Navigator.pop(ctx);
+                              AppSnackbar.show(context, "Repayment alert scheduled for '${selected.name}'!", type: SnackType.success);
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                            }
+                          }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF166534),
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Dispatch Repayment Alert',
-                          style: TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
+                        child: const Text('Dispatch Repayment Alert', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
@@ -4359,31 +4169,64 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
-  void _confirmDeleteTransaction(Map<String, dynamic> tx) {
-    setState(() {
-      for (var c in _contacts) {
-        (c['transactions'] as List<Map<String, dynamic>>).removeWhere((t) => t['id'] == tx['id']);
-      }
-    });
-    AppSnackbar.show(context, 'Transaction removed from ledger', type: SnackType.info);
+  void _confirmDeleteAlert(RepaymentAlert alert) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Repayment Alert', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFFDC2626))),
+        content: Text("Are you sure you want to dismiss the repayment alert for '${alert.targetContact}'?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final ok = await ref.read(peopleProvider.notifier).deleteRepaymentAlert(alert.id);
+                if (ok && mounted) {
+                  AppSnackbar.show(context, 'Alert cleared', type: SnackType.info);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626), foregroundColor: Colors.white),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
-  void _confirmDeleteAlert(Map<String, dynamic> alert) {
-    setState(() {
-      for (var c in _contacts) {
-        (c['repaymentAlerts'] as List<Map<String, dynamic>>).removeWhere((a) => a['id'] == alert['id']);
-      }
-    });
-    AppSnackbar.show(context, 'Alert cleared', type: SnackType.info);
-  }
-
-  void _confirmSettleAlert(Map<String, dynamic> alert) {
-    setState(() {
-      for (var c in _contacts) {
-        (c['repaymentAlerts'] as List<Map<String, dynamic>>).removeWhere((a) => a['id'] == alert['id']);
-      }
-    });
-    AppSnackbar.show(context, 'Alert marked as settled & cleared!', type: SnackType.success);
+  void _confirmSettleAlert(RepaymentAlert alert) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Mark Alert as Settled', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF166534))),
+        content: Text("Mark repayment of ₹${_fmt(alert.claimCap)} from '${alert.targetContact}' as Settled on the server?"),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final ok = await ref.read(peopleProvider.notifier).updateAlertStatus(alert.id, 'Settled');
+                if (ok && mounted) {
+                  AppSnackbar.show(context, 'Alert marked as settled!', type: SnackType.success);
+                }
+              } catch (e) {
+                if (mounted) {
+                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
+            child: const Text('Confirm Settle'),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildEmptyState({
@@ -4451,4 +4294,15 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     final result = '$formattedRest,$last3';
     return isNegative ? '-$result' : result;
   }
+}
+
+class _TabDef {
+  final String title;
+  final IconData icon;
+  final bool hasNotificationBadge;
+  const _TabDef({
+    required this.title,
+    required this.icon,
+    this.hasNotificationBadge = false,
+  });
 }

@@ -2,10 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/people_models.dart';
 
 class EnrollContactDialog extends StatefulWidget {
+  final Future<void> Function(CreatePersonRequest)? onSubmit;
   final Function(Map<String, dynamic>)? onContactCreated;
-  const EnrollContactDialog({super.key, this.onContactCreated});
+
+  const EnrollContactDialog({
+    super.key,
+    this.onSubmit,
+    this.onContactCreated,
+  });
 
   @override
   State<EnrollContactDialog> createState() => _EnrollContactDialogState();
@@ -16,12 +23,15 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
   final _companyController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
-  final _pointsController = TextEditingController(text: '0');
+  final _relationshipController = TextEditingController();
+  final _notesController = TextEditingController();
 
   String _networkRole = 'Friend';
   String? _nameError;
   String? _phoneError;
   String? _emailError;
+  String? _generalError;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -29,11 +39,14 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
     _companyController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
-    _pointsController.dispose();
+    _relationshipController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
-  void _validateAndSubmit() {
+  Future<void> _validateAndSubmit() async {
+    if (_isSubmitting) return;
+
     bool isValid = true;
     String? nameErr;
     String? phoneErr;
@@ -57,45 +70,82 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
       isValid = false;
     }
 
-    final rawEmail = _emailController.text.trim();
-    final emailRegex = RegExp(r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$');
-    if (rawEmail.isNotEmpty && !emailRegex.hasMatch(rawEmail)) {
-      emailErr = 'Enter a valid email address';
+    final rawEmail = _emailController.text.trim().toLowerCase();
+    if (rawEmail.isEmpty) {
+      emailErr = 'E-mail address is required';
       isValid = false;
+    } else if (!rawEmail.endsWith('@bnxmail.com')) {
+      emailErr = 'Email must end with @bnxmail.com as required by documentation';
+      isValid = false;
+    } else {
+      final emailRegex = RegExp(r'^[\w\.-]+@bnxmail\.com$');
+      if (!emailRegex.hasMatch(rawEmail)) {
+        emailErr = 'Enter a valid username before @bnxmail.com';
+        isValid = false;
+      }
     }
 
     setState(() {
       _nameError = nameErr;
       _phoneError = phoneErr;
       _emailError = emailErr;
+      _generalError = null;
     });
 
     if (!isValid) return;
 
-    final formattedPhone =
-        rawPhone.length == 10
-            ? '+91 ${rawPhone.substring(0, 5)} ${rawPhone.substring(5)}'
-            : rawPhone;
+    final req = CreatePersonRequest(
+      name: rawName,
+      roleType: _networkRole.toLowerCase(),
+      relationship: _relationshipController.text.trim().isNotEmpty
+          ? _relationshipController.text.trim()
+          : _networkRole,
+      phone: rawPhone,
+      email: rawEmail,
+      company: _companyController.text.trim().isNotEmpty
+          ? _companyController.text.trim()
+          : null,
+      notes: _notesController.text.trim().isNotEmpty
+          ? _notesController.text.trim()
+          : null,
+    );
 
-    final newContact = {
-      'id': 'c_${DateTime.now().millisecondsSinceEpoch}',
-      'name': rawName,
-      'classification': _networkRole.toUpperCase(),
-      'company':
-          _companyController.text.trim().isEmpty
-              ? '-'
-              : _companyController.text.trim(),
-      'phone': formattedPhone,
-      'email': rawEmail.isEmpty ? '-' : rawEmail,
-      'ledgerStand': 0.0,
-      'transactions': <Map<String, dynamic>>[],
-      'repaymentAlerts': <Map<String, dynamic>>[],
-    };
+    if (widget.onSubmit != null) {
+      setState(() => _isSubmitting = true);
+      try {
+        await widget.onSubmit!(req);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isSubmitting = false;
+            _generalError = e.toString().replaceAll('ApiException: ', '').replaceAll('Exception: ', '');
+          });
+        }
+      }
+    } else if (widget.onContactCreated != null) {
+      final formattedPhone = rawPhone.length == 10
+          ? '+91 ${rawPhone.substring(0, 5)} ${rawPhone.substring(5)}'
+          : rawPhone;
 
-    if (widget.onContactCreated != null) {
+      final newContact = {
+        'id': 'c_${DateTime.now().millisecondsSinceEpoch}',
+        'name': rawName,
+        'classification': _networkRole.toUpperCase(),
+        'company': _companyController.text.trim().isEmpty ? '-' : _companyController.text.trim(),
+        'phone': formattedPhone,
+        'email': rawEmail,
+        'ledgerStand': 0.0,
+        'transactions': <Map<String, dynamic>>[],
+        'repaymentAlerts': <Map<String, dynamic>>[],
+      };
       widget.onContactCreated!(newContact);
+      Navigator.pop(context);
+    } else {
+      Navigator.pop(context);
     }
-    Navigator.pop(context);
   }
 
   @override
@@ -108,22 +158,20 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
       backgroundColor: Colors.white,
       alignment: isMobile ? Alignment.bottomCenter : Alignment.center,
       shape: RoundedRectangleBorder(
-        borderRadius:
-            isMobile
-                ? const BorderRadius.only(
-                  topLeft: Radius.circular(32),
-                  topRight: Radius.circular(32),
-                )
-                : BorderRadius.circular(24),
+        borderRadius: isMobile
+            ? const BorderRadius.only(
+                topLeft: Radius.circular(32),
+                topRight: Radius.circular(32),
+              )
+            : BorderRadius.circular(24),
       ),
-      insetPadding:
-          isMobile
-              ? EdgeInsets.zero
-              : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      insetPadding: isMobile
+          ? EdgeInsets.zero
+          : const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: 500,
-          maxHeight: isMobile ? screenHeight * 0.75 : double.infinity,
+          maxHeight: isMobile ? screenHeight * 0.85 : double.infinity,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -151,7 +199,7 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                 children: [
                   const Expanded(
                     child: Text(
-                      'Enroll New Contact',
+                      'Add People Contact',
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 16,
@@ -176,6 +224,29 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
             ),
             const Divider(height: 1, color: AppColors.border),
 
+            if (_generalError != null)
+              Container(
+                margin: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFFCA5A5)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.alertTriangle, size: 16, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _generalError!,
+                        style: const TextStyle(fontSize: 12, color: Color(0xFFDC2626), fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
             // Form Content
             Flexible(
               child: SingleChildScrollView(
@@ -183,10 +254,10 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildLabel('Full Identity Name', isRequired: true),
+                    _buildLabel('Full Name', isRequired: true),
                     _buildTextField(
                       controller: _nameController,
-                      hint: 'e.g., Rahul Dev',
+                      hint: 'e.g., Kiran Kumar',
                       inputFormatters: [
                         LengthLimitingTextInputFormatter(50),
                       ],
@@ -207,18 +278,18 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('Network Role'),
+                              _buildLabel('Role Type'),
                               _buildDropdown(
                                 value: _networkRole,
                                 items: [
                                   'Friend',
-                                  'Family',
+                                  'Partner',
+                                  'Investor',
                                   'Colleague',
                                   'Business',
                                   'Other',
                                 ],
-                                onChanged:
-                                    (v) => setState(() => _networkRole = v!),
+                                onChanged: (v) => setState(() => _networkRole = v!),
                               ),
                             ],
                           ),
@@ -231,7 +302,7 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                               _buildLabel('Company Label'),
                               _buildTextField(
                                 controller: _companyController,
-                                hint: 'Dunder Mifflin',
+                                hint: 'e.g. Kiran Ventures',
                                 inputFormatters: [
                                   LengthLimitingTextInputFormatter(40),
                                 ],
@@ -251,7 +322,7 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('Phone Contact', isRequired: true),
+                              _buildLabel('Mobile Number', isRequired: true),
                               _buildTextField(
                                 controller: _phoneController,
                                 hint: '9876543210',
@@ -281,10 +352,10 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('E-Mail Address'),
+                              _buildLabel('E-Mail Address', isRequired: true),
                               _buildTextField(
                                 controller: _emailController,
-                                hint: 'name@example.com',
+                                hint: 'username@bnxmail.com',
                                 keyboardType: TextInputType.emailAddress,
                                 inputFormatters: [
                                   LengthLimitingTextInputFormatter(60),
@@ -303,38 +374,52 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                     ),
                     const SizedBox(height: 14),
 
-                    _buildLabel('Initial Loyalty Points'),
+                    _buildLabel('Relationship Note / Specific Role'),
                     _buildTextField(
-                      controller: _pointsController,
-                      hint: '0',
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(6),
-                      ],
+                      controller: _relationshipController,
+                      hint: 'e.g. Investor, Senior Partner',
                     ),
+                    const SizedBox(height: 14),
+
+                    _buildLabel('General Notes'),
+                    _buildTextField(
+                      controller: _notesController,
+                      hint: 'Optional notes regarding peer relationship',
+                      maxLines: 2,
+                    ),
+
                     const SizedBox(height: 24),
 
+                    // Submit Button
                     SizedBox(
                       width: double.infinity,
-                      height: 42,
+                      height: 44,
                       child: ElevatedButton(
-                        onPressed: _validateAndSubmit,
+                        onPressed: _isSubmitting ? null : _validateAndSubmit,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF084421),
+                          backgroundColor: const Color(0xFF166534),
                           foregroundColor: Colors.white,
-                          elevation: 0,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 0,
                         ),
-                        child: const Text(
-                          'Create Contact Node',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Text(
+                                'Enroll Contact',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -349,15 +434,14 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
 
   Widget _buildLabel(String text, {bool isRequired = false}) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6.0, left: 4),
+      padding: const EdgeInsets.only(bottom: 6),
       child: RichText(
         text: TextSpan(
           text: text,
           style: const TextStyle(
-            fontSize: 9,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF5A7184),
-            letterSpacing: 0.5,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF334155),
           ),
           children: [
             if (isRequired)
@@ -374,71 +458,53 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
-    int maxLines = 1,
-    TextInputType keyboardType = TextInputType.text,
-    List<TextInputFormatter>? inputFormatters,
-    String? errorText,
+    TextInputType? keyboardType,
     String? prefixText,
     TextStyle? prefixStyle,
+    List<TextInputFormatter>? inputFormatters,
+    String? errorText,
     ValueChanged<String>? onChanged,
     TextCapitalization textCapitalization = TextCapitalization.none,
+    int maxLines = 1,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
       children: [
-        TextFormField(
+        TextField(
           controller: controller,
-          maxLines: maxLines,
           keyboardType: keyboardType,
           inputFormatters: inputFormatters,
-          onChanged: onChanged,
           textCapitalization: textCapitalization,
-          style: const TextStyle(
-            fontSize: 13,
-            color: AppColors.darkText,
-            fontWeight: FontWeight.w500,
-          ),
+          onChanged: onChanged,
+          maxLines: maxLines,
+          style: const TextStyle(fontSize: 13, color: AppColors.darkText),
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: const TextStyle(
-              color: Color(0xFFC1C7D0),
-              fontSize: 12,
+              fontSize: 13,
+              color: AppColors.secondaryText,
             ),
             prefixText: prefixText,
             prefixStyle: prefixStyle,
             filled: true,
-            fillColor: Colors.white,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
+            fillColor: Colors.grey.shade50,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                color:
-                    errorText != null
-                        ? Colors.red
-                        : const Color(0xFFE5EAF4),
+                color: errorText != null ? Colors.red : AppColors.border,
               ),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                color:
-                    errorText != null
-                        ? Colors.red
-                        : const Color(0xFFE5EAF4),
+                color: errorText != null ? Colors.red : AppColors.border,
               ),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(
-                color:
-                    errorText != null
-                        ? Colors.red
-                        : const Color(0xFF084421),
+                color: errorText != null ? Colors.red : const Color(0xFF166534),
                 width: 1.5,
               ),
             ),
@@ -449,11 +515,7 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
             padding: const EdgeInsets.only(top: 4, left: 4),
             child: Text(
               errorText,
-              style: const TextStyle(
-                fontSize: 10,
-                color: Colors.red,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 11, color: Colors.red),
             ),
           ),
       ],
@@ -466,36 +528,36 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
     required ValueChanged<String?> onChanged,
   }) {
     return Container(
-      height: 40,
+      height: 42,
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE5EAF4)),
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: AppColors.border),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: items.contains(value) ? value : items.first,
           isExpanded: true,
           icon: const Icon(
             LucideIcons.chevronDown,
-            size: 14,
-            color: Color(0xFF5A7184),
+            size: 16,
+            color: AppColors.secondaryText,
           ),
-          items:
-              items.map((String item) {
-                return DropdownMenuItem<String>(
+          items: items
+              .map(
+                (item) => DropdownMenuItem(
                   value: item,
                   child: Text(
                     item,
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: AppColors.darkText,
-                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                );
-              }).toList(),
+                ),
+              )
+              .toList(),
           onChanged: onChanged,
         ),
       ),
