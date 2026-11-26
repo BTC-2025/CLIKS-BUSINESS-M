@@ -131,7 +131,9 @@ class ApiClient {
   static bool _isPaymentsPath(String path) {
     return path.contains('/planned-payments') ||
         path.contains('/split-expenses') ||
-        path.contains('/goal-wallets');
+        path.contains('/goal-wallets') ||
+        path.contains('/transactions') ||
+        path.contains('cliks.beta-softnet.com');
   }
 
   /// Exchanges active account's BNX token for Cliks Business JWT token via SSO.
