@@ -241,14 +241,12 @@ class StorageRepository {
       }
 
       final quota = StorageQuota.fromJson(dataMap);
-      final resolvedQuota = quota.email.isEmpty && email.isNotEmpty
-          ? StorageQuota(
-              email: email,
-              storageLimit: quota.storageLimit,
-              storageUsed: quota.storageUsed,
-              storagePercentage: quota.storagePercentage,
-            )
-          : quota;
+      final resolvedQuota = StorageQuota(
+        email: email.isNotEmpty ? email : quota.email,
+        storageLimit: quota.storageLimit,
+        storageUsed: quota.storageUsed,
+        storagePercentage: quota.storagePercentage,
+      );
 
       _cachedQuotas[email] = resolvedQuota;
       StorageDebug.log('[STORAGE] Quota loaded for $email');

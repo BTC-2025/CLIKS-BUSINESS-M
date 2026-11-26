@@ -310,9 +310,11 @@ class TokenService {
     if (target.isEmpty) return null;
     final tok = await _safeRead(key: _kCliksAccessKey(target));
     if (isValidJwt(tok)) {
-      final jwtEmail = getEmailFromJwt(tok!);
-      if (jwtEmail == null || !jwtEmail.contains('user@cliks.com')) {
+      final jwtEmail = (getEmailFromJwt(tok!) ?? '').trim().toLowerCase();
+      if (jwtEmail == target) {
         return tok;
+      } else {
+        await _safeDelete(key: _kCliksAccessKey(target));
       }
     }
     return null;
@@ -577,16 +579,13 @@ class TokenService {
         }
       }
 
-      // If target mailbox does not have its own separate token, retain current/primary session token
+      // If target account does not have its own separate token, do not assign a foreign account's token
       if (accessToken.isEmpty) {
-        final currentSessionToken = await _safeRead(key: _kAccess);
-        if (currentSessionToken != null && currentSessionToken.isNotEmpty) {
-          accessToken = currentSessionToken;
-          refreshToken = (await _safeRead(key: _kRefresh)) ?? '';
-        } else {
-          for (final acc in accounts) {
-            final tok = acc['accessToken']?.toString() ?? '';
-            if (tok.isNotEmpty) {
+        for (final acc in accounts) {
+          final tok = acc['accessToken']?.toString() ?? '';
+          if (tok.isNotEmpty) {
+            final jwtEmail = (getEmailFromJwt(tok) ?? '').trim().toLowerCase();
+            if (jwtEmail == clean) {
               accessToken = tok;
               refreshToken = acc['refreshToken']?.toString() ?? '';
               break;
@@ -595,8 +594,12 @@ class TokenService {
         }
       }
 
-      if (accessToken.isNotEmpty) {
+      if (accessToken.isNotEmpty && isValidJwt(accessToken)) {
         await saveTokens(accessToken: accessToken, refreshToken: refreshToken);
+      } else {
+        cachedAccessToken = null;
+        await _safeDelete(key: _kAccess);
+        await _safeDelete(key: _kRefresh);
       }
       await _safeWrite(key: _kEmail, value: clean);
       await _safeWrite(key: _kName, value: name);

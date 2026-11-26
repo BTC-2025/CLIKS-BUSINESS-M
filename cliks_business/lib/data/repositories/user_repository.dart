@@ -593,7 +593,26 @@ class UserRepository {
   /// 5.3 Switch Primary Mailbox (POST /api/emails/{emailId}/set-primary)
   static Future<bool> switchPrimaryMailbox(dynamic emailId) async {
     try {
-      final res = await ApiClient.post('/api/emails/$emailId/set-primary');
+      dynamic targetId = emailId;
+      if (emailId is String) {
+        if (int.tryParse(emailId) == null) {
+          try {
+            final emails = await getConnectedEmails();
+            final match = emails.firstWhere(
+              (e) =>
+                  (e['email']?.toString() ?? '').toLowerCase() == emailId.toLowerCase() ||
+                  (e['id']?.toString() ?? '').toLowerCase() == emailId.toLowerCase(),
+              orElse: () => {},
+            );
+            targetId = match['id'];
+          } catch (_) {}
+        }
+      }
+      if (targetId == null || int.tryParse(targetId.toString()) == null) {
+        // Not a numeric email ID registered on backend, skip request
+        return false;
+      }
+      final res = await ApiClient.post('/api/emails/$targetId/set-primary');
       return res['success'] == true || res['data'] != null;
     } catch (e) {
       print('[SWITCH PRIMARY MAILBOX ERROR] $e');
