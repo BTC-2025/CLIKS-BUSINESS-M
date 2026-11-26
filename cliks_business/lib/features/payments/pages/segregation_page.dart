@@ -1,61 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../widgets/setup_target_wallet_dialog.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../widgets/bento/bento.dart';
+import '../../../models/account_model.dart';
+import '../../../data/account_provider.dart';
+import '../../../core/network/api_client.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../data/models/goal_wallet_models.dart';
+import '../../../data/repositories/goal_wallet_repository.dart';
+import '../../navigation/widgets/macos_showroom_menu_card.dart';
 
-class SegregationPage extends StatefulWidget {
+class SegregationPage extends ConsumerStatefulWidget {
   const SegregationPage({super.key});
 
   @override
-  State<SegregationPage> createState() => _SegregationPageState();
+  ConsumerState<SegregationPage> createState() => _SegregationPageState();
 }
 
-class _SegregationPageState extends State<SegregationPage> {
-  String _selectedFilter = 'all'; // 'all', 'growing', 'met', 'claimed'
+class _SegregationPageState extends ConsumerState<SegregationPage> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  bool _isSearchExpanded = false;
 
-  final List<Map<String, dynamic>> _wallets = [
-    {
-      'id': '1',
-      'title': 'pen',
-      'status': 'TARGET MET',
-      'statusColor': const Color(0xFFE11D48),
-      'saved': 50000.0,
-      'target': 50000.0,
-      'notes': 'Dedicated supplies & stationery reserve',
-      'isClaimed': false,
-    },
-    {
-      'id': '2',
-      'title': 'future stock',
-      'status': 'FULLY CLAIMED',
-      'statusColor': const Color(0xFF3B82F6),
-      'saved': 50000.0,
-      'target': 50000.0,
-      'notes': 'Reserve pool to procure upcoming seasonal inventory',
-      'isClaimed': true,
-    },
-    {
-      'id': '3',
-      'title': 'Office Upgrade',
-      'status': 'IN PROGRESS',
-      'statusColor': const Color(0xFF059669),
-      'saved': 32000.0,
-      'target': 100000.0,
-      'notes': 'Ergonomic workstations and office improvement reserve',
-      'isClaimed': false,
-    },
-  ];
+  List<GoalWallet> _wallets = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  int _loadVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   /// Indian currency format helper (e.g. 451000 -> 4,51,000)
   String _formatCurrency(double val) {
     if (val == 0) return '0';
     final isNegative = val < 0;
-    final clampedVal =
-        val.abs() > 999999999999.99 ? 999999999999.99 : val.abs();
+    final clampedVal = val.abs() > 999999999999.99
+        ? 999999999999.99
+        : val.abs();
     final absVal = clampedVal.round();
     final s = absVal.toString();
     if (s.length <= 3) {
@@ -71,21 +66,87 @@ class _SegregationPageState extends State<SegregationPage> {
     return isNegative ? '-$result' : result;
   }
 
-  void _addNewWallet(Map<String, dynamic> wallet) {
-    setState(() {
-      _wallets.add(wallet);
-    });
-    AppSnackbar.show(
-      context,
-      "New purpose wallet '${wallet['title']}' created successfully!",
-      type: SnackType.success,
+  Future<void> _loadData([String? accountEmail]) async {
+    final version = ++_loadVersion;
+    final activeEmail = (accountEmail != null && accountEmail.trim().isNotEmpty)
+        ? accountEmail.trim().toLowerCase()
+        : ref.read(activeAccountProvider).email.trim().toLowerCase();
+
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+    }
+
+    try {
+      final fetched = await GoalWalletRepository.getGoalWallets(
+        email: activeEmail,
+      );
+      if (version != _loadVersion || !mounted) return;
+
+      setState(() {
+        _wallets = fetched;
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      if (version != _loadVersion || !mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e is ApiException ? e.message : e.toString();
+      });
+    }
+  }
+
+  List<GoalWallet> get _filteredWallets {
+    if (_searchQuery.trim().isEmpty) return _wallets;
+    final q = _searchQuery.trim().toLowerCase();
+    return _wallets.where((w) {
+      final nameMatch = w.name.toLowerCase().contains(q);
+      final descMatch = w.description.toLowerCase().contains(q);
+      return nameMatch || descMatch;
+    }).toList();
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // DIALOGS & ACTIONS
+  // ══════════════════════════════════════════════════════════════════════════
+
+  void _openSetupTargetWalletDialog() {
+    final activeEmail = ref
+        .read(activeAccountProvider)
+        .email
+        .trim()
+        .toLowerCase();
+    showDialog(
+      context: context,
+      builder: (context) => SetupTargetWalletDialog(
+        activeEmail: activeEmail,
+        onWalletCreated: (created) {
+          _loadData();
+        },
+      ),
     );
   }
 
-  void _showConfirmClaimSheet(int index) {
-    final wallet = _wallets[index];
-    final title = wallet['title'] as String;
-    final savedFormatted = _formatCurrency(wallet['saved'] as double);
+  void _openAllocationLedgerDialog(GoalWallet wallet) {
+    final activeEmail = ref
+        .read(activeAccountProvider)
+        .email
+        .trim()
+        .toLowerCase();
+    showDialog(
+      context: context,
+      builder: (ctx) =>
+          AllocationLedgerDialog(wallet: wallet, activeEmail: activeEmail),
+    );
+  }
+
+  void _showConfirmClaimSheet(GoalWallet wallet) {
+    final title = wallet.name;
+    final savedFormatted = _formatCurrency(wallet.currentAmount);
+    bool isClaiming = false;
 
     showModalBottomSheet(
       context: context,
@@ -94,118 +155,176 @@ class _SegregationPageState extends State<SegregationPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 16,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Drag Handle Bar
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 16,
             ),
-            const SizedBox(height: 24),
-
-            // Warning Icon Badge
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: const Color(0xFFFEF2F2),
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFFEE2E8), width: 2),
-              ),
-              child: const Icon(LucideIcons.trophy, color: Color(0xFFE11D48), size: 28),
-            ),
-            const SizedBox(height: 16),
-
-            const Text(
-              'Claim & Extract Goal',
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
-            ),
-            const SizedBox(height: 10),
-
-            Text(
-              'Extract ₹$savedFormatted accumulated for "$title" and release it into active business reserves?',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13, color: Color(0xFF64748B), height: 1.4),
-            ),
-            const SizedBox(height: 26),
-
-            // Buttons (Cancel & Confirm)
-            Row(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    ),
-                    child: const Text(
-                      'Cancel',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
-                    ),
+                // Drag Handle Bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        wallet['isClaimed'] = true;
-                        wallet['status'] = 'FULLY CLAIMED';
-                        wallet['statusColor'] = const Color(0xFF3B82F6);
-                      });
-                      Navigator.pop(ctx);
-                      AppSnackbar.show(
-                        context,
-                        "Successfully extracted ₹$savedFormatted for \"$title\" into reserves!",
-                        type: SnackType.success,
-                      );
-                    },
-                    icon: const Icon(LucideIcons.checkCircle2, size: 16),
-                    label: const Text(
-                      'Confirm Release',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.stylishDarkGreen,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 13),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                const SizedBox(height: 24),
+
+                // Trophy Icon Badge
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFEE2E8),
+                      width: 2,
                     ),
                   ),
+                  child: const Icon(
+                    LucideIcons.trophy,
+                    color: Color(0xFFE11D48),
+                    size: 28,
+                  ),
                 ),
+                const SizedBox(height: 16),
+
+                const Text(
+                  'Claim & Extract Goal',
+                  style: TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                Text(
+                  'Extract ₹$savedFormatted accumulated for "$title" and release it into active business reserves?',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 26),
+
+                // Buttons (Cancel & Confirm)
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: isClaiming ? null : () => Navigator.pop(ctx),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFFCBD5E1)),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF475569),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: isClaiming
+                            ? null
+                            : () async {
+                                setModalState(() => isClaiming = true);
+                                final activeEmail = ref
+                                    .read(activeAccountProvider)
+                                    .email
+                                    .trim()
+                                    .toLowerCase();
+                                try {
+                                  await GoalWalletRepository.claimGoalWallet(
+                                    wallet.id,
+                                    email: activeEmail,
+                                  );
+                                  if (!mounted) return;
+                                  Navigator.pop(ctx);
+                                  AppSnackbar.show(
+                                    context,
+                                    "Successfully extracted ₹$savedFormatted for \"$title\" into reserves!",
+                                    type: SnackType.success,
+                                  );
+                                  _loadData();
+                                } catch (e) {
+                                  setModalState(() => isClaiming = false);
+                                  final msg = e is ApiException
+                                      ? e.message
+                                      : e.toString();
+                                  AppSnackbar.show(
+                                    ctx,
+                                    'Failed to claim goal: $msg',
+                                    type: SnackType.error,
+                                  );
+                                }
+                              },
+                        icon: isClaiming
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(LucideIcons.checkCircle2, size: 16),
+                        label: Text(
+                          isClaiming ? 'Claiming...' : 'Confirm Release',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.stylishDarkGreen,
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
               ],
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  void _openAddCashDialog(int index) {
-    final wallet = _wallets[index];
-    final isClaimed = wallet['isClaimed'] == true;
-    final currentSaved = wallet['saved'] as double;
-    final target = wallet['target'] as double;
-    final remaining = (target - currentSaved).clamp(0.0, double.infinity);
+  void _openAddCashDialog(GoalWallet wallet) {
+    final isClaimed = wallet.isClaimed;
+    final currentSaved = wallet.currentAmount;
+    final target = wallet.targetAmount;
+    final remaining = wallet.remainingAmount;
 
-    // Strict guard: Completed or Claimed goals cannot receive any more cash!
     if (isClaimed) {
       AppSnackbar.show(
         context,
@@ -224,8 +343,8 @@ class _SegregationPageState extends State<SegregationPage> {
       return;
     }
 
-    // Starts completely empty - user can enter directly or tap quick fill!
     final controller = TextEditingController();
+    bool isSubmitting = false;
 
     final quickChips = [
       {'label': '+₹1,000', 'val': 1000.0},
@@ -243,7 +362,9 @@ class _SegregationPageState extends State<SegregationPage> {
       ),
       builder: (ctx) => StatefulBuilder(
         builder: (context, setSheetState) {
-          final entered = double.tryParse(controller.text.trim()) ?? 0.0;
+          final entered =
+              double.tryParse(controller.text.replaceAll(',', '').trim()) ??
+              0.0;
           final projectedTotal = currentSaved + entered;
           final isOverCap = entered > remaining;
 
@@ -279,7 +400,11 @@ class _SegregationPageState extends State<SegregationPage> {
                         color: const Color(0xFFECFDF5),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: const Icon(LucideIcons.plusCircle, color: Color(0xFF059669), size: 18),
+                      child: const Icon(
+                        LucideIcons.plusCircle,
+                        color: Color(0xFF059669),
+                        size: 18,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -287,13 +412,20 @@ class _SegregationPageState extends State<SegregationPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Add Cash to ${wallet['title']}',
-                            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                            'Add Cash to ${wallet.name}',
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             'Saved: ₹${_formatCurrency(currentSaved)} of ₹${_formatCurrency(target)}  •  Remaining: ₹${_formatCurrency(remaining)}',
-                            style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
                           ),
                         ],
                       ),
@@ -310,14 +442,19 @@ class _SegregationPageState extends State<SegregationPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isOverCap ? const Color(0xFFE11D48) : const Color(0xFFCBD5E1),
+                      color: isOverCap
+                          ? const Color(0xFFE11D48)
+                          : const Color(0xFFCBD5E1),
                       width: isOverCap ? 1.5 : 1.0,
                     ),
                   ),
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(6),
@@ -336,9 +473,14 @@ class _SegregationPageState extends State<SegregationPage> {
                         child: TextFormField(
                           controller: controller,
                           autofocus: true,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           inputFormatters: [
-                            const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                            const CurrencyInputFormatter(
+                              integerDigits: 12,
+                              decimalDigits: 2,
+                            ),
                             LengthLimitingTextInputFormatter(15),
                           ],
                           onChanged: (_) => setSheetState(() {}),
@@ -348,38 +490,51 @@ class _SegregationPageState extends State<SegregationPage> {
                             fontWeight: FontWeight.w700,
                           ),
                           decoration: InputDecoration(
-                            hintText: 'Max deposit ₹${_formatCurrency(remaining)}',
+                            hintText:
+                                'Max deposit ₹${_formatCurrency(remaining)}',
                             hintStyle: const TextStyle(
                               color: Color(0xFF94A3B8),
                               fontSize: 14,
                               fontWeight: FontWeight.normal,
                             ),
                             border: InputBorder.none,
-                            isDense: true,
-                            contentPadding: EdgeInsets.zero,
                           ),
                         ),
                       ),
+                      if (controller.text.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(
+                            LucideIcons.x,
+                            size: 16,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          onPressed: () {
+                            controller.clear();
+                            setSheetState(() {});
+                          },
+                        ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
-                // Quick Addition Chips (Including "Fill Remaining")
+                // Quick Chips Row
                 Wrap(
                   spacing: 8,
-                  runSpacing: 6,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
-                    // Highlighted Fill Remaining chip
                     InkWell(
                       onTap: () {
-                        setSheetState(() {
-                          controller.text = remaining.toInt().toString();
-                        });
+                        controller.text = remaining.toInt().toString();
+                        setSheetState(() {});
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFFEF2F2),
                           borderRadius: BorderRadius.circular(20),
@@ -388,8 +543,12 @@ class _SegregationPageState extends State<SegregationPage> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(LucideIcons.target, size: 12, color: Color(0xFFE11D48)),
-                            const SizedBox(width: 5),
+                            const Icon(
+                              LucideIcons.zap,
+                              size: 12,
+                              color: Color(0xFFE11D48),
+                            ),
+                            const SizedBox(width: 4),
                             Text(
                               'Fill Remaining (₹${_formatCurrency(remaining)})',
                               style: const TextStyle(
@@ -402,34 +561,49 @@ class _SegregationPageState extends State<SegregationPage> {
                         ),
                       ),
                     ),
-                    ...quickChips.where((chip) => (chip['val'] as double) <= remaining).map((chip) {
-                      return InkWell(
-                        onTap: () {
-                          setSheetState(() {
-                            final currentVal = double.tryParse(controller.text.trim()) ?? 0.0;
-                            final newVal = (currentVal + (chip['val'] as double)).clamp(0.0, remaining);
-                            controller.text = newVal.toInt().toString();
-                          });
-                        },
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFECFDF5),
+                    ...quickChips
+                        .where((chip) => (chip['val'] as double) <= remaining)
+                        .map((chip) {
+                          return InkWell(
+                            onTap: () {
+                              setSheetState(() {
+                                final currentVal =
+                                    double.tryParse(
+                                      controller.text
+                                          .replaceAll(',', '')
+                                          .trim(),
+                                    ) ??
+                                    0.0;
+                                final newVal =
+                                    (currentVal + (chip['val'] as double))
+                                        .clamp(0.0, remaining);
+                                controller.text = newVal.toInt().toString();
+                              });
+                            },
                             borderRadius: BorderRadius.circular(20),
-                            border: Border.all(color: const Color(0xFFA7F3D0)),
-                          ),
-                          child: Text(
-                            chip['label'] as String,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF047857),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFECFDF5),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: const Color(0xFFA7F3D0),
+                                ),
+                              ),
+                              child: Text(
+                                chip['label'] as String,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF047857),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      );
-                    }),
+                          );
+                        }),
                   ],
                 ),
 
@@ -437,7 +611,10 @@ class _SegregationPageState extends State<SegregationPage> {
                   const SizedBox(height: 12),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(8),
@@ -445,12 +622,20 @@ class _SegregationPageState extends State<SegregationPage> {
                     ),
                     child: Row(
                       children: [
-                        const Icon(LucideIcons.alertTriangle, size: 14, color: Color(0xFFE11D48)),
+                        const Icon(
+                          LucideIcons.alertTriangle,
+                          size: 14,
+                          color: Color(0xFFE11D48),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Exceeds goal ceiling! You only need ₹${_formatCurrency(remaining)} to complete this goal.',
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFFE11D48)),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFFE11D48),
+                            ),
                           ),
                         ),
                       ],
@@ -460,7 +645,10 @@ class _SegregationPageState extends State<SegregationPage> {
                   const SizedBox(height: 14),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
@@ -471,14 +659,19 @@ class _SegregationPageState extends State<SegregationPage> {
                       children: [
                         const Text(
                           'Projected Balance After Deposit:',
-                          style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
                         ),
                         Text(
                           '₹${_formatCurrency(projectedTotal)}',
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
-                            color: projectedTotal >= target ? const Color(0xFF059669) : const Color(0xFF0F172A),
+                            color: projectedTotal >= target
+                                ? const Color(0xFF059669)
+                                : const Color(0xFF0F172A),
                           ),
                         ),
                       ],
@@ -493,24 +686,37 @@ class _SegregationPageState extends State<SegregationPage> {
                   children: [
                     Expanded(
                       child: OutlinedButton(
-                        onPressed: () => Navigator.pop(ctx),
+                        onPressed: isSubmitting
+                            ? null
+                            : () => Navigator.pop(ctx),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF475569),
                           side: const BorderSide(color: Color(0xFFCBD5E1)),
                           padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('Cancel', style: TextStyle(fontWeight: FontWeight.w600)),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(fontWeight: FontWeight.w600),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       flex: 2,
                       child: ElevatedButton.icon(
-                        onPressed: isOverCap
+                        onPressed: (isOverCap || isSubmitting)
                             ? null
-                            : () {
-                                final added = double.tryParse(controller.text.trim()) ?? 0;
+                            : () async {
+                                final added =
+                                    double.tryParse(
+                                      controller.text
+                                          .replaceAll(',', '')
+                                          .trim(),
+                                    ) ??
+                                    0;
                                 if (added <= 0) {
                                   AppSnackbar.show(
                                     ctx,
@@ -527,47 +733,74 @@ class _SegregationPageState extends State<SegregationPage> {
                                   );
                                   return;
                                 }
-                                if (added > kMaxAllowedAmount) {
+
+                                setSheetState(() => isSubmitting = true);
+                                final activeEmail = ref
+                                    .read(activeAccountProvider)
+                                    .email
+                                    .trim()
+                                    .toLowerCase();
+
+                                try {
+                                  final req = AddMoneyGoalWalletRequest(
+                                    amount: added,
+                                  );
+                                  await GoalWalletRepository.addMoney(
+                                    wallet.id,
+                                    req,
+                                    email: activeEmail,
+                                  );
+                                  if (!mounted) return;
+                                  Navigator.pop(ctx);
+                                  if (currentSaved + added >= target) {
+                                    AppSnackbar.show(
+                                      context,
+                                      "Goal Achieved! '${wallet.name}' reached 100% target and is ready to claim!",
+                                      type: SnackType.success,
+                                    );
+                                  } else {
+                                    AppSnackbar.show(
+                                      context,
+                                      "Deposited ₹${_formatCurrency(added)} into '${wallet.name}'. ₹${_formatCurrency(target - (currentSaved + added))} remaining.",
+                                      type: SnackType.success,
+                                    );
+                                  }
+                                  _loadData();
+                                } catch (e) {
+                                  setSheetState(() => isSubmitting = false);
+                                  final msg = e is ApiException
+                                      ? e.message
+                                      : e.toString();
                                   AppSnackbar.show(
                                     ctx,
-                                    'Deposit amount cannot exceed $kMaxAllowedAmountText',
-                                    type: SnackType.warning,
-                                  );
-                                  return;
-                                }
-                                setState(() {
-                                  final newSaved = (wallet['saved'] as double) + added;
-                                  final targetVal = wallet['target'] as double;
-                                  wallet['saved'] = newSaved.clamp(0.0, targetVal);
-                                  if (wallet['saved'] >= targetVal && wallet['isClaimed'] != true) {
-                                    wallet['status'] = 'TARGET MET';
-                                    wallet['statusColor'] = const Color(0xFFE11D48);
-                                  }
-                                });
-                                Navigator.pop(ctx);
-                                if (wallet['saved'] >= wallet['target']) {
-                                  AppSnackbar.show(
-                                    context,
-                                    "Goal Achieved! '${wallet['title']}' has reached 100% target and is ready to claim!",
-                                    type: SnackType.success,
-                                  );
-                                } else {
-                                  AppSnackbar.show(
-                                    context,
-                                    "Deposited ₹${_formatCurrency(added)} into '${wallet['title']}'. ₹${_formatCurrency((wallet['target'] as double) - (wallet['saved'] as double))} remaining.",
-                                    type: SnackType.success,
+                                    'Failed to add money: $msg',
+                                    type: SnackType.error,
                                   );
                                 }
                               },
-                        icon: const Icon(LucideIcons.check, size: 16),
-                        label: const Text('Deposit Cash', style: TextStyle(fontWeight: FontWeight.bold)),
+                        icon: isSubmitting
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(LucideIcons.check, size: 16),
+                        label: Text(
+                          isSubmitting ? 'Depositing...' : 'Deposit Cash',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF0F5B2E),
                           foregroundColor: Colors.white,
                           disabledBackgroundColor: Colors.grey.shade300,
                           disabledForegroundColor: Colors.grey.shade500,
                           padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
@@ -582,11 +815,13 @@ class _SegregationPageState extends State<SegregationPage> {
     );
   }
 
-  void _openEditWalletDialog(int index) {
-    final wallet = _wallets[index];
-    final titleController = TextEditingController(text: wallet['title'] as String);
-    final targetController = TextEditingController(text: (wallet['target'] as double).toInt().toString());
-    final notesController = TextEditingController(text: wallet['notes'] as String);
+  void _openEditWalletDialog(GoalWallet wallet) {
+    final titleController = TextEditingController(text: wallet.name);
+    final targetController = TextEditingController(
+      text: wallet.targetAmount.toInt().toString(),
+    );
+    final notesController = TextEditingController(text: wallet.description);
+    bool isSaving = false;
 
     showModalBottomSheet(
       context: context,
@@ -595,209 +830,362 @@ class _SegregationPageState extends State<SegregationPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(ctx).viewInsets.bottom,
-          left: 24,
-          right: 24,
-          top: 16,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.topCenter,
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setEditState) {
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom,
+              left: 24,
+              right: 24,
+              top: 16,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+
+                  Row(
+                    children: [
+                      Container(
+                        width: 36,
+                        height: 36,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          LucideIcons.pencil,
+                          color: Color(0xFF2563EB),
+                          size: 18,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Edit Purpose Container',
+                        style: TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
                   const Text(
-                    'Edit Purpose Wallet',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
+                    'PURPOSE / ITEM NAME',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF475569),
+                    ),
                   ),
-                  IconButton(
-                    icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF64748B)),
-                    onPressed: () => Navigator.pop(ctx),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: titleController,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 16),
+
+                  const Text(
+                    'TARGET CAP AMOUNT (INR)',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: targetController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      const CurrencyInputFormatter(
+                        integerDigits: 12,
+                        decimalDigits: 2,
+                      ),
+                      LengthLimitingTextInputFormatter(15),
+                    ],
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0F172A),
+                    ),
+                    decoration: InputDecoration(
+                      prefixText: '₹ ',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  const Text(
+                    'DESCRIPTIVE NOTES',
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: notesController,
+                    maxLines: 2,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF0F172A),
+                    ),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: isSaving
+                          ? null
+                          : () async {
+                              final newTitle = titleController.text.trim();
+                              final newTarget =
+                                  double.tryParse(
+                                    targetController.text
+                                        .replaceAll(',', '')
+                                        .trim(),
+                                  ) ??
+                                  wallet.targetAmount;
+                              final newNotes = notesController.text.trim();
+
+                              if (newTitle.isEmpty) {
+                                AppSnackbar.show(
+                                  context,
+                                  'Please enter a purpose / container name',
+                                  type: SnackType.warning,
+                                );
+                                return;
+                              }
+                              if (newTarget <= 0) {
+                                AppSnackbar.show(
+                                  context,
+                                  'Please enter a target amount greater than ₹0',
+                                  type: SnackType.warning,
+                                );
+                                return;
+                              }
+
+                              setEditState(() => isSaving = true);
+                              final activeEmail = ref
+                                  .read(activeAccountProvider)
+                                  .email
+                                  .trim()
+                                  .toLowerCase();
+
+                              try {
+                                final req = UpdateGoalWalletRequest(
+                                  name: newTitle,
+                                  targetAmount: newTarget,
+                                  description: newNotes,
+                                );
+                                await GoalWalletRepository.updateGoalWallet(
+                                  wallet.id,
+                                  req,
+                                  email: activeEmail,
+                                );
+                                if (!mounted) return;
+                                Navigator.pop(ctx);
+                                AppSnackbar.show(
+                                  context,
+                                  "Purpose wallet '$newTitle' updated successfully!",
+                                  type: SnackType.success,
+                                );
+                                _loadData();
+                              } catch (e) {
+                                setEditState(() => isSaving = false);
+                                final msg = e is ApiException
+                                    ? e.message
+                                    : e.toString();
+                                AppSnackbar.show(
+                                  ctx,
+                                  'Failed to update wallet: $msg',
+                                  type: SnackType.error,
+                                );
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0F5B2E),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: isSaving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Save Changes',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
-              const SizedBox(height: 18),
-
-              const Text('PURPOSE / CONTAINER NAME', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-              const SizedBox(height: 6),
-              TextField(
-                controller: titleController,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              const Text('TARGET CAP AMOUNT (INR)', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-              const SizedBox(height: 6),
-              TextField(
-                controller: targetController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                inputFormatters: [
-                  const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
-                  LengthLimitingTextInputFormatter(15),
-                ],
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF0F172A)),
-                decoration: InputDecoration(
-                  prefixText: '₹ ',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              const Text('DESCRIPTIVE NOTES', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF475569))),
-              const SizedBox(height: 6),
-              TextField(
-                controller: notesController,
-                maxLines: 2,
-                style: const TextStyle(fontSize: 13, color: Color(0xFF0F172A)),
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: ElevatedButton(
-                  onPressed: () {
-                    final newTitle = titleController.text.trim();
-                    final newTarget = double.tryParse(targetController.text.trim()) ?? (wallet['target'] as double);
-                    final newNotes = notesController.text.trim();
-
-                    if (newTitle.isEmpty) {
-                      AppSnackbar.show(
-                        context,
-                        'Please enter a purpose / container name',
-                        type: SnackType.warning,
-                      );
-                      return;
-                    }
-                    if (newTarget <= 0) {
-                      AppSnackbar.show(
-                        context,
-                        'Please enter a target amount greater than ₹0',
-                        type: SnackType.warning,
-                      );
-                      return;
-                    }
-                    if (newTarget > kMaxAllowedAmount) {
-                      AppSnackbar.show(
-                        context,
-                        'Target cap cannot exceed $kMaxAllowedAmountText',
-                        type: SnackType.warning,
-                      );
-                      return;
-                    }
-
-                    if (newTarget < (wallet['saved'] as double)) {
-                      AppSnackbar.show(
-                        context,
-                        'Target ceiling cannot be less than already saved amount (₹${_formatCurrency(wallet['saved'] as double)})',
-                        type: SnackType.warning,
-                      );
-                      return;
-                    }
-
-                    setState(() {
-                      wallet['title'] = newTitle;
-                      wallet['target'] = newTarget;
-                      wallet['notes'] = newNotes;
-                      final saved = wallet['saved'] as double;
-                      if (saved >= newTarget && wallet['isClaimed'] != true) {
-                        wallet['status'] = 'TARGET MET';
-                        wallet['statusColor'] = const Color(0xFFE11D48);
-                      } else if (saved < newTarget) {
-                        wallet['status'] = 'IN PROGRESS';
-                        wallet['statusColor'] = const Color(0xFF059669);
-                        wallet['isClaimed'] = false;
-                      }
-                    });
-                    AppSnackbar.show(
-                      context,
-                      "Purpose wallet '$newTitle' updated successfully!",
-                      type: SnackType.success,
-                    );
-                    Navigator.pop(ctx);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0F5B2E),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  ),
-                  child: const Text('Save Changes', style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
 
-  void _deleteWallet(int index) {
-    final title = _wallets[index]['title'] as String;
+  void _deleteWallet(GoalWallet wallet) {
+    final title = wallet.name;
+    bool isDeleting = false;
+
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Purpose Wallet', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text("Are you sure you want to delete '$title'? This action cannot be undone."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF64748B))),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _wallets.removeAt(index);
-              });
-              Navigator.pop(ctx);
-              AppSnackbar.show(
-                context,
-                "Purpose wallet '$title' deleted.",
-                type: SnackType.info,
-              );
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
+            title: const Text(
+              'Delete Purpose Wallet',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              "Are you sure you want to delete '$title'? This action cannot be undone.",
+            ),
+            actions: [
+              TextButton(
+                onPressed: isDeleting ? null : () => Navigator.pop(ctx),
+                child: const Text(
+                  'Cancel',
+                  style: TextStyle(color: Color(0xFF64748B)),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: isDeleting
+                    ? null
+                    : () async {
+                        setDialogState(() => isDeleting = true);
+                        final activeEmail = ref
+                            .read(activeAccountProvider)
+                            .email
+                            .trim()
+                            .toLowerCase();
+                        try {
+                          await GoalWalletRepository.deleteGoalWallet(
+                            wallet.id,
+                            email: activeEmail,
+                          );
+                          if (!mounted) return;
+                          Navigator.pop(ctx);
+                          AppSnackbar.show(
+                            context,
+                            "Purpose wallet '$title' deleted.",
+                            type: SnackType.info,
+                          );
+                          _loadData();
+                        } catch (e) {
+                          setDialogState(() => isDeleting = false);
+                          final msg = e is ApiException
+                              ? e.message
+                              : e.toString();
+                          AppSnackbar.show(
+                            ctx,
+                            'Failed to delete wallet: $msg',
+                            type: SnackType.error,
+                          );
+                        }
+                      },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: isDeleting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Text(
+                        'Delete',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MAIN BUILD
+  // ══════════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
+      if (previous?.email != next.email || previous?.id != next.id) {
+        ApiClient.clearCliksToken();
+        _loadData(next.email);
+      }
+    });
+
+    ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
+      if (previous != next) {
+        _loadData();
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 32.0;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -805,45 +1193,86 @@ class _SegregationPageState extends State<SegregationPage> {
           ? Padding(
               padding: const EdgeInsets.only(bottom: 130),
               child: FloatingActionButton.extended(
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => SetupTargetWalletDialog(onWalletCreated: _addNewWallet),
-                  );
-                },
+                onPressed: _openSetupTargetWalletDialog,
                 backgroundColor: const Color(0xFF0F5B2E),
                 foregroundColor: Colors.white,
                 elevation: 4,
                 icon: const Icon(LucideIcons.plus, size: 18),
-                label: const Text('Setup Purpose Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                label: const Text(
+                  'Setup Purpose Wallet',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
               ),
             )
           : null,
       body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(paddingVal, isMobile ? 12 : 20, paddingVal, isMobile ? 80 : 32),
+        padding: EdgeInsets.fromLTRB(
+          paddingVal,
+          isMobile ? 16 : 24,
+          paddingVal,
+          isMobile ? 80 : 32,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Hero Summary (Gradient Stats & Actions or Bento Hero)
-            isMacOS
-                ? _buildMacOsBentoHero(context, isMobile)
-                : _buildHeroSummary(context, isMobile).animate().fadeIn(duration: 400.ms).slideY(begin: -0.05, end: 0),
-            const SizedBox(height: 20),
+            // Top Section Header (matching screenshot)
+            _buildPageHeader(context, isMobile),
+            const SizedBox(height: 12),
 
-            // Quick Filter Tabs Bar
-            _buildFilterBar(isMobile),
-            const SizedBox(height: 18),
+            // Optional Expandable Search Input
+            if (_isSearchExpanded) ...[
+              SizedBox(
+                height: 42,
+                child: TextField(
+                  controller: _searchController,
+                  autofocus: true,
+                  onChanged: (val) => setState(() => _searchQuery = val),
+                  decoration: InputDecoration(
+                    hintText: 'Search purpose wallets...',
+                    hintStyle: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    prefixIcon: const Icon(
+                      LucideIcons.search,
+                      size: 16,
+                      color: Color(0xFF94A3B8),
+                    ),
+                    suffixIcon: _searchQuery.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(LucideIcons.x, size: 14),
+                            onPressed: () {
+                              _searchController.clear();
+                              setState(() => _searchQuery = '');
+                            },
+                          )
+                        : null,
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF0F5B2E),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+            ],
 
-            // Purpose Wallets List or Empty State
-            if (_filteredWallets.isEmpty)
-              _buildEmptyStateCard(context, isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms)
-            else
-              _buildWalletCardsSection(isMobile).animate().fadeIn(duration: 500.ms, delay: 150.ms),
-
-            const SizedBox(height: 28),
-
-            // Financial Goals Section
-            _buildFinancialGoalsCard(isMobile).animate().fadeIn(duration: 500.ms, delay: 200.ms),
+            // Content Area: Loading, Error, Empty, or Wallet Cards Grid
+            _buildContentArea(context, isMobile),
             const SizedBox(height: 32),
           ],
         ),
@@ -851,490 +1280,280 @@ class _SegregationPageState extends State<SegregationPage> {
     );
   }
 
-  List<Map<String, dynamic>> get _filteredWallets {
-    switch (_selectedFilter) {
-      case 'growing':
-        return _wallets.where((w) => (w['saved'] as double) < (w['target'] as double) && w['isClaimed'] != true).toList();
-      case 'met':
-        return _wallets.where((w) => (w['saved'] as double) >= (w['target'] as double) && w['isClaimed'] != true).toList();
-      case 'claimed':
-        return _wallets.where((w) => w['isClaimed'] == true).toList();
-      default:
-        return _wallets;
-    }
-  }
-
-  Widget _buildFilterBar(bool isMobile) {
-    final growingCount = _wallets.where((w) => (w['saved'] as double) < (w['target'] as double) && w['isClaimed'] != true).length;
-    final metCount = _wallets.where((w) => (w['saved'] as double) >= (w['target'] as double) && w['isClaimed'] != true).length;
-    final claimedCount = _wallets.where((w) => w['isClaimed'] == true).length;
-
-    final filters = [
-      {'id': 'all', 'label': 'All Containers', 'count': _wallets.length},
-      {'id': 'growing', 'label': 'In Progress', 'count': growingCount},
-      {'id': 'met', 'label': 'Target Met', 'count': metCount},
-      {'id': 'claimed', 'label': 'Claimed', 'count': claimedCount},
-    ];
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: filters.map((f) {
-          final isSelected = _selectedFilter == f['id'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  _selectedFilter = f['id'] as String;
-                });
-              },
-              borderRadius: BorderRadius.circular(10),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.stylishDarkGreen : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: isSelected ? AppColors.stylishDarkGreen : const Color(0xFFE2E8F0),
+  // ══════════════════════════════════════════════════════════════════════════
+  // PAGE HEADER
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildPageHeader(BuildContext context, bool isMobile) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Circular Target Icon
+        Container(
+          width: 38,
+          height: 38,
+          decoration: const BoxDecoration(
+            color: Color(0xFF0F5B2E),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(LucideIcons.target, color: Colors.white, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Segregation Wallets',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F5B2E),
+                      letterSpacing: -0.3,
+                    ),
                   ),
-                  boxShadow: isSelected
-                      ? [
-                          BoxShadow(
-                            color: AppColors.heroShadowColor,
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : null,
-                ),
-                child: Row(
-                  children: [
-                    Text(
-                      f['label'] as String,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-                        color: isSelected ? Colors.white : const Color(0xFF475569),
-                      ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isSearchExpanded = !_isSearchExpanded;
+                      });
+                    },
+                    icon: Icon(
+                      LucideIcons.search,
+                      size: 18,
+                      color: _isSearchExpanded
+                          ? const Color(0xFF0F5B2E)
+                          : const Color(0xFF475569),
                     ),
-                    const SizedBox(width: 6),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.white.withValues(alpha: 0.2)
-                            : const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(
-                        '${f['count']}',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? Colors.white : const Color(0xFF64748B),
-                        ),
-                      ),
-                    ),
-                  ],
+                    tooltip: 'Search wallets',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Create target-based wallets to isolate and secure funds for specific business needs.',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                  fontWeight: FontWeight.w400,
                 ),
               ),
+            ],
+          ),
+        ),
+        if (!isMobile) ...[
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            onPressed: _openSetupTargetWalletDialog,
+            icon: const Icon(LucideIcons.plus, size: 16),
+            label: const Text(
+              'Setup Purpose Wallet',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildMacOsBentoHero(BuildContext context, bool isMobile) {
-    final double totalSaved = _wallets.fold(0.0, (sum, item) => sum + (item['saved'] as double));
-    final double totalTarget = _wallets.fold(0.0, (sum, item) => sum + (item['target'] as double));
-    final int accomplishment = totalTarget > 0 ? ((totalSaved / totalTarget).clamp(0.0, 1.0) * 100).toInt() : 0;
-    final int targetMetCount = _wallets.where((w) => (w['saved'] as double) >= (w['target'] as double) && w['isClaimed'] != true).length;
-
-    return MacOsSoftUiBentoHero(
-      margin: EdgeInsets.zero,
-      title: 'Dedicated Purpose Wallets & Reserves',
-      mainValue: '₹ ${_formatCurrency(totalSaved)}',
-      subtitle: 'Target goal progress, isolated capital pools & ringfenced business funds',
-      badgeText: 'RINGFENCED FUNDS ACTIVE',
-      badgeIcon: LucideIcons.shieldCheck,
-      isMobile: isMobile,
-      chips: [
-        MacOsBentoHeroChip(
-          label: 'Cumulative Target',
-          value: '₹ ${_formatCurrency(totalTarget)}',
-          icon: LucideIcons.target,
-          accentColor: const Color(0xFF166534),
-        ),
-        MacOsBentoHeroChip(
-          label: 'Goals Met',
-          value: '$targetMetCount Goals',
-          icon: LucideIcons.trophy,
-          accentColor: const Color(0xFF2563EB),
-        ),
-        MacOsBentoHeroChip(
-          label: 'Overall Progress',
-          value: '$accomplishment% Funded',
-          icon: LucideIcons.trendingUp,
-          accentColor: const Color(0xFFD97706),
-        ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0F5B2E),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ],
       ],
-      trailingAction: ElevatedButton.icon(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => SetupTargetWalletDialog(onWalletCreated: _addNewWallet),
-          );
-        },
-        icon: const Icon(LucideIcons.plus, size: 14),
-        label: const Text('Setup Purpose Wallet', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF166534),
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      ),
     );
   }
 
-  Widget _buildHeroSummary(BuildContext context, bool isMobile) {
-    final double totalSaved = _wallets.fold(0.0, (sum, item) => sum + (item['saved'] as double));
-    final double totalTarget = _wallets.fold(0.0, (sum, item) => sum + (item['target'] as double));
-    final int accomplishment = totalTarget > 0 ? ((totalSaved / totalTarget).clamp(0.0, 1.0) * 100).toInt() : 0;
-    final int targetMetCount = _wallets.where((w) => (w['saved'] as double) >= (w['target'] as double) && w['isClaimed'] != true).length;
-
-    final setupWalletBtn = ElevatedButton.icon(
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (context) => SetupTargetWalletDialog(onWalletCreated: _addNewWallet),
-        );
-      },
-      icon: const Icon(LucideIcons.plus, size: 14),
-      label: const Text(
-        'Setup Purpose Wallet',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-      ),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.stylishDarkGreen,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        elevation: 0,
-      ),
-    );
-
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 18 : 24),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: AppColors.heroGradientColors,
+  // ══════════════════════════════════════════════════════════════════════════
+  // CONTENT AREA
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildContentArea(BuildContext context, bool isMobile) {
+    if (_isLoading && _wallets.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 60),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: Color(0xFF0F5B2E),
+            strokeWidth: 2.5,
+          ),
         ),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.heroShadowColor,
-            blurRadius: 20,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Top Row: Tag badge + Action Button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.14),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.shieldCheck, color: Color(0xFFA7F3D0), size: 13),
-                    SizedBox(width: 6),
-                    Text(
-                      'PURPOSE-DRIVEN ISOLATION',
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFA7F3D0),
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (!isMobile) setupWalletBtn,
-            ],
-          ),
-          const SizedBox(height: 16),
+      );
+    }
 
-          // Total Isolated Funds Figure
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                '₹ ${_formatCurrency(totalSaved)}',
-                style: TextStyle(
-                  fontSize: isMobile ? 30 : 38,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: -1.2,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'INR',
-                style: TextStyle(
-                  fontSize: isMobile ? 12 : 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-
-          // Stat Chips in a responsive row
-          Row(
-            children: [
-              _buildHeroChip(
-                icon: LucideIcons.target,
-                label: 'Goal Target',
-                value: '₹ ${_formatCurrency(totalTarget)}',
-                isMobile: isMobile,
-              ),
-              const SizedBox(width: 8),
-              _buildHeroChip(
-                icon: LucideIcons.trendingUp,
-                label: 'Accomplishment',
-                value: '$accomplishment%',
-                isMobile: isMobile,
-              ),
-              const SizedBox(width: 8),
-              _buildHeroChip(
-                icon: LucideIcons.walletCards,
-                label: 'Active Containers',
-                value: '${_wallets.length}',
-                isMobile: isMobile,
-              ),
-              if (!isMobile) ...[
-                const SizedBox(width: 8),
-                _buildHeroChip(
-                  icon: LucideIcons.trophy,
-                  label: 'Ready to Claim',
-                  value: '$targetMetCount Goals',
-                  isMobile: isMobile,
-                ),
-              ],
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeroChip({
-    required IconData icon,
-    required String label,
-    required String value,
-    required bool isMobile,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 12, vertical: isMobile ? 8 : 10),
+    if (_errorMessage != null && _wallets.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(28),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFECDD3)),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: isMobile ? 11 : 13, color: Colors.white.withValues(alpha: 0.7)),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    label,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: isMobile ? 9 : 10,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white.withValues(alpha: 0.65),
-                    ),
-                  ),
-                ),
-              ],
+            const Icon(
+              LucideIcons.alertCircle,
+              color: Color(0xFFE11D48),
+              size: 36,
             ),
-            const SizedBox(height: 3),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                value,
-                style: TextStyle(
-                  fontSize: isMobile ? 14 : 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+            const SizedBox(height: 12),
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFFE11D48),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () => _loadData(),
+              icon: const Icon(LucideIcons.refreshCw, size: 14),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F5B2E),
+                foregroundColor: Colors.white,
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
+    }
+
+    if (_filteredWallets.isEmpty) {
+      return _buildEmptyStateCard(context, isMobile);
+    }
+
+    return _buildWalletCardsSection(isMobile);
   }
 
+  // ══════════════════════════════════════════════════════════════════════════
+  // WALLET CARDS SECTION (GRID)
+  // ══════════════════════════════════════════════════════════════════════════
   Widget _buildWalletCardsSection(bool isMobile) {
-    final displayedWallets = _filteredWallets;
-
-    final cardWidgets = displayedWallets.map((w) {
-      final originalIndex = _wallets.indexOf(w);
-      final isClaimed = w['isClaimed'] == true;
-      final saved = w['saved'] as double;
-      final target = w['target'] as double;
-      final isTargetMet = saved >= target;
-
-      final String statusText;
-      final Color statusColor;
-      final Color statusBgColor;
-      final IconData statusIcon;
-
-      if (isClaimed) {
-        statusText = 'FULLY CLAIMED';
-        statusColor = const Color(0xFF2563EB);
-        statusBgColor = const Color(0xFFEFF6FF);
-        statusIcon = LucideIcons.checkCheck;
-      } else if (isTargetMet) {
-        statusText = 'TARGET MET';
-        statusColor = const Color(0xFFE11D48);
-        statusBgColor = const Color(0xFFFFF1F2);
-        statusIcon = LucideIcons.trophy;
-      } else {
-        statusText = 'IN PROGRESS';
-        statusColor = const Color(0xFF059669);
-        statusBgColor = const Color(0xFFECFDF5);
-        statusIcon = LucideIcons.sprout;
-      }
-
-      final percent = target > 0 ? (saved / target).clamp(0.0, 1.0) : 0.0;
-      final percentDisplay = (percent * 100).toInt();
+    final cardWidgets = _filteredWallets.map((w) {
+      final saved = w.currentAmount;
+      final target = w.targetAmount;
+      final isClaimed = w.isClaimed;
+      final isTargetMet = w.isTargetMet;
 
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          boxShadow: const [],
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Status Accent Bar
-            Container(
-              height: 3.5,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: statusColor,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 14),
-
-            // Header Row: Avatar, Title, Status & Actions
+            // Top Row: Title, History Icon, More Vert Options
             Row(
               children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: statusBgColor,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.2)),
-                  ),
-                  child: Icon(statusIcon, color: statusColor, size: 20),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        w['title'] as String,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF0F172A),
-                          letterSpacing: -0.3,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 3),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                        decoration: BoxDecoration(
-                          color: statusBgColor,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          statusText,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    w.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                // Allocation Ledger History Icon
+                IconButton(
+                  icon: const Icon(
+                    LucideIcons.history,
+                    size: 18,
+                    color: Color(0xFF64748B),
+                  ),
+                  tooltip: 'Allocation Ledger',
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () => _openAllocationLedgerDialog(w),
+                ),
+                const SizedBox(width: 8),
                 PopupMenuButton<String>(
-                  icon: const Icon(LucideIcons.moreVertical, size: 18, color: Color(0xFF64748B)),
+                  icon: const Icon(
+                    LucideIcons.moreVertical,
+                    size: 18,
+                    color: Color(0xFF64748B),
+                  ),
                   color: Colors.white,
                   elevation: 8,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   offset: const Offset(0, 40),
                   onSelected: (value) {
-                    if (value == 'add') {
-                      _openAddCashDialog(originalIndex);
+                    if (value == 'history') {
+                      _openAllocationLedgerDialog(w);
+                    } else if (value == 'add') {
+                      _openAddCashDialog(w);
                     } else if (value == 'claim') {
-                      _showConfirmClaimSheet(originalIndex);
+                      _showConfirmClaimSheet(w);
                     } else if (value == 'edit') {
-                      _openEditWalletDialog(originalIndex);
+                      _openEditWalletDialog(w);
                     } else if (value == 'delete') {
-                      _deleteWallet(originalIndex);
+                      _deleteWallet(w);
                     }
                   },
                   itemBuilder: (ctx) => [
+                    const PopupMenuItem<String>(
+                      value: 'history',
+                      child: Row(
+                        children: [
+                          Icon(
+                            LucideIcons.history,
+                            size: 16,
+                            color: Color(0xFF0F5B2E),
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'Allocation Ledger',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                     if (!isTargetMet && !isClaimed)
                       const PopupMenuItem<String>(
                         value: 'add',
                         child: Row(
                           children: [
-                            Icon(LucideIcons.plusCircle, size: 16, color: Color(0xFF059669)),
+                            Icon(
+                              LucideIcons.plusCircle,
+                              size: 16,
+                              color: Color(0xFF059669),
+                            ),
                             SizedBox(width: 12),
-                            Text('Deposit Cash', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                            Text(
+                              'Deposit Cash',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1343,9 +1562,20 @@ class _SegregationPageState extends State<SegregationPage> {
                         value: 'claim',
                         child: Row(
                           children: [
-                            Icon(LucideIcons.trophy, size: 16, color: Color(0xFFE11D48)),
+                            Icon(
+                              LucideIcons.trophy,
+                              size: 16,
+                              color: Color(0xFFE11D48),
+                            ),
                             SizedBox(width: 12),
-                            Text('Claim Goal', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFFE11D48))),
+                            Text(
+                              'Claim Goal',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFFE11D48),
+                              ),
+                            ),
                           ],
                         ),
                       ),
@@ -1353,9 +1583,20 @@ class _SegregationPageState extends State<SegregationPage> {
                       value: 'edit',
                       child: Row(
                         children: [
-                          Icon(LucideIcons.pencil, size: 16, color: Color(0xFF3B82F6)),
+                          Icon(
+                            LucideIcons.pencil,
+                            size: 16,
+                            color: Color(0xFF3B82F6),
+                          ),
                           SizedBox(width: 12),
-                          Text('Edit Container', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                          Text(
+                            'Edit Purpose Wallet',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1365,7 +1606,14 @@ class _SegregationPageState extends State<SegregationPage> {
                         children: [
                           Icon(LucideIcons.trash2, size: 16, color: Colors.red),
                           SizedBox(width: 12),
-                          Text('Delete', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.red)),
+                          Text(
+                            'Delete',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1373,105 +1621,132 @@ class _SegregationPageState extends State<SegregationPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
 
-            // Notes / Rationale
+            // Status Badge below title
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: isClaimed
+                    ? const Color(0xFFEFF6FF)
+                    : (isTargetMet
+                          ? const Color(0xFFFFF1F2)
+                          : const Color(0xFFECFDF5)),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: isClaimed
+                      ? const Color(0xFFBFDBFE)
+                      : (isTargetMet
+                            ? const Color(0xFFFECDD3)
+                            : const Color(0xFFA7F3D0)),
+                ),
+              ),
+              child: Text(
+                isClaimed
+                    ? '🎉 FULLY CLAIMED'
+                    : (isTargetMet ? '🎯 TARGET MET' : '🌱 IN PROGRESS'),
+                style: TextStyle(
+                  color: isClaimed
+                      ? const Color(0xFF2563EB)
+                      : (isTargetMet
+                            ? const Color(0xFFE11D48)
+                            : const Color(0xFF047857)),
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+
+            // Descriptive notes
             Text(
-              w['notes'] as String,
-              style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), height: 1.3),
+              w.description.isNotEmpty ? w.description : 'descriptive notes',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF64748B),
+                height: 1.3,
+              ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 14),
 
-            // Allocation Metrics Split Container
+            // Allocation Metrics Box (Saved Allocated & Target Ceiling)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: Row(
+              child: Column(
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Saved Allocated',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Saved Allocated',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '₹ ${_formatCurrency(saved)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF059669),
-                          ),
+                      ),
+                      Text(
+                        '₹${_formatCurrency(saved)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                  Container(
-                    width: 1,
-                    height: 32,
-                    color: const Color(0xFFCBD5E1),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Target Ceiling',
-                          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF64748B)),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Target Ceiling',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF64748B),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '₹ ${_formatCurrency(target)}',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                          ),
+                      ),
+                      Text(
+                        '₹${_formatCurrency(target)}',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 14),
 
-            // Goal Progress Bar & Dynamic Status Label
+            // Goal Status & Percent (Protected against NaN, Infinity, scientific notation)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  isClaimed
-                      ? 'Goal Extracted to Reserves'
-                      : isTargetMet
-                          ? 'Target Achieved 🎉'
-                          : '₹${_formatCurrency(target - saved)} remaining',
+                const Text(
+                  'Goal Status',
                   style: TextStyle(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: isClaimed
-                        ? const Color(0xFF2563EB)
-                        : isTargetMet
-                            ? const Color(0xFFE11D48)
-                            : const Color(0xFF64748B),
+                    color: Color(0xFF0F172A),
                   ),
                 ),
                 Text(
-                  '$percentDisplay%',
-                  style: TextStyle(
+                  '${w.progressPercent}%',
+                  style: const TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: statusColor,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF047857),
                   ),
                 ),
               ],
@@ -1480,10 +1755,16 @@ class _SegregationPageState extends State<SegregationPage> {
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
               child: LinearProgressIndicator(
-                value: percent,
+                value: w.progressRatio,
                 minHeight: 7,
-                backgroundColor: const Color(0xFFE2E8F0),
-                valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                backgroundColor: const Color(0xFFCBD5E1),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  isClaimed
+                      ? const Color(0xFF94A3B8)
+                      : (isTargetMet
+                            ? const Color(0xFF047857)
+                            : const Color(0xFF0F5B2E)),
+                ),
               ),
             ),
             const SizedBox(height: 18),
@@ -1495,21 +1776,21 @@ class _SegregationPageState extends State<SegregationPage> {
                 width: double.infinity,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
+                  color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.checkCheck, size: 15, color: Color(0xFF2563EB)),
-                    SizedBox(width: 7),
+                    Icon(LucideIcons.check, size: 16, color: Color(0xFF047857)),
+                    SizedBox(width: 6),
                     Text(
-                      'Fully Claimed & Released to Reserves',
+                      'Claimed',
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFF1D4ED8),
+                        color: Color(0xFF047857),
                       ),
                     ),
                   ],
@@ -1520,18 +1801,19 @@ class _SegregationPageState extends State<SegregationPage> {
                 height: 42,
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () => _showConfirmClaimSheet(originalIndex),
-                  icon: const Icon(LucideIcons.trophy, size: 15),
-                  label: Text(
-                    'Claim Goal! (₹${_formatCurrency(saved)})',
-                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                  onPressed: () => _showConfirmClaimSheet(w),
+                  icon: const Icon(LucideIcons.trophy, size: 16),
+                  label: const Text(
+                    'Claim Goal',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE11D48),
+                    backgroundColor: const Color(0xFF0F5B2E),
                     foregroundColor: Colors.white,
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 11),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                 ),
               ),
@@ -1539,53 +1821,49 @@ class _SegregationPageState extends State<SegregationPage> {
               Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () => _openAddCashDialog(originalIndex),
-                      icon: const Icon(LucideIcons.plus, size: 14),
-                      label: const Text(
-                        'Add Cash',
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFECFDF5),
-                        foregroundColor: const Color(0xFF059669),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 11),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: const BorderSide(color: Color(0xFFA7F3D0)),
+                    flex: 2,
+                    child: SizedBox(
+                      height: 42,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _openAddCashDialog(w),
+                        icon: const Icon(LucideIcons.plus, size: 15),
+                        label: const Text(
+                          'Deposit Cash',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F5B2E),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
+                    flex: 1,
                     child: Container(
                       height: 42,
                       alignment: Alignment.center,
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(10),
                         border: Border.all(color: const Color(0xFFE2E8F0)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(LucideIcons.lock, size: 13, color: Color(0xFF94A3B8)),
-                          const SizedBox(width: 5),
-                          Flexible(
-                            child: Text(
-                              '₹${_formatCurrency(target - saved)} left',
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                              ),
-                            ),
-                          ),
-                        ],
+                      child: Text(
+                        '₹${_formatCurrency(w.remainingAmount)} left',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ),
@@ -1600,10 +1878,12 @@ class _SegregationPageState extends State<SegregationPage> {
     if (isMobile) {
       return Column(
         children: cardWidgets
-            .map((c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16.0),
-                  child: c,
-                ))
+            .map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 16.0),
+                child: c,
+              ),
+            )
             .toList(),
       );
     }
@@ -1615,81 +1895,10 @@ class _SegregationPageState extends State<SegregationPage> {
           spacing: 20,
           runSpacing: 20,
           children: cardWidgets
-              .map((c) => SizedBox(
-                    width: cardWidth,
-                    child: c,
-                  ))
+              .map((c) => SizedBox(width: cardWidth, child: c))
               .toList(),
         );
       },
-    );
-  }
-
-  Widget _buildFinancialGoalsCard(bool isMobile) {
-    return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(isMobile ? 18 : 22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3E8FF),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE9D5FF)),
-            ),
-            child: const Icon(LucideIcons.sparkles, color: Color(0xFF9333EA), size: 22),
-          ),
-          const SizedBox(width: 16),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Automated Cash Segregation Insights',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
-                ),
-                SizedBox(height: 3),
-                Text(
-                  'Maintain separate reserves for GST liabilities, payroll safety nets, and capital equipment.',
-                  style: TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => SetupTargetWalletDialog(onWalletCreated: _addNewWallet),
-              );
-            },
-            icon: const Icon(LucideIcons.plus, size: 14),
-            label: const Text('Add Goal', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFF3E8FF),
-              foregroundColor: const Color(0xFF7E22CE),
-              elevation: 0,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -1708,44 +1917,53 @@ class _SegregationPageState extends State<SegregationPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: const Color(0xFFECFDF5),
+              color: const Color(0xFF0F5B2E).withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.walletCards, color: Color(0xFF059669), size: 40),
+            child: const Icon(
+              LucideIcons.target,
+              color: Color(0xFF0F5B2E),
+              size: 40,
+            ),
           ),
           const SizedBox(height: 20),
           const Text(
-            'No Purpose Wallets Found',
-            style: TextStyle(color: Color(0xFF0F172A), fontSize: 19, fontWeight: FontWeight.bold),
+            'No Segregation Wallets',
+            style: TextStyle(
+              color: Color(0xFF0F172A),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 10),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
+            constraints: const BoxConstraints(maxWidth: 450),
             child: const Text(
-              'No segregated containers match this filter. Create purpose-driven containers to ringfence money for tax deposits, equipment, or future inventory.',
+              'Setup isolated purpose-driven buckets! For example, reserve money sequentially for office equipment, tax deposits, or inventory buffers.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 13, height: 1.5),
+              style: TextStyle(
+                color: Color(0xFF64748B),
+                fontSize: 13,
+                height: 1.5,
+              ),
             ),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (context) => SetupTargetWalletDialog(onWalletCreated: _addNewWallet),
-              );
-            },
+            onPressed: _openSetupTargetWalletDialog,
             icon: const Icon(LucideIcons.plus, size: 16),
+            label: const Text(
+              'Create Purpose Wallet',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0F5B2E),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               elevation: 0,
-            ),
-            label: const Text(
-              'Create First Purpose Wallet',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             ),
           ),
         ],
@@ -1754,3 +1972,379 @@ class _SegregationPageState extends State<SegregationPage> {
   }
 }
 
+// ══════════════════════════════════════════════════════════════════════════════
+// ALLOCATION LEDGER DIALOG (Connected to API timing & transactions)
+// ══════════════════════════════════════════════════════════════════════════════
+class AllocationLedgerDialog extends StatefulWidget {
+  final GoalWallet wallet;
+  final String? activeEmail;
+
+  const AllocationLedgerDialog({
+    super.key,
+    required this.wallet,
+    this.activeEmail,
+  });
+
+  @override
+  State<AllocationLedgerDialog> createState() => _AllocationLedgerDialogState();
+}
+
+class _AllocationLedgerDialogState extends State<AllocationLedgerDialog> {
+  bool _isLoading = true;
+  GoalWallet? _walletDetails;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLedger();
+  }
+
+  Future<void> _loadLedger() async {
+    setState(() => _isLoading = true);
+    try {
+      final details = await GoalWalletRepository.getGoalWalletDetails(
+        widget.wallet.id,
+        email: widget.activeEmail,
+      );
+      if (!mounted) return;
+      setState(() {
+        _walletDetails = details ?? widget.wallet;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _walletDetails = widget.wallet;
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _formatCurrency(double val) {
+    if (val == 0) return '0';
+    final isNegative = val < 0;
+    final clampedVal = val.abs() > 999999999999.99
+        ? 999999999999.99
+        : val.abs();
+    final absVal = clampedVal.round();
+    final s = absVal.toString();
+    if (s.length <= 3) return isNegative ? '-$s' : s;
+    final last3 = s.substring(s.length - 3);
+    final rest = s.substring(0, s.length - 3);
+    final formattedRest = rest.replaceAllMapped(
+      RegExp(r'(\d+?)(?=(\d{2})+$)'),
+      (m) => '${m[1]},',
+    );
+    final result = '$formattedRest,$last3';
+    return isNegative ? '-$result' : result;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentWallet = _walletDetails ?? widget.wallet;
+    final transactions = currentWallet.transactions;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 500;
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 40,
+        vertical: 24,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isMobile ? double.infinity : 460,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header Bar
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 18, 16, 14),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      LucideIcons.history,
+                      size: 18,
+                      color: Color(0xFF0F5B2E),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Text(
+                      'Allocation Ledger',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F5B2E),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      LucideIcons.x,
+                      size: 18,
+                      color: Color(0xFF64748B),
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF1F5F9),
+                      shape: const CircleBorder(),
+                      padding: const EdgeInsets.all(8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(22, 18, 22, 22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Selected Wallet Info Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'SELECTED WALLET',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.6,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            currentWallet.name,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Total Isolated',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              Text(
+                                '₹${_formatCurrency(currentWallet.currentAmount)}',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF047857),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Allocation History Header
+                    const Text(
+                      'ALLOCATION HISTORY',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 0.6,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    if (_isLoading)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 36),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Color(0xFF0F5B2E),
+                          ),
+                        ),
+                      )
+                    else if (transactions.isNotEmpty)
+                      ...transactions.map((tx) {
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF0F172A,
+                                ).withValues(alpha: 0.02),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    tx.isCredit
+                                        ? '✦ IN / CREDIT'
+                                        : '✦ OUT / DEBIT',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: tx.isCredit
+                                          ? const Color(0xFF047857)
+                                          : const Color(0xFFE11D48),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    tx.formattedDate.isNotEmpty
+                                        ? tx.formattedDate
+                                        : (currentWallet.createdAt != null
+                                              ? GoalWalletTransaction.formatLedgerDate(
+                                                  currentWallet.createdAt!
+                                                      .toLocal(),
+                                                )
+                                              : 'Recent allocation'),
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Text(
+                                '${tx.isCredit ? '+' : '-'} ₹${_formatCurrency(tx.amount)}',
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      })
+                    else if (currentWallet.currentAmount > 0)
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '✦ IN / CREDIT',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF047857),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  currentWallet.createdAt != null
+                                      ? GoalWalletTransaction.formatLedgerDate(
+                                          currentWallet.createdAt!.toLocal(),
+                                        )
+                                      : 'Initial deposit',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Text(
+                              '+ ₹${_formatCurrency(currentWallet.currentAmount)}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF0F172A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 24,
+                          horizontal: 16,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'No allocation transactions recorded for this wallet yet.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

@@ -129,7 +129,9 @@ class ApiClient {
 
   /// Returns true if the path belongs to the Cliks Payments backend.
   static bool _isPaymentsPath(String path) {
-    return path.contains('/planned-payments') || path.contains('/split-expenses');
+    return path.contains('/planned-payments') ||
+        path.contains('/split-expenses') ||
+        path.contains('/goal-wallets');
   }
 
   /// Exchanges active account's BNX token for Cliks Business JWT token via SSO.

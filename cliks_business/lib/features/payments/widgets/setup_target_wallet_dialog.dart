@@ -3,21 +3,31 @@ import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/network/api_exception.dart';
+import '../../../data/models/goal_wallet_models.dart';
+import '../../../data/repositories/goal_wallet_repository.dart';
 
 class SetupTargetWalletDialog extends StatefulWidget {
-  final Function(Map<String, dynamic>)? onWalletCreated;
+  final String? activeEmail;
+  final Function(GoalWallet)? onWalletCreated;
 
-  const SetupTargetWalletDialog({super.key, this.onWalletCreated});
+  const SetupTargetWalletDialog({
+    super.key,
+    this.activeEmail,
+    this.onWalletCreated,
+  });
 
   @override
-  State<SetupTargetWalletDialog> createState() => _SetupTargetWalletDialogState();
+  State<SetupTargetWalletDialog> createState() =>
+      _SetupTargetWalletDialogState();
 }
 
 class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
   final _purposeController = TextEditingController();
-  // Field starts completely empty - no default 5000 prefilled
   final _amountController = TextEditingController();
   final _notesController = TextEditingController();
+
+  bool _isSubmitting = false;
 
   static const List<String> _purposePresets = [
     'Tax Reserve',
@@ -43,7 +53,9 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+
     final purpose = _purposeController.text.trim();
     if (purpose.isEmpty) {
       AppSnackbar.show(
@@ -53,7 +65,9 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
       );
       return;
     }
-    final amount = double.tryParse(_amountController.text.trim()) ?? 0.0;
+
+    final amountStr = _amountController.text.replaceAll(',', '').trim();
+    final amount = double.tryParse(amountStr) ?? 0.0;
     if (amount <= 0) {
       AppSnackbar.show(
         context,
@@ -62,6 +76,7 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
       );
       return;
     }
+
     if (amount > kMaxAllowedAmount) {
       AppSnackbar.show(
         context,
@@ -70,22 +85,46 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
       );
       return;
     }
-    final newWallet = {
-      'id': DateTime.now().millisecondsSinceEpoch.toString(),
-      'title': purpose,
-      'status': 'GROWING',
-      'statusColor': const Color(0xFF10B981),
-      'saved': 0.0,
-      'target': amount,
-      'notes': _notesController.text.trim().isEmpty
-          ? 'Purpose-driven isolated container'
-          : _notesController.text.trim(),
-      'isClaimed': false,
-    };
-    if (widget.onWalletCreated != null) {
-      widget.onWalletCreated!(newWallet);
+
+    final notes = _notesController.text.trim();
+
+    setState(() => _isSubmitting = true);
+
+    try {
+      final req = CreateGoalWalletRequest(
+        name: purpose,
+        targetAmount: amount,
+        description: notes.isNotEmpty ? notes : null,
+      );
+
+      final createdWallet = await GoalWalletRepository.createGoalWallet(
+        req,
+        email: widget.activeEmail,
+      );
+
+      if (!mounted) return;
+
+      AppSnackbar.show(
+        context,
+        "Purpose wallet '${createdWallet.name}' activated successfully!",
+        type: SnackType.success,
+      );
+
+      if (widget.onWalletCreated != null) {
+        widget.onWalletCreated!(createdWallet);
+      }
+
+      Navigator.pop(context, createdWallet);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSubmitting = false);
+      final errorMsg = e is ApiException ? e.message : e.toString();
+      AppSnackbar.show(
+        context,
+        'Failed to activate purpose wallet: $errorMsg',
+        type: SnackType.error,
+      );
     }
-    Navigator.pop(context);
   }
 
   @override
@@ -96,9 +135,7 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
     return Dialog(
       backgroundColor: Colors.white,
       alignment: Alignment.center,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       insetPadding: EdgeInsets.symmetric(
         horizontal: isMobile ? 16 : 40,
         vertical: 24,
@@ -106,7 +143,7 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: isMobile ? double.infinity : 480,
-          maxHeight: MediaQuery.of(context).size.height * 0.82,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -136,7 +173,7 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Setup Purpose Wallet',
+                          'Setup Target Wallet',
                           style: TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w700,
@@ -156,8 +193,14 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                     ),
                   ),
                   IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF64748B)),
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => Navigator.pop(context),
+                    icon: const Icon(
+                      LucideIcons.x,
+                      size: 18,
+                      color: Color(0xFF64748B),
+                    ),
                     style: IconButton.styleFrom(
                       backgroundColor: const Color(0xFFF1F5F9),
                       shape: const CircleBorder(),
@@ -177,11 +220,12 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Purpose / Item Name
-                    _buildLabel('PURPOSE / CONTAINER NAME'),
+                    _buildLabel('PURPOSE / ITEM NAME'),
                     _buildTextField(
                       controller: _purposeController,
                       hint: 'e.g. Tax Reserve, Equipment, Inventory',
                       prefixIcon: LucideIcons.tag,
+                      enabled: !_isSubmitting,
                     ),
                     const SizedBox(height: 8),
 
@@ -191,18 +235,25 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                       runSpacing: 6,
                       children: _purposePresets.map((preset) {
                         return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _purposeController.text = preset;
-                            });
-                          },
+                          onTap: _isSubmitting
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _purposeController.text = preset;
+                                  });
+                                },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF1F5F9),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
                             ),
                             child: Text(
                               '+ $preset',
@@ -229,18 +280,26 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                       runSpacing: 6,
                       children: _amountPresets.map((preset) {
                         return InkWell(
-                          onTap: () {
-                            setState(() {
-                              _amountController.text = preset['value'] as String;
-                            });
-                          },
+                          onTap: _isSubmitting
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _amountController.text =
+                                        preset['value'] as String;
+                                  });
+                                },
                           borderRadius: BorderRadius.circular(20),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFECFDF5),
                               borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: const Color(0xFFA7F3D0)),
+                              border: Border.all(
+                                color: const Color(0xFFA7F3D0),
+                              ),
                             ),
                             child: Text(
                               preset['label'] as String,
@@ -257,12 +316,14 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                     const SizedBox(height: 18),
 
                     // Descriptive Notes
-                    _buildLabel('DESCRIPTIVE NOTES & MEMO'),
+                    _buildLabel('DESCRIPTIVE NOTES'),
                     _buildTextField(
                       controller: _notesController,
-                      hint: 'Rationale or milestone conditions for this isolated reserve...',
+                      hint:
+                          'Rationale or milestone conditions for this isolated reserve...',
                       maxLines: 2,
                       prefixIcon: LucideIcons.fileText,
+                      enabled: !_isSubmitting,
                     ),
                     const SizedBox(height: 24),
 
@@ -272,7 +333,9 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                         Expanded(
                           flex: 1,
                           child: OutlinedButton(
-                            onPressed: () => Navigator.pop(context),
+                            onPressed: _isSubmitting
+                                ? null
+                                : () => Navigator.pop(context),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF475569),
                               side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -283,7 +346,10 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                             ),
                             child: const Text(
                               'Cancel',
-                              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         ),
@@ -291,11 +357,28 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
                         Expanded(
                           flex: 2,
                           child: ElevatedButton.icon(
-                            onPressed: _submit,
-                            icon: const Icon(LucideIcons.checkCircle2, size: 16),
-                            label: const Text(
-                              'Activate Purpose Wallet',
-                              style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                            onPressed: _isSubmitting ? null : _submit,
+                            icon: _isSubmitting
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(
+                                    LucideIcons.checkCircle2,
+                                    size: 16,
+                                  ),
+                            label: Text(
+                              _isSubmitting
+                                  ? 'Activating...'
+                                  : 'Activate Isolated Container',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.stylishDarkGreen,
@@ -354,12 +437,12 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
               color: const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(6),
             ),
-            child: Text(
+            child: const Text(
               '₹ INR',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w800,
-                color: AppColors.stylishDarkGreen,
+                color: Color(0xFF0F5B2E),
               ),
             ),
           ),
@@ -367,22 +450,27 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
           Expanded(
             child: TextFormField(
               controller: _amountController,
-              autofocus: false,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              enabled: !_isSubmitting,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: [
-                const CurrencyInputFormatter(integerDigits: 12, decimalDigits: 2),
+                const CurrencyInputFormatter(
+                  integerDigits: 12,
+                  decimalDigits: 2,
+                ),
                 LengthLimitingTextInputFormatter(15),
               ],
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 15,
                 color: Color(0xFF0F172A),
                 fontWeight: FontWeight.w700,
               ),
               decoration: const InputDecoration(
-                hintText: '0.00',
+                hintText: 'Enter target amount',
                 hintStyle: TextStyle(
                   color: Color(0xFF94A3B8),
-                  fontSize: 15,
+                  fontSize: 14,
                   fontWeight: FontWeight.normal,
                 ),
                 border: InputBorder.none,
@@ -401,37 +489,56 @@ class _SetupTargetWalletDialogState extends State<SetupTargetWalletDialog> {
     required String hint,
     IconData? prefixIcon,
     int maxLines = 1,
+    bool enabled = true,
   }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      style: const TextStyle(
-        fontSize: 14,
-        color: Color(0xFF0F172A),
-        fontWeight: FontWeight.w500,
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: 14,
+        vertical: maxLines > 1 ? 10 : 0,
       ),
-      decoration: InputDecoration(
-        prefixIcon: prefixIcon != null
-            ? Icon(prefixIcon, size: 16, color: const Color(0xFF94A3B8))
-            : null,
-        hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 13),
-        filled: true,
-        fillColor: Colors.white,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.stylishDarkGreen, width: 1.5),
-        ),
+      height: maxLines > 1 ? 72 : 48,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFCBD5E1)),
+      ),
+      alignment: maxLines > 1 ? Alignment.topLeft : Alignment.centerLeft,
+      child: Row(
+        crossAxisAlignment: maxLines > 1
+            ? CrossAxisAlignment.start
+            : CrossAxisAlignment.center,
+        children: [
+          if (prefixIcon != null) ...[
+            Padding(
+              padding: EdgeInsets.only(top: maxLines > 1 ? 2 : 0),
+              child: Icon(prefixIcon, size: 16, color: const Color(0xFF64748B)),
+            ),
+            const SizedBox(width: 10),
+          ],
+          Expanded(
+            child: TextFormField(
+              controller: controller,
+              enabled: enabled,
+              maxLines: maxLines,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.w600,
+              ),
+              decoration: InputDecoration(
+                hintText: hint,
+                hintStyle: const TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontSize: 13,
+                  fontWeight: FontWeight.normal,
+                ),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
