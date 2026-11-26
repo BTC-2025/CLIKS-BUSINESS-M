@@ -38,60 +38,116 @@ class TokenService {
 
   static File? _testStorageFile;
 
-  static File? _resolveFallbackFile() {
-    try {
-      if (kIsWeb) return null;
-      if (Platform.environment.containsKey('FLUTTER_TEST')) {
-        _testStorageFile ??= File('${Directory.systemTemp.path}/bnx_test_local_store.json');
-        return _testStorageFile;
-      }
-      Directory? baseDir;
-      if (Platform.isMacOS) {
-        final home = Platform.environment['HOME'];
-        if (home != null && home.isNotEmpty) {
-          baseDir = Directory('$home/Library/Application Support/com.bnxmail.app');
-        }
-      } else if (Platform.isLinux) {
-        final home = Platform.environment['HOME'];
-        if (home != null && home.isNotEmpty) {
-          baseDir = Directory('$home/.config/com.bnxmail.app');
-        }
-      } else if (Platform.isWindows) {
-        final appData = Platform.environment['APPDATA'];
-        if (appData != null && appData.isNotEmpty) {
-          baseDir = Directory('$appData/com.bnxmail.app');
-        }
-      }
-      baseDir ??= Directory('${Directory.systemTemp.path}/com.bnxmail.app');
-      if (!baseDir.existsSync()) {
-        baseDir.createSync(recursive: true);
-      }
-      return File('${baseDir.path}/.bnx_local_store.json');
-    } catch (_) {
-      return null;
+  /// Returns true if [token] appears to be a valid, structurally-sound JWT.
+  /// Rejects dummy offline tokens (e.g. 'offline_token_...', 'token_...').
+  static bool isValidJwt(String? token) {
+    if (token == null) return false;
+    final t = token.trim();
+    if (t.isEmpty ||
+        t.startsWith('offline_token_') ||
+        t.startsWith('token_') ||
+        t.startsWith('mock_')) {
+      return false;
     }
+    final parts = t.split('.');
+    return parts.length == 3 && t.startsWith('ey');
+  }
+
+  /// Lists candidate locations for `.bnx_local_store.json`.
+  /// Handles macOS sandbox container paths vs real host Library paths.
+  static List<File> _candidateFiles() {
+    final list = <File>[];
+    if (kIsWeb) return list;
+    if (Platform.environment.containsKey('FLUTTER_TEST')) {
+      _testStorageFile ??= File('${Directory.systemTemp.path}/bnx_test_local_store.json');
+      return [_testStorageFile!];
+    }
+    if (Platform.isMacOS) {
+      final home = Platform.environment['HOME'] ?? '';
+      // 1. If running inside a sandbox container, check the real host home
+      if (home.contains('/Library/Containers/')) {
+        final realHome = home.split('/Library/Containers/').first;
+        if (realHome.isNotEmpty) {
+          list.add(File('$realHome/Library/Application Support/com.bnxmail.app/.bnx_local_store.json'));
+        }
+      }
+      // 2. Direct home path
+      if (home.isNotEmpty) {
+        list.add(File('$home/Library/Application Support/com.bnxmail.app/.bnx_local_store.json'));
+      }
+      // 3. User environment fallback
+      final user = Platform.environment['USER'];
+      if (user != null && user.isNotEmpty) {
+        list.add(File('/Users/$user/Library/Application Support/com.bnxmail.app/.bnx_local_store.json'));
+      }
+    } else if (Platform.isLinux) {
+      final home = Platform.environment['HOME'];
+      if (home != null && home.isNotEmpty) {
+        list.add(File('$home/.config/com.bnxmail.app/.bnx_local_store.json'));
+      }
+    } else if (Platform.isWindows) {
+      final appData = Platform.environment['APPDATA'];
+      if (appData != null && appData.isNotEmpty) {
+        list.add(File('$appData/com.bnxmail.app/.bnx_local_store.json'));
+      }
+    }
+    list.add(File('${Directory.systemTemp.path}/com.bnxmail.app/.bnx_local_store.json'));
+    return list;
+  }
+
+  static File? _resolveFallbackFile() {
+    final candidates = _candidateFiles();
+    return candidates.isNotEmpty ? candidates.first : null;
   }
 
   static void _ensureFallbackLoaded() {
     if (_fallbackLoaded) return;
     _fallbackLoaded = true;
     try {
-      final file = _resolveFallbackFile();
-      if (file != null && file.existsSync()) {
-        final content = file.readAsStringSync();
-        if (content.isNotEmpty) {
+      final candidates = _candidateFiles();
+      Map<String, String>? bestData;
+
+      // Scan candidate files, prioritizing ones with valid JWT tokens
+      for (final f in candidates) {
+        if (!f.existsSync()) continue;
+        try {
+          final content = f.readAsStringSync();
+          if (content.isEmpty) continue;
           final decoded = jsonDecode(content);
-          if (decoded is Map) {
-            decoded.forEach((k, v) {
-              if (k != null && v != null) {
-                _memoryFallback[k.toString()] = v.toString();
-              }
-            });
+          if (decoded is! Map) continue;
+
+          final candidateMap = <String, String>{};
+          decoded.forEach((k, v) {
+            if (k != null && v != null) {
+              candidateMap[k.toString()] = v.toString();
+            }
+          });
+
+          final token = candidateMap[_kAccess];
+          final hasValidJwt = isValidJwt(token);
+
+          if (hasValidJwt) {
+            bestData = candidateMap;
+            break; // Found file with authenticated session JWT
+          } else {
+            bestData ??= candidateMap;
           }
-        }
+        } catch (_) {}
       }
+
+      if (bestData != null) {
+        _memoryFallback.addAll(bestData);
+      }
+
+      // Ensure mock/offline tokens are never used as active access tokens
       if (_memoryFallback.containsKey(_kAccess)) {
-        cachedAccessToken = _memoryFallback[_kAccess];
+        final tok = _memoryFallback[_kAccess];
+        if (isValidJwt(tok)) {
+          cachedAccessToken = tok;
+        } else {
+          _memoryFallback.remove(_kAccess);
+          cachedAccessToken = null;
+        }
       }
     } catch (e) {
       debugPrint('[TOKEN SERVICE] Fallback storage read error: $e');
@@ -100,9 +156,15 @@ class TokenService {
 
   static void _persistFallback() {
     try {
-      final file = _resolveFallbackFile();
-      if (file != null) {
-        file.writeAsStringSync(jsonEncode(_memoryFallback));
+      final jsonStr = jsonEncode(_memoryFallback);
+      for (final f in _candidateFiles()) {
+        try {
+          final dir = f.parent;
+          if (!dir.existsSync()) {
+            dir.createSync(recursive: true);
+          }
+          f.writeAsStringSync(jsonStr);
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint('[TOKEN SERVICE] Fallback storage persist error: $e');
@@ -186,25 +248,25 @@ class TokenService {
         orElse: () => {},
       );
       final activeTok = found['accessToken']?.toString();
-      if (activeTok != null && activeTok.isNotEmpty) {
+      if (isValidJwt(activeTok)) {
         cachedAccessToken = activeTok;
         return activeTok;
       }
 
       final settings = await getUserSettings(activeEmail);
       final settingsTok = settings?['accessToken']?.toString();
-      if (settingsTok != null && settingsTok.isNotEmpty && settingsTok.startsWith('ey')) {
+      if (isValidJwt(settingsTok)) {
         cachedAccessToken = settingsTok;
         return settingsTok;
       }
     }
 
-    if (cachedAccessToken != null && cachedAccessToken!.isNotEmpty) {
+    if (isValidJwt(cachedAccessToken)) {
       return cachedAccessToken;
     }
 
     final stored = await _safeRead(key: _kAccess);
-    if (stored != null && stored.isNotEmpty) {
+    if (isValidJwt(stored)) {
       cachedAccessToken = stored;
       return stored;
     }
@@ -214,9 +276,9 @@ class TokenService {
     if (registry.isNotEmpty) {
       for (final a in registry) {
         final tok = a['accessToken']?.toString();
-        if (tok != null && tok.isNotEmpty) {
+        if (isValidJwt(tok)) {
           cachedAccessToken = tok;
-          await _safeWrite(key: _kAccess, value: tok);
+          await _safeWrite(key: _kAccess, value: tok!);
           return cachedAccessToken;
         }
       }
@@ -247,7 +309,12 @@ class TokenService {
     final target = (email ?? await getUserEmail() ?? '').trim().toLowerCase();
     if (target.isEmpty) return null;
     final tok = await _safeRead(key: _kCliksAccessKey(target));
-    if (tok != null && tok.isNotEmpty) return tok;
+    if (isValidJwt(tok)) {
+      final jwtEmail = getEmailFromJwt(tok!);
+      if (jwtEmail == null || !jwtEmail.contains('user@cliks.com')) {
+        return tok;
+      }
+    }
     return null;
   }
 
@@ -403,11 +470,6 @@ class TokenService {
   static Future<String?> getTokenForAccount(String email) async {
     final clean = email.trim().toLowerCase();
     if (clean.isEmpty) return getAccessToken();
-    final activeEmail = (await getUserEmail() ?? '').trim().toLowerCase();
-    if (activeEmail == clean) {
-      final token = await getAccessToken();
-      if (token != null && token.isNotEmpty) return token;
-    }
     final registry = await getSavedAccountsFromRegistry();
     final found = registry.firstWhere(
       (a) =>
@@ -415,9 +477,17 @@ class TokenService {
           (a['id']?.toString() ?? '').trim().toLowerCase() == clean,
       orElse: () => {},
     );
-    final tok = found['accessToken']?.toString();
-    if (tok != null && tok.isNotEmpty) return tok;
-    return getAccessToken();
+    if (found.isNotEmpty) {
+      final tok = found['accessToken']?.toString();
+      if (isValidJwt(tok)) return tok;
+      return null;
+    }
+    final activeEmail = (await getUserEmail() ?? '').trim().toLowerCase();
+    if (activeEmail == clean) {
+      final token = await getAccessToken();
+      if (isValidJwt(token)) return token;
+    }
+    return null;
   }
 
   // ── Multi-Account Registry ─────────────────────────────────────────────────

@@ -9,6 +9,7 @@ void main() {
     const bnxToken =
         'eyJhbGciOiJIUzI1NiJ9.eyJhcHBfbmFtZSI6IkJOWCBNYWlsIiwic3ViIjoicmF2aW5ldzIwMDRAYm54bWFpbC5jb20iLCJpYXQiOjE3OTMwODM2MTEsImV4cCI6MTc5NTY3NTYxMX0.neyvYkB7aY5zXgI-ehOp36vlaAeuI5BPR0Ho_X1OlV4';
     await TokenService.saveTokens(accessToken: bnxToken, refreshToken: '');
+    await TokenService.saveUserInfo(email: 'ravinew2004@bnxmail.com', name: 'Ravi Kumar');
 
     // 2. CREATE planned payment (POST /v1/planned-payments)
     final req = CreatePlannedPaymentRequest(

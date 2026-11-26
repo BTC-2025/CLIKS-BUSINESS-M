@@ -24,22 +24,11 @@ class AuthRepository {
       'password': password,
     };
 
-    dynamic res;
-    try {
-      // 1. Attempt documented endpoint from mobile_payments_api_guide.md
-      res = await ApiClient.post(
-        '/api/v1/auth/login',
-        body: body,
-        auth: false,
-      );
-    } catch (_) {
-      // 2. Fall back to standard BNX Mail auth endpoint
-      res = await ApiClient.post(
-        '/api/auth/login',
-        body: body,
-        auth: false,
-      );
-    }
+    final res = await ApiClient.post(
+      '/api/auth/login',
+      body: body,
+      auth: false,
+    );
 
     final data = res is Map<String, dynamic>
         ? (res['data'] as Map<String, dynamic>? ?? res)
@@ -48,16 +37,15 @@ class AuthRepository {
     final accessToken = data['accessToken']?.toString() ?? '';
     final refreshToken = data['refreshToken']?.toString() ?? '';
 
-    if (accessToken.isNotEmpty) {
+    if (accessToken.isNotEmpty && TokenService.isValidJwt(accessToken)) {
       await TokenService.saveTokens(
         accessToken: accessToken,
         refreshToken: refreshToken,
       );
     } else {
-      // Offline / dev fallback token
-      await TokenService.saveTokens(
-        accessToken: 'token_${DateTime.now().millisecondsSinceEpoch}',
-        refreshToken: 'refresh_${DateTime.now().millisecondsSinceEpoch}',
+      throw ApiException(
+        statusCode: 401,
+        message: data['message']?.toString() ?? 'Invalid credentials or login failed',
       );
     }
 
@@ -300,17 +288,7 @@ class AuthRepository {
     }
 
     // If server does not auto-return JWT from emails/create, perform auto-login
-    try {
-      return await login(fullEmail, password);
-    } catch (_) {
-      final user = UserModel(name: userOnly, email: fullEmail);
-      await TokenService.saveTokens(
-        accessToken: 'token_${DateTime.now().millisecondsSinceEpoch}',
-        refreshToken: 'refresh_${DateTime.now().millisecondsSinceEpoch}',
-      );
-      await TokenService.saveUserInfo(email: user.email, name: user.name);
-      return user;
-    }
+    return await login(fullEmail, password);
   }
 
   // ── Mobile OTP Verification ───────────────────────────────────────────────

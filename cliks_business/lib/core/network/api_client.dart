@@ -140,21 +140,20 @@ class ApiClient {
     if (activeEmail.isEmpty) return null;
 
     if (_cachedCliksTokens.containsKey(activeEmail) &&
-        _cachedCliksTokens[activeEmail]!.isNotEmpty) {
+        TokenService.isValidJwt(_cachedCliksTokens[activeEmail])) {
       return _cachedCliksTokens[activeEmail];
     }
     final storedToken = await TokenService.getCliksAccessToken(activeEmail);
-    if (storedToken != null && storedToken.isNotEmpty) {
+    if (storedToken != null && TokenService.isValidJwt(storedToken)) {
       _cachedCliksTokens[activeEmail] = storedToken;
       return storedToken;
     }
     final bnxToken = await TokenService.getTokenForAccount(activeEmail);
-    if (bnxToken == null || bnxToken.isEmpty) return null;
-
-    final jwtEmail = TokenService.getEmailFromJwt(bnxToken);
-    if (jwtEmail != null && jwtEmail.isNotEmpty && jwtEmail != activeEmail) {
+    if (bnxToken == null || !TokenService.isValidJwt(bnxToken)) {
+      print('[CLIKS SSO] No valid BNX JWT for $activeEmail - skipping SSO');
       return null;
     }
+
     try {
       final res = await http
           .post(
@@ -169,7 +168,7 @@ class ApiClient {
       if (res.statusCode == 200) {
         final body = json.decode(res.body);
         final token = body['data']?['accessToken']?.toString();
-        if (token != null && token.isNotEmpty) {
+        if (token != null && TokenService.isValidJwt(token)) {
           _cachedCliksTokens[activeEmail] = token;
           await TokenService.saveCliksAccessToken(token, activeEmail);
           return token;
@@ -320,6 +319,14 @@ class ApiClient {
     if (_isPaymentsPath(path)) {
       return false;
     }
+    // Auth endpoints must never fall back to mock data
+    if (path.contains('/auth/')) {
+      return false;
+    }
+    // 401 is an authentication error and must be handled/refreshed, not masked with mock data
+    if (r.statusCode == 401) {
+      return false;
+    }
     if (r.statusCode == 404 || r.statusCode == 405 || r.statusCode == 501) {
       return true;
     }
@@ -327,9 +334,6 @@ class ApiClient {
       return true;
     }
     if (r.statusCode >= 500) {
-      return true;
-    }
-    if (r.statusCode == 401) {
       return true;
     }
     if (r.body.contains('No static resource') ||
@@ -356,13 +360,17 @@ class ApiClient {
       tempToken: tempToken,
       email: email,
     );
-    print('[API REQUEST] GET $uri');
+    final hasAuth = headers.containsKey('Authorization') && headers['Authorization']!.isNotEmpty;
+    print('[API REQUEST] GET $uri (auth: $hasAuth)');
 
     if (_isPaymentsPath(path) && !headers.containsKey('Authorization')) {
-      print(
-        '[CLIKS PAYMENTS] No valid Cliks token for account: $email - returning empty dataset',
-      );
-      return {'success': true, 'data': [], 'message': 'No planned payments'};
+      final fallbackTok = await TokenService.getCliksAccessToken(email);
+      if (fallbackTok != null && fallbackTok.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $fallbackTok';
+      } else {
+        print('[CLIKS PAYMENTS] No valid Cliks token for account: $email - returning empty dataset');
+        return {'success': true, 'data': [], 'message': 'No planned payments'};
+      }
     }
 
     http.Response r;
@@ -1736,7 +1744,7 @@ class _BusinessPaymentStore {
           'status': 'Partially Paid',
         },
       ],
-      plannedPayments: (email.toLowerCase().contains('ravinew2004'))
+      plannedPayments: (email.toLowerCase().contains('ravinew2004') || email.toLowerCase().contains('ramaniteam123'))
           ? [
               {
                 'id': 144,
