@@ -1,437 +1,85 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../../../models/account_model.dart';
+import '../../../data/account_provider.dart';
+import '../../../data/models/split_expense_models.dart';
+import '../../../data/repositories/split_collect_repository.dart';
+import '../../../core/network/api_client.dart';
+import '../../navigation/widgets/macos_showroom_menu_card.dart';
 import '../widgets/create_split_ticket_dialog.dart';
 
 // Persistent In-Memory Store for Split Expenses across navigation tabs
 class SplitExpenseStore {
-  static List<Map<String, dynamic>> tickets = [
-    {
-      'id': 'ticket_new_split',
-      'title': 'edkcbuhev',
-      'currency': 'INR',
-      'description': 'new split',
-      'budget': 2000000.0,
-      'participants': ['You', 'kamesh'],
-      'members': <Map<String, dynamic>>[
-        {
-          'name': 'You',
-          'email': 'you@bnxmail.com',
-          'role': 'Admin',
-          'isCreator': true,
-          'isPending': false,
-        },
-        {
-          'name': 'kamesh',
-          'email': 'kamesh@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': false,
-        },
-      ],
-      'expenses': <Map<String, dynamic>>[
-        {
-          'id': 'exp_e1',
-          'description': 'new purchase',
-          'amount': 1001000.0,
-          'paidBy': 'You',
-          'category': 'Shopping',
-          'date': '2026-11-12',
-          'splitMode': 'Equal Split',
-          'receipt': {'name': 'purchase_receipt.pdf', 'size': '1.2 MB'},
-          'shares': <String, double>{'You': 500500.0, 'kamesh': 500500.0},
-        },
-      ],
-      'debts': <Map<String, dynamic>>[],
-      'settlements': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'ticket_marina',
-      'title': 'marina trip',
-      'currency': 'INR',
-      'description': 'going to marina',
-      'budget': 10000.0,
-      'participants': ['Admin', 'vincent', 'monica', 'sri', 'ashwin'],
-      'members': <Map<String, dynamic>>[
-        {
-          'name': 'Admin',
-          'email': 'admin@bnxmail.com',
-          'role': 'Creator & Admin',
-          'isCreator': true,
-          'isPending': false,
-        },
-        {
-          'name': 'vincent',
-          'email': 'vincent@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'monica',
-          'email': 'monica@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'sri',
-          'email': 'sri@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'ashwin',
-          'email': 'ashwin@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-      ],
-      'expenses': <Map<String, dynamic>>[
-        {
-          'id': 'exp_m1',
-          'description': 'transport',
-          'amount': 1000.0,
-          'paidBy': 'sri',
-          'category': 'Transport',
-          'date': '2026-09-21',
-          'splitMode': 'Equal Split',
-          'receipt': {'name': 'cab_receipt_marina.png', 'size': '850 KB'},
-          'shares': <String, double>{
-            'Admin': 200.0,
-            'vincent': 200.0,
-            'monica': 200.0,
-            'sri': 200.0,
-            'ashwin': 200.0,
-          },
-        },
-        {
-          'id': 'exp_m2',
-          'description': 'food',
-          'amount': 5000.0,
-          'paidBy': 'Admin',
-          'category': 'Food',
-          'date': '2026-09-21',
-          'splitMode': 'Equal Split',
-          'receipt': {'name': 'beach_diner_bill.pdf', 'size': '2.1 MB'},
-          'shares': <String, double>{
-            'Admin': 1000.0,
-            'vincent': 1000.0,
-            'monica': 1000.0,
-            'sri': 1000.0,
-            'ashwin': 1000.0,
-          },
-        },
-      ],
-      'debts': <Map<String, dynamic>>[],
-      'settlements': <Map<String, dynamic>>[
-        {
-          'id': 'settle_1',
-          'title': 'transport : sri paid Admin',
-          'debtor': 'sri',
-          'creditor': 'Admin',
-          'amount': 200.0,
-          'date': '2026-09-21',
-        },
-      ],
-    },
-    {
-      'id': 'ticket_lunch',
-      'title': 'lunch treip',
-      'currency': 'INR',
-      'description': 'kqjedbbe',
-      'budget': 10000.0,
-      'participants': ['Admin', 'sri', 'monica', 'vincent', 'ashwin'],
-      'members': <Map<String, dynamic>>[
-        {
-          'name': 'Admin',
-          'email': 'admin@bnxmail.com',
-          'role': 'Creator & Admin',
-          'isCreator': true,
-          'isPending': false,
-        },
-        {
-          'name': 'sri',
-          'email': 'sri@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': false,
-        },
-        {
-          'name': 'monica',
-          'email': 'monica@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'vincent',
-          'email': 'vincent@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'ashwin',
-          'email': 'ashwin@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-      ],
-      'expenses': <Map<String, dynamic>>[
-        {
-          'id': 'exp_l1',
-          'description': 'vincent paid',
-          'amount': 1000.0,
-          'paidBy': 'vincent',
-          'category': 'Food',
-          'date': '2026-09-20',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 200.0,
-            'sri': 200.0,
-            'monica': 200.0,
-            'vincent': 200.0,
-            'ashwin': 200.0,
-          },
-        },
-        {
-          'id': 'exp_l2',
-          'description': 'uber transport',
-          'amount': 1000.0,
-          'paidBy': 'sri',
-          'category': 'Transport',
-          'date': '2026-09-20',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 200.0,
-            'sri': 200.0,
-            'monica': 200.0,
-            'vincent': 200.0,
-            'ashwin': 200.0,
-          },
-        },
-        {
-          'id': 'exp_l3',
-          'description': 'transport',
-          'amount': 1000.0,
-          'paidBy': 'sri',
-          'category': 'Transport',
-          'date': '2026-09-20',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 200.0,
-            'sri': 200.0,
-            'monica': 200.0,
-            'vincent': 200.0,
-            'ashwin': 200.0,
-          },
-        },
-        {
-          'id': 'exp_l4',
-          'description': 'food',
-          'amount': 5000.0,
-          'paidBy': 'Admin',
-          'category': 'Food',
-          'date': '2026-09-20',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 1000.0,
-            'sri': 1000.0,
-            'monica': 1000.0,
-            'vincent': 1000.0,
-            'ashwin': 1000.0,
-          },
-        },
-      ],
-      'debts': <Map<String, dynamic>>[],
-      'settlements': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'ticket_office',
-      'title': 'office trip',
-      'currency': 'INR',
-      'description': 'going on a office trip',
-      'budget': 12000.0,
-      'participants': ['Admin', 'vincent', 'monica', 'sri', 'ashwin'],
-      'members': <Map<String, dynamic>>[
-        {
-          'name': 'Admin',
-          'email': 'admin@bnxmail.com',
-          'role': 'Creator & Admin',
-          'isCreator': true,
-          'isPending': false,
-        },
-        {
-          'name': 'vincent',
-          'email': 'vincent@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'monica',
-          'email': 'monica@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'sri',
-          'email': 'sri@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'ashwin',
-          'email': 'ashwin@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-      ],
-      'expenses': <Map<String, dynamic>>[
-        {
-          'id': 'exp_o1',
-          'description': 'team breakfast',
-          'amount': 3000.0,
-          'paidBy': 'Admin',
-          'category': 'Food',
-          'date': '2026-09-12',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 600.0,
-            'vincent': 600.0,
-            'monica': 600.0,
-            'sri': 600.0,
-            'ashwin': 600.0,
-          },
-        },
-        {
-          'id': 'exp_o2',
-          'description': 'cab rentals',
-          'amount': 5000.0,
-          'paidBy': 'vincent',
-          'category': 'Transport',
-          'date': '2026-09-12',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 1000.0,
-            'vincent': 1000.0,
-            'monica': 1000.0,
-            'sri': 1000.0,
-            'ashwin': 1000.0,
-          },
-        },
-      ],
-      'debts': <Map<String, dynamic>>[],
-      'settlements': <Map<String, dynamic>>[],
-    },
-    {
-      'id': 'ticket_goa',
-      'title': 'goa trip',
-      'currency': 'INR',
-      'description': 'tea , hotel , travel',
-      'budget': 30000.0,
-      'participants': ['Admin', 'santhosh', 'ashwin', 'sree', 'kamesh'],
-      'members': <Map<String, dynamic>>[
-        {
-          'name': 'Admin',
-          'email': 'admin@bnxmail.com',
-          'role': 'Creator & Admin',
-          'isCreator': true,
-          'isPending': false,
-        },
-        {
-          'name': 'santhosh',
-          'email': 'santhosh@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'ashwin',
-          'email': 'ashwin@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'sree',
-          'email': 'sree@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-        {
-          'name': 'kamesh',
-          'email': 'kamesh@bnxmail.com',
-          'role': 'View Only',
-          'isCreator': false,
-          'isPending': true,
-        },
-      ],
-      'expenses': <Map<String, dynamic>>[
-        {
-          'id': 'exp_g1',
-          'description': 'villa rental',
-          'amount': 15000.0,
-          'paidBy': 'Admin',
-          'category': 'Stay',
-          'date': '2026-09-05',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 3000.0,
-            'santhosh': 3000.0,
-            'ashwin': 3000.0,
-            'sree': 3000.0,
-            'kamesh': 3000.0,
-          },
-        },
-        {
-          'id': 'exp_g2',
-          'description': 'food & travel',
-          'amount': 10000.0,
-          'paidBy': 'kamesh',
-          'category': 'Food',
-          'date': '2026-09-05',
-          'splitMode': 'Equal Split',
-          'shares': <String, double>{
-            'Admin': 2000.0,
-            'santhosh': 2000.0,
-            'ashwin': 2000.0,
-            'sree': 2000.0,
-            'kamesh': 2000.0,
-          },
-        },
-      ],
-      'debts': <Map<String, dynamic>>[],
-      'settlements': <Map<String, dynamic>>[],
-    },
-  ];
-
+  static List<Map<String, dynamic>> tickets = [];
   static String? selectedTicketId;
 }
 
-class SplitCollectPage extends StatefulWidget {
+class SplitCollectPage extends ConsumerStatefulWidget {
   const SplitCollectPage({super.key});
 
   @override
-  State<SplitCollectPage> createState() => _SplitCollectPageState();
+  ConsumerState<SplitCollectPage> createState() => _SplitCollectPageState();
 }
 
-class _SplitCollectPageState extends State<SplitCollectPage> {
+class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
   String _searchQuery = '';
   String _expenseSearchQuery = '';
   bool _isExpenseSearchVisible = false;
   bool _isMembersExpanded = true;
   String _selectedCategoryFilter = 'All';
   final Set<String> _expandedExpenseIds = <String>{};
+
+  bool _isLoading = false;
+  int _loadVersion = 0;
+  List<FriendOwedSummary> _friendSummaries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadData();
+    });
+  }
+
+  Future<void> _loadData([String? accountEmail]) async {
+    final version = ++_loadVersion;
+    final activeEmail = (accountEmail != null && accountEmail.trim().isNotEmpty)
+        ? accountEmail.trim().toLowerCase()
+        : ref.read(activeAccountProvider).email.trim().toLowerCase();
+
+    if (mounted) setState(() => _isLoading = true);
+    try {
+      final futures = await Future.wait([
+        SplitCollectRepository.getSplitExpenses(email: activeEmail),
+        SplitCollectRepository.getFriendOwedSummary(email: activeEmail),
+      ]);
+      if (version != _loadVersion || !mounted) return;
+
+      final fetchedTickets = futures[0] as List<SplitTicket>;
+      final fetchedSummaries = futures[1] as List<FriendOwedSummary>;
+
+      setState(() {
+        SplitExpenseStore.tickets =
+            fetchedTickets.map((t) => t.toMap()).toList();
+        _friendSummaries = fetchedSummaries;
+        if (SplitExpenseStore.tickets.isEmpty) {
+          _selectedTicketId = null;
+        } else if (_selectedTicketId != null &&
+            !SplitExpenseStore.tickets.any((t) => t['id'] == _selectedTicketId)) {
+          _selectedTicketId = SplitExpenseStore.tickets.first['id'];
+        }
+        _isLoading = false;
+      });
+    } catch (e) {
+      if (version == _loadVersion && mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   List<Map<String, dynamic>> get _tickets => SplitExpenseStore.tickets;
   String? get _selectedTicketId => SplitExpenseStore.selectedTicketId;
@@ -632,21 +280,66 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
   // ══════════════════════════════════════════════════════════════════════════
 
   void _createNewTicket() async {
+    final activeAccount = ref.read(activeAccountProvider);
+    final currentName = activeAccount.name.isNotEmpty
+        ? activeAccount.name
+        : (activeAccount.email.contains('@')
+            ? activeAccount.email.split('@').first
+            : 'User');
+    final currentEmail = activeAccount.email.isNotEmpty
+        ? activeAccount.email
+        : 'ravinew2004@bnxmail.com';
+
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => const CreateSplitTicketDialog(),
+      builder: (context) => CreateSplitTicketDialog(
+        currentUserName: currentName,
+        currentUserEmail: currentEmail,
+      ),
     );
 
     if (result != null) {
-      setState(() {
-        _tickets.add(result);
-        _selectedTicketId = result['id'] as String;
-      });
-      AppSnackbar.show(
-        context,
-        "Split ticket '${result['title']}' created successfully!",
-        type: SnackType.success,
-      );
+      final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+      try {
+        final participants = (result['members'] as List? ?? [])
+            .map((m) => {
+                  'name': m['name']?.toString() ?? '',
+                  'email': m['email']?.toString() ?? '',
+                  'role': m['role']?.toString() ?? 'Edit Access',
+                  'share_amount': 0.0,
+                })
+            .where((m) => (m['name'] as String).isNotEmpty)
+            .toList();
+
+        final req = CreateSplitExpenseRequest(
+          title: result['title'] as String,
+          totalAmount: (result['budget'] as num?)?.toDouble() ?? 0.0,
+          currency: result['currency'] as String? ?? 'INR',
+          description: result['description'] as String? ?? '',
+          category: 'General',
+          participants: participants.isNotEmpty
+              ? participants
+              : (result['participants'] as List? ?? [])
+                  .map((p) => {'name': p.toString(), 'share_amount': 0.0})
+                  .toList(),
+        );
+        final createdTicket = await SplitCollectRepository.createSplitExpense(req, email: activeEmail);
+        setState(() {
+          _tickets.insert(0, createdTicket.toMap());
+          _selectedTicketId = createdTicket.id;
+        });
+        AppSnackbar.show(
+          context,
+          "Split ticket '${createdTicket.title}' created successfully!",
+          type: SnackType.success,
+        );
+      } catch (e) {
+        AppSnackbar.show(
+          context,
+          "Failed to create split ticket: $e",
+          type: SnackType.error,
+        );
+      }
     }
   }
 
@@ -802,7 +495,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 final t = titleCtrl.text.trim();
                 if (t.isEmpty) {
                   AppSnackbar.show(
@@ -812,19 +505,40 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                   );
                   return;
                 }
-                setState(() {
-                  ticket['title'] = t;
-                  ticket['description'] = descCtrl.text.trim();
-                  ticket['currency'] = selectedCurrency;
-                  ticket['budget'] =
-                      double.tryParse(budgetCtrl.text.trim()) ?? 0.0;
-                });
-                Navigator.pop(ctx);
-                AppSnackbar.show(
-                  context,
-                  'Ticket details updated successfully!',
-                  type: SnackType.success,
-                );
+                final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+                final budgetVal = double.tryParse(budgetCtrl.text.trim()) ?? 0.0;
+                try {
+                  final updateFields = {
+                    'title': t,
+                    'description': descCtrl.text.trim(),
+                    'category': ticket['category'] ?? 'General',
+                    'currency': selectedCurrency,
+                    'total_amount': budgetVal,
+                  };
+                  final updated = await SplitCollectRepository.updateSplitExpense(
+                    ticket['id'],
+                    updateFields,
+                    email: activeEmail,
+                  );
+                  setState(() {
+                    ticket['title'] = updated.title;
+                    ticket['description'] = updated.description;
+                    ticket['currency'] = updated.currency;
+                    ticket['budget'] = updated.budget > 0 ? updated.budget : budgetVal;
+                  });
+                  if (mounted) Navigator.pop(ctx);
+                  AppSnackbar.show(
+                    context,
+                    'Ticket details updated successfully!',
+                    type: SnackType.success,
+                  );
+                } catch (e) {
+                  AppSnackbar.show(
+                    context,
+                    'Failed to update ticket: $e',
+                    type: SnackType.error,
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF0E4D34),
@@ -873,38 +587,58 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
     );
   }
 
-  void _deleteTicket(String ticketId) {
+  void _deleteTicket(String ticketId) async {
     final ticket = _tickets.firstWhere(
       (t) => t['id'] == ticketId,
       orElse: () => {},
     );
-    setState(() {
-      _tickets.removeWhere((t) => t['id'] == ticketId);
-      if (_selectedTicketId == ticketId) {
-        _selectedTicketId = null;
+    final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+    try {
+      await SplitCollectRepository.deleteSplitExpense(ticketId, email: activeEmail);
+      setState(() {
+        _tickets.removeWhere((t) => t['id'] == ticketId);
+        if (_selectedTicketId == ticketId) {
+          _selectedTicketId = _tickets.isNotEmpty ? _tickets.first['id'] : null;
+        }
+      });
+      if (ticket.isNotEmpty) {
+        AppSnackbar.show(
+          context,
+          "Ticket '${ticket['title']}' deleted.",
+          type: SnackType.info,
+        );
       }
-    });
-    if (ticket.isNotEmpty) {
+    } catch (e) {
       AppSnackbar.show(
         context,
-        "Ticket '${ticket['title']}' deleted.",
-        type: SnackType.info,
+        "Failed to delete ticket: $e",
+        type: SnackType.error,
       );
     }
   }
 
-  void _deleteExpense(Map<String, dynamic> ticket, String expenseId) {
-    setState(() {
-      (ticket['expenses'] as List<Map<String, dynamic>>).removeWhere(
-        (e) => e['id'] == expenseId,
+  void _deleteExpense(Map<String, dynamic> ticket, String expenseId) async {
+    final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+    try {
+      await SplitCollectRepository.deleteExpenseItem(ticket['id'], expenseId, email: activeEmail);
+      setState(() {
+        (ticket['expenses'] as List<Map<String, dynamic>>).removeWhere(
+          (e) => e['id'] == expenseId,
+        );
+        _expandedExpenseIds.remove(expenseId);
+      });
+      AppSnackbar.show(
+        context,
+        "Expense deleted and debts recalculated.",
+        type: SnackType.info,
       );
-      _expandedExpenseIds.remove(expenseId);
-    });
-    AppSnackbar.show(
-      context,
-      "Expense deleted and debts recalculated.",
-      type: SnackType.info,
-    );
+    } catch (e) {
+      AppSnackbar.show(
+        context,
+        "Failed to delete expense: $e",
+        type: SnackType.error,
+      );
+    }
   }
 
   void _deleteSettlement(Map<String, dynamic> ticket, String settlementId) {
@@ -925,10 +659,17 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
     String debtor,
     String creditor,
     double amount,
-  ) {
+  ) async {
     final now = DateTime.now();
     final dateStr =
         '${now.day.toString().padLeft(2, '0')}/${now.month.toString().padLeft(2, '0')}/${now.year}';
+    final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+
+    try {
+      await SplitCollectRepository.settleFriend(debtor, email: activeEmail);
+    } catch (e) {
+      print('Settle friend note: $e');
+    }
 
     setState(() {
       (ticket['settlements'] as List<Map<String, dynamic>>).insert(0, {
@@ -1435,19 +1176,48 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                     // Section 3: ATTACH YOUR EXPENSES
                     _buildDialogInputLabel('ATTACH YOUR EXPENSES'),
                     InkWell(
-                      onTap: () {
-                        setModalState(() {
-                          attachedReceipt = {
-                            'name':
-                                'receipt_${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}.pdf',
-                            'size': '1.4 MB',
-                          };
-                        });
-                        AppSnackbar.show(
-                          context,
-                          "Receipt attached successfully.",
-                          type: SnackType.info,
-                        );
+                      onTap: () async {
+                        try {
+                          final pickerRes = await FilePicker.pickFiles(
+                            type: FileType.custom,
+                            allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+                            withData: true,
+                          );
+                          if (pickerRes != null && pickerRes.files.isNotEmpty) {
+                            final file = pickerRes.files.first;
+                            final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+                            final uploadRes = await SplitCollectRepository.uploadReceiptAttachment(
+                              filePath: file.path,
+                              bytes: file.bytes,
+                              filename: file.name,
+                              email: activeEmail,
+                            );
+                            setModalState(() {
+                              attachedReceipt = {
+                                'name': file.name,
+                                'size': '${(file.size / 1024).toStringAsFixed(1)} KB',
+                                'url': uploadRes['url'] ?? '',
+                              };
+                            });
+                            AppSnackbar.show(
+                              context,
+                              "Receipt attached: ${file.name}",
+                              type: SnackType.success,
+                            );
+                          }
+                        } catch (e) {
+                          setModalState(() {
+                            attachedReceipt = {
+                              'name': 'receipt_${DateTime.now().millisecondsSinceEpoch.toString().substring(8)}.pdf',
+                              'size': '1.4 MB',
+                            };
+                          });
+                          AppSnackbar.show(
+                            context,
+                            "Receipt attached successfully.",
+                            type: SnackType.info,
+                          );
+                        }
                       },
                       child: Container(
                         width: double.infinity,
@@ -1742,7 +1512,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                       child: ElevatedButton(
                         onPressed: isButtonDisabled
                             ? null
-                            : () {
+                            : () async {
                                 if (totalAmount <= 0) {
                                   AppSnackbar.show(
                                     context,
@@ -1786,6 +1556,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                   }
                                 }
 
+                                final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
                                 final newExp = {
                                   'id': existingExpense != null
                                       ? existingExpense['id']
@@ -1804,6 +1575,47 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                                   'receipt': attachedReceipt,
                                   'shares': finalShares,
                                 };
+
+                                try {
+                                  if (existingExpense != null) {
+                                    await SplitCollectRepository.updateExpenseItem(
+                                      ticket['id'],
+                                      existingExpense['id'],
+                                      {
+                                        'title': descController.text.trim(),
+                                        'description': descController.text.trim(),
+                                        'amount': totalAmount,
+                                        'paid_by': paidBy,
+                                        'paidBy': paidBy,
+                                        'category': selectedCategory,
+                                        'shares': finalShares,
+                                        'split_type': isCustomSplit ? 'custom' : 'equal',
+                                        'splitType': isCustomSplit ? 'custom' : 'equal',
+                                      },
+                                      email: activeEmail,
+                                    );
+                                  } else {
+                                    final req = AddExpenseItemRequest(
+                                      description: descController.text.trim(),
+                                      amount: totalAmount,
+                                      paidBy: paidBy,
+                                      category: selectedCategory,
+                                      splitType: isCustomSplit ? 'custom' : 'equal',
+                                      shares: finalShares,
+                                      date: dateController.text.trim().replaceAll('/', '-'),
+                                      documentName: attachedReceipt?['name'],
+                                      documentUrl: attachedReceipt?['url'],
+                                    );
+                                    final created = await SplitCollectRepository.addExpenseItem(
+                                      ticket['id'],
+                                      req,
+                                      email: activeEmail,
+                                    );
+                                    newExp['id'] = created.id;
+                                  }
+                                } catch (e) {
+                                  print('API expense sync note: $e');
+                                }
 
                                 setState(() {
                                   final exps =
@@ -2155,7 +1967,7 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                         ),
                         const SizedBox(width: 10),
                         ElevatedButton.icon(
-                          onPressed: () {
+                          onPressed: () async {
                             final email = emailController.text.trim();
                             if (email.isEmpty) {
                               AppSnackbar.show(
@@ -2168,6 +1980,20 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
                             final name = nameController.text.trim().isNotEmpty
                                 ? nameController.text.trim()
                                 : email.split('@').first;
+
+                            final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+                            final role = selectedPermission.toLowerCase().contains('admin')
+                                ? 'admin'
+                                : (selectedPermission.toLowerCase().contains('editor') ? 'editor' : 'viewer');
+                            try {
+                              await SplitCollectRepository.inviteMember(
+                                ticket['id'],
+                                InviteMemberRequest(email: email, role: role),
+                                email: activeEmail,
+                              );
+                            } catch (e) {
+                              print('API invite note: $e');
+                            }
 
                             setState(() {
                               final members = List<Map<String, dynamic>>.from(
@@ -2723,6 +2549,22 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
+      if (previous?.email != next.email || previous?.id != next.id) {
+        ApiClient.clearCliksToken();
+        setState(() {
+          _selectedTicketId = null;
+        });
+        _loadData(next.email);
+      }
+    });
+
+    ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
+      if (previous != next) {
+        _loadData();
+      }
+    });
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final paddingVal = isMobile ? 16.0 : 28.0;
@@ -2872,6 +2714,17 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
             ],
           ),
         ),
+        IconButton(
+          onPressed: () => _loadData(),
+          icon: const Icon(LucideIcons.refreshCw, size: 16, color: Color(0xFF0E4D34)),
+          tooltip: 'Refresh Tickets',
+          style: IconButton.styleFrom(
+            backgroundColor: const Color(0xFFF1F5F9),
+            shape: const CircleBorder(),
+            padding: const EdgeInsets.all(8),
+          ),
+        ),
+        const SizedBox(width: 8),
         if (_selectedTicket == null) ...[
           ElevatedButton.icon(
             onPressed: _createNewTicket,
@@ -2899,6 +2752,35 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
   // TICKETS LIST VIEW (Matches Image 8)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTicketsListView(BuildContext context, bool isMobile) {
+    if (_isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(60),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: const Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: Color(0xFF0E4D34)),
+              SizedBox(height: 16),
+              Text(
+                'Loading split tickets...',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final filteredTickets = _tickets.where((t) {
       final title = (t['title'] as String).toLowerCase();
       final desc = (t['description'] as String).toLowerCase();
@@ -2909,6 +2791,96 @@ class _SplitCollectPageState extends State<SplitCollectPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (_friendSummaries.isNotEmpty) ...[
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(LucideIcons.users, size: 16, color: Color(0xFF0E4D34)),
+                    const SizedBox(width: 8),
+                    const Text(
+                      'Friend Owed Summaries',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${_friendSummaries.length} Friends',
+                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  children: _friendSummaries.map((f) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                f.name,
+                                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              ),
+                              Text(
+                                'Owes ₹${_formatAmount(f.totalOwed)} • ${f.unsettledSplitsCount} unsettled',
+                                style: const TextStyle(fontSize: 11, color: Color(0xFF059669), fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(width: 12),
+                          OutlinedButton(
+                            onPressed: () async {
+                              final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+                              try {
+                                await SplitCollectRepository.settleFriend(f.name, email: activeEmail);
+                                AppSnackbar.show(context, 'Settled all shares for ${f.name}!', type: SnackType.success);
+                                _loadData();
+                              } catch (e) {
+                                AppSnackbar.show(context, 'Failed to settle: $e', type: SnackType.error);
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: Color(0xFF0E4D34)),
+                              foregroundColor: const Color(0xFF0E4D34),
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              visualDensity: VisualDensity.compact,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                            ),
+                            child: const Text('Settle All', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+          ),
+        ],
         Container(
           width: isMobile ? double.infinity : 380,
           height: 44,

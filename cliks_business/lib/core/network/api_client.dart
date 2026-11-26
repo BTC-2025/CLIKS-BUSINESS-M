@@ -129,7 +129,7 @@ class ApiClient {
 
   /// Returns true if the path belongs to the Cliks Payments backend.
   static bool _isPaymentsPath(String path) {
-    return path.contains('/planned-payments');
+    return path.contains('/planned-payments') || path.contains('/split-expenses');
   }
 
   /// Exchanges active account's BNX token for Cliks Business JWT token via SSO.
@@ -780,6 +780,66 @@ class ApiClient {
       };
     }
     return {'success': true};
+  }
+
+  /// Generic multipart upload for files (e.g. split expense receipts).
+  static Future<Map<String, dynamic>> uploadMultipart(
+    String path, {
+    String? filePath,
+    Uint8List? bytes,
+    String? filename,
+    String fieldName = 'file',
+    String? email,
+  }) async {
+    final uri = await _resolveUri(path);
+    final headers = await _buildHeaders(path: path, auth: true, email: email);
+    headers.remove('Content-Type');
+
+    final request = http.MultipartRequest('POST', uri);
+    request.headers.addAll(headers);
+
+    final resolvedFilename = filename ??
+        (filePath != null && filePath.contains('.')
+            ? filePath.split(Platform.pathSeparator).last
+            : 'receipt.pdf');
+    final ext = resolvedFilename.split('.').last.toLowerCase();
+    MediaType mediaType;
+    if (ext == 'png') {
+      mediaType = MediaType('image', 'png');
+    } else if (ext == 'jpg' || ext == 'jpeg') {
+      mediaType = MediaType('image', 'jpeg');
+    } else {
+      mediaType = MediaType('application', 'pdf');
+    }
+
+    if (bytes != null && bytes.isNotEmpty) {
+      request.files.add(
+        http.MultipartFile.fromBytes(
+          fieldName,
+          bytes,
+          filename: resolvedFilename,
+          contentType: mediaType,
+        ),
+      );
+    } else if (filePath != null && filePath.isNotEmpty) {
+      final file = File(filePath);
+      if (file.existsSync()) {
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            fieldName,
+            filePath,
+            filename: resolvedFilename,
+            contentType: mediaType,
+          ),
+        );
+      }
+    }
+
+    final streamedResponse =
+        await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamedResponse);
+    _assertOk(response);
+    return _parseBody(response);
   }
 
   // ── Offline / Fallback Mock Stores ─────────────────────────────────────────

@@ -499,7 +499,7 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
   @override
   Widget build(BuildContext context) {
     ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
-      if (previous?.email != next.email) {
+      if (previous?.email != next.email || previous?.id != next.id) {
         ApiClient.clearCliksToken();
         _loadData(next.email);
       }
