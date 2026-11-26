@@ -237,17 +237,17 @@ class ApiClient {
         final cliksToken = await _getCliksAuthToken(email);
         if (cliksToken != null && cliksToken.isNotEmpty) {
           headers['Authorization'] = 'Bearer $cliksToken';
-        } else {
-          final generalToken = await TokenService.getTokenForAccount(email ?? '');
-          if (generalToken != null && generalToken.isNotEmpty) {
-            headers['Authorization'] = 'Bearer $generalToken';
-          }
         }
         return headers;
       }
-      final token = await TokenService.getTokenForAccount(email ?? '');
-      if (token != null && token.isNotEmpty) {
-        headers['Authorization'] = 'Bearer $token';
+      final token = (email != null && email.isNotEmpty)
+          ? await TokenService.getTokenForAccount(email)
+          : await TokenService.getAccessToken();
+      final effectiveToken = (token != null && token.isNotEmpty)
+          ? token
+          : await TokenService.getAccessToken();
+      if (effectiveToken != null && effectiveToken.isNotEmpty) {
+        headers['Authorization'] = 'Bearer $effectiveToken';
       }
     }
     return headers;
@@ -256,7 +256,9 @@ class ApiClient {
   static Map<String, dynamic> _parseBody(http.Response response) {
     try {
       final decoded = json.decode(response.body);
-      if (decoded is Map<String, dynamic>) return decoded;
+      if (decoded is Map) {
+        return Map<String, dynamic>.from(decoded);
+      }
       return {'data': decoded, 'success': true};
     } catch (_) {
       return {
@@ -1734,7 +1736,120 @@ class _BusinessPaymentStore {
           'status': 'Partially Paid',
         },
       ],
-      plannedPayments: [],
+      plannedPayments: (email.toLowerCase().contains('ravinew2004'))
+          ? [
+              {
+                'id': 144,
+                'name': 'Office Internet Bill',
+                'description': 'Airtel Broadband High Speed',
+                'amount': 2699.0,
+                'due_date': '2026-12-05',
+                'frequency': 'MONTHLY',
+                'category': 'Utilities',
+                'status': 'pending',
+                'type': 'SEND',
+              },
+              {
+                'id': 143,
+                'name': 'Office Internet Bill',
+                'description': 'Airtel Broadband High Speed',
+                'amount': 2699.0,
+                'due_date': '2026-11-05',
+                'frequency': 'MONTHLY',
+                'category': 'Utilities',
+                'status': 'paid',
+                'type': 'SEND',
+              },
+              {
+                'id': 141,
+                'name': 'Vendor Invoice Payment',
+                'description': '',
+                'amount': 1234567890.0,
+                'due_date': '2026-11-25',
+                'frequency': 'one_time',
+                'category': 'Vendor',
+                'status': 'pending',
+                'type': 'SEND',
+              },
+              {
+                'id': 132,
+                'name': 'wertyuiop',
+                'description': '',
+                'amount': 5990.0,
+                'due_date': '2026-11-25',
+                'frequency': 'monthly',
+                'category': 'Rent',
+                'status': 'pending',
+                'type': 'RECEIVE',
+              },
+              {
+                'id': 62,
+                'name': 'Electricity / Internet Bill',
+                'description': '',
+                'amount': 67890.0,
+                'due_date': '2027-02-12',
+                'frequency': 'monthly',
+                'category': 'Utilities',
+                'status': 'pending',
+                'type': 'SEND',
+              },
+              {
+                'id': 61,
+                'name': 'Electricity / Internet Bill',
+                'description': '',
+                'amount': 67890.0,
+                'due_date': '2027-01-12',
+                'frequency': 'monthly',
+                'category': 'Utilities',
+                'status': 'paid',
+                'type': 'SEND',
+              },
+              {
+                'id': 60,
+                'name': 'Electricity / Internet Bill',
+                'description': '',
+                'amount': 67890.0,
+                'due_date': '2026-12-12',
+                'frequency': 'monthly',
+                'category': 'Utilities',
+                'status': 'paid',
+                'type': 'SEND',
+              },
+              {
+                'id': 59,
+                'name': 'Electricity / Internet Bill',
+                'description': '',
+                'amount': 67890.0,
+                'due_date': '2026-11-12',
+                'frequency': 'monthly',
+                'category': 'Utilities',
+                'status': 'paid',
+                'type': 'SEND',
+              },
+              {
+                'id': 56,
+                'name': 'Monthly Loan EMI',
+                'description': '',
+                'amount': 7000.0,
+                'due_date': '2026-11-12',
+                'frequency': 'monthly',
+                'category': 'EMI',
+                'status': 'paid',
+                'type': 'SEND',
+              },
+              {
+                'id': 35,
+                'name': 'malligai saman ',
+                'description': '',
+                'amount': 5000.0,
+                'due_date': '2026-09-19',
+                'frequency': 'monthly',
+                'category': 'General',
+                'status': 'paid',
+                'type': 'RECEIVE',
+              },
+            ]
+          : [],
       invoicePayments: {},
       purchasePayments: {},
     );

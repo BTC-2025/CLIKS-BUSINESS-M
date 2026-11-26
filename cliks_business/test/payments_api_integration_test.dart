@@ -400,7 +400,7 @@ void main() {
       await PaymentsRepository.markPlannedPaymentPaid(created.id);
       final listAfterPaid = await PaymentsRepository.getPlannedPayments();
       final paidItem = listAfterPaid.firstWhere((p) => p.id.toString() == created.id.toString());
-      expect(paidItem.status, equals('COMPLETED'));
+      expect(paidItem.isPaid, isTrue);
 
       // 5. Delete Planned Payment
       await PaymentsRepository.deletePlannedPayment(created.id);

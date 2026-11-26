@@ -28,6 +28,7 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
 
   List<Map<String, dynamic>> _schedules = [];
   bool _isLoading = true;
+  int _loadVersion = 0;
 
   @override
   void initState() {
@@ -36,24 +37,37 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
   }
 
   Future<void> _loadData([String? accountEmail]) async {
+    final version = ++_loadVersion;
     final activeEmail = (accountEmail != null && accountEmail.trim().isNotEmpty)
         ? accountEmail.trim().toLowerCase()
         : ref.read(activeAccountProvider).email.trim().toLowerCase();
 
-    setState(() => _isLoading = true);
+    if (mounted) setState(() => _isLoading = true);
     try {
       final targetEmail = activeEmail.isNotEmpty
           ? activeEmail
           : (await TokenService.getUserEmail() ?? '').trim().toLowerCase();
 
+      debugPrint('[PLANNER UI] _loadData (v$version) starting for email: "$targetEmail"');
+
       final planned = await PaymentsRepository.getPlannedPayments(
         email: targetEmail.isNotEmpty ? targetEmail : null,
       );
+
+      // Discard stale response if a newer request was dispatched
+      if (version != _loadVersion) {
+        debugPrint('[PLANNER UI] Discarding stale load v$version (current: $_loadVersion)');
+        return;
+      }
+
+      debugPrint('[PLANNER UI] Fetched ${planned.length} payments for "$targetEmail"');
+
       if (mounted) {
         setState(() {
           _schedules = planned.map((p) {
-            final isMonthly = (p.frequency.toUpperCase().contains('MONTH')) ||
-                (p.category.toUpperCase().contains('RENT'));
+            final freq = (p.frequency.trim().isNotEmpty ? p.frequency : 'Monthly').toUpperCase();
+            final cat = (p.category.trim().isNotEmpty ? p.category : 'General').toUpperCase();
+            final isMonthly = freq.contains('MONTH') || cat.contains('RENT');
 
             // Format due date for UI: if YYYY-MM-DD, convert to DD/MM/YYYY for display
             String displayDate = p.dueDate;
@@ -84,13 +98,15 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
       }
     } catch (e) {
       debugPrint('[PLANNER API] Error loading planned payments: $e');
-      if (mounted) {
+      if (version == _loadVersion && mounted) {
         setState(() {
           _schedules = [];
         });
       }
     } finally {
-      if (mounted) setState(() => _isLoading = false);
+      if (version == _loadVersion && mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -647,7 +663,10 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
         IconButton(
           tooltip: 'Refresh Schedules',
           icon: const Icon(LucideIcons.refreshCw, size: 18, color: Color(0xFF166534)),
-          onPressed: _loadData,
+          onPressed: () {
+            ApiClient.clearCliksToken();
+            _loadData();
+          },
         ),
         const SizedBox(width: 8),
         ElevatedButton.icon(

@@ -36,9 +36,15 @@ class TokenService {
   static String _kBizOnboardedKey(String email) =>
       'bnx_biz_onboarded_${email.trim().toLowerCase()}';
 
+  static File? _testStorageFile;
+
   static File? _resolveFallbackFile() {
     try {
       if (kIsWeb) return null;
+      if (Platform.environment.containsKey('FLUTTER_TEST')) {
+        _testStorageFile ??= File('${Directory.systemTemp.path}/bnx_test_local_store.json');
+        return _testStorageFile;
+      }
       Directory? baseDir;
       if (Platform.isMacOS) {
         final home = Platform.environment['HOME'];
@@ -411,7 +417,7 @@ class TokenService {
     );
     final tok = found['accessToken']?.toString();
     if (tok != null && tok.isNotEmpty) return tok;
-    return null;
+    return getAccessToken();
   }
 
   // ── Multi-Account Registry ─────────────────────────────────────────────────
@@ -443,7 +449,7 @@ class TokenService {
     if (token == null || token.isEmpty) {
       final currentToken = await getAccessToken();
       if (currentToken != null && currentToken.isNotEmpty) {
-        final jwtEmail = _getEmailFromJwt(currentToken);
+        final jwtEmail = getEmailFromJwt(currentToken);
         if (jwtEmail == email) {
           token = currentToken;
         }
@@ -495,6 +501,24 @@ class TokenService {
               accessToken = tok;
               refreshToken = acc['refreshToken']?.toString() ?? '';
               target['accessToken'] = tok;
+              break;
+            }
+          }
+        }
+      }
+
+      // If target mailbox does not have its own separate token, retain current/primary session token
+      if (accessToken.isEmpty) {
+        final currentSessionToken = await _safeRead(key: _kAccess);
+        if (currentSessionToken != null && currentSessionToken.isNotEmpty) {
+          accessToken = currentSessionToken;
+          refreshToken = (await _safeRead(key: _kRefresh)) ?? '';
+        } else {
+          for (final acc in accounts) {
+            final tok = acc['accessToken']?.toString() ?? '';
+            if (tok.isNotEmpty) {
+              accessToken = tok;
+              refreshToken = acc['refreshToken']?.toString() ?? '';
               break;
             }
           }

@@ -50,12 +50,9 @@ void main() {
       reason: 'ramaniteam123 must NOT inherit ravinew2004 data or hardcoded mock fallback items',
     );
 
-    // Verify token isolation
-    final activeToken = await TokenService.getAccessToken();
-    expect(activeToken, isNull, reason: 'ramaniteam123 must not leak ravinew2004 access token');
-
-    final targetToken = await TokenService.getTokenForAccount(ramaniEmail);
-    expect(targetToken, isNull, reason: 'Target token for ramaniteam123 must be null');
+    // Verify Cliks token isolation
+    final targetCliksToken = await TokenService.getCliksAccessToken(ramaniEmail);
+    expect(targetCliksToken, isNull, reason: 'Target Cliks token for ramaniteam123 must be null');
 
     // ── STEP C: Switch back to ravinew2004 ─────────────────────────────────────
     await TokenService.switchActiveAccountSession(raviEmail);

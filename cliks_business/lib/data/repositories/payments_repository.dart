@@ -287,7 +287,10 @@ class PaymentsRepository {
     );
     if (res is Map) {
       final map = Map<String, dynamic>.from(res);
-      final data = map['data'] ?? map['plans'] ?? map['items'];
+      var data = map['data'] ?? map['plans'] ?? map['items'];
+      if (data is Map) {
+        data = data['data'] ?? data['plans'] ?? data['items'] ?? data['list'];
+      }
       if (data is List) {
         return data
             .whereType<Map>()
