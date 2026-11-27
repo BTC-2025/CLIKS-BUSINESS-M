@@ -185,9 +185,9 @@ void main() {
         // Verify down table features comparison
         expect(find.text('Platform Features'), findsOneWidget);
 
-        // Verify add-ons, zoho comparison, and billing history invoice
+        // Verify add-ons, zoho comparison removed, and billing history invoice
         expect(find.text('Cliks Business — Optional Capability Add-ons'), findsOneWidget);
-        expect(find.text('Why Indian Businesses Choose Cliks Over Zoho Books'), findsOneWidget);
+        expect(find.text('Why Indian Businesses Choose Cliks Over Zoho Books'), findsNothing);
         expect(find.text('INV-2026-1137'), findsOneWidget);
       }
 
