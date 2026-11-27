@@ -419,7 +419,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
@@ -438,7 +438,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             // ─── 2. ACTIVE PLAN HERO BANNER (Dark green color long tab) ───
             Container(
               key: _activePlanKey,
-              child: isMacOS
+              child: isDesktop
                   ? _buildMacOsBentoHero(isMobile)
                   : _buildActivePlanBanner(isMobile),
             ),

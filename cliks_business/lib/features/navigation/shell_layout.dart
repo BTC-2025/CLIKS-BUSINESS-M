@@ -81,13 +81,14 @@ class _ShellLayoutState extends ConsumerState<ShellLayout> {
   @override
   Widget build(BuildContext context) {
     final navigation = ref.watch(navigationProvider);
-    final isDesktop = MediaQuery.of(context).size.width >= 1100;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isDesktop = screenWidth >= 950;
     final platform = Theme.of(context).platform;
-    final isMacOS = !kIsWeb && (defaultTargetPlatform == TargetPlatform.macOS || platform == TargetPlatform.macOS);
-    final isWindows = !kIsWeb && (defaultTargetPlatform == TargetPlatform.windows || platform == TargetPlatform.windows);
-    final isLinux = !kIsWeb && (defaultTargetPlatform == TargetPlatform.linux || platform == TargetPlatform.linux);
+    final isMacOS = (defaultTargetPlatform == TargetPlatform.macOS || platform == TargetPlatform.macOS);
+    final isWindows = (defaultTargetPlatform == TargetPlatform.windows || platform == TargetPlatform.windows);
+    final isLinux = (defaultTargetPlatform == TargetPlatform.linux || platform == TargetPlatform.linux);
     final isDesktopPlatform =
-        isMacOS || isWindows || isLinux || (kIsWeb && isDesktop);
+        isMacOS || isWindows || isLinux || isDesktop || kIsWeb;
     final isSplitCalculator = !isDesktopPlatform && !isDesktop && ref.watch(mobileCalculatorSplitScreenProvider);
     final isProfileModule = navigation.currentModule == AppModule.profile;
     final headerColor = (!isDesktop && isProfileModule)

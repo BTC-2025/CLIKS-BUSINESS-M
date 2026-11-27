@@ -100,13 +100,11 @@ class _BetaClubPageState extends State<BetaClubPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header Banner
-              Theme.of(context).platform == TargetPlatform.macOS
-                  ? _buildMacOsBentoHero(isMobile)
-                  : _buildHeaderBanner(
-                      context,
-                      isMobile,
-                    ).animate().fadeIn(duration: 400.ms).slideY(begin: -0.04, end: 0),
+              // Header Banner (Reference 3: Distinct Royal Blue Theme)
+              _buildHeaderBanner(
+                context,
+                isMobile,
+              ),
               const SizedBox(height: 24),
 
               // Segmented Tabs Row

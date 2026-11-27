@@ -194,7 +194,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -213,7 +213,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
         slivers: [
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
-            child: isMacOS
+            child: isDesktop
                 ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
@@ -256,7 +256,7 @@ class _AttendancePageState extends ConsumerState<AttendancePage>
                 children: [
                   _buildDesktopActions(isMobile),
                   if (!isMobile) const SizedBox(height: 12),
-                  isMacOS
+                  isDesktop
                       ? _buildMainContent(isMobile, screenWidth)
                       : _buildMainContent(isMobile, screenWidth)
                           .animate()

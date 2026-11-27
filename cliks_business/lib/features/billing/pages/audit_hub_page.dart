@@ -184,7 +184,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
     const isFirmWorkplace = true;
 
     return Scaffold(
@@ -192,7 +192,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          if (isMacOS) ...[
+          if (isDesktop) ...[
             SliverToBoxAdapter(
               child: _buildMacOsBentoHero(isMobile),
             ),
@@ -206,7 +206,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
             child: Padding(
               padding: EdgeInsets.fromLTRB(
                 isMobile ? 14 : 24,
-                (isMacOS ? 0 : (isMobile ? 12 : 16)),
+                (isDesktop ? 0 : (isMobile ? 12 : 16)),
                 isMobile ? 14 : 24,
                 0,
               ),
@@ -244,7 +244,7 @@ class AuditHubPageState extends State<AuditHubPage> with SingleTickerProviderSta
               isMobile ? 80 : 40,
             ),
             sliver: SliverToBoxAdapter(
-              child: isMacOS
+              child: isDesktop
                   ? _buildMainContent(isMobile, isFirmWorkplace)
                   : _buildMainContent(isMobile, isFirmWorkplace)
                       .animate()

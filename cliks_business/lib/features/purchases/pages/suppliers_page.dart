@@ -303,9 +303,9 @@ class _SuppliersPageState extends ConsumerState<SuppliersPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 900;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 900 || Theme.of(context).platform == TargetPlatform.macOS;
 
-    if (isMacOS) {
+    if (isDesktop) {
       return _buildDesktopView(screenWidth, isMobile);
     }
 

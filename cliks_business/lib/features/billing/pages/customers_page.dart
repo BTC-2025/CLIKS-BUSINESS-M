@@ -955,8 +955,8 @@ class _CustomersPageState extends ConsumerState<CustomersPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
 
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    if (isMacOS) {
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
+    if (isDesktop) {
       return _buildDesktopView(isMobile);
     }
 

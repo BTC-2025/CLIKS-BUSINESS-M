@@ -355,9 +355,9 @@ class _StaffPageState extends ConsumerState<StaffPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 768 || Theme.of(context).platform == TargetPlatform.macOS;
 
-    if (isMacOS) {
+    if (isDesktop) {
       return _buildDesktopView(screenWidth, isMobile);
     }
 

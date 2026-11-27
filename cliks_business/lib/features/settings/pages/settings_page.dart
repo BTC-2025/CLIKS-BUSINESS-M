@@ -178,13 +178,13 @@ class _SettingsPageState extends State<SettingsPage> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
 
     if (!_showCustomization) {
-      return _buildPrimarySettingsView(context, isMobile, isMacOS);
+      return _buildPrimarySettingsView(context, isMobile, isDesktop);
     }
 
-    return _buildCustomizationView(context, isMobile, isMacOS);
+    return _buildCustomizationView(context, isMobile, isDesktop);
   }
 
   // ═══════════════════════════════════════════════════════════════

@@ -13,7 +13,7 @@ class WalletPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
@@ -42,7 +42,7 @@ class WalletPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Hero Summary (Gradient Stats & Actions)
-            isMacOS
+            isDesktop
                 ? _buildMacOsBentoHero(context, isMobile)
                 : _buildHeroSummary(context, isMobile)
                     .animate()

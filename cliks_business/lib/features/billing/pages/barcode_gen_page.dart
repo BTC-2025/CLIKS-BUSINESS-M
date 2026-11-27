@@ -58,7 +58,7 @@ class _BarcodeGenPageState extends State<BarcodeGenPage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
     final platform = Theme.of(context).platform;
-    final isDesktop = platform == TargetPlatform.macOS ||
+    final isDesktop = !isMobile || screenWidth >= 950 || platform == TargetPlatform.macOS ||
         platform == TargetPlatform.windows ||
         platform == TargetPlatform.linux;
     if (isDesktop) {

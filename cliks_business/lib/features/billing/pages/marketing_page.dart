@@ -103,7 +103,7 @@ class _MarketingPageState extends State<MarketingPage> with SingleTickerProvider
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -128,7 +128,7 @@ class _MarketingPageState extends State<MarketingPage> with SingleTickerProvider
         slivers: [
           // ─── HERO SUMMARY CARD (Accounting Style Header) ───
           SliverToBoxAdapter(
-            child: isMacOS
+            child: isDesktop
                 ? _buildMacOsBentoHero(isMobile)
                 : _buildHeroSummary(isMobile)
                     .animate()
@@ -171,7 +171,7 @@ class _MarketingPageState extends State<MarketingPage> with SingleTickerProvider
                 children: [
                   _buildDesktopActions(isMobile),
                   if (!isMobile) const SizedBox(height: 12),
-                  isMacOS
+                  isDesktop
                       ? _buildMainContent(isMobile)
                       : _buildMainContent(isMobile)
                           .animate()

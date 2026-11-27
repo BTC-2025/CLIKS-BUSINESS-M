@@ -438,11 +438,11 @@ class _GstPageState extends ConsumerState<GstPage> {
 
   @override
   Widget build(BuildContext context) {
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 768;
+    final isDesktop = !isMobile || screenWidth >= 768 || Theme.of(context).platform == TargetPlatform.macOS;
 
-    if (isMacOS) {
+    if (isDesktop) {
       return Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
         body: SingleChildScrollView(

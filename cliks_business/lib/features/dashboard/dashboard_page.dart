@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,11 +14,9 @@ class DashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 700;
-    final isTablet = screenWidth >= 700 && screenWidth < 1100;
-    final isDesktop = screenWidth >= 1100;
-    final isMacOS = (!kIsWeb && defaultTargetPlatform == TargetPlatform.macOS) ||
-        Theme.of(context).platform == TargetPlatform.macOS;
-    final isCompactMobile = isMobile && !isMacOS;
+    final isTablet = screenWidth >= 700 && screenWidth < 1000;
+    final isDesktop = screenWidth >= 1000;
+    final isCompactMobile = isMobile && screenWidth < 400;
 
     final activeIds = ref.watch(dashboardShortcutsProvider);
     final activeShortcuts = allDashboardShortcuts
@@ -31,7 +28,7 @@ class DashboardPage extends ConsumerWidget {
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // ─── 1. TOP BENTO HERO BANNER ───
+          // ─── 1. TOP BUSINESS OVERVIEW HEADER (Reference 1) ───
           SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(
@@ -40,121 +37,15 @@ class DashboardPage extends ConsumerWidget {
                 isCompactMobile ? 12 : (isMobile ? 14 : 24),
                 0,
               ),
-              child: isMacOS
-                  ? MacOsSoftUiBentoHero(
-                      title: 'Business Overview',
-                      mainValue: '₹10,21,25,50,71,294',
-                      subtitle: 'Monitor your enterprise performance and operations.',
-                      badgeText: 'LIVE',
-                      isMobile: isMobile,
-                      margin: EdgeInsets.zero,
-                      chips: const [
-                        MacOsBentoHeroChip(
-                          label: 'Revenue',
-                          value: '₹10,21,25,50,71,294',
-                          icon: LucideIcons.trendingUp,
-                          accentColor: Color(0xFF166534),
-                        ),
-                        MacOsBentoHeroChip(
-                          label: 'Purchases',
-                          value: '₹13,84,791',
-                          icon: LucideIcons.shoppingCart,
-                          accentColor: Color(0xFF2563EB),
-                        ),
-                        MacOsBentoHeroChip(
-                          label: 'Operating Expenses',
-                          value: '₹3,14,61,64,99,53,93,93...',
-                          icon: LucideIcons.banknote,
-                          accentColor: Color(0xFFDC2626),
-                        ),
-                        MacOsBentoHeroChip(
-                          label: 'Est. Net Profit',
-                          value: '₹0',
-                          icon: LucideIcons.wallet,
-                          accentColor: Color(0xFF166534),
-                        ),
-                      ],
-                      trailingAction: InkWell(
-                        onTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) =>
-                                const ConfigureQuickActionsDialog(),
-                          );
-                        },
-                        borderRadius: BorderRadius.circular(8),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F5F9),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                LucideIcons.settings2,
-                                size: 12,
-                                color: Color(0xFF334155),
-                              ),
-                              SizedBox(width: 5),
-                              Text(
-                                'Customise',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                  : BentoHeroBanner(
-                      title: 'BUSINESS OVERVIEW',
-                      netProfitText: 'Est. Net Profit: ₹0',
-                      isMobile: isMobile,
-                      chips: const [
-                        BentoHeroChipData(
-                          label: 'Revenue',
-                          value: '₹10,21,25,50,71,294',
-                          icon: LucideIcons.trendingUp,
-                        ),
-                        BentoHeroChipData(
-                          label: 'Purchases',
-                          value: '₹13,84,791',
-                          icon: LucideIcons.shoppingCart,
-                        ),
-                        BentoHeroChipData(
-                          label: 'Expenses',
-                          value: '₹3,14,61,64,99,53,93,93...',
-                          icon: LucideIcons.banknote,
-                        ),
-                      ],
-                      onCustomiseTap: () {
-                        showDialog(
-                          context: context,
-                          builder: (context) =>
-                              const ConfigureQuickActionsDialog(),
-                        );
-                      },
-                    )
-                      .animate()
-                      .fadeIn(duration: 400.ms, curve: Curves.easeOut)
-                      .slideY(begin: -0.04, end: 0, curve: Curves.easeOut),
+              child: _buildBusinessOverviewHeader(context, isMobile),
             ),
           ),
 
           SliverToBoxAdapter(
-            child: SizedBox(height: isCompactMobile ? 10 : 20),
+            child: SizedBox(height: isCompactMobile ? 10 : 18),
           ),
 
-          // ─── 2. BENTO METRIC CARDS ───
+          // ─── 2. 4 TOP KPI METRIC CARDS ROW (Reference 1) ───
           SliverPadding(
             padding: EdgeInsets.symmetric(
               horizontal: isCompactMobile ? 12 : (isMobile ? 14 : 24),
@@ -171,8 +62,21 @@ class DashboardPage extends ConsumerWidget {
             ),
           ),
 
+          // ─── SALES TIMEFRAME INFORMATION BAR (Reference 1) ───
           SliverToBoxAdapter(
-            child: SizedBox(height: isCompactMobile ? 10 : 28),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                isCompactMobile ? 12 : (isMobile ? 14 : 24),
+                16,
+                isCompactMobile ? 12 : (isMobile ? 14 : 24),
+                0,
+              ),
+              child: _buildSalesTimeframeInfoBar(isMobile),
+            ),
+          ),
+
+          SliverToBoxAdapter(
+            child: SizedBox(height: isCompactMobile ? 10 : 20),
           ),
 
           // ─── 3. QUICK ACTION CENTER (BENTO MODULE) ───
@@ -355,6 +259,224 @@ class DashboardPage extends ConsumerWidget {
     );
   }
 
+  Widget _buildBusinessOverviewHeader(BuildContext context, bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 22,
+        vertical: isMobile ? 14 : 18,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF0FDF4), // Mint/light green background (Reference 1)
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDCF2E4), width: 1.2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x06166534),
+            blurRadius: 10,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: isMobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderTitleSection(),
+                const SizedBox(height: 14),
+                _buildHeaderControlsSection(context),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(child: _buildHeaderTitleSection()),
+                const SizedBox(width: 16),
+                _buildHeaderControlsSection(context),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildHeaderTitleSection() {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: const Color(0xFF166534),
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x26166534),
+                blurRadius: 8,
+                offset: Offset(0, 3),
+              ),
+            ],
+          ),
+          child: const Center(
+            child: Icon(
+              LucideIcons.layoutDashboard,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Text(
+                    'Business Overview',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: -0.4,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFDCF2E4),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFF166534),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Text(
+                          'LIVE',
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF166534),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 3),
+              const Text(
+                'Monitor your enterprise performance, revenues, procurement and operational workflows.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF64748B),
+                  height: 1.25,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderControlsSection(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // FY and Date Selector Pill (Reference 1)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: const Color(0xFFCBD5E1)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(LucideIcons.calendar, size: 14, color: Color(0xFF166534)),
+              SizedBox(width: 6),
+              Text(
+                'FY 2026-27',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 10),
+
+        // Customize Dashboard Button (Reference 1)
+        OutlinedButton.icon(
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (context) => const ConfigureQuickActionsDialog(),
+            );
+          },
+          icon: const Icon(LucideIcons.slidersHorizontal, size: 14, color: Color(0xFF166534)),
+          label: const Text(
+            'Customize Dashboard',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 12.5,
+              color: Color(0xFF166534),
+            ),
+          ),
+          style: OutlinedButton.styleFrom(
+            backgroundColor: Colors.white,
+            side: const BorderSide(color: Color(0xFF166534)),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSalesTimeframeInfoBar(bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: const [
+          Icon(LucideIcons.info, size: 14, color: Color(0xFF475569)),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Consolidated Enterprise Analytics • Financial Period 2026-2027 • Real-time cloud sync active',
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF475569),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMetricCards(
     BuildContext context,
     WidgetRef ref,
@@ -411,6 +533,21 @@ class DashboardPage extends ConsumerWidget {
       animationDelayMs: 150,
     );
 
+    final netProfitCard = BentoMetricCard(
+      label: 'Estimated Net Profit',
+      value: '₹0',
+      icon: LucideIcons.wallet,
+      iconColor: const Color(0xFF166534),
+      iconBg: const Color(0xFFDCF2E4),
+      trendText: 'Margin: 0.0%',
+      isTrendPositive: true,
+      footerText: 'Gross Operational Yield',
+      onTap: () {
+        ref.read(navigationProvider.notifier).setRoute(AppRoute.accounting);
+      },
+      animationDelayMs: 200,
+    );
+
     if (isMobile) {
       return Column(
         children: [
@@ -419,18 +556,26 @@ class DashboardPage extends ConsumerWidget {
           purchasesCard,
           const SizedBox(height: 12),
           expensesCard,
+          const SizedBox(height: 12),
+          netProfitCard,
         ],
       );
     } else if (isTablet) {
       return Column(
         children: [
-          revenueCard,
+          Row(
+            children: [
+              Expanded(child: revenueCard),
+              const SizedBox(width: 14),
+              Expanded(child: purchasesCard),
+            ],
+          ),
           const SizedBox(height: 14),
           Row(
             children: [
-              Expanded(child: purchasesCard),
-              const SizedBox(width: 14),
               Expanded(child: expensesCard),
+              const SizedBox(width: 14),
+              Expanded(child: netProfitCard),
             ],
           ),
         ],
@@ -440,10 +585,12 @@ class DashboardPage extends ConsumerWidget {
     return Row(
       children: [
         Expanded(child: revenueCard),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(child: purchasesCard),
-        const SizedBox(width: 16),
+        const SizedBox(width: 14),
         Expanded(child: expensesCard),
+        const SizedBox(width: 14),
+        Expanded(child: netProfitCard),
       ],
     );
   }

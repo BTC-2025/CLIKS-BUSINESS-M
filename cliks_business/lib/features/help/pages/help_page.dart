@@ -92,12 +92,12 @@ class _HelpPageState extends ConsumerState<HelpPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isMacOS = Theme.of(context).platform == TargetPlatform.macOS;
-    final paddingVal = isMobile ? 16.0 : (isMacOS ? 24.0 : 32.0);
+    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
+    final paddingVal = isMobile ? 16.0 : (isDesktop ? 24.0 : 32.0);
 
     return Scaffold(
       primary: false,
-      backgroundColor: isMacOS ? const Color(0xFFF8F9FB) : Colors.white,
+      backgroundColor: isDesktop ? const Color(0xFFF8F9FB) : Colors.white,
       body: SafeArea(
         child: ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(scrollbars: false),
@@ -109,7 +109,7 @@ class _HelpPageState extends ConsumerState<HelpPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isMacOS) ...[
+                if (isDesktop) ...[
                   MacOsSoftUiBentoHero(
                     margin: EdgeInsets.zero,
                     title: 'Help & Customer Support Hub',
