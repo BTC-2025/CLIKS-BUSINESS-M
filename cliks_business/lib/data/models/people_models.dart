@@ -496,12 +496,87 @@ class ConnectionRequest {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// 5B. GROUP INVITATION MODEL (Incoming Financial Group Requests)
+// ─────────────────────────────────────────────────────────────────────────────
+
+@immutable
+class GroupInvitation {
+  final int membershipId;
+  final int groupId;
+  final String groupName;
+  final String groupType;
+  final String? groupDescription;
+  final String? inviterBusinessName;
+  final String? inviterUsername;
+  final String? inviterEmail;
+  final String role;
+  final double targetAmount;
+  final String currency;
+  final DateTime? createdAt;
+
+  const GroupInvitation({
+    required this.membershipId,
+    required this.groupId,
+    required this.groupName,
+    this.groupType = 'syndicate',
+    this.groupDescription,
+    this.inviterBusinessName,
+    this.inviterUsername,
+    this.inviterEmail,
+    this.role = 'member',
+    this.targetAmount = 0.0,
+    this.currency = 'INR',
+    this.createdAt,
+  });
+
+  factory GroupInvitation.fromJson(Map<String, dynamic> json) {
+    return GroupInvitation(
+      membershipId: parseInt(json['membership_id'] ?? json['membershipId'] ?? json['id']),
+      groupId: parseInt(json['group_id'] ?? json['groupId'] ?? json['id']),
+      groupName: (json['group_name'] ?? json['groupName'] ?? json['name'] ?? json['title'] ?? '').toString().trim(),
+      groupType: (json['group_type'] ?? json['groupType'] ?? 'syndicate').toString().trim(),
+      groupDescription: json['group_description']?.toString().trim() ?? json['description']?.toString().trim(),
+      inviterBusinessName: json['inviter_business_name']?.toString().trim(),
+      inviterUsername: json['inviter_username']?.toString().trim(),
+      inviterEmail: json['inviter_email']?.toString().trim(),
+      role: (json['role'] ?? 'member').toString().trim(),
+      targetAmount: parseDouble(json['target_amount'] ?? json['targetAmount']),
+      currency: (json['currency'] ?? 'INR').toString().trim(),
+      createdAt: parseDateTime(json['created_at'] ?? json['createdAt']),
+    );
+  }
+
+  String get inviterName =>
+      inviterBusinessName ?? (inviterUsername ?? (inviterEmail ?? 'Partner'));
+
+  String get inviterDisplayEmail => inviterEmail ?? 'partner@bnxmail.com';
+
+  FinancialGroup toFinancialGroup() {
+    return FinancialGroup(
+      id: groupId,
+      membershipId: membershipId,
+      name: groupName,
+      description: groupDescription,
+      groupType: groupType,
+      currency: currency,
+      targetAmount: targetAmount,
+      myRole: role,
+      myMembershipStatus: 'pending',
+      invitedByName: inviterName,
+      invitedByEmail: inviterDisplayEmail,
+      createdAt: createdAt,
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // 6. FINANCIAL GROUP MODEL
 // ─────────────────────────────────────────────────────────────────────────────
 
 @immutable
 class FinancialGroup {
   final int id;
+  final int? membershipId;
   final int? createdBy;
   final String name;
   final String? description;
@@ -526,6 +601,7 @@ class FinancialGroup {
 
   const FinancialGroup({
     required this.id,
+    this.membershipId,
     this.createdBy,
     required this.name,
     this.description,
@@ -592,8 +668,13 @@ class FinancialGroup {
     final finalInvName = invByName ?? adminMember?.name;
     final finalInvEmail = invByEmail ?? adminMember?.email;
 
+    final mId = json['membership_id'] != null
+        ? parseInt(json['membership_id'])
+        : (json['my_membership']?['id'] != null ? parseInt(json['my_membership']['id']) : null);
+
     return FinancialGroup(
       id: parseInt(json['id']),
+      membershipId: mId,
       createdBy: json['created_by'] != null ? parseInt(json['created_by']) : null,
       name: (json['name'] ?? json['title'] ?? '').toString().trim(),
       description: json['description']?.toString().trim(),
@@ -621,6 +702,7 @@ class FinancialGroup {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
+      if (membershipId != null) 'membership_id': membershipId,
       if (createdBy != null) 'created_by': createdBy,
       'name': name,
       if (description != null) 'description': description,

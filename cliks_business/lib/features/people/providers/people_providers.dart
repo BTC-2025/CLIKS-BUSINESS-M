@@ -14,6 +14,7 @@ class PeopleState {
   final List<PersonTransaction> transactions;
   final List<RepaymentAlert> reminders;
   final List<ConnectionRequest> incomingRequests;
+  final List<GroupInvitation> incomingGroupRequests;
   final List<FinancialGroup> groups;
   final PersonContact? selectedContact;
   final FinancialGroup? selectedGroup;
@@ -27,6 +28,7 @@ class PeopleState {
     this.transactions = const [],
     this.reminders = const [],
     this.incomingRequests = const [],
+    this.incomingGroupRequests = const [],
     this.groups = const [],
     this.selectedContact,
     this.selectedGroup,
@@ -42,6 +44,7 @@ class PeopleState {
     List<PersonTransaction>? transactions,
     List<RepaymentAlert>? reminders,
     List<ConnectionRequest>? incomingRequests,
+    List<GroupInvitation>? incomingGroupRequests,
     List<FinancialGroup>? groups,
     PersonContact? selectedContact,
     bool clearSelectedContact = false,
@@ -57,6 +60,7 @@ class PeopleState {
       transactions: transactions ?? this.transactions,
       reminders: reminders ?? this.reminders,
       incomingRequests: incomingRequests ?? this.incomingRequests,
+      incomingGroupRequests: incomingGroupRequests ?? this.incomingGroupRequests,
       groups: groups ?? this.groups,
       selectedContact: clearSelectedContact ? null : (selectedContact ?? this.selectedContact),
       selectedGroup: clearSelectedGroup ? null : (selectedGroup ?? this.selectedGroup),
@@ -82,6 +86,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         PeopleRepository.getRepaymentAlerts(),
         PeopleRepository.getIncomingRequests(),
         PeopleRepository.getFinancialGroups(),
+        PeopleRepository.getIncomingGroupRequests(),
       ]);
 
       final contacts = results[0] as List<PersonContact>;
@@ -89,6 +94,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
       final reminders = results[2] as List<RepaymentAlert>;
       final requests = results[3] as List<ConnectionRequest>;
       final groups = results[4] as List<FinancialGroup>;
+      final groupInvs = results[5] as List<GroupInvitation>;
 
       final summary = PeopleSummary.fromContacts(contacts);
 
@@ -101,6 +107,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         transactions: transactions,
         reminders: reminders,
         incomingRequests: requests,
+        incomingGroupRequests: groupInvs,
         groups: groups,
       );
     } catch (e) {
@@ -366,8 +373,14 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
 
   Future<void> loadGroups() async {
     try {
-      final groups = await PeopleRepository.getFinancialGroups();
-      state = state.copyWith(groups: groups);
+      final results = await Future.wait([
+        PeopleRepository.getFinancialGroups(),
+        PeopleRepository.getIncomingGroupRequests(),
+      ]);
+      state = state.copyWith(
+        groups: results[0] as List<FinancialGroup>,
+        incomingGroupRequests: results[1] as List<GroupInvitation>,
+      );
     } catch (_) {}
   }
 
@@ -469,14 +482,45 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
     }
   }
 
-  Future<bool> joinFinancialGroup(dynamic id) async {
+  /// Respond to incoming financial group invitation ("accept" or "reject")
+  /// Calls `POST /api/v1/people/groups/requests/:membershipId/respond`
+  Future<bool> respondToGroupRequest(dynamic id, String action) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final ok = await PeopleRepository.joinFinancialGroup(id);
-      final list = state.groups.map((g) {
-        if (g.id.toString() == id.toString()) {
+      // 1. Resolve membership ID if a group ID or invitation was passed
+      dynamic membershipId = id;
+      final matchingInv = state.incomingGroupRequests.where(
+        (inv) =>
+            inv.membershipId.toString() == id.toString() ||
+            inv.groupId.toString() == id.toString(),
+      ).firstOrNull;
+
+      if (matchingInv != null) {
+        membershipId = matchingInv.membershipId;
+      } else {
+        final matchingGroup = state.groups.where(
+          (g) => g.id.toString() == id.toString(),
+        ).firstOrNull;
+        if (matchingGroup?.membershipId != null) {
+          membershipId = matchingGroup!.membershipId;
+        }
+      }
+
+      // Optimistically update incomingGroupRequests and groups
+      final updatedInvs = state.incomingGroupRequests.where(
+        (inv) =>
+            inv.membershipId.toString() != membershipId.toString() &&
+            inv.groupId.toString() != id.toString(),
+      ).toList();
+
+      final updatedGroups = state.groups.map((g) {
+        if (g.id.toString() == id.toString() ||
+            (matchingInv != null && g.id == matchingInv.groupId) ||
+            (g.membershipId != null &&
+                g.membershipId.toString() == membershipId.toString())) {
           return FinancialGroup(
             id: g.id,
+            membershipId: g.membershipId,
             createdBy: g.createdBy,
             name: g.name,
             description: g.description,
@@ -485,8 +529,8 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
             targetAmount: g.targetAmount,
             status: g.status,
             myRole: g.myRole ?? 'member',
-            myMembershipStatus: 'accepted',
-            memberCount: g.memberCount + 1,
+            myMembershipStatus: action == 'accept' ? 'accepted' : 'rejected',
+            memberCount: action == 'accept' ? (g.memberCount + 1) : g.memberCount,
             pendingMemberCount: (g.pendingMemberCount - 1).clamp(0, 999),
             totalMembers: g.totalMembers,
             totalContributed: g.totalContributed,
@@ -502,7 +546,16 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         }
         return g;
       }).toList();
-      state = state.copyWith(isLoading: false, groups: list);
+
+      state = state.copyWith(
+        isLoading: false,
+        incomingGroupRequests: updatedInvs,
+        groups: action == 'reject'
+            ? updatedGroups.where((g) => g.id.toString() != id.toString()).toList()
+            : updatedGroups,
+      );
+
+      final ok = await PeopleRepository.respondToGroupRequest(membershipId, action);
       await loadGroups();
       await loadContacts();
       return ok;
@@ -515,21 +568,12 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
     }
   }
 
+  Future<bool> joinFinancialGroup(dynamic id) async {
+    return await respondToGroupRequest(id, 'accept');
+  }
+
   Future<bool> declineFinancialGroup(dynamic id) async {
-    state = state.copyWith(isLoading: true, clearError: true);
-    try {
-      final ok = await PeopleRepository.declineFinancialGroup(id);
-      final list = state.groups.where((g) => g.id.toString() != id.toString()).toList();
-      state = state.copyWith(isLoading: false, groups: list);
-      await loadGroups();
-      return ok;
-    } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        errorMessage: e is ApiException ? e.message : e.toString(),
-      );
-      rethrow;
-    }
+    return await respondToGroupRequest(id, 'reject');
   }
 
   Future<GroupMember> inviteGroupMember(

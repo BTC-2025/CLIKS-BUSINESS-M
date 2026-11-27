@@ -686,6 +686,15 @@ Standard Error Response Envelope:
 - **Get Group Details:** `GET /api/v1/people/groups/:id`
 - **Update Group:** `PUT /api/v1/people/groups/:id`
 - **Delete Group:** `DELETE /api/v1/people/groups/:id`
+- **Get Incoming Group Invitations:** `GET /api/v1/people/groups/requests/incoming`
+- **Respond to Group Invitation:** `POST /api/v1/people/groups/requests/:membershipId/respond`
+
+  ```json
+  {
+    "action": "accept"
+  }
+  ```
+
 - **Invite Member:** `POST /api/v1/people/groups/:id/members`
 
   ```json

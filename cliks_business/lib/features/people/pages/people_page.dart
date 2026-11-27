@@ -103,6 +103,21 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // MAIN BUILD
   // ══════════════════════════════════════════════════════════════════════════
+  List<FinancialGroup> _resolveGroupInvitations(PeopleState state) {
+    final list = <FinancialGroup>[];
+    final seenGroupIds = <int>{};
+    for (final inv in state.incomingGroupRequests) {
+      seenGroupIds.add(inv.groupId);
+      list.add(inv.toFinancialGroup());
+    }
+    for (final g in state.groups) {
+      if (g.isPendingInvitation && !seenGroupIds.contains(g.id)) {
+        list.add(g);
+      }
+    }
+    return list;
+  }
+
   @override
   Widget build(BuildContext context) {
     final peopleState = ref.watch(peopleProvider);
@@ -115,7 +130,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
         final isMobile = availableWidth < 850;
-        final groupInvs = peopleState.groups.where((g) => g.isPendingInvitation).toList();
+        final groupInvs = _resolveGroupInvitations(peopleState);
         final directReqs = peopleState.incomingRequests;
         final double horizontalPadding = availableWidth >= 1200
             ? 32.0
@@ -686,7 +701,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   ElevatedButton.icon(
                     onPressed: () async {
                       try {
-                        await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.id);
+                        await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.membershipId ?? grp.id);
                         if (mounted) {
                           AppSnackbar.show(context, "Joined '${grp.name}' group successfully!", type: SnackType.success);
                         }
@@ -719,7 +734,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   OutlinedButton.icon(
                     onPressed: () async {
                       try {
-                        await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.id);
+                        await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.membershipId ?? grp.id);
                         if (mounted) {
                           AppSnackbar.show(context, "Declined invitation to '${grp.name}'", type: SnackType.info);
                         }
@@ -901,8 +916,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // 3. SEGMENTED TABS ROW + SEARCH BUTTON (Matching Image 1, 2, 3)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTabsRow(bool isMobile, PeopleState state) {
-    final groupInvitations = state.groups.where((g) => g.isPendingInvitation).toList();
+    final groupInvitations = _resolveGroupInvitations(state);
     final totalPendingCount = groupInvitations.length + state.incomingRequests.length;
+    final activeGroupsCount = state.groups.where((g) => !g.isPendingInvitation).length;
 
     final tabs = [
       const _TabDef(
@@ -910,7 +926,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         icon: LucideIcons.user,
       ),
       _TabDef(
-        title: state.groups.isNotEmpty ? 'Financial Groups (${state.groups.length})' : 'Financial Groups',
+        title: activeGroupsCount > 0 ? 'Financial Groups ($activeGroupsCount)' : 'Financial Groups',
         icon: LucideIcons.walletCards,
       ),
       _TabDef(
@@ -3239,7 +3255,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildRequestsView(double availableWidth, bool isMobile, PeopleState state) {
     final directRequests = state.incomingRequests;
-    final groupInvitations = state.groups.where((g) => g.isPendingInvitation).toList();
+    final groupInvitations = _resolveGroupInvitations(state);
     final totalPendingCount = directRequests.length + groupInvitations.length;
 
     return Container(
@@ -3464,7 +3480,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                             child: ElevatedButton.icon(
                               onPressed: () async {
                                 try {
-                                  await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.id);
+                                  await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.membershipId ?? grp.id);
                                   if (mounted) {
                                     AppSnackbar.show(context, "Joined '${grp.name}' group successfully!", type: SnackType.success);
                                   }
@@ -3494,7 +3510,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           child: OutlinedButton.icon(
                             onPressed: () async {
                               try {
-                                await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.id);
+                                await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.membershipId ?? grp.id);
                                 if (mounted) {
                                   AppSnackbar.show(context, "Declined invitation to '${grp.name}'", type: SnackType.info);
                                 }

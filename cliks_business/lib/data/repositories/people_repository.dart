@@ -536,45 +536,112 @@ class PeopleRepository {
     return true;
   }
 
-  /// Join / Accept Financial Group Invitation
-  static Future<bool> joinFinancialGroup(dynamic groupId, {String? email}) async {
-    try {
-      await ApiClient.post(
-        '/api/v1/people/groups/$groupId/join',
-        body: {'action': 'accept'},
-        email: email,
-      );
+  /// Get Incoming Financial Group Invitations
+  /// GET `/api/v1/people/groups/requests/incoming`
+  static Future<List<GroupInvitation>> getIncomingGroupRequests({
+    String? email,
+  }) async {
+    final res = await ApiClient.get('/api/v1/people/groups/requests/incoming', email: email);
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] == false || map['status'] == 'error') {
+        throw ApiException(
+          statusCode: 400,
+          message: map['error']?['message']?.toString() ??
+              map['message']?.toString() ??
+              'Failed to retrieve group invitations',
+        );
+      }
+      final data = map['data'];
+      if (data is List) {
+        return data
+            .whereType<Map>()
+            .map((e) => GroupInvitation.fromJson(Map<String, dynamic>.from(e)))
+            .toList();
+      }
+    } else if (res is List) {
+      return res
+          .whereType<Map>()
+          .map((e) => GroupInvitation.fromJson(Map<String, dynamic>.from(e)))
+          .toList();
+    }
+    return [];
+  }
+
+  /// Respond to Financial Group Invitation ("accept" or "reject")
+  /// POST `/api/v1/people/groups/requests/:membershipId/respond`
+  static Future<bool> respondToGroupRequest(
+    dynamic membershipId,
+    String action, {
+    String? email,
+  }) async {
+    final res = await ApiClient.post(
+      '/api/v1/people/groups/requests/$membershipId/respond',
+      body: {'action': action.trim().toLowerCase()},
+      email: email,
+    );
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] == false || map['status'] == 'error') {
+        throw ApiException(
+          statusCode: 400,
+          message: map['error']?['message']?.toString() ??
+              map['message']?.toString() ??
+              'Failed to respond to group invitation',
+        );
+      }
       return true;
+    }
+    return true;
+  }
+
+  /// Join / Accept Financial Group Invitation
+  static Future<bool> joinFinancialGroup(dynamic id, {String? email}) async {
+    try {
+      return await respondToGroupRequest(id, 'accept', email: email);
     } catch (_) {
       try {
-        await ApiClient.patch(
-          '/api/v1/people/requests/$groupId/respond',
+        await ApiClient.post(
+          '/api/v1/people/groups/$id/join',
           body: {'action': 'accept'},
           email: email,
         );
-      } catch (_) {}
-      return true;
+        return true;
+      } catch (_) {
+        try {
+          await ApiClient.patch(
+            '/api/v1/people/requests/$id/respond',
+            body: {'action': 'accept'},
+            email: email,
+          );
+        } catch (_) {}
+        return true;
+      }
     }
   }
 
   /// Decline Financial Group Invitation
-  static Future<bool> declineFinancialGroup(dynamic groupId, {String? email}) async {
+  static Future<bool> declineFinancialGroup(dynamic id, {String? email}) async {
     try {
-      await ApiClient.post(
-        '/api/v1/people/groups/$groupId/decline',
-        body: {'action': 'reject'},
-        email: email,
-      );
-      return true;
+      return await respondToGroupRequest(id, 'reject', email: email);
     } catch (_) {
       try {
-        await ApiClient.patch(
-          '/api/v1/people/requests/$groupId/respond',
+        await ApiClient.post(
+          '/api/v1/people/groups/$id/decline',
           body: {'action': 'reject'},
           email: email,
         );
-      } catch (_) {}
-      return true;
+        return true;
+      } catch (_) {
+        try {
+          await ApiClient.patch(
+            '/api/v1/people/requests/$id/respond',
+            body: {'action': 'reject'},
+            email: email,
+          );
+        } catch (_) {}
+        return true;
+      }
     }
   }
 
