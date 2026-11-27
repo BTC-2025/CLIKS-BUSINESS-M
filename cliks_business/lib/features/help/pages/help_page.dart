@@ -92,7 +92,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop =
+        !isMobile ||
+        screenWidth >= 950 ||
+        Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : (isDesktop ? 24.0 : 32.0);
 
     return Scaffold(
@@ -114,7 +117,8 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                     margin: EdgeInsets.zero,
                     title: 'Help & Customer Support Hub',
                     mainValue: '24/7 SLA Support',
-                    subtitle: 'Access interactive FAQs, documentation guides or lodge priority support tickets',
+                    subtitle:
+                        'Access interactive FAQs, documentation guides or lodge priority support tickets',
                     badgeText: 'ENTERPRISE DESK ONLINE',
                     badgeIcon: LucideIcons.lifeBuoy,
                     isMobile: isMobile,
@@ -143,7 +147,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                 ] else ...[
                   // Header Pill Badge: HELP CENTER
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFF2563EB),
                       borderRadius: BorderRadius.circular(10),
@@ -175,10 +182,7 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                   // Subtitle
                   const Text(
                     'Access common guides or log direct tickets to our dedicated customer support squad.',
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      color: Color(0xFF4B5563),
-                    ),
+                    style: TextStyle(fontSize: 13.5, color: Color(0xFF4B5563)),
                   ),
                   const SizedBox(height: 32),
                 ],
@@ -290,10 +294,16 @@ class _HelpPageState extends ConsumerState<HelpPage> {
               style: const TextStyle(fontSize: 13.5, color: Color(0xFF111827)),
               decoration: InputDecoration(
                 hintText: 'e.g. Invoicing tax breakdown looks wrong',
-                hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+                hintStyle: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9CA3AF),
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF9FAFB),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -304,7 +314,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2563EB),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -326,7 +339,11 @@ class _HelpPageState extends ConsumerState<HelpPage> {
             onNotification: (_) => true,
             child: DropdownButtonFormField<String>(
               value: _selectedPriority,
-              icon: const Icon(LucideIcons.chevronDown, color: Color(0xFF166534), size: 16),
+              icon: const Icon(
+                LucideIcons.chevronDown,
+                color: Color(0xFF166534),
+                size: 16,
+              ),
               style: const TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.w600,
@@ -335,7 +352,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
               decoration: InputDecoration(
                 filled: true,
                 fillColor: const Color(0xFFF9FAFB),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 12,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -346,33 +366,37 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF166534),
+                    width: 1.5,
+                  ),
                 ),
               ),
               dropdownColor: Colors.white,
               onChanged: (val) {
                 if (val != null) setState(() => _selectedPriority = val);
               },
-              items: [
-                'Low - General Question',
-                'Medium - Performance/Glitch',
-                'High - Workflow Blocked',
-                'Critical - System Outage',
-              ].map((p) {
-                return DropdownMenuItem(
-                  value: p,
-                  child: Text(
-                    p,
-                    style: TextStyle(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: p == 'Medium - Performance/Glitch'
-                          ? const Color(0xFF166534)
-                          : const Color(0xFF111827),
-                    ),
-                  ),
-                );
-              }).toList(),
+              items:
+                  [
+                    'Low - General Question',
+                    'Medium - Performance/Glitch',
+                    'High - Workflow Blocked',
+                    'Critical - System Outage',
+                  ].map((p) {
+                    return DropdownMenuItem(
+                      value: p,
+                      child: Text(
+                        p,
+                        style: TextStyle(
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                          color: p == 'Medium - Performance/Glitch'
+                              ? const Color(0xFF166534)
+                              : const Color(0xFF111827),
+                        ),
+                      ),
+                    );
+                  }).toList(),
             ),
           ),
           const SizedBox(height: 20),
@@ -398,10 +422,17 @@ class _HelpPageState extends ConsumerState<HelpPage> {
               decoration: InputDecoration(
                 hintText:
                     'Please describe exactly what you were doing, what went wrong, and how our support specialists can assist you.',
-                hintStyle: const TextStyle(fontSize: 13, color: Color(0xFF9CA3AF), height: 1.4),
+                hintStyle: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF9CA3AF),
+                  height: 1.4,
+                ),
                 filled: true,
                 fillColor: const Color(0xFFF9FAFB),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 14,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
                   borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
@@ -412,7 +443,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
-                  borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF2563EB),
+                    width: 1.5,
+                  ),
                 ),
               ),
             ),
@@ -492,7 +526,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(12),
@@ -515,10 +552,7 @@ class _HelpPageState extends ConsumerState<HelpPage> {
               child: Center(
                 child: Text(
                   'No filed tickets detected in your system history.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF94A3B8),
-                  ),
+                  style: TextStyle(fontSize: 13, color: Color(0xFF94A3B8)),
                 ),
               ),
             )
@@ -536,7 +570,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                   child: Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFDCF2E4),
                           borderRadius: BorderRadius.circular(4),
@@ -574,7 +611,10 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: const Color(0xFFEFF6FF),
                           borderRadius: BorderRadius.circular(6),
@@ -687,7 +727,11 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                 AnimatedCrossFade(
                   firstChild: const SizedBox.shrink(),
                   secondChild: Padding(
-                    padding: const EdgeInsets.only(bottom: 16, left: 2, right: 16),
+                    padding: const EdgeInsets.only(
+                      bottom: 16,
+                      left: 2,
+                      right: 16,
+                    ),
                     child: Text(
                       faq['answer']!,
                       style: const TextStyle(
@@ -697,12 +741,12 @@ class _HelpPageState extends ConsumerState<HelpPage> {
                       ),
                     ),
                   ),
-                  crossFadeState:
-                      isExpanded ? CrossFadeState.showSecond : CrossFadeState.showFirst,
+                  crossFadeState: isExpanded
+                      ? CrossFadeState.showSecond
+                      : CrossFadeState.showFirst,
                   duration: const Duration(milliseconds: 200),
                 ),
-                if (!isLast)
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                if (!isLast) const Divider(height: 1, color: Color(0xFFF1F5F9)),
               ],
             );
           }),
@@ -806,11 +850,7 @@ class _HelpPageState extends ConsumerState<HelpPage> {
       ),
       child: Row(
         children: [
-          Icon(
-            icon,
-            color: Colors.white70,
-            size: 18,
-          ),
+          Icon(icon, color: Colors.white70, size: 18),
           const SizedBox(width: 14),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
