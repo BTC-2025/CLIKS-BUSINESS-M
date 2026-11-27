@@ -115,6 +115,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
         final isMobile = availableWidth < 850;
+        final groupInvs = peopleState.groups.where((g) => g.isPendingInvitation).toList();
+        final directReqs = peopleState.incomingRequests;
         final double horizontalPadding = availableWidth >= 1200
             ? 32.0
             : (availableWidth >= 800 ? 24.0 : 16.0);
@@ -144,9 +146,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     _buildTopMetricsRow(availableWidth, peopleState),
                     const SizedBox(height: 20),
 
-                    // Pending Invitations Banner (Matching Image 2)
-                    if (peopleState.incomingRequests.isNotEmpty) ...[
-                      _buildPendingInvitationsBanner(peopleState.incomingRequests, isMobile),
+                    // Pending Invitations Banner (Matching Image 1, 2, 3)
+                    if (groupInvs.isNotEmpty || directReqs.isNotEmpty) ...[
+                      _buildPendingInvitationsBanner(directReqs, groupInvs, isMobile),
                       const SizedBox(height: 20),
                     ],
 
@@ -521,8 +523,22 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // ══════════════════════════════════════════════════════════════════════════
   // PENDING INVITATIONS BANNER (Matching Image 2)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildPendingInvitationsBanner(List<ConnectionRequest> requests, bool isMobile) {
-    if (requests.isEmpty) return const SizedBox.shrink();
+  Widget _buildPendingInvitationsBanner(
+    List<ConnectionRequest> requests,
+    List<FinancialGroup> groupInvitations,
+    bool isMobile,
+  ) {
+    if (requests.isEmpty && groupInvitations.isEmpty) return const SizedBox.shrink();
+
+    final totalCount = requests.length + groupInvitations.length;
+    final String subtitle;
+    if (groupInvitations.isNotEmpty && requests.isEmpty) {
+      subtitle = '${groupInvitations.length} financial group invitation(s) sent to your @bnxmail.com address.';
+    } else if (requests.isNotEmpty && groupInvitations.isEmpty) {
+      subtitle = '${requests.length} contact request(s) sent to your @bnxmail.com address.';
+    } else {
+      subtitle = '$totalCount invitation(s) sent to your @bnxmail.com address.';
+    }
 
     return Container(
       width: double.infinity,
@@ -559,7 +575,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Pending Invitations (${requests.length})',
+                      'Pending Invitations ($totalCount)',
                       style: const TextStyle(
                         fontSize: 14.5,
                         fontWeight: FontWeight.w800,
@@ -569,7 +585,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      '${requests.length} contact request(s) sent to your @bnxmail.com address.',
+                      subtitle,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF64748B),
@@ -593,7 +609,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'Review All (${requests.length})',
+                    'Review All ($totalCount)',
                     style: const TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -605,6 +621,136 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             ],
           ),
           const SizedBox(height: 14),
+
+          // Group Invitations cards inside banner (Matching Image 1 & 3)
+          ...groupInvitations.map((grp) {
+            final inviter = grp.invitedByName ?? (grp.members.isNotEmpty ? grp.members.first.name : 'Partner');
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x04000000),
+                    blurRadius: 6,
+                    offset: Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF4F46E5), // Indigo matching Image 1
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.walletCards,
+                        size: 18,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          grp.groupType.isEmpty ? grp.name : grp.groupType,
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Invited by $inviter',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.id);
+                        if (mounted) {
+                          AppSnackbar.show(context, "Joined '${grp.name}' group successfully!", type: SnackType.success);
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                        }
+                      }
+                    },
+                    icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
+                    label: const Text(
+                      'Join',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4F46E5), // Purple/indigo matching Image 1
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  OutlinedButton.icon(
+                    onPressed: () async {
+                      try {
+                        await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.id);
+                        if (mounted) {
+                          AppSnackbar.show(context, "Declined invitation to '${grp.name}'", type: SnackType.info);
+                        }
+                      } catch (e) {
+                        if (mounted) {
+                          AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                        }
+                      }
+                    },
+                    icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
+                    label: const Text(
+                      'Decline',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
 
           // Request cards inside banner
           ...requests.map((req) {
@@ -755,8 +901,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // 3. SEGMENTED TABS ROW + SEARCH BUTTON (Matching Image 1, 2, 3)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildTabsRow(bool isMobile, PeopleState state) {
-    final groupCount = state.groups.length;
-    final requestCount = state.incomingRequests.length;
+    final groupInvitations = state.groups.where((g) => g.isPendingInvitation).toList();
+    final totalPendingCount = groupInvitations.length + state.incomingRequests.length;
 
     final tabs = [
       const _TabDef(
@@ -764,13 +910,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         icon: LucideIcons.user,
       ),
       _TabDef(
-        title: groupCount > 0 ? 'Financial Groups ($groupCount)' : 'Financial Groups',
+        title: state.groups.isNotEmpty ? 'Financial Groups (${state.groups.length})' : 'Financial Groups',
         icon: LucideIcons.walletCards,
       ),
       _TabDef(
-        title: requestCount > 0 ? 'Requests ($requestCount)' : 'Requests',
+        title: totalPendingCount > 0 ? 'Requests ($totalPendingCount)' : 'Requests',
         icon: LucideIcons.userPlus,
-        hasNotificationBadge: requestCount > 0,
+        hasNotificationBadge: totalPendingCount > 0,
       ),
       const _TabDef(
         title: 'Global Ledger',
@@ -1223,7 +1369,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   final name = c.name;
                   final connected = c.isConnected;
                   final classification = c.classification;
-                  final company = c.displayCompany;
+                  final company = (c.company != null && c.company!.isNotEmpty) ? c.company! : (c.displayCompany != '-' ? c.displayCompany : 'Individual');
                   final phone = c.formattedPhone;
                   final email = c.email;
                   final stand = c.netBalance;
@@ -1695,7 +1841,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                   borderRadius: BorderRadius.circular(6),
                                 ),
                                 child: Text(
-                                  grp.groupType.toUpperCase(),
+                                  (grp.groupType.isEmpty ? 'PROJECT OUTLAYS' : grp.groupType.replaceAll('_', ' ')).toUpperCase(),
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
@@ -1712,12 +1858,29 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                     color: Color(0xFF64748B),
                                   ),
                                   const SizedBox(width: 4),
-                                  Text(
-                                    '${grp.memberCount} active',
-                                    style: const TextStyle(
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF64748B),
+                                  RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: '${grp.memberCount} active',
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        if (grp.pendingMemberCount > 0) ...[
+                                          const TextSpan(text: ' '),
+                                          TextSpan(
+                                            text: '(${grp.pendingMemberCount} pending)',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Color(0xFFD97706),
+                                            ),
+                                          ),
+                                        ],
+                                      ],
                                     ),
                                   ),
                                 ],
@@ -1783,20 +1946,20 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                           ),
                           const SizedBox(height: 14),
 
-                          // Metrics Box (Contributed / Expenses)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: const Color(0xFFF1F5F9)),
-                            ),
-                            child: Row(
-                              children: [
-                                Expanded(
+                          // Metrics Row (Contributed / Expenses in 2 separate cards)
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1809,7 +1972,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                           letterSpacing: 0.5,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: 3),
                                       Text(
                                         '₹${_fmt(contributed)}',
                                         style: const TextStyle(
@@ -1822,7 +1985,19 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                     ],
                                   ),
                                 ),
-                                Expanded(
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
@@ -1835,21 +2010,21 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                           letterSpacing: 0.5,
                                         ),
                                       ),
-                                      const SizedBox(height: 2),
+                                      const SizedBox(height: 3),
                                       Text(
                                         '₹${_fmt(expenses)}',
                                         style: const TextStyle(
                                           fontSize: 14.5,
                                           fontWeight: FontWeight.w800,
-                                          color: Color(0xFF0F172A),
+                                          color: Color(0xFFDC2626),
                                           fontFeatures: [FontFeature.tabularFigures()],
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 14),
 
@@ -1890,9 +2065,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                   width: 36,
                                   height: 36,
                                   decoration: BoxDecoration(
-                                    color: const Color(0xFFFEF2F2),
+                                    color: Colors.white,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: const Color(0xFFFEE2E8)),
+                                    border: Border.all(color: const Color(0xFFFCA5A5)),
                                   ),
                                   child: const Center(
                                     child: Icon(
@@ -2050,34 +2225,43 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                   style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF15803D),
+                                  backgroundColor: const Color(0xFF10B981), // Emerald green from Image 1
                                   foregroundColor: Colors.white,
                                   elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              ElevatedButton.icon(
+                              OutlinedButton.icon(
                                 onPressed: () => _openInviteMemberModal(activeGrp),
                                 icon: const Icon(LucideIcons.userPlus, size: 13, color: Colors.white),
                                 label: const Text(
-                                  'Invite Partner',
-                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold),
+                                  'Invite Member',
+                                  style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF15803D),
-                                  foregroundColor: Colors.white,
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.white.withValues(alpha: 0.15),
+                                  side: BorderSide(color: Colors.white.withValues(alpha: 0.3)),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(LucideIcons.x, color: Colors.white, size: 18),
-                                onPressed: () => Navigator.pop(dialogCtx),
-                                tooltip: 'Close',
+                              InkWell(
+                                onTap: () => Navigator.pop(dialogCtx),
+                                borderRadius: BorderRadius.circular(8),
+                                child: Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.18),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(LucideIcons.x, color: Colors.white, size: 16),
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -2085,24 +2269,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                       ),
                     ),
 
-                    // Top 4 Metrics Strip
+                    // Segmented Sub-Tabs Strip (Immediately below header - Matching Image 1)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                      color: const Color(0xFFF8FAFC),
-                      child: Row(
-                        children: [
-                          _buildGroupMetricItem('POOL GOAL', '₹${_fmt(targetPool)}', const Color(0xFF0F172A)),
-                          _buildGroupMetricItem('CONTRIBUTED', '₹${_fmt(contributed)}', const Color(0xFF15803D)),
-                          _buildGroupMetricItem('EXPENSES', '₹${_fmt(expenses)}', const Color(0xFFDC2626)),
-                          _buildGroupMetricItem('NET IN HAND', '₹${_fmt(netFund)}', const Color(0xFF2563EB)),
-                        ],
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
                       ),
-                    ),
-                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-                    // Segmented Sub-Tabs
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
                       child: Row(
                         children: [
                           _buildModalTabItem('Net Balances & Overview', LucideIcons.clock, subTab == 0, () {
@@ -2122,7 +2295,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                         ],
                       ),
                     ),
-                    const Divider(height: 16, color: Color(0xFFE2E8F0)),
 
                     // Sub-Tab Content
                     Expanded(
@@ -2142,6 +2314,56 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           },
         );
       },
+    );
+  }
+
+  Widget _buildLedgerKpiCard({
+    required String title,
+    required String amount,
+    required Color titleColor,
+    required Color amountColor,
+    required Color bgColor,
+    required Color borderColor,
+    Widget? trailing,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: titleColor,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              ?trailing,
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            amount,
+            style: TextStyle(
+              fontSize: 19,
+              fontWeight: FontWeight.w800,
+              color: amountColor,
+              fontFeatures: const [FontFeature.tabularFigures()],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -2213,110 +2435,328 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     required List<GroupMember> members,
     required FinancialGroup grp,
   }) {
-    if (members.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text('No members registered in this group yet.', style: TextStyle(color: Color(0xFF64748B))),
-        ),
-      );
-    }
+    final targetPool = grp.targetAmount;
+    final contributed = grp.totalContributed;
+    final expenses = grp.totalExpenses;
+    final netFund = grp.netFundInHand;
+    final toGivePrivate = grp.totalPrivateMoneyToGive;
 
     return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
       physics: const BouncingScrollPhysics(),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        child: DataTable(
-          headingRowHeight: 40,
-          dataRowMinHeight: 52,
-          dataRowMaxHeight: 52,
-          horizontalMargin: 20,
-          columnSpacing: 20,
-          headingTextStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF64748B)),
-          columns: const [
-            DataColumn(label: Text('Member')),
-            DataColumn(label: Text('Role / Status')),
-            DataColumn(label: Text('Total Paid')),
-            DataColumn(label: Text('Contributed')),
-            DataColumn(label: Text('Owed')),
-            DataColumn(label: Text('Net Balance')),
-            DataColumn(label: Text('🔒 Private Note')),
-          ],
-          rows: members.map((m) {
-            final privateNoteText = m.privateNote != null && m.privateNote!.notes.isNotEmpty
-                ? m.privateNote!.notes
-                : (m.privateNote != null && m.privateNote!.amount > 0 ? '₹${_fmt(m.privateNote!.amount)}' : 'Set Note');
-
-            return DataRow(
-              cells: [
-                DataCell(
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(m.name, style: const TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold, color: Color(0xFF0F172A))),
-                      Text(m.email, style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B))),
-                    ],
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Row 1: 4 Top KPI Cards (Matching Image 1)
+          Row(
+            children: [
+              Expanded(
+                child: _buildLedgerKpiCard(
+                  title: 'TOTAL CONTRIBUTED',
+                  amount: '₹${_fmt(contributed)}',
+                  titleColor: const Color(0xFF15803D),
+                  amountColor: const Color(0xFF15803D),
+                  bgColor: const Color(0xFFF0FDF4),
+                  borderColor: const Color(0xFFBBF7D0),
                 ),
-                DataCell(
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: m.isAdmin ? const Color(0xFFFEF3C7) : const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      '${m.role.toUpperCase()} • ${m.status.toUpperCase()}',
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildLedgerKpiCard(
+                  title: 'TOTAL EXPENSES',
+                  amount: '₹${_fmt(expenses)}',
+                  titleColor: const Color(0xFFDC2626),
+                  amountColor: const Color(0xFFDC2626),
+                  bgColor: const Color(0xFFFEF2F2),
+                  borderColor: const Color(0xFFFECACA),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildLedgerKpiCard(
+                  title: 'NET FUND IN HAND',
+                  amount: '₹${_fmt(netFund)}',
+                  titleColor: const Color(0xFF2563EB),
+                  amountColor: const Color(0xFF2563EB),
+                  bgColor: const Color(0xFFEFF6FF),
+                  borderColor: const Color(0xFFBFDBFE),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildLedgerKpiCard(
+                  title: 'TARGET POOL',
+                  amount: '₹${_fmt(targetPool)}',
+                  titleColor: const Color(0xFF475569),
+                  amountColor: const Color(0xFF0F172A),
+                  bgColor: Colors.white,
+                  borderColor: const Color(0xFFE2E8F0),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Row 2: 5th Card - TO GIVE (PRIVATE) (Matching Image 1)
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 220),
+            child: _buildLedgerKpiCard(
+              title: 'TO GIVE (PRIVATE)',
+              amount: '₹${_fmt(toGivePrivate)}',
+              titleColor: const Color(0xFF15803D),
+              amountColor: const Color(0xFF15803D),
+              bgColor: const Color(0xFFF0FDF4),
+              borderColor: const Color(0xFFBBF7D0),
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    Icon(LucideIcons.lock, size: 9.5, color: Color(0xFF15803D)),
+                    SizedBox(width: 3),
+                    Text(
+                      'Only You',
                       style: TextStyle(
                         fontSize: 9.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF15803D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Row 3: Section Title: Member Financial Positions & Net Dues (Matching Image 1)
+          Row(
+            children: const [
+              Icon(LucideIcons.shieldCheck, size: 16, color: Color(0xFF0F172A)),
+              SizedBox(width: 8),
+              Text(
+                'Member Financial Positions & Net Dues',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Row 4: Member Table (Matching Image 1)
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: members.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: Text('No members registered in this group yet.', style: TextStyle(color: Color(0xFF64748B))),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: DataTable(
+                      headingRowHeight: 40,
+                      dataRowMinHeight: 52,
+                      dataRowMaxHeight: 52,
+                      horizontalMargin: 20,
+                      columnSpacing: 28,
+                      headingTextStyle: const TextStyle(
+                        fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: m.isAdmin ? const Color(0xFFD97706) : const Color(0xFF2563EB),
+                        color: Color(0xFF64748B),
                       ),
-                    ),
-                  ),
-                ),
-                DataCell(Text('₹${_fmt(m.totalPaid)}', style: const TextStyle(fontSize: 12.5))),
-                DataCell(Text('₹${_fmt(m.totalContributed)}', style: const TextStyle(fontSize: 12.5))),
-                DataCell(Text('₹${_fmt(m.totalOwed)}', style: const TextStyle(fontSize: 12.5))),
-                DataCell(
-                  Text(
-                    '${m.netBalance >= 0 ? '+' : '-'}₹${_fmt(m.netBalance.abs())}',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: m.netBalance >= 0 ? const Color(0xFF15803D) : const Color(0xFFDC2626),
-                    ),
-                  ),
-                ),
-                DataCell(
-                  InkWell(
-                    onTap: () => _openNoteToGiveModal(grp, m),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(LucideIcons.lock, size: 11, color: Color(0xFF64748B)),
-                          const SizedBox(width: 4),
-                          Text(
-                            privateNoteText,
-                            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                      columns: const [
+                        DataColumn(label: Text('Member')),
+                        DataColumn(label: Text('Role / Status')),
+                        DataColumn(label: Text('Total Paid')),
+                        DataColumn(label: Text('Contributed')),
+                        DataColumn(label: Text('Owed')),
+                        DataColumn(label: Text('Net Balance')),
+                        DataColumn(
+                          label: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.lock, size: 12, color: Color(0xFF15803D)),
+                              SizedBox(width: 4),
+                              Text(
+                                'Money to Give',
+                                style: TextStyle(
+                                  color: Color(0xFF15803D),
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                      rows: members.map((m) {
+                        return DataRow(
+                          cells: [
+                            // 1. Member
+                            DataCell(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    m.name.isNotEmpty ? m.name : m.email.split('@').first,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 1),
+                                  Text(
+                                    m.email,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // 2. Role / Status (Matching Image 1 side by side pills)
+                            DataCell(
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      m.role.toLowerCase(),
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: m.isActive ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7),
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                    child: Text(
+                                      m.isActive ? 'Active' : 'Pending Invite',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: m.isActive ? const Color(0xFF15803D) : const Color(0xFFB45309),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // 3. Total Paid
+                            DataCell(
+                              Text(
+                                '₹${_fmt(m.totalPaid)}',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            // 4. Contributed
+                            DataCell(
+                              Text(
+                                '₹${_fmt(m.totalContributed)}',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            // 5. Owed
+                            DataCell(
+                              Text(
+                                '₹${_fmt(m.totalOwed)}',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            // 6. Net Balance
+                            DataCell(
+                              Text(
+                                m.netBalance > 0
+                                    ? '+₹${_fmt(m.netBalance)}'
+                                    : (m.netBalance < 0 ? '-₹${_fmt(m.netBalance.abs())}' : '₹0'),
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: m.netBalance > 0
+                                      ? const Color(0xFF15803D)
+                                      : (m.netBalance < 0 ? const Color(0xFFDC2626) : const Color(0xFF64748B)),
+                                ),
+                              ),
+                            ),
+                            // 7. Money to Give (+ Note to Give matching Image 1)
+                            DataCell(
+                              InkWell(
+                                onTap: () => _openNoteToGiveModal(grp, m),
+                                borderRadius: BorderRadius.circular(6),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF0FDF4),
+                                    borderRadius: BorderRadius.circular(6),
+                                    border: Border.all(color: const Color(0xFF86EFAC)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        m.privateNote != null && m.privateNote!.amount > 0
+                                            ? '₹${_fmt(m.privateNote!.amount)}'
+                                            : '+ Note to Give',
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
                     ),
                   ),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -2457,7 +2897,9 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   // TAB 2: REQUESTS VIEW (Matching Image 5 exactly)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildRequestsView(double availableWidth, bool isMobile, PeopleState state) {
-    final list = state.incomingRequests;
+    final directRequests = state.incomingRequests;
+    final groupInvitations = state.groups.where((g) => g.isPendingInvitation).toList();
+    final totalPendingCount = directRequests.length + groupInvitations.length;
 
     return Container(
       width: double.infinity,
@@ -2477,7 +2919,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header Row (Incoming Requests & Invitations + Pending badge from Image 3)
+          // Header Row (Incoming Requests & Invitations + Pending badge from Image 2)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2514,7 +2956,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '${list.length} Pending',
+                  '$totalPendingCount Pending',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -2526,13 +2968,13 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           ),
           const SizedBox(height: 22),
 
-          // Sub-heading: Direct Contact Requests (Image 3)
+          // ── Section 1: Financial Group Invitations (Matching Image 2) ──
           Row(
             children: [
-              const Icon(LucideIcons.userPlus, size: 16, color: Color(0xFF0F172A)),
+              const Icon(LucideIcons.walletCards, size: 16, color: Color(0xFF0F172A)),
               const SizedBox(width: 8),
               Text(
-                'Direct Contact Requests (${list.length})',
+                'Financial Group Invitations (${groupInvitations.length})',
                 style: const TextStyle(
                   fontSize: 13.5,
                   fontWeight: FontWeight.w800,
@@ -2543,63 +2985,236 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           ),
           const SizedBox(height: 14),
 
-          if (list.isEmpty)
-            // Empty State Box (Matching Image 3 & 5)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 24),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: const Color(0xFFE2E8F0),
-                  width: 1.0,
+          if (groupInvitations.isNotEmpty)
+            ...groupInvitations.map((grp) {
+              final invName = grp.invitedByName ?? (grp.members.isNotEmpty ? grp.members.first.name : 'Partner');
+              final invEmail = grp.invitedByEmail ?? (grp.members.isNotEmpty ? grp.members.first.email : 'partner@bnxmail.com');
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x04000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E40AF), // Deep Blue square from Image 2
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Center(
+                            child: Icon(LucideIcons.walletCards, color: Colors.white, size: 20),
+                          ),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    grp.name,
+                                    style: const TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF3E8FF),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      grp.groupType.isEmpty ? 'Business_syndicate' : grp.groupType,
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF7C3AED),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (grp.description != null && grp.description!.isNotEmpty) ...[
+                                const SizedBox(height: 3),
+                                Text(
+                                  grp.description!,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                              const SizedBox(height: 5),
+                              Text(
+                                'Invited by: $invName ($invEmail)',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'Role: ${(grp.myRole ?? 'ADMIN').toUpperCase()}',
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFECFDF5),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      'Pool Goal: ₹${_fmt(grp.targetAmount)}',
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF059669),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 38,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                try {
+                                  await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.id);
+                                  if (mounted) {
+                                    AppSnackbar.show(context, "Joined '${grp.name}' group successfully!", type: SnackType.success);
+                                  }
+                                } catch (e) {
+                                  if (mounted) {
+                                    AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                                  }
+                                }
+                              },
+                              icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
+                              label: const Text(
+                                'Join Group',
+                                style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Colors.white),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF4F46E5), // Purple/Indigo matching Image 2
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        SizedBox(
+                          height: 38,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              try {
+                                await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.id);
+                                if (mounted) {
+                                  AppSnackbar.show(context, "Declined invitation to '${grp.name}'", type: SnackType.info);
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                                }
+                              }
+                            },
+                            icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
+                            label: const Text(
+                              'Decline',
+                              style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w700, color: Color(0xFFDC2626)),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }),
+          const SizedBox(height: 10),
+
+          // ── Section 2: Direct Contact Requests (Image 2) ──
+          Row(
+            children: [
+              const Icon(LucideIcons.userPlus, size: 16, color: Color(0xFF0F172A)),
+              const SizedBox(width: 8),
+              Text(
+                'Direct Contact Requests (${directRequests.length})',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
                 ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 46,
-                    height: 46,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFF1F5F9),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        LucideIcons.userPlus,
-                        color: Color(0xFF94A3B8),
-                        size: 22,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'No Pending Requests',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    'When someone adds your @bnxmail.com address or invites you to a financial group, you can accept or decline here.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 11.5,
-                      color: Color(0xFF64748B),
-                      height: 1.35,
-                    ),
-                  ),
-                ],
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          if (directRequests.isEmpty)
+            // Empty State Box (Matching Image 2)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+              child: const Text(
+                'No direct contact requests pending.',
+                style: TextStyle(
+                  fontSize: 12.5,
+                  color: Color(0xFF64748B),
+                ),
               ),
             )
           else
             Column(
-              children: list.map((req) {
+              children: directRequests.map((req) {
                 return Container(
                   margin: const EdgeInsets.only(bottom: 14),
                   padding: const EdgeInsets.all(20),
@@ -3633,54 +4248,600 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   void _openNewGroupModal() {
-    final nameCtrl = TextEditingController();
+    final titleCtrl = TextEditingController();
+    String selectedModel = 'Business Syndicate';
+    final targetPoolCtrl = TextEditingController();
     final descCtrl = TextEditingController();
-    final targetPoolCtrl = TextEditingController(text: '50000');
+
+    // Invite Partner fields
+    final partnerNameCtrl = TextEditingController();
+    final partnerEmailCtrl = TextEditingController();
+    String partnerRole = 'Member';
+    final invitedPartners = <Map<String, String>>[];
+
+    bool isSubmitting = false;
+
+    final models = [
+      'Business Syndicate',
+      'Savings & Contribution Pool',
+      'Project Expenses',
+      'Lending & Credit Circle',
+    ];
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('New Financial Group', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(controller: nameCtrl, decoration: const InputDecoration(labelText: 'Group Name', hintText: 'e.g. Project Syndicates')),
-            const SizedBox(height: 10),
-            TextField(controller: descCtrl, decoration: const InputDecoration(labelText: 'Description', hintText: 'e.g. Shared capital pool')),
-            const SizedBox(height: 10),
-            TextField(controller: targetPoolCtrl, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'Target Pool Goal (₹)')),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameCtrl.text.trim();
-              if (name.isEmpty) return;
-              final target = double.tryParse(targetPoolCtrl.text.trim()) ?? 50000.0;
-              final req = CreateFinancialGroupRequest(
-                name: name,
-                description: descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : null,
-                targetAmount: target,
-                currency: 'INR',
-              );
-              try {
-                final grp = await ref.read(peopleProvider.notifier).createFinancialGroup(req);
-                if (mounted) {
-                  Navigator.pop(ctx);
-                  AppSnackbar.show(context, "Group '${grp.name}' created successfully!", type: SnackType.success);
-                }
-              } catch (e) {
-                if (mounted) {
-                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-            child: const Text('Create'),
-          ),
-        ],
-      ),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 480,
+                padding: const EdgeInsets.all(24),
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header Row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE8FDF3),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      LucideIcons.walletCards,
+                                      size: 18,
+                                      color: Color(0xFF166534),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: const [
+                                      Text(
+                                        'New Financial Group',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0F172A),
+                                          letterSpacing: -0.3,
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Create a shared syndicate or pool with verified @bnxmail.com partners',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            key: const Key('close_new_financial_group_dialog'),
+                            onTap: () => Navigator.pop(ctx),
+                            borderRadius: BorderRadius.circular(8),
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF1F5F9),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 18),
+
+                      // Group Title *
+                      RichText(
+                        text: const TextSpan(
+                          text: 'Group Title ',
+                          style: TextStyle(
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF334155),
+                          ),
+                          children: [
+                            TextSpan(
+                              text: '*',
+                              style: TextStyle(color: Color(0xFFDC2626)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: titleCtrl,
+                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                        decoration: InputDecoration(
+                          hintText: 'e.g. Q4 Inventory Syndicate or Retail Expansion Pool',
+                          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Two Columns: Group Financial Model & Target Pool Amount (Optional)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Group Financial Model',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF334155),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Container(
+                                  height: 42,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: selectedModel,
+                                      isExpanded: true,
+                                      icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                                      selectedItemBuilder: (BuildContext context) {
+                                        return models.map<Widget>((String item) {
+                                          return Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Text(
+                                              item,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w500,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                          );
+                                        }).toList();
+                                      },
+                                      items: models.map((m) {
+                                        final isSel = m == selectedModel;
+                                        return DropdownMenuItem(
+                                          value: m,
+                                          child: Text(
+                                            isSel ? '✓ $m' : '   $m',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: isSel ? FontWeight.w600 : FontWeight.w400,
+                                              color: const Color(0xFF0F172A),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
+                                      onChanged: (v) {
+                                        if (v != null) {
+                                          setModalState(() => selectedModel = v);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Target Pool Amount (Optional)',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF334155),
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: targetPoolCtrl,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                                  decoration: InputDecoration(
+                                    hintText: 'e.g. 500000',
+                                    hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                                    filled: true,
+                                    fillColor: Colors.white,
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                    ),
+                                    focusedBorder: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                      borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Description & Purpose
+                      const Text(
+                        'Description & Purpose',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF334155),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: descCtrl,
+                        maxLines: 3,
+                        style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                        decoration: InputDecoration(
+                          hintText: 'Outline capital objectives, expense boundaries, or settlement frequency...',
+                          hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                          filled: true,
+                          fillColor: Colors.white,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10),
+                            borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Invite Group Partners (Strictly @bnxmail.com)
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text(
+                                  'Invite Group Partners (Strictly @bnxmail.com)',
+                                  style: TextStyle(
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                Text(
+                                  '${invitedPartners.length} invited',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Input Row (Name, partner@bnxmail.com, Member, Add)
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: SizedBox(
+                                    height: 36,
+                                    child: TextField(
+                                      controller: partnerNameCtrl,
+                                      style: const TextStyle(fontSize: 11.5),
+                                      decoration: InputDecoration(
+                                        hintText: 'Name',
+                                        hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 4,
+                                  child: SizedBox(
+                                    height: 36,
+                                    child: TextField(
+                                      controller: partnerEmailCtrl,
+                                      style: const TextStyle(fontSize: 11.5),
+                                      decoration: InputDecoration(
+                                        hintText: 'partner@bnxmail.com',
+                                        hintStyle: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  flex: 3,
+                                  child: Container(
+                                    height: 36,
+                                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                                    ),
+                                    child: DropdownButtonHideUnderline(
+                                      child: DropdownButton<String>(
+                                        value: partnerRole,
+                                        isExpanded: true,
+                                        icon: const Icon(LucideIcons.chevronDown, size: 12, color: Color(0xFF64748B)),
+                                        items: const [
+                                          DropdownMenuItem(
+                                            value: 'Member',
+                                            child: Text('Member', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF166534))),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Admin',
+                                            child: Text('Admin', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF166534))),
+                                          ),
+                                        ],
+                                        onChanged: (v) {
+                                          if (v != null) {
+                                            setModalState(() => partnerRole = v);
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  height: 36,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      final pEmail = partnerEmailCtrl.text.trim().toLowerCase();
+                                      final pName = partnerNameCtrl.text.trim();
+                                      if (pEmail.isEmpty || !pEmail.endsWith('@bnxmail.com')) {
+                                        AppSnackbar.show(context, 'Partner email must end with @bnxmail.com', type: SnackType.error);
+                                        return;
+                                      }
+                                      setModalState(() {
+                                        invitedPartners.add({
+                                          'name': pName.isNotEmpty ? pName : pEmail.split('@').first,
+                                          'email': pEmail,
+                                          'role': partnerRole,
+                                        });
+                                        partnerNameCtrl.clear();
+                                        partnerEmailCtrl.clear();
+                                      });
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF064E3B),
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
+                                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    child: const Text('Add', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            if (invitedPartners.isNotEmpty) ...[
+                              const SizedBox(height: 10),
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: invitedPartners.map((p) {
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF1F5F9),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '${p['name']} (${p['role']})',
+                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        InkWell(
+                                          onTap: () => setModalState(() => invitedPartners.remove(p)),
+                                          child: const Icon(LucideIcons.x, size: 12, color: Color(0xFF64748B)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 22),
+
+                      // Bottom Action Buttons
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 1,
+                            child: SizedBox(
+                              height: 42,
+                              child: OutlinedButton(
+                                onPressed: () => Navigator.pop(ctx),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: const Text(
+                                  'Cancel',
+                                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            flex: 2,
+                            child: SizedBox(
+                              height: 42,
+                              child: ElevatedButton(
+                                onPressed: isSubmitting
+                                    ? null
+                                    : () async {
+                                        final title = titleCtrl.text.trim();
+                                        if (title.isEmpty) {
+                                          AppSnackbar.show(context, 'Group title is required', type: SnackType.error);
+                                          return;
+                                        }
+
+                                        setModalState(() => isSubmitting = true);
+                                        final target = double.tryParse(targetPoolCtrl.text.trim()) ?? 0.0;
+                                        final typeSlug = selectedModel.toLowerCase().replaceAll(' ', '_').replaceAll('&_', '');
+                                        final req = CreateFinancialGroupRequest(
+                                          name: title,
+                                          description: descCtrl.text.trim().isNotEmpty ? descCtrl.text.trim() : null,
+                                          targetAmount: target,
+                                          currency: 'INR',
+                                          groupType: typeSlug,
+                                        );
+
+                                        try {
+                                          final grp = await ref.read(peopleProvider.notifier).createFinancialGroup(req);
+
+                                          // Send invitations for invited partners if any
+                                          for (final partner in invitedPartners) {
+                                            try {
+                                              await ref.read(peopleProvider.notifier).inviteGroupMember(
+                                                grp.id,
+                                                InviteGroupMemberRequest(
+                                                  email: partner['email']!,
+                                                  role: partner['role']?.toLowerCase() ?? 'member',
+                                                ),
+                                              );
+                                            } catch (_) {}
+                                          }
+
+                                          if (mounted) {
+                                            Navigator.pop(ctx);
+                                            AppSnackbar.show(context, "Group '${grp.name}' created successfully!", type: SnackType.success);
+                                          }
+                                        } catch (e) {
+                                          setModalState(() => isSubmitting = false);
+                                          if (mounted) {
+                                            AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                                          }
+                                        }
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF064E3B),
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                ),
+                                child: isSubmitting
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                      )
+                                    : const Text(
+                                        'Create Group & Send Invites',
+                                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -3848,8 +5009,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   void _openInviteMemberModal(FinancialGroup grp) {
+    final nameCtrl = TextEditingController();
     final emailCtrl = TextEditingController();
     String selectedRole = 'member';
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
@@ -3862,75 +5025,250 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Container(
-                width: 480,
+                width: 460,
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Header (Invite Partner to Group + Close X - Matching Images 2 & 3)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Invite Partner to Group', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
-                        InkWell(onTap: () => Navigator.pop(ctx), child: const Icon(LucideIcons.x, size: 16)),
+                        const Text(
+                          'Invite Partner to Group',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF0F172A),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => Navigator.pop(ctx),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-                    const Text('Partner @bnxmail.com Email *', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 18),
+
+                    // Partner Name
+                    const Text(
+                      'Partner Name',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: nameCtrl,
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. Ramesh Patel',
+                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Partner @bnxmail.com Email *
+                    RichText(
+                      text: const TextSpan(
+                        text: 'Partner @bnxmail.com Email ',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF334155),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: '*',
+                            style: TextStyle(color: Color(0xFFDC2626)),
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     TextField(
                       controller: emailCtrl,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                      decoration: InputDecoration(
                         hintText: 'partner@bnxmail.com',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Only official @bnxmail.com accounts can receive financial invitations',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    const Text('Assigned Access Role', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+
+                    // Assigned Access Role (Matching Image 3)
+                    const Text(
+                      'Assigned Access Role',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
                     const SizedBox(height: 6),
-                    DropdownButtonFormField<String>(
-                      value: selectedRole,
-                      decoration: const InputDecoration(border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
-                      items: const [
-                        DropdownMenuItem(value: 'member', child: Text('Member (Can view ledger & contribute)')),
-                        DropdownMenuItem(value: 'manager', child: Text('Manager (Can manage group operations)')),
-                        DropdownMenuItem(value: 'admin', child: Text('Admin (Full ledger & pool control)')),
-                      ],
-                      onChanged: (v) => setModalState(() => selectedRole = v!),
+                    Container(
+                      height: 42,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedRole,
+                          isExpanded: true,
+                          icon: const Icon(LucideIcons.chevronDown, size: 14, color: Color(0xFF64748B)),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'member',
+                              child: Text('Member (Can view ledger & contribute)', style: TextStyle(fontSize: 12, color: Color(0xFF0F172A))),
+                            ),
+                            DropdownMenuItem(
+                              value: 'manager',
+                              child: Text('Manager (Can record & edit transactions)', style: TextStyle(fontSize: 12, color: Color(0xFF0F172A))),
+                            ),
+                            DropdownMenuItem(
+                              value: 'auditor',
+                              child: Text('Auditor (Read-only financial auditor)', style: TextStyle(fontSize: 12, color: Color(0xFF0F172A))),
+                            ),
+                          ],
+                          onChanged: (v) {
+                            if (v != null) {
+                              setModalState(() => selectedRole = v);
+                            }
+                          },
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          final email = emailCtrl.text.trim().toLowerCase();
-                          if (!email.endsWith('@bnxmail.com')) {
-                            AppSnackbar.show(context, 'Please enter a valid @bnxmail.com email address', type: SnackType.warning);
-                            return;
-                          }
-                          final req = InviteGroupMemberRequest(email: email, role: selectedRole);
-                          try {
-                            await ref.read(peopleProvider.notifier).inviteGroupMember(grp.id, req);
-                            if (mounted) {
-                              Navigator.pop(ctx);
-                              AppSnackbar.show(context, "Invitation dispatched to '$email'!", type: SnackType.success);
-                            }
-                          } catch (e) {
-                            if (mounted) {
-                              AppSnackbar.show(context, e.toString(), type: SnackType.error);
-                            }
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-                        child: const Text('Dispatch Invitation', style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
+
+                    // Action Buttons (Cancel / Dispatch Invitation)
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: SizedBox(
+                            height: 42,
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
+                                      final email = emailCtrl.text.trim().toLowerCase();
+                                      if (email.isEmpty || !email.endsWith('@bnxmail.com')) {
+                                        AppSnackbar.show(context, 'Please enter a valid @bnxmail.com email address', type: SnackType.warning);
+                                        return;
+                                      }
+
+                                      setModalState(() => isSubmitting = true);
+                                      final req = InviteGroupMemberRequest(
+                                        email: email,
+                                        role: selectedRole,
+                                      );
+
+                                      try {
+                                        await ref.read(peopleProvider.notifier).inviteGroupMember(grp.id, req);
+                                        if (mounted) {
+                                          Navigator.pop(ctx);
+                                          AppSnackbar.show(context, "Invitation dispatched to '$email'!", type: SnackType.success);
+                                        }
+                                      } catch (e) {
+                                        setModalState(() => isSubmitting = false);
+                                        if (mounted) {
+                                          AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                                        }
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF064E3B),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Text(
+                                      'Dispatch Invitation',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -3943,63 +5281,323 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   void _openNoteToGiveModal(FinancialGroup grp, GroupMember member) {
-    final noteCtrl = TextEditingController(text: member.privateNote?.notes ?? '');
-    final amtCtrl = TextEditingController(text: (member.privateNote?.amount ?? 0.0) > 0 ? member.privateNote!.amount.toString() : '');
+    final amtCtrl = TextEditingController(
+      text: (member.privateNote?.amount ?? 0.0) > 0
+          ? (member.privateNote!.amount == member.privateNote!.amount.toInt()
+              ? member.privateNote!.amount.toInt().toString()
+              : member.privateNote!.amount.toString())
+          : '',
+    );
+    final memoCtrl = TextEditingController(text: member.privateNote?.notes ?? '');
+    bool isSubmitting = false;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Private Note for ${member.name}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: noteCtrl,
-              decoration: const InputDecoration(labelText: 'Internal Note', hintText: 'Confidential note only visible to you'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: amtCtrl,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: 'Private Due / Commitment (₹)', hintText: '0.00'),
-            ),
-          ],
-        ),
-        actions: [
-          if (member.privateNote != null)
-            TextButton(
-              onPressed: () async {
-                Navigator.pop(ctx);
-                await ref.read(peopleProvider.notifier).deletePrivateMemberNote(grp.id, member.id);
-                if (mounted) {
-                  AppSnackbar.show(context, 'Private note removed', type: SnackType.info);
-                }
-              },
-              child: const Text('Delete', style: TextStyle(color: Colors.red)),
-            ),
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          ElevatedButton(
-            onPressed: () async {
-              final note = noteCtrl.text.trim();
-              final amt = double.tryParse(amtCtrl.text.trim()) ?? 0.0;
-              final req = SetPrivateNoteRequest(note: note, amount: amt);
-              try {
-                await ref.read(peopleProvider.notifier).setPrivateMemberNote(grp.id, member.id, req);
-                if (mounted) {
-                  Navigator.pop(ctx);
-                  AppSnackbar.show(context, 'Private note saved!', type: SnackType.success);
-                }
-              } catch (e) {
-                if (mounted) {
-                  AppSnackbar.show(context, e.toString(), type: SnackType.error);
-                }
-              }
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-            child: const Text('Save Note'),
-          ),
-        ],
-      ),
+      barrierColor: Colors.black.withValues(alpha: 0.45),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Dialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              child: Container(
+                width: 460,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header (Icon + Title + Subtitle + Close X - Matching Image 4)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFECFDF5),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Icon(LucideIcons.lock, size: 18, color: Color(0xFF10B981)),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: const [
+                              Text(
+                                'Private Member Note',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              SizedBox(height: 2),
+                              Text(
+                                'Only visible to you',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF10B981),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => Navigator.pop(ctx),
+                          borderRadius: BorderRadius.circular(8),
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Center(
+                              child: Icon(LucideIcons.x, size: 14, color: Color(0xFF64748B)),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Target Member Box (Matching Image 4)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF8FAFC),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'TARGET MEMBER',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            member.name.isNotEmpty ? member.name : member.email.split('@').first,
+                            style: const TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            member.email,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Field 1: How much money will you give? *
+                    RichText(
+                      text: const TextSpan(
+                        text: 'How much money will you give? ',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF334155),
+                        ),
+                        children: [
+                          TextSpan(
+                            text: '*',
+                            style: TextStyle(color: Color(0xFFDC2626)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: amtCtrl,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. 5000',
+                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+
+                    // Field 2: Private Memo / Reason (Optional)
+                    const Text(
+                      'Private Memo / Reason (Optional)',
+                      style: TextStyle(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF334155),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: memoCtrl,
+                      maxLines: 3,
+                      style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                      decoration: InputDecoration(
+                        hintText: 'e.g. For raw materials share, to be settled next Tuesday...',
+                        hintStyle: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                        filled: true,
+                        fillColor: Colors.white,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                          borderSide: const BorderSide(color: Color(0xFF166534), width: 1.5),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Green Disclaimer Box (Matching Image 4)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Icon(LucideIcons.lock, size: 15, color: Color(0xFF059669)),
+                          SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'This note and amount will NEVER be visible to any other group member or admin.',
+                              style: TextStyle(
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF065F46),
+                                height: 1.35,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+
+                    // Action Buttons (Cancel / Save Private Note)
+                    Row(
+                      children: [
+                        Expanded(
+                          flex: 1,
+                          child: SizedBox(
+                            height: 42,
+                            child: OutlinedButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              style: OutlinedButton.styleFrom(
+                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: Color(0xFF0F172A)),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          flex: 2,
+                          child: SizedBox(
+                            height: 42,
+                            child: ElevatedButton(
+                              onPressed: isSubmitting
+                                  ? null
+                                  : () async {
+                                      final amt = double.tryParse(amtCtrl.text.trim()) ?? 0.0;
+                                      final memo = memoCtrl.text.trim();
+
+                                      setModalState(() => isSubmitting = true);
+                                      final req = SetPrivateNoteRequest(note: memo, amount: amt);
+
+                                      try {
+                                        await ref.read(peopleProvider.notifier).setPrivateMemberNote(grp.id, member.id, req);
+                                        await ref.read(peopleProvider.notifier).selectGroupForDetail(grp.id);
+                                        if (mounted) {
+                                          Navigator.pop(ctx);
+                                          AppSnackbar.show(context, 'Private note saved successfully!', type: SnackType.success);
+                                        }
+                                      } catch (e) {
+                                        setModalState(() => isSubmitting = false);
+                                        if (mounted) {
+                                          AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                                        }
+                                      }
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF064E3B),
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                              ),
+                              child: isSubmitting
+                                  ? const SizedBox(
+                                      width: 18,
+                                      height: 18,
+                                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    )
+                                  : const Text(
+                                      'Save Private Note',
+                                      style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

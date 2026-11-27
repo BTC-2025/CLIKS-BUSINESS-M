@@ -469,6 +469,69 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
     }
   }
 
+  Future<bool> joinFinancialGroup(dynamic id) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final ok = await PeopleRepository.joinFinancialGroup(id);
+      final list = state.groups.map((g) {
+        if (g.id.toString() == id.toString()) {
+          return FinancialGroup(
+            id: g.id,
+            createdBy: g.createdBy,
+            name: g.name,
+            description: g.description,
+            groupType: g.groupType,
+            currency: g.currency,
+            targetAmount: g.targetAmount,
+            status: g.status,
+            myRole: g.myRole ?? 'member',
+            myMembershipStatus: 'accepted',
+            memberCount: g.memberCount + 1,
+            pendingMemberCount: (g.pendingMemberCount - 1).clamp(0, 999),
+            totalMembers: g.totalMembers,
+            totalContributed: g.totalContributed,
+            totalExpenses: g.totalExpenses,
+            totalLoans: g.totalLoans,
+            createdAt: g.createdAt,
+            updatedAt: g.updatedAt,
+            members: g.members,
+            transactions: g.transactions,
+            invitedByName: g.invitedByName,
+            invitedByEmail: g.invitedByEmail,
+          );
+        }
+        return g;
+      }).toList();
+      state = state.copyWith(isLoading: false, groups: list);
+      await loadGroups();
+      await loadContacts();
+      return ok;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
+  Future<bool> declineFinancialGroup(dynamic id) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final ok = await PeopleRepository.declineFinancialGroup(id);
+      final list = state.groups.where((g) => g.id.toString() != id.toString()).toList();
+      state = state.copyWith(isLoading: false, groups: list);
+      await loadGroups();
+      return ok;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
   Future<GroupMember> inviteGroupMember(
     dynamic groupId,
     InviteGroupMemberRequest req,

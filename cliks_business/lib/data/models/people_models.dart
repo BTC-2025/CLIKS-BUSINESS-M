@@ -235,9 +235,10 @@ class PersonContact {
       ? relationship!.toUpperCase()
       : roleType.toUpperCase();
 
-  bool get isConnected => status == 'accepted' || status == 'connected';
+  bool get isConnected => status == 'accepted' || status == 'connected' || status == 'active';
 
   String get formattedPhone {
+    if (phone.trim().isEmpty || phone.trim() == 'N/A') return 'N/A';
     final digits = phone.replaceAll(RegExp(r'\D'), '');
     if (digits.length == 10) {
       return '+91 ${digits.substring(0, 5)} ${digits.substring(5)}';
@@ -520,6 +521,8 @@ class FinancialGroup {
   final DateTime? updatedAt;
   final List<GroupMember> members;
   final List<GroupTransaction> transactions;
+  final String? invitedByName;
+  final String? invitedByEmail;
 
   const FinancialGroup({
     required this.id,
@@ -542,6 +545,8 @@ class FinancialGroup {
     this.updatedAt,
     this.members = const [],
     this.transactions = const [],
+    this.invitedByName,
+    this.invitedByEmail,
   });
 
   factory FinancialGroup.fromJson(Map<String, dynamic> json) {
@@ -574,6 +579,19 @@ class FinancialGroup {
     final pCount = parseInt(json['pending_member_count'] ?? json['pendingMemberCount'], memberList.where((m) => !m.isAccepted).length);
     final totCount = parseInt(json['total_members'] ?? json['totalMembers'], memberList.length);
 
+    final invByName = json['invited_by_name']?.toString() ??
+        json['created_by_name']?.toString() ??
+        json['creator']?['name']?.toString() ??
+        json['invited_by']?['name']?.toString();
+    final invByEmail = json['invited_by_email']?.toString() ??
+        json['created_by_email']?.toString() ??
+        json['creator']?['email']?.toString() ??
+        json['invited_by']?['email']?.toString();
+
+    final adminMember = memberList.where((m) => m.role == 'admin').firstOrNull;
+    final finalInvName = invByName ?? adminMember?.name;
+    final finalInvEmail = invByEmail ?? adminMember?.email;
+
     return FinancialGroup(
       id: parseInt(json['id']),
       createdBy: json['created_by'] != null ? parseInt(json['created_by']) : null,
@@ -595,6 +613,8 @@ class FinancialGroup {
       updatedAt: parseDateTime(json['updated_at'] ?? json['updatedAt']),
       members: memberList,
       transactions: txList,
+      invitedByName: finalInvName,
+      invitedByEmail: finalInvEmail,
     );
   }
 
@@ -618,10 +638,14 @@ class FinancialGroup {
       'total_loans': totalLoans,
       if (createdAt != null) 'created_at': createdAt!.toIso8601String(),
       if (updatedAt != null) 'updated_at': updatedAt!.toIso8601String(),
+      if (invitedByName != null) 'invited_by_name': invitedByName,
+      if (invitedByEmail != null) 'invited_by_email': invitedByEmail,
       'members': members.map((m) => m.toJson()).toList(),
       'transactions': transactions.map((t) => t.toJson()).toList(),
     };
   }
+
+  bool get isPendingInvitation => myMembershipStatus == 'pending';
 
   double get completionPercentage {
     if (targetAmount <= 0) return 0.0;
@@ -629,6 +653,16 @@ class FinancialGroup {
   }
 
   double get netFundInHand => (totalContributed - totalExpenses).clamp(0.0, double.infinity);
+
+  double get totalPrivateMoneyToGive {
+    double sum = 0.0;
+    for (final m in members) {
+      if (m.privateNote != null && m.privateNote!.amount > 0) {
+        sum += m.privateNote!.amount;
+      }
+    }
+    return sum;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -758,6 +792,7 @@ class GroupMember {
   }
 
   bool get isAccepted => status == 'accepted';
+  bool get isActive => status == 'active' || status == 'accepted' || status == 'connected';
   bool get isAdmin => role == 'admin';
 }
 

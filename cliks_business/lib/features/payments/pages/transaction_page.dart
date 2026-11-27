@@ -106,12 +106,67 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
         ));
       }
 
-      // Extract overdue invoices
+      // Extract overdue invoices directly from backend reports API (Strictly Live Data)
       final overdue = <Map<String, dynamic>>[];
       final overdueRaw = reports['overdueInvoices'];
       if (overdueRaw is List) {
         for (final o in overdueRaw) {
-          if (o is Map<String, dynamic>) overdue.add(o);
+          if (o is Map<String, dynamic>) {
+            overdue.add(o);
+          }
+        }
+      }
+
+      // Check invoices from reports API for outstanding or overdue balances
+      final invoicesRaw = reports['invoices'];
+      if (invoicesRaw is List) {
+        for (final inv in invoicesRaw) {
+          if (inv is Map<String, dynamic>) {
+            final total = ((inv['total_amount'] ?? inv['grand_total'] ?? inv['totalBill'] ?? inv['amount'] ?? 0) as num).toDouble();
+            final paid = ((inv['paid_amount'] ?? inv['paidAmount'] ?? 0) as num).toDouble();
+            final due = ((inv['due_amount'] ?? inv['dueBalance'] ?? inv['pending_amount'] ?? (total - paid)) as num).toDouble();
+            final dueDateStr = (inv['due_date'] ?? inv['dueDate'])?.toString();
+            DateTime? dueDate;
+            if (dueDateStr != null && dueDateStr.isNotEmpty && dueDateStr != '—') {
+              dueDate = DateTime.tryParse(dueDateStr);
+            }
+            final isPastDue = dueDate != null && dueDate.isBefore(DateTime.now());
+            final isOverdue = inv['isOverdue'] == true || (due > 0 && isPastDue);
+
+            if (due > 0 || isOverdue) {
+              final invNo = (inv['invoice_number'] ?? inv['invoiceNo'] ?? inv['invoice_id'] ?? inv['id'] ?? '').toString();
+              if (!overdue.any((existing) =>
+                  (existing['invoiceNo'] ?? existing['invoice_number'] ?? existing['invoice_id'] ?? existing['id'] ?? '').toString() == invNo)) {
+                overdue.add(inv);
+              }
+            }
+          }
+        }
+      }
+
+      // Also ingest receivables with outstanding customer balance
+      final recRawList = reports['receivables'];
+      if (recRawList is List) {
+        for (final rec in recRawList) {
+          if (rec is Map<String, dynamic>) {
+            final pending = ((rec['pending_amount'] ?? rec['pendingAmount'] ?? 0) as num).toDouble();
+            if (pending > 0) {
+              final refNo = (rec['invoice_id'] ?? rec['invoiceLinkedId'] ?? rec['reference_number'] ?? rec['id'] ?? '').toString();
+              if (!overdue.any((existing) =>
+                  (existing['invoiceNo'] ?? existing['invoice_number'] ?? existing['invoice_id'] ?? existing['id'] ?? '').toString() == refNo)) {
+                overdue.add({
+                  'customerName': rec['party_name'] ?? rec['customer_name'] ?? 'Customer',
+                  'invoiceNo': refNo,
+                  'totalBill': ((rec['total_original'] ?? rec['total_amount'] ?? rec['amount'] ?? pending) as num).toDouble(),
+                  'paidAmount': ((rec['paid_amount'] ?? 0) as num).toDouble(),
+                  'dueBalance': pending,
+                  'dueDate': rec['due_date'] ?? rec['created_at'] ?? '—',
+                  'status': rec['status'] ?? 'Credit Due',
+                  'isOverdue': rec['isOverdue'] ?? false,
+                });
+              }
+            }
+          }
         }
       }
 
@@ -232,7 +287,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
       }
     }
     for (final o in _overdueInvoices) {
-      final bal = (o['dueBalance'] ?? o['balance'] ?? o['pending_amount'] ?? 0) as num;
+      final bal = (o['due_amount'] ?? o['dueBalance'] ?? o['balance'] ?? o['pending_amount'] ?? 0) as num;
       pending += bal.toDouble();
     }
     return pending;
@@ -302,9 +357,10 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     if (_searchQuery.trim().isEmpty) return _overdueInvoices;
     final q = _searchQuery.toLowerCase();
     return _overdueInvoices.where((item) {
-      final name = (item['customerName'] ?? item['customer_name'] ?? '').toString().toLowerCase();
-      final no = (item['invoiceNo'] ?? item['invoice_id'] ?? '').toString().toLowerCase();
-      return name.contains(q) || no.contains(q);
+      final name = (item['customer_name'] ?? item['customerName'] ?? item['client_name'] ?? item['party_name'] ?? '').toString().toLowerCase();
+      final no = (item['invoice_number'] ?? item['invoiceNo'] ?? item['invoice_id'] ?? item['id'] ?? '').toString().toLowerCase();
+      final status = (item['status'] ?? '').toString().toLowerCase();
+      return name.contains(q) || no.contains(q) || status.contains(q);
     }).toList();
   }
 
@@ -480,44 +536,64 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
         ),
 
-        // Outlined "Send Payment" Button
-        OutlinedButton.icon(
+        // Outlined "Send Payment" Button with two-line layout matching screenshot
+        OutlinedButton(
           onPressed: _openSupplierDisbursementModal,
-          icon: const Icon(LucideIcons.arrowUpRight, size: 14, color: Color(0xFF166534)),
-          label: const Text(
-            'Send Payment',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12.5,
-              color: Color(0xFF166534),
-            ),
-          ),
           style: OutlinedButton.styleFrom(
             backgroundColor: Colors.white,
             side: const BorderSide(color: Color(0xFFE2E8F0)),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.arrowUpRight, size: 14, color: Color(0xFF166534)),
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 58),
+                child: const Text(
+                  'Send Payment',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: Color(0xFF166534),
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
 
-        // Solid "Receive Payment" Button
-        ElevatedButton.icon(
+        // Solid "Receive Payment" Button with two-line layout matching screenshot
+        ElevatedButton(
           onPressed: _openCustomerPaymentModal,
-          icon: const Icon(LucideIcons.arrowDownLeft, size: 14, color: Colors.white),
-          label: const Text(
-            'Receive Payment',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12.5,
-              color: Colors.white,
-            ),
-          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF166534),
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(LucideIcons.arrowDownLeft, size: 14, color: Colors.white),
+              const SizedBox(width: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 58),
+                child: const Text(
+                  'Receive Payment',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    color: Colors.white,
+                    height: 1.15,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -1275,6 +1351,130 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 1: OVERDUE COLLECTIONS & REMINDERS (Live Reports Backend)
   // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildTableHeaderWithFilter(String title) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF64748B),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(width: 5),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: const Color(0xFFE2E8F0), width: 0.8),
+          ),
+          child: const Icon(
+            LucideIcons.filter,
+            size: 9,
+            color: Color(0xFF94A3B8),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverdueStatusCell(Map<String, dynamic> item, double due, String dueDateStr) {
+    final rawStatus = item['status']?.toString();
+
+    DateTime? dueDateParsed;
+    if (dueDateStr.isNotEmpty && dueDateStr != '—') {
+      dueDateParsed = DateTime.tryParse(dueDateStr);
+    }
+
+    final now = DateTime.now();
+    final isPastDue = (dueDateParsed != null && dueDateParsed.isBefore(now)) ||
+        (rawStatus != null && rawStatus.toLowerCase().contains('overdue')) ||
+        item['isOverdue'] == true;
+
+    int daysOverdue = 0;
+    if (rawStatus != null && rawStatus.toLowerCase().contains('overdue')) {
+      final match = RegExp(r'(\d+)\s*Days', caseSensitive: false).firstMatch(rawStatus);
+      if (match != null) {
+        daysOverdue = int.tryParse(match.group(1) ?? '') ?? 0;
+      }
+    }
+    if (daysOverdue == 0 && dueDateParsed != null && dueDateParsed.isBefore(now)) {
+      daysOverdue = now.difference(dueDateParsed).inDays;
+      if (daysOverdue <= 0) daysOverdue = 1;
+    }
+
+    if (isPastDue && (daysOverdue > 0 || (rawStatus != null && rawStatus.toLowerCase().contains('overdue')))) {
+      final daysText = daysOverdue > 0 ? '$daysOverdue Days' : 'Overdue';
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFEE2E2),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              daysText,
+              style: const TextStyle(
+                fontSize: 10.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFFDC2626),
+              ),
+            ),
+          ),
+          const SizedBox(height: 2),
+          const Text(
+            'Overdue',
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFFDC2626),
+            ),
+          ),
+        ],
+      );
+    } else if (due > 0 || rawStatus == 'Credit Due') {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          'Credit Due',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFFD97706),
+          ),
+        ),
+      );
+    } else {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+        decoration: BoxDecoration(
+          color: const Color(0xFFDCFCE7),
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: const Text(
+          'Settled',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF16A34A),
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildOverdueRemindersTabView(double screenWidth, bool isMobile) {
     final list = _filteredOverdueList;
 
@@ -1285,7 +1485,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0)),
             boxShadow: const [
               BoxShadow(
@@ -1296,181 +1496,200 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
             ],
           ),
           clipBehavior: Clip.antiAlias,
-          child: list.isEmpty
-              ? _buildEmptyState(
-                  icon: LucideIcons.circleCheck,
-                  title: 'No Overdue Invoices Found',
-                  description: 'All customer receivables are completely settled or within due dates.',
-                  actionLabel: 'Receive Payment',
-                  onAction: _openCustomerPaymentModal,
-                )
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      minWidth: screenWidth >= 900 ? screenWidth - 64 : 880,
-                    ),
-                    child: DataTable(
-                      headingRowHeight: 48,
-                      dataRowMinHeight: 64,
-                      dataRowMaxHeight: 64,
-                      horizontalMargin: 20,
-                      columnSpacing: 24,
-                      dividerThickness: 1,
-                      border: const TableBorder(
-                        bottom: BorderSide(color: Color(0xFFF1F5F9)),
-                      ),
-                      headingTextStyle: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF64748B),
-                        letterSpacing: 0.6,
-                      ),
-                      columns: const [
-                        DataColumn(label: Text('CUSTOMER NAME')),
-                        DataColumn(label: Text('INVOICE / BILL NO')),
-                        DataColumn(label: Text('TOTAL BILL')),
-                        DataColumn(label: Text('PAID AMOUNT')),
-                        DataColumn(label: Text('CREDIT DUE BALANCE')),
-                        DataColumn(label: Text('DUE DATE')),
-                        DataColumn(label: Text('STATUS')),
-                        DataColumn(label: Text('ACTIONS')),
-                      ],
-                      rows: list.map((item) {
-                        final total = ((item['totalBill'] ?? item['grand_total'] ?? item['total_amount'] ?? 0) as num).toDouble();
-                        final paid = ((item['paidAmount'] ?? item['paid_amount'] ?? 0) as num).toDouble();
-                        final due = ((item['dueBalance'] ?? item['pending_amount'] ?? (total - paid)) as num).toDouble();
-                        final isOverdue = item['isOverdue'] == true || due > 0;
-                        final status = item['status']?.toString() ?? (due > 0 ? 'Due' : 'Settled');
-                        final customerName = (item['customerName'] ?? item['customer_name'] ?? 'Walk-in Customer').toString();
-                        final invNo = (item['invoiceNo'] ?? item['invoice_number'] ?? item['invoice_id'] ?? 'INV-001').toString();
-                        final dueDate = (item['dueDate'] ?? item['due_date'] ?? '—').toString();
-
-                        return DataRow(
-                          cells: [
-                            // 1. CUSTOMER NAME
-                            DataCell(
-                              Text(
-                                customerName,
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
-
-                            // 2. INVOICE NO
-                            DataCell(
-                              Text(
-                                invNo,
-                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
-                              ),
-                            ),
-
-                            // 3. TOTAL BILL
-                            DataCell(
-                              Text(
-                                '₹${_fmt(total)}',
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
-
-                            // 4. PAID AMOUNT
-                            DataCell(
-                              Text(
-                                '₹${_fmt(paid)}',
-                                style: const TextStyle(
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
-
-                            // 5. CREDIT DUE BALANCE
-                            DataCell(
-                              Text(
-                                '₹${_fmt(due)}',
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: Color(0xFFDC2626),
-                                ),
-                              ),
-                            ),
-
-                            // 6. DUE DATE
-                            DataCell(
-                              Text(
-                                dueDate,
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
-                              ),
-                            ),
-
-                            // 7. STATUS
-                            DataCell(
-                              Text(
-                                status,
-                                style: TextStyle(
-                                  fontSize: 11.5,
-                                  fontWeight: FontWeight.w700,
-                                  color: isOverdue ? const Color(0xFFDC2626) : const Color(0xFFD97706),
-                                ),
-                              ),
-                            ),
-
-                            // 8. Action: Send Reminder Button
-                            DataCell(
-                              InkWell(
-                                onTap: () {
-                                  HapticFeedback.lightImpact();
-                                  AppSnackbar.show(
-                                    context,
-                                    "Overdue reminder dispatched to '$customerName' for invoice $invNo!",
-                                    type: SnackType.success,
-                                  );
-                                },
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFECFDF5),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: const [
-                                      Icon(
-                                        LucideIcons.send,
-                                        size: 12,
-                                        color: Color(0xFF059669),
-                                      ),
-                                      SizedBox(width: 5),
-                                      Text(
-                                        'Send Reminder',
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF059669),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList(),
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Card Heading matching reference screenshot
+              const Padding(
+                padding: EdgeInsets.only(left: 20, right: 20, top: 22, bottom: 16),
+                child: Text(
+                  'Overdue Customer Accounts Reminders',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF064E3B),
+                    letterSpacing: -0.2,
                   ),
                 ),
+              ),
+
+              list.isEmpty
+                  ? _buildEmptyState(
+                      icon: LucideIcons.circleCheck,
+                      title: 'No Overdue Invoices Found',
+                      description: 'All customer receivables are completely settled or within due dates.',
+                      actionLabel: 'Receive Payment',
+                      onAction: _openCustomerPaymentModal,
+                    )
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: screenWidth >= 900 ? screenWidth - 64 : 880,
+                        ),
+                        child: DataTable(
+                          headingRowHeight: 48,
+                          dataRowMinHeight: 64,
+                          dataRowMaxHeight: 64,
+                          horizontalMargin: 20,
+                          columnSpacing: 24,
+                          dividerThickness: 1,
+                          border: const TableBorder(
+                            bottom: BorderSide(color: Color(0xFFF1F5F9)),
+                          ),
+                          headingTextStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.6,
+                          ),
+                          columns: [
+                            DataColumn(label: _buildTableHeaderWithFilter('CUSTOMER NAME')),
+                            DataColumn(label: _buildTableHeaderWithFilter('INVOICE / BILL NO')),
+                            DataColumn(label: _buildTableHeaderWithFilter('TOTAL BILL')),
+                            DataColumn(label: _buildTableHeaderWithFilter('PAID AMOUNT')),
+                            DataColumn(label: _buildTableHeaderWithFilter('CREDIT DUE BALANCE')),
+                            DataColumn(label: _buildTableHeaderWithFilter('DUE DATE')),
+                            DataColumn(label: _buildTableHeaderWithFilter('STATUS')),
+                            DataColumn(label: _buildTableHeaderWithFilter('ACTIONS')),
+                          ],
+                          rows: list.map((item) {
+                            final total = ((item['total_amount'] ?? item['totalBill'] ?? item['grand_total'] ?? item['amount'] ?? 0) as num).toDouble();
+                            final paid = ((item['paid_amount'] ?? item['paidAmount'] ?? 0) as num).toDouble();
+                            final due = ((item['due_amount'] ?? item['dueBalance'] ?? item['pending_amount'] ?? (total - paid)) as num).toDouble();
+                            final customerName = (item['customer_name'] ?? item['customerName'] ?? item['client_name'] ?? item['party_name'] ?? 'Walk-in Customer').toString();
+                            final invNo = (item['invoice_number'] ?? item['invoiceNo'] ?? item['invoice_id'] ?? item['id'] ?? 'INV-001').toString();
+                            final dueDate = (item['due_date'] ?? item['dueDate'] ?? item['created_at'] ?? '—').toString().split('T').first;
+
+                            return DataRow(
+                              cells: [
+                                // 1. CUSTOMER NAME
+                                DataCell(
+                                  Text(
+                                    customerName,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+
+                                // 2. INVOICE NO
+                                DataCell(
+                                  Text(
+                                    invNo,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+
+                                // 3. TOTAL BILL
+                                DataCell(
+                                  Text(
+                                    '₹${_fmt(total)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                ),
+
+                                // 4. PAID AMOUNT (Green text)
+                                DataCell(
+                                  Text(
+                                    '₹${_fmt(paid)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF16A34A),
+                                    ),
+                                  ),
+                                ),
+
+                                // 5. CREDIT DUE BALANCE (Bold Red text)
+                                DataCell(
+                                  Text(
+                                    '₹${_fmt(due)}',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFDC2626),
+                                    ),
+                                  ),
+                                ),
+
+                                // 6. DUE DATE
+                                DataCell(
+                                  Text(
+                                    dueDate,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ),
+
+                                // 7. STATUS (Credit Due or X Days Overdue)
+                                DataCell(
+                                  _buildOverdueStatusCell(item, due, dueDate),
+                                ),
+
+                                // 8. Action: Send Reminder Pill Button
+                                DataCell(
+                                  InkWell(
+                                    onTap: () {
+                                      HapticFeedback.lightImpact();
+                                      AppSnackbar.show(
+                                        context,
+                                        "Overdue reminder dispatched to '$customerName' for invoice $invNo!",
+                                        type: SnackType.success,
+                                      );
+                                    },
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFE8FDF3),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: const [
+                                          Icon(
+                                            LucideIcons.send,
+                                            size: 12,
+                                            color: Color(0xFF059669),
+                                          ),
+                                          SizedBox(width: 6),
+                                          Text(
+                                            'Send Reminder',
+                                            style: TextStyle(
+                                              fontSize: 11.5,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF059669),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    ),
+            ],
+          ),
         ),
       ],
     );

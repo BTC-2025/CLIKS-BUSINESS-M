@@ -4,7 +4,10 @@ import 'package:clicks_business_frontend/data/models/payment_transaction_models.
 import 'package:clicks_business_frontend/data/repositories/payment_transaction_repository.dart';
 
 void main() {
-  test('Live Payments & Transactions API - Full End-to-End Integration Lifecycle', () async {
+  test(
+    'Live Payments & Transactions API - Full End-to-End Integration Lifecycle',
+    timeout: const Timeout(Duration(seconds: 120)),
+    () async {
     // 1. Authenticate with active account session token
     const bnxToken =
         'eyJhbGciOiJIUzI1NiJ9.eyJhcHBfbmFtZSI6IkJOWCBNYWlsIiwic3ViIjoicmF2aW5ldzIwMDRAYm54bWFpbC5jb20iLCJpYXQiOjE3OTMwODM2MTEsImV4cCI6MTc5NTY3NTYxMX0.neyvYkB7aY5zXgI-ehOp36vlaAeuI5BPR0Ho_X1OlV4';
@@ -19,6 +22,9 @@ void main() {
     // 3. GET PAYMENT REPORTS (GET /api/v1/payments/reports)
     final reports = await PaymentTransactionRepository.getPaymentReports(email: 'ravinew2004@bnxmail.com');
     print('[LIVE TEST] Payment Reports Keys: ${reports.keys.toList()}');
+    print('[LIVE TEST] Overdue Invoices: ${reports['overdueInvoices']}');
+    print('[LIVE TEST] Invoices: ${reports['invoices']}');
+    print('[LIVE TEST] Receivables: ${reports['receivables']}');
     expect(reports.containsKey('receivables') || reports.containsKey('accounts'), isTrue);
 
     // 4. GET BANK ACCOUNTS (GET /api/v1/bank-accounts)

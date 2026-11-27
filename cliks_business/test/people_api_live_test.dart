@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:clicks_business_frontend/core/network/api_client.dart';
 import 'package:clicks_business_frontend/core/network/token_service.dart';
 import 'package:clicks_business_frontend/data/models/people_models.dart';
 import 'package:clicks_business_frontend/data/repositories/people_repository.dart';
@@ -16,7 +17,23 @@ void main() {
   group('People Network & Escrow Live API E2E Integration Suite', () {
     test('1. Verify GET /api/v1/people contact list & summary retrieval', () async {
       final contacts = await PeopleRepository.getPeople(email: activeEmail);
-      print('[LIVE TEST] Fetched ${contacts.length} live contacts');
+      print('[LIVE TEST] Fetched ${contacts.length} live contacts:');
+      for (final c in contacts) {
+        print('  -> Contact: ${c.name}, email: ${c.email}, status: ${c.status}, isConnected: ${c.isConnected}');
+      }
+      final groups = await PeopleRepository.getFinancialGroups(email: activeEmail);
+      print('[LIVE TEST] Fetched ${groups.length} live groups:');
+      for (final g in groups) {
+        print('  -> Group: ${g.name}, type: ${g.groupType}, members: ${g.members.length}, myRole: ${g.myRole}, myStatus: ${g.myMembershipStatus}');
+        for (final m in g.members) {
+          print('     * member: ${m.name}, email: ${m.email}, status: ${m.status}, role: ${m.role}');
+        }
+      }
+      final reqs = await PeopleRepository.getIncomingRequests(email: activeEmail);
+      print('[LIVE TEST] Fetched ${reqs.length} incoming requests:');
+      for (final r in reqs) {
+        print('  -> Req: ${r.id}, from: ${r.fromName}, email: ${r.fromEmail}');
+      }
       expect(contacts, isA<List<PersonContact>>());
 
       final summary = await PeopleRepository.getPeopleSummary(email: activeEmail);
@@ -240,6 +257,30 @@ void main() {
         final deletedGroup = await PeopleRepository.deleteFinancialGroup(groupId, email: activeEmail);
         print('[LIVE TEST] Deleted group $groupId status: $deletedGroup');
         expect(deletedGroup, isTrue);
+      }
+    });
+
+    test('7. Inspect group invitations and requests payload', () async {
+      // Test member patch
+      try {
+        final res = await ApiClient.patch(
+          '/api/v1/people/groups/5/members/1',
+          body: {'status': 'accepted'},
+          email: activeEmail,
+        );
+        print('PATCH member -> $res');
+      } catch (e) {
+        print('PATCH member -> $e');
+      }
+      try {
+        final res = await ApiClient.put(
+          '/api/v1/people/groups/5/members/1',
+          body: {'status': 'accepted'},
+          email: activeEmail,
+        );
+        print('PUT member -> $res');
+      } catch (e) {
+        print('PUT member -> $e');
       }
     });
   });

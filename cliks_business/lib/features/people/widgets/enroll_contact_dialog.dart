@@ -62,10 +62,7 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
     }
 
     final rawPhone = _phoneController.text.trim();
-    if (rawPhone.isEmpty) {
-      phoneErr = 'Mobile number is required';
-      isValid = false;
-    } else if (rawPhone.length != 10) {
+    if (rawPhone.isNotEmpty && rawPhone.length != 10) {
       phoneErr = 'Enter a valid 10-digit mobile number';
       isValid = false;
     }
@@ -322,7 +319,7 @@ class _EnrollContactDialogState extends State<EnrollContactDialog> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              _buildLabel('Mobile Number', isRequired: true),
+                              _buildLabel('Mobile Number', isRequired: false),
                               _buildTextField(
                                 controller: _phoneController,
                                 hint: '9876543210',

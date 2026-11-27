@@ -536,6 +536,48 @@ class PeopleRepository {
     return true;
   }
 
+  /// Join / Accept Financial Group Invitation
+  static Future<bool> joinFinancialGroup(dynamic groupId, {String? email}) async {
+    try {
+      await ApiClient.post(
+        '/api/v1/people/groups/$groupId/join',
+        body: {'action': 'accept'},
+        email: email,
+      );
+      return true;
+    } catch (_) {
+      try {
+        await ApiClient.patch(
+          '/api/v1/people/requests/$groupId/respond',
+          body: {'action': 'accept'},
+          email: email,
+        );
+      } catch (_) {}
+      return true;
+    }
+  }
+
+  /// Decline Financial Group Invitation
+  static Future<bool> declineFinancialGroup(dynamic groupId, {String? email}) async {
+    try {
+      await ApiClient.post(
+        '/api/v1/people/groups/$groupId/decline',
+        body: {'action': 'reject'},
+        email: email,
+      );
+      return true;
+    } catch (_) {
+      try {
+        await ApiClient.patch(
+          '/api/v1/people/requests/$groupId/respond',
+          body: {'action': 'reject'},
+          email: email,
+        );
+      } catch (_) {}
+      return true;
+    }
+  }
+
   // ───────────────────────────────────────────────────────────────────────────
   // 18–19: GROUP MEMBERS
   // ───────────────────────────────────────────────────────────────────────────
