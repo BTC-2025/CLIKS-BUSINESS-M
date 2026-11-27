@@ -806,6 +806,7 @@ class GroupTransaction {
   final int groupId;
   final int? createdBy;
   final int? paidByMemberId;
+  final String? recordedBy;
   final String type; // "expense", "contribution", "loan"
   final double amount;
   final String title;
@@ -821,6 +822,7 @@ class GroupTransaction {
     required this.groupId,
     this.createdBy,
     this.paidByMemberId,
+    this.recordedBy,
     required this.type,
     required this.amount,
     required this.title,
@@ -838,6 +840,7 @@ class GroupTransaction {
       groupId: parseInt(json['group_id'] ?? json['groupId']),
       createdBy: json['created_by'] != null ? parseInt(json['created_by']) : null,
       paidByMemberId: json['paid_by_member_id'] != null ? parseInt(json['paid_by_member_id']) : null,
+      recordedBy: (json['recorded_by'] ?? json['payer_name'] ?? json['created_by_name'] ?? json['paid_by_name'] ?? json['payer'])?.toString().trim(),
       type: (json['type'] ?? 'expense').toString().trim().toLowerCase(),
       amount: parseDouble(json['amount']),
       title: (json['title'] ?? '').toString().trim(),
@@ -856,6 +859,7 @@ class GroupTransaction {
       'group_id': groupId,
       if (createdBy != null) 'created_by': createdBy,
       if (paidByMemberId != null) 'paid_by_member_id': paidByMemberId,
+      if (recordedBy != null) 'recorded_by': recordedBy,
       'type': type,
       'amount': amount,
       'title': title,

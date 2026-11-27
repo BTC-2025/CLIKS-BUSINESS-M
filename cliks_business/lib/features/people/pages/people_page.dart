@@ -2722,31 +2722,243 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                             ),
                             // 7. Money to Give (+ Note to Give matching Image 1)
                             DataCell(
-                              InkWell(
-                                onTap: () => _openNoteToGiveModal(grp, m),
-                                borderRadius: BorderRadius.circular(6),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF0FDF4),
-                                    borderRadius: BorderRadius.circular(6),
-                                    border: Border.all(color: const Color(0xFF86EFAC)),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        m.privateNote != null && m.privateNote!.amount > 0
-                                            ? '₹${_fmt(m.privateNote!.amount)}'
-                                            : '+ Note to Give',
-                                        style: const TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w700,
-                                          color: Color(0xFF15803D),
+                              m.privateNote != null && m.privateNote!.amount > 0
+                                  ? InkWell(
+                                      onTap: () => _openNoteToGiveModal(grp, m),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text(
+                                              '₹${_fmt(m.privateNote!.amount)}',
+                                              style: const TextStyle(
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                            ),
+                                            if (m.privateNote!.notes.isNotEmpty) ...[
+                                              const SizedBox(height: 1),
+                                              Text(
+                                                m.privateNote!.notes,
+                                                style: const TextStyle(
+                                                  fontSize: 10.5,
+                                                  color: Color(0xFF64748B),
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                            const SizedBox(height: 2),
+                                            const Text(
+                                              'Edit Note',
+                                              style: TextStyle(
+                                                fontSize: 10.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF15803D),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    ],
+                                    )
+                                  : InkWell(
+                                      onTap: () => _openNoteToGiveModal(grp, m),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF0FDF4),
+                                          borderRadius: BorderRadius.circular(6),
+                                          border: Border.all(color: const Color(0xFF86EFAC)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: const [
+                                            Text(
+                                              '+ Note to Give',
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF15803D),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModalTransactionsTab(FinancialGroup grp, List<GroupTransaction> txs) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row: Shared Financial Entries + button + Record Entry (Matching Image 2)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Shared Financial Entries',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => _openRecordGroupEntryModal(grp),
+                icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
+                label: const Text(
+                  'Record Entry',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF166534),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+
+          // Transactions Table Container (Matching Image 2)
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: txs.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(
+                      child: Text('No transactions recorded in this group yet.', style: TextStyle(color: Color(0xFF64748B))),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: DataTable(
+                      headingRowHeight: 40,
+                      dataRowMinHeight: 52,
+                      dataRowMaxHeight: 52,
+                      horizontalMargin: 20,
+                      columnSpacing: 28,
+                      headingTextStyle: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF64748B),
+                      ),
+                      columns: const [
+                        DataColumn(label: Text('Date')),
+                        DataColumn(label: Text('Type')),
+                        DataColumn(label: Text('Title & Category')),
+                        DataColumn(label: Text('Recorded By / Payer')),
+                        DataColumn(label: Text('Amount')),
+                        DataColumn(label: SizedBox(width: 24)),
+                      ],
+                      rows: txs.map((t) {
+                        final isContribution = t.type.toLowerCase() == 'contribution';
+                        final typeColor = isContribution ? const Color(0xFF15803D) : const Color(0xFFDC2626);
+                        final dateStr = t.createdAt != null
+                            ? '${t.createdAt!.year}-${t.createdAt!.month.toString().padLeft(2, '0')}-${t.createdAt!.day.toString().padLeft(2, '0')}'
+                            : '2026-11-26';
+
+                        return DataRow(
+                          cells: [
+                            // 1. Date
+                            DataCell(Text(dateStr, style: const TextStyle(fontSize: 12, color: Color(0xFF0F172A)))),
+                            // 2. Type (e.g. CONTRIBUTION in green)
+                            DataCell(
+                              Text(
+                                t.type.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: typeColor,
+                                ),
+                              ),
+                            ),
+                            // 3. Title & Category
+                            DataCell(
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    t.title,
+                                    style: const TextStyle(
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
                                   ),
+                                  Text(
+                                    t.category ?? 'General',
+                                    style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B)),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            // 4. Recorded By / Payer
+                            DataCell(
+                              Text(
+                                (t.recordedBy != null && t.recordedBy!.isNotEmpty)
+                                    ? t.recordedBy!
+                                    : (grp.members.isNotEmpty ? grp.members.first.name : 'ravinew2004'),
+                                style: const TextStyle(fontSize: 12.5, color: Color(0xFF0F172A)),
+                              ),
+                            ),
+                            // 5. Amount
+                            DataCell(
+                              Text(
+                                '₹${_fmt(t.amount)}',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                            ),
+                            // 6. Delete Action
+                            DataCell(
+                              InkWell(
+                                onTap: () async {
+                                  final ok = await ref.read(peopleProvider.notifier).deleteGroupTransaction(grp.id, t.id);
+                                  if (ok && mounted) {
+                                    AppSnackbar.show(context, 'Group transaction deleted', type: SnackType.info);
+                                  }
+                                },
+                                child: const Icon(
+                                  LucideIcons.trash2,
+                                  size: 14,
+                                  color: Color(0xFF94A3B8),
                                 ),
                               ),
                             ),
@@ -2761,135 +2973,264 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
-  Widget _buildModalTransactionsTab(FinancialGroup grp, List<GroupTransaction> txs) {
-    if (txs.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('No transactions recorded in this group yet.', style: TextStyle(color: Color(0xFF64748B))),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: () => _openRecordGroupEntryModal(grp),
-                icon: const Icon(LucideIcons.plus, size: 14),
-                label: const Text('Record First Entry'),
-                style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534)),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: txs.length,
-      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
-      itemBuilder: (ctx, i) {
-        final t = txs[i];
-        final isContribution = t.type.toLowerCase() == 'contribution';
-        final color = isContribution ? const Color(0xFF15803D) : const Color(0xFFDC2626);
-
-        return ListTile(
-          dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          leading: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: isContribution ? const Color(0xFFECFDF5) : const Color(0xFFFEF2F2),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Icon(
-                isContribution ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft,
-                size: 16,
-                color: color,
-              ),
-            ),
-          ),
-          title: Text(t.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-          subtitle: Text('${t.category ?? 'General'} • ${t.type.toUpperCase()}', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                '${isContribution ? '+' : '-'}₹${_fmt(t.amount)}',
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: color),
-              ),
-              const SizedBox(width: 8),
-              IconButton(
-                icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFF94A3B8)),
-                onPressed: () async {
-                  final ok = await ref.read(peopleProvider.notifier).deleteGroupTransaction(grp.id, t.id);
-                  if (ok && mounted) {
-                    AppSnackbar.show(context, 'Group transaction deleted', type: SnackType.info);
-                  }
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
   Widget _buildModalMembersTab(FinancialGroup grp, List<GroupMember> members) {
-    if (members.isEmpty) {
-      return const Center(child: Text('No members found', style: TextStyle(color: Color(0xFF64748B))));
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: members.length,
-      separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFE2E8F0)),
-      itemBuilder: (ctx, i) {
-        final m = members[i];
-        return ListTile(
-          dense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          leading: CircleAvatar(
-            radius: 16,
-            backgroundColor: const Color(0xFFE0E7FF),
-            child: Text(
-              m.name.isNotEmpty ? m.name[0].toUpperCase() : 'M',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Color(0xFF4F46E5)),
-            ),
-          ),
-          title: Text(m.name, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-          subtitle: Text(m.email, style: const TextStyle(fontSize: 11, color: Color(0xFF64748B))),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      physics: const BouncingScrollPhysics(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header Row: Group Governance & Participants + button + Invite Partner (Matching Image 3)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF6FF),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  '${m.role.toUpperCase()} • ${m.status.toUpperCase()}',
-                  style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Color(0xFF2563EB)),
+              const Text(
+                'Group Governance & Participants',
+                style: TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
                 ),
               ),
-              const SizedBox(width: 8),
-              if (!m.isAdmin)
-                IconButton(
-                  icon: const Icon(LucideIcons.userMinus, size: 15, color: Color(0xFFDC2626)),
-                  tooltip: 'Remove Member',
-                  onPressed: () async {
-                    final ok = await ref.read(peopleProvider.notifier).removeGroupMember(grp.id, m.id);
-                    if (ok && mounted) {
-                      AppSnackbar.show(context, 'Member removed from group', type: SnackType.info);
-                    }
-                  },
+              ElevatedButton.icon(
+                onPressed: () => _openInviteMemberModal(grp),
+                icon: const Icon(LucideIcons.userPlus, size: 14, color: Colors.white),
+                label: const Text(
+                  'Invite Partner',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
                 ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF166534),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+              ),
             ],
           ),
-        );
-      },
+          const SizedBox(height: 16),
+
+          // Member Cards Grid (Matching Image 3)
+          if (members.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Center(
+                child: Text('No members found', style: TextStyle(color: Color(0xFF64748B))),
+              ),
+            )
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final cardWidth = constraints.maxWidth >= 900
+                    ? (constraints.maxWidth - 32) / 3
+                    : (constraints.maxWidth >= 600 ? (constraints.maxWidth - 16) / 2 : double.infinity);
+
+                return Wrap(
+                  spacing: 16,
+                  runSpacing: 16,
+                  children: members.map((m) {
+                    final hasPrivateNote = m.privateNote != null && m.privateNote!.amount > 0;
+
+                    return Container(
+                      width: cardWidth,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Header: Name + Role Badge (ADMIN / MEMBER)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  m.name.isNotEmpty ? m.name : m.email.split('@').first,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  m.role.toUpperCase(),
+                                  style: const TextStyle(
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF475569),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+
+                          // 2. Email with icon
+                          Row(
+                            children: [
+                              const Icon(LucideIcons.mail, size: 12, color: Color(0xFF64748B)),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  m.email,
+                                  style: const TextStyle(
+                                    fontSize: 11.5,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 3. Middle Note Box (Matching Image 3)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: const Color(0xFFDCFCE7)),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: const [
+                                        Icon(LucideIcons.lock, size: 11, color: Color(0xFF15803D)),
+                                        SizedBox(width: 4),
+                                        Text(
+                                          'My Private Note (Only for me)',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF15803D),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    InkWell(
+                                      onTap: () => _openNoteToGiveModal(grp, m),
+                                      child: Text(
+                                        hasPrivateNote ? 'Edit' : '+ Note to Give',
+                                        style: const TextStyle(
+                                          fontSize: 10.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF15803D),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                if (hasPrivateNote) ...[
+                                  Text(
+                                    'I will give: ₹${_fmt(m.privateNote!.amount)}',
+                                    style: const TextStyle(
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  if (m.privateNote!.notes.isNotEmpty) ...[
+                                    const SizedBox(height: 1),
+                                    Text(
+                                      '"${m.privateNote!.notes}"',
+                                      style: const TextStyle(
+                                        fontSize: 10.5,
+                                        fontStyle: FontStyle.italic,
+                                        color: Color(0xFF15803D),
+                                      ),
+                                    ),
+                                  ],
+                                ] else ...[
+                                  const Text(
+                                    'No private commitment set yet',
+                                    style: TextStyle(
+                                      fontSize: 10.5,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // 4. Footer: Status (Active Member vs Pending Invite) & Remove
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    m.isActive ? LucideIcons.check : LucideIcons.clock,
+                                    size: 13,
+                                    color: m.isActive ? const Color(0xFF15803D) : const Color(0xFFD97706),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    m.isActive ? 'Active Member' : 'Pending Invite',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: m.isActive ? const Color(0xFF15803D) : const Color(0xFFD97706),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (!m.isActive || m.role.toLowerCase() != 'admin')
+                                InkWell(
+                                  onTap: () async {
+                                    final ok = await ref.read(peopleProvider.notifier).removeGroupMember(grp.id, m.id);
+                                    if (ok && mounted) {
+                                      AppSnackbar.show(context, 'Member removed from group', type: SnackType.info);
+                                    }
+                                  },
+                                  child: const Text(
+                                    'Remove',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFEF4444),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 
