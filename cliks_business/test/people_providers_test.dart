@@ -302,5 +302,46 @@ void main() {
       expect(group.transactions.length, 1);
       expect(group.transactions.first.amount, 50000.0);
     });
+
+    test('9. FinancialGroup rejection and decline state handling', () {
+      const activeGroup = FinancialGroup(
+        id: 1,
+        name: 'Active Group',
+        myMembershipStatus: 'accepted',
+      );
+      const pendingGroup = FinancialGroup(
+        id: 2,
+        name: 'Pending Group',
+        myMembershipStatus: 'pending',
+      );
+      const rejectedGroup = FinancialGroup(
+        id: 3,
+        name: 'Rejected Group',
+        myMembershipStatus: 'rejected',
+      );
+      const declinedGroup = FinancialGroup(
+        id: 4,
+        name: 'Declined Group',
+        myMembershipStatus: 'declined',
+      );
+
+      expect(activeGroup.isRejectedOrDeclined, isFalse);
+      expect(activeGroup.isPendingInvitation, isFalse);
+
+      expect(pendingGroup.isPendingInvitation, isTrue);
+      expect(pendingGroup.isRejectedOrDeclined, isFalse);
+
+      expect(rejectedGroup.isRejectedOrDeclined, isTrue);
+      expect(rejectedGroup.isPendingInvitation, isFalse);
+
+      expect(declinedGroup.isRejectedOrDeclined, isTrue);
+      expect(declinedGroup.isPendingInvitation, isFalse);
+
+      // Filtering active groups
+      final all = [activeGroup, pendingGroup, rejectedGroup, declinedGroup];
+      final activeOnly = all.where((g) => !g.isPendingInvitation && !g.isRejectedOrDeclined).toList();
+      expect(activeOnly.length, 1);
+      expect(activeOnly.first.id, 1);
+    });
   });
 }

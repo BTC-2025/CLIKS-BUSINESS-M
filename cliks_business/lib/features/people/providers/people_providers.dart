@@ -93,7 +93,8 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
       final transactions = results[1] as List<PersonTransaction>;
       final reminders = results[2] as List<RepaymentAlert>;
       final requests = results[3] as List<ConnectionRequest>;
-      final groups = results[4] as List<FinancialGroup>;
+      final rawGroups = results[4] as List<FinancialGroup>;
+      final groups = rawGroups.where((g) => !g.isRejectedOrDeclined).toList();
       final groupInvs = results[5] as List<GroupInvitation>;
 
       final summary = PeopleSummary.fromContacts(contacts);
@@ -377,8 +378,10 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         PeopleRepository.getFinancialGroups(),
         PeopleRepository.getIncomingGroupRequests(),
       ]);
+      final rawGroups = results[0] as List<FinancialGroup>;
+      final activeGroups = rawGroups.where((g) => !g.isRejectedOrDeclined).toList();
       state = state.copyWith(
-        groups: results[0] as List<FinancialGroup>,
+        groups: activeGroups,
         incomingGroupRequests: results[1] as List<GroupInvitation>,
       );
     } catch (_) {}
@@ -487,8 +490,15 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
   Future<bool> respondToGroupRequest(dynamic id, String action) async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      // 1. Resolve membership ID if a group ID or invitation was passed
+      final isReject = action.trim().toLowerCase() == 'reject' ||
+          action.trim().toLowerCase() == 'decline' ||
+          action.trim().toLowerCase() == 'declined';
+      final apiAction = isReject ? 'reject' : 'accept';
+
+      // 1. Resolve membership ID and target group ID
       dynamic membershipId = id;
+      dynamic targetGroupId = id;
+
       final matchingInv = state.incomingGroupRequests.where(
         (inv) =>
             inv.membershipId.toString() == id.toString() ||
@@ -497,65 +507,89 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
 
       if (matchingInv != null) {
         membershipId = matchingInv.membershipId;
+        targetGroupId = matchingInv.groupId;
       } else {
         final matchingGroup = state.groups.where(
-          (g) => g.id.toString() == id.toString(),
+          (g) =>
+              g.id.toString() == id.toString() ||
+              (g.membershipId != null &&
+                  g.membershipId.toString() == id.toString()),
         ).firstOrNull;
-        if (matchingGroup?.membershipId != null) {
-          membershipId = matchingGroup!.membershipId;
+        if (matchingGroup != null) {
+          targetGroupId = matchingGroup.id;
+          if (matchingGroup.membershipId != null) {
+            membershipId = matchingGroup.membershipId;
+          }
         }
       }
 
-      // Optimistically update incomingGroupRequests and groups
+      // 2. Optimistically remove from incomingGroupRequests
       final updatedInvs = state.incomingGroupRequests.where(
         (inv) =>
             inv.membershipId.toString() != membershipId.toString() &&
+            inv.groupId.toString() != targetGroupId.toString() &&
             inv.groupId.toString() != id.toString(),
       ).toList();
 
-      final updatedGroups = state.groups.map((g) {
-        if (g.id.toString() == id.toString() ||
-            (matchingInv != null && g.id == matchingInv.groupId) ||
-            (g.membershipId != null &&
-                g.membershipId.toString() == membershipId.toString())) {
-          return FinancialGroup(
-            id: g.id,
-            membershipId: g.membershipId,
-            createdBy: g.createdBy,
-            name: g.name,
-            description: g.description,
-            groupType: g.groupType,
-            currency: g.currency,
-            targetAmount: g.targetAmount,
-            status: g.status,
-            myRole: g.myRole ?? 'member',
-            myMembershipStatus: action == 'accept' ? 'accepted' : 'rejected',
-            memberCount: action == 'accept' ? (g.memberCount + 1) : g.memberCount,
-            pendingMemberCount: (g.pendingMemberCount - 1).clamp(0, 999),
-            totalMembers: g.totalMembers,
-            totalContributed: g.totalContributed,
-            totalExpenses: g.totalExpenses,
-            totalLoans: g.totalLoans,
-            createdAt: g.createdAt,
-            updatedAt: g.updatedAt,
-            members: g.members,
-            transactions: g.transactions,
-            invitedByName: g.invitedByName,
-            invitedByEmail: g.invitedByEmail,
-          );
-        }
-        return g;
-      }).toList();
+      // 3. Optimistically update groups list
+      final List<FinancialGroup> updatedGroups;
+      if (isReject) {
+        // If rejected/declined, remove the group completely from groups!
+        updatedGroups = state.groups.where((g) {
+          final matchesId = g.id.toString() == targetGroupId.toString() ||
+              g.id.toString() == id.toString();
+          final matchesMembership = g.membershipId != null &&
+              (g.membershipId.toString() == membershipId.toString() ||
+                  g.membershipId.toString() == id.toString());
+          return !matchesId && !matchesMembership;
+        }).toList();
+      } else {
+        // If accepted, update membership status to accepted
+        updatedGroups = state.groups.map((g) {
+          if (g.id.toString() == targetGroupId.toString() ||
+              g.id.toString() == id.toString() ||
+              (g.membershipId != null &&
+                  g.membershipId.toString() == membershipId.toString())) {
+            return FinancialGroup(
+              id: g.id,
+              membershipId: g.membershipId ??
+                  (membershipId is int
+                      ? membershipId
+                      : int.tryParse(membershipId.toString())),
+              createdBy: g.createdBy,
+              name: g.name,
+              description: g.description,
+              groupType: g.groupType,
+              currency: g.currency,
+              targetAmount: g.targetAmount,
+              status: g.status,
+              myRole: g.myRole ?? 'member',
+              myMembershipStatus: 'accepted',
+              memberCount: g.memberCount + 1,
+              pendingMemberCount: (g.pendingMemberCount - 1).clamp(0, 999),
+              totalMembers: g.totalMembers,
+              totalContributed: g.totalContributed,
+              totalExpenses: g.totalExpenses,
+              totalLoans: g.totalLoans,
+              createdAt: g.createdAt,
+              updatedAt: g.updatedAt,
+              members: g.members,
+              transactions: g.transactions,
+              invitedByName: g.invitedByName,
+              invitedByEmail: g.invitedByEmail,
+            );
+          }
+          return g;
+        }).toList();
+      }
 
       state = state.copyWith(
         isLoading: false,
         incomingGroupRequests: updatedInvs,
-        groups: action == 'reject'
-            ? updatedGroups.where((g) => g.id.toString() != id.toString()).toList()
-            : updatedGroups,
+        groups: updatedGroups,
       );
 
-      final ok = await PeopleRepository.respondToGroupRequest(membershipId, action);
+      final ok = await PeopleRepository.respondToGroupRequest(membershipId, apiAction);
       await loadGroups();
       await loadContacts();
       return ok;

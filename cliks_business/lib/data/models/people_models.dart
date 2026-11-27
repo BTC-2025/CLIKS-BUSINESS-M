@@ -727,7 +727,28 @@ class FinancialGroup {
     };
   }
 
-  bool get isPendingInvitation => myMembershipStatus == 'pending';
+  bool get isRejectedOrDeclined {
+    final s = (myMembershipStatus ?? '').toLowerCase().trim();
+    final st = status.toLowerCase().trim();
+    return s == 'rejected' || s == 'declined' || st == 'rejected' || st == 'declined';
+  }
+
+  bool get isPendingInvitation {
+    if (isRejectedOrDeclined) return false;
+    final s = (myMembershipStatus ?? '').toLowerCase().trim();
+    final st = status.toLowerCase().trim();
+    return s == 'pending' || st == 'pending_invite' || st == 'invited';
+  }
+
+  bool get isAcceptedMember {
+    final s = (myMembershipStatus ?? '').toLowerCase().trim();
+    final r = (myRole ?? '').toLowerCase().trim();
+    return s == 'accepted' ||
+        r == 'admin' ||
+        r == 'owner' ||
+        r == 'creator' ||
+        (createdBy != null && myMembershipStatus == null);
+  }
 
   double get completionPercentage {
     if (targetAmount <= 0) return 0.0;
@@ -1109,16 +1130,19 @@ class UpdateFinancialGroupRequest {
 class InviteGroupMemberRequest {
   final String email;
   final String role;
+  final String? name;
 
   const InviteGroupMemberRequest({
     required this.email,
     this.role = 'member',
+    this.name,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'email': email.trim().toLowerCase(),
       'role': role.trim().toLowerCase(),
+      if (name != null && name!.trim().isNotEmpty) 'name': name!.trim(),
     };
   }
 }

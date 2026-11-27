@@ -90,9 +90,12 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   List<FinancialGroup> _getFilteredGroups(List<FinancialGroup> groups) {
-    if (_searchQuery.trim().isEmpty) return groups;
+    final active = groups
+        .where((g) => !g.isPendingInvitation && !g.isRejectedOrDeclined)
+        .toList();
+    if (_searchQuery.trim().isEmpty) return active;
     final q = _searchQuery.toLowerCase();
-    return groups.where((g) {
+    return active.where((g) {
       final name = g.name.toLowerCase();
       final desc = (g.description ?? '').toLowerCase();
       final tag = g.groupType.toLowerCase();
@@ -111,7 +114,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       list.add(inv.toFinancialGroup());
     }
     for (final g in state.groups) {
-      if (g.isPendingInvitation && !seenGroupIds.contains(g.id)) {
+      if (g.isPendingInvitation && !g.isRejectedOrDeclined && !seenGroupIds.contains(g.id)) {
         list.add(g);
       }
     }
@@ -918,7 +921,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   Widget _buildTabsRow(bool isMobile, PeopleState state) {
     final groupInvitations = _resolveGroupInvitations(state);
     final totalPendingCount = groupInvitations.length + state.incomingRequests.length;
-    final activeGroupsCount = state.groups.where((g) => !g.isPendingInvitation).length;
+    final activeGroupsCount =
+        state.groups.where((g) => !g.isPendingInvitation && !g.isRejectedOrDeclined).length;
 
     final tabs = [
       const _TabDef(
@@ -5012,11 +5016,15 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                         items: const [
                                           DropdownMenuItem(
                                             value: 'Member',
-                                            child: Text('Member', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF166534))),
+                                            child: Text('Member', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
                                           ),
                                           DropdownMenuItem(
-                                            value: 'Admin',
-                                            child: Text('Admin', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w700, color: Color(0xFF166534))),
+                                            value: 'Manager',
+                                            child: Text('Manager', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
+                                          ),
+                                          DropdownMenuItem(
+                                            value: 'Auditor',
+                                            child: Text('Auditor', style: TextStyle(fontSize: 11.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A))),
                                           ),
                                         ],
                                         onChanged: (v) {
@@ -5065,26 +5073,60 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                             if (invitedPartners.isNotEmpty) ...[
                               const SizedBox(height: 10),
                               Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: invitedPartners.map((p) {
                                   return Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFFF1F5F9),
+                                      color: Colors.white,
                                       borderRadius: BorderRadius.circular(6),
+                                      border: Border.all(color: const Color(0xFFE2E8F0)),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Text(
-                                          '${p['name']} (${p['role']})',
-                                          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Color(0xFF334155)),
+                                          '${p['name']}',
+                                          style: const TextStyle(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF0F172A),
+                                          ),
                                         ),
-                                        const SizedBox(width: 6),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '(${p['email']})',
+                                          style: const TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w400,
+                                            color: Color(0xFF64748B),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: const Color(0xFFECFDF5),
+                                            borderRadius: BorderRadius.circular(4),
+                                          ),
+                                          child: Text(
+                                            '${p['role']?.toString().toLowerCase()}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                              color: Color(0xFF047857),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
                                         InkWell(
                                           onTap: () => setModalState(() => invitedPartners.remove(p)),
-                                          child: const Icon(LucideIcons.x, size: 12, color: Color(0xFF64748B)),
+                                          child: const Icon(
+                                            LucideIcons.x,
+                                            size: 13,
+                                            color: Color(0xFFEF4444),
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -5152,6 +5194,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                               await ref.read(peopleProvider.notifier).inviteGroupMember(
                                                 grp.id,
                                                 InviteGroupMemberRequest(
+                                                  name: partner['name'],
                                                   email: partner['email']!,
                                                   role: partner['role']?.toLowerCase() ?? 'member',
                                                 ),

@@ -575,9 +575,13 @@ class PeopleRepository {
     String action, {
     String? email,
   }) async {
+    final act = action.trim().toLowerCase();
+    final apiAction = (act == 'decline' || act == 'declined' || act == 'reject' || act == 'rejected')
+        ? 'reject'
+        : 'accept';
     final res = await ApiClient.post(
       '/api/v1/people/groups/requests/$membershipId/respond',
-      body: {'action': action.trim().toLowerCase()},
+      body: {'action': apiAction},
       email: email,
     );
     if (res is Map) {
