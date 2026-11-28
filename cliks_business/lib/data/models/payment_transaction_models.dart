@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// Represents a single cash flow transaction record from `GET /api/v1/transactions`.
 class CashFlowTransaction {
   final dynamic id;
@@ -271,6 +273,7 @@ class PaymentLedgerItem {
   final String? invoiceId;
   final String? purchaseId;
   final DateTime? createdAt;
+  final String? notes;
 
   PaymentLedgerItem({
     required this.id,
@@ -287,6 +290,7 @@ class PaymentLedgerItem {
     this.invoiceId,
     this.purchaseId,
     this.createdAt,
+    this.notes,
   });
 
   bool get isReceive =>
@@ -296,8 +300,47 @@ class PaymentLedgerItem {
 
   String get flowTypeLabel => isReceive ? 'INWARD' : 'OUTWARD';
 
+  String get entryDisplayId {
+    final refStr = referenceNumber.trim();
+    if (refStr.startsWith('REC-') || refStr.startsWith('PAY-')) {
+      return refStr;
+    }
+    final yr = (createdAt ?? DateTime.now()).year;
+    if (isReceive) {
+      if (refStr.toUpperCase().contains('REF')) {
+        return 'REC-REF-$id';
+      }
+      return 'REC-$yr-$id';
+    } else {
+      if (refStr.toUpperCase().contains('REF')) {
+        return 'PAY-REF-$id';
+      }
+      return 'PAY-$yr-$id';
+    }
+  }
+
   String get displayReference =>
       referenceNumber.isNotEmpty ? referenceNumber : (invoiceId ?? purchaseId ?? 'REF-$id');
+
+  double get displayOriginalAmount {
+    if (totalOriginal > 0) return totalOriginal;
+    if (amount > 0) return amount;
+    return paidAmount;
+  }
+
+  double get displayTransactedAmount {
+    if (paidAmount > 0) return paidAmount;
+    return amount;
+  }
+
+  String get dateFormatted {
+    final d = createdAt;
+    if (d == null) return '—';
+    final yr = d.year.toString();
+    final mo = d.month.toString().padLeft(2, '0');
+    final dy = d.day.toString().padLeft(2, '0');
+    return '$yr-$mo-$dy';
+  }
 
   String get formattedDate {
     if (createdAt == null) return '';
@@ -314,28 +357,70 @@ class PaymentLedgerItem {
       return 0.0;
     }
 
-    final amt = parseNum(json['amount']);
-    final paid = parseNum(json['paid_amount'] ?? json['paidAmount'] ?? amt);
-    final total = parseNum(json['total_original'] ??
+    double amt = parseNum(json['amount']);
+    double paid = parseNum(json['paid_amount'] ?? json['paidAmount'] ?? amt);
+    double total = parseNum(json['total_original'] ??
         json['total_original_amount'] ??
         json['totalOriginalAmount'] ??
         (paid > 0 ? paid : amt));
-    final pending = parseNum(json['pending_amount'] ?? (total - paid > 0 ? total - paid : 0.0));
+    double pending = parseNum(json['pending_amount'] ?? (total - paid > 0 ? total - paid : 0.0));
 
-    final party = json['party_name']?.toString() ??
+    String party = json['party_name']?.toString() ??
         json['customer_name']?.toString() ??
         json['customerProfile']?.toString() ??
         json['supplier_name']?.toString() ??
-        'General Party';
+        '';
 
-    final ref = json['reference_number']?.toString() ??
+    String ref = json['reference_number']?.toString() ??
         json['receipt_number']?.toString() ??
         json['invoice_number']?.toString() ??
         json['bill_number']?.toString() ??
         json['cheque_number']?.toString() ??
-        json['invoice_id']?.toString() ??
-        json['purchase_id']?.toString() ??
         '';
+
+    String? invId = json['invoice_id']?.toString() ?? json['invoiceLinkedId']?.toString();
+    String? purId = json['purchase_id']?.toString() ?? json['purchaseBillLinkedId']?.toString();
+    final rawNotes = json['notes']?.toString();
+
+    if (rawNotes != null && rawNotes.trim().isNotEmpty) {
+      try {
+        if (rawNotes.trim().startsWith('{')) {
+          final parsed = jsonDecode(rawNotes.trim());
+          if (parsed is Map<String, dynamic>) {
+            final nParty = parsed['customerProfile'] ?? parsed['supplierProfile'] ?? parsed['party_name'];
+            if (nParty != null && nParty.toString().trim().isNotEmpty) {
+              party = nParty.toString().trim();
+            }
+            final nInv = parsed['invoiceLinkedId'] ?? parsed['invoice_id'];
+            if (nInv != null && nInv.toString().trim().isNotEmpty) {
+              invId = nInv.toString().trim();
+            }
+            final nPur = parsed['purchaseBillLinkedId'] ?? parsed['purchase_id'];
+            if (nPur != null && nPur.toString().trim().isNotEmpty) {
+              purId = nPur.toString().trim();
+            }
+            final nTotal = parsed['totalOriginalAmount'] ??
+                parsed['total_original'] ??
+                parsed['total_original_amount'] ??
+                parsed['originalDueAmount'] ??
+                parsed['original_due_amount'];
+            if (nTotal != null) {
+              final parsedTotal = parseNum(nTotal);
+              if (parsedTotal > 0) total = parsedTotal;
+            }
+            final nPaid = parsed['paidAmount'] ?? parsed['paid_amount'];
+            if (nPaid != null) {
+              final parsedPaid = parseNum(nPaid);
+              if (parsedPaid > 0) paid = parsedPaid;
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (party.isEmpty) {
+      party = 'General Party';
+    }
 
     DateTime? date;
     final rawDate = json['created_at'] ?? json['date'];
@@ -357,9 +442,10 @@ class PaymentLedgerItem {
       referenceNumber: ref,
       status: json['status']?.toString() ?? 'Completed',
       reconciliationStatus: json['reconciliation_status']?.toString() ?? 'matched',
-      invoiceId: json['invoice_id']?.toString() ?? json['invoiceLinkedId']?.toString(),
-      purchaseId: json['purchase_id']?.toString(),
+      invoiceId: invId,
+      purchaseId: purId,
       createdAt: date,
+      notes: rawNotes,
     );
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
   List<CashFlowAccount> _accounts = [];
   List<PaymentLedgerItem> _reportsLedger = [];
   List<Map<String, dynamic>> _overdueInvoices = [];
+  List<Map<String, dynamic>> _rawInvoices = [];
+  List<Map<String, dynamic>> _rawPurchases = [];
   OutstandingSummaryStats? _outstandingStats;
 
   bool _isLoading = false;
@@ -119,9 +122,11 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
       // Check invoices from reports API for outstanding or overdue balances
       final invoicesRaw = reports['invoices'];
+      final rawInvoicesList = <Map<String, dynamic>>[];
       if (invoicesRaw is List) {
         for (final inv in invoicesRaw) {
           if (inv is Map<String, dynamic>) {
+            rawInvoicesList.add(inv);
             final total = ((inv['total_amount'] ?? inv['grand_total'] ?? inv['totalBill'] ?? inv['amount'] ?? 0) as num).toDouble();
             final paid = ((inv['paid_amount'] ?? inv['paidAmount'] ?? 0) as num).toDouble();
             final due = ((inv['due_amount'] ?? inv['dueBalance'] ?? inv['pending_amount'] ?? (total - paid)) as num).toDouble();
@@ -140,6 +145,17 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                 overdue.add(inv);
               }
             }
+          }
+        }
+      }
+
+      // Check purchases from reports API
+      final purchasesRaw = reports['purchases'];
+      final rawPurchasesList = <Map<String, dynamic>>[];
+      if (purchasesRaw is List) {
+        for (final p in purchasesRaw) {
+          if (p is Map<String, dynamic>) {
+            rawPurchasesList.add(p);
           }
         }
       }
@@ -203,6 +219,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           _accounts = combinedAccounts;
           _overdueInvoices = overdue;
           _reportsLedger = ledgerItems;
+          _rawInvoices = rawInvoicesList;
+          _rawPurchases = rawPurchasesList;
           _outstandingStats = stats;
           _isLoading = false;
           if (_selectedCardId.isEmpty && combinedAccounts.isNotEmpty) {
@@ -337,6 +355,48 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
       final cat = (t.category ?? '').toLowerCase();
       final id = t.id.toString().toLowerCase();
       return title.contains(q) || ref.contains(q) || cat.contains(q) || id.contains(q);
+    }).toList();
+  }
+
+  // Unified Inward / Outward payment items list matching Web App Table (Image 2)
+  List<PaymentLedgerItem> get _unifiedInwardOutwardList {
+    if (_reportsLedger.isNotEmpty) {
+      return _reportsLedger;
+    }
+    // Fallback if reports ledger is empty
+    return _transactions.map((t) {
+      return PaymentLedgerItem(
+        id: t.id,
+        type: t.isIncome ? 'receive' : 'pay',
+        partyName: t.displayTitle,
+        amount: t.amount,
+        paidAmount: t.amount,
+        totalOriginal: t.amount,
+        pendingAmount: 0.0,
+        paymentMode: 'Cash',
+        referenceNumber: t.displayReference,
+        status: 'Completed',
+        reconciliationStatus: 'matched',
+        createdAt: t.date ?? t.createdAt,
+      );
+    }).toList();
+  }
+
+  List<PaymentLedgerItem> get _filteredInwardOutwardList {
+    var list = _unifiedInwardOutwardList;
+    if (_flowFilter == 'INWARD') {
+      list = list.where((item) => item.isReceive).toList();
+    } else if (_flowFilter == 'OUTWARD') {
+      list = list.where((item) => item.isPay).toList();
+    }
+    if (_searchQuery.trim().isEmpty) return list;
+    final q = _searchQuery.toLowerCase();
+    return list.where((item) {
+      final party = item.partyName.toLowerCase();
+      final entry = item.entryDisplayId.toLowerCase();
+      final ref = item.displayReference.toLowerCase();
+      final dt = item.dateFormatted.toLowerCase();
+      return party.contains(q) || entry.contains(q) || ref.contains(q) || dt.contains(q);
     }).toList();
   }
 
@@ -512,52 +572,33 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     );
 
     final actionButtons = Wrap(
-      spacing: 8,
+      spacing: 10,
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        // Outlined "Transfer Funds"
-        OutlinedButton.icon(
-          onPressed: _openTransferFundsModal,
-          icon: const Icon(LucideIcons.arrowLeftRight, size: 14, color: Color(0xFF2563EB)),
-          label: const Text(
-            'Transfer Funds',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 12.5,
-              color: Color(0xFF2563EB),
-            ),
-          ),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: Colors.white,
-            side: const BorderSide(color: Color(0xFFBFDBFE)),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        ),
-
-        // Outlined "Send Payment" Button with two-line layout matching screenshot
+        // Outlined "Send Payment" Button matching Web App (Image 2)
         OutlinedButton(
+          key: const Key('header_send_payment_button'),
           onPressed: _openSupplierDisbursementModal,
           style: OutlinedButton.styleFrom(
             backgroundColor: Colors.white,
-            side: const BorderSide(color: Color(0xFFE2E8F0)),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            side: const BorderSide(color: Color(0xFFCBD5E1)),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(LucideIcons.arrowUpRight, size: 14, color: Color(0xFF166534)),
+              const Icon(LucideIcons.arrowUpRight, size: 14, color: Color(0xFF0F172A)),
               const SizedBox(width: 8),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 58),
                 child: const Text(
                   'Send Payment',
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 12,
-                    color: Color(0xFF166534),
+                    color: Color(0xFF0F172A),
                     height: 1.15,
                   ),
                 ),
@@ -566,14 +607,15 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
         ),
 
-        // Solid "Receive Payment" Button with two-line layout matching screenshot
+        // Solid "Receive Payment" Button matching Web App (Image 2)
         ElevatedButton(
+          key: const Key('header_receive_payment_button'),
           onPressed: _openCustomerPaymentModal,
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF166534),
+            backgroundColor: const Color(0xFF14532D), // Deep Forest Green
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
           ),
           child: Row(
@@ -586,7 +628,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                 child: const Text(
                   'Receive Payment',
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                     fontSize: 12,
                     color: Colors.white,
                     height: 1.15,
@@ -924,12 +966,13 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
   // TAB 0: TOTAL INWARD & OUTWARD (Real Cash Flow Transactions)
   // ══════════════════════════════════════════════════════════════════════════
   Widget _buildInwardOutwardTabView(double screenWidth, bool isMobile) {
-    final list = _filteredTransactions;
+    final list = _filteredInwardOutwardList;
 
-    // 3 Dynamic Stat Cards Row
+    // 3 Dynamic Stat Cards Row matching Web App (Image 2)
     final cardInward = _buildInwardOutwardStatCard(
       label: 'TOTAL INWARD (+₹)',
-      value: '+₹${_fmt(_totalInward)}',
+      prefixSign: '+',
+      value: '₹${_fmt(_totalInward)}',
       valueColor: const Color(0xFF16A34A),
       icon: LucideIcons.arrowDownLeft,
       iconColor: const Color(0xFF16A34A),
@@ -938,7 +981,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
     final cardOutward = _buildInwardOutwardStatCard(
       label: 'TOTAL OUTWARD (-₹)',
-      value: '-₹${_fmt(_totalOutward)}',
+      prefixSign: '-',
+      value: '₹${_fmt(_totalOutward)}',
       valueColor: const Color(0xFFDC2626),
       icon: LucideIcons.arrowUpRight,
       iconColor: const Color(0xFFDC2626),
@@ -947,7 +991,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
     final cardNet = _buildInwardOutwardStatCard(
       label: 'NET BALANCE (INWARD - OUTWARD)',
-      value: '${_netBalance >= 0 ? '+' : '-'}₹${_fmt(_netBalance.abs())}',
+      prefixSign: _netBalance >= 0 ? '+' : '-',
+      value: '₹${_fmt(_netBalance.abs())}',
       valueColor: _netBalance >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
       icon: LucideIcons.wallet,
       iconColor: _netBalance >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
@@ -979,60 +1024,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
         const SizedBox(height: 18),
 
-        // Filter Bar & Action Row
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Flow Filter Pills
-            Row(
-              children: [
-                _buildFlowFilterPill('ALL', 'All'),
-                const SizedBox(width: 6),
-                _buildFlowFilterPill('INWARD', 'Inward (+₹)'),
-                const SizedBox(width: 6),
-                _buildFlowFilterPill('OUTWARD', 'Outward (-₹)'),
-              ],
-            ),
-
-            // "+ Add Transaction" Button & "Gateway Order"
-            Row(
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _openCreatePaymentOrderModal,
-                  icon: const Icon(LucideIcons.globe, size: 13, color: Color(0xFF475569)),
-                  label: const Text(
-                    'Gateway Order',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Color(0xFF475569)),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton.icon(
-                  onPressed: _openAddTransactionModal,
-                  icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
-                  label: const Text(
-                    'Add Transaction',
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: Colors.white),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF166534),
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    elevation: 0,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-
-        // Table Card Container
+        // Table Card Container matching Web App (Image 2)
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -1054,9 +1046,9 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                   title: 'No Transactions Found',
                   description: _searchQuery.isNotEmpty
                       ? "No records matched '$_searchQuery'. Try adjusting your search query."
-                      : "Record incoming sales revenue, log supplier disbursements, or create a cash flow entry.",
-                  actionLabel: '+ Add Transaction',
-                  onAction: _openAddTransactionModal,
+                      : "Record incoming customer payment or disburse supplier funds.",
+                  actionLabel: 'Receive Payment',
+                  onAction: _openCustomerPaymentModal,
                 )
               : SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -1067,40 +1059,32 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                     ),
                     child: DataTable(
                       headingRowHeight: 48,
-                      dataRowMinHeight: 60,
+                      dataRowMinHeight: 56,
                       dataRowMaxHeight: 64,
                       horizontalMargin: 20,
-                      columnSpacing: 20,
+                      columnSpacing: 24,
                       dividerThickness: 1,
                       border: const TableBorder(
                         bottom: BorderSide(color: Color(0xFFF1F5F9)),
                       ),
-                      headingTextStyle: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF64748B),
-                        letterSpacing: 0.6,
-                      ),
-                      columns: const [
-                        DataColumn(label: Text('ENTRY ID')),
-                        DataColumn(label: Text('DATE')),
-                        DataColumn(label: Text('FLOW TYPE')),
-                        DataColumn(label: Text('TITLE / DESCRIPTION')),
-                        DataColumn(label: Text('REFERENCE #')),
-                        DataColumn(label: Text('AMOUNT')),
-                        DataColumn(label: Text('CATEGORY')),
-                        DataColumn(label: Text('STATUS')),
-                        DataColumn(label: Text('ACTIONS')),
+                      columns: [
+                        DataColumn(label: _buildTableHeaderWithFilter('ENTRY ID')),
+                        DataColumn(label: _buildTableHeaderWithFilter('DATE')),
+                        DataColumn(label: _buildTableHeaderWithFilter('FLOW TYPE')),
+                        DataColumn(label: _buildTableHeaderWithFilter('PARTY (CUSTOMER / SUPPLIER)')),
+                        DataColumn(label: _buildTableHeaderWithFilter('REFERENCE #')),
+                        DataColumn(label: _buildTableHeaderWithFilter('ORIGINAL AMOUNT')),
+                        DataColumn(label: _buildTableHeaderWithFilter('TRANSACTED AMOUNT')),
                       ],
                       rows: list.map((item) {
-                        final isOutward = item.isExpense;
+                        final isReceive = item.isReceive;
 
                         return DataRow(
                           cells: [
                             // 1. ENTRY ID
                             DataCell(
                               Text(
-                                'TX-${item.id}',
+                                item.entryDisplayId,
                                 style: const TextStyle(
                                   fontSize: 12.5,
                                   fontWeight: FontWeight.w700,
@@ -1112,7 +1096,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                             // 2. DATE
                             DataCell(
                               Text(
-                                item.formattedDate.isNotEmpty ? item.formattedDate : '—',
+                                item.dateFormatted,
                                 style: const TextStyle(fontSize: 12.5, color: Color(0xFF475569)),
                               ),
                             ),
@@ -1120,27 +1104,30 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                             // 3. FLOW TYPE
                             DataCell(
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: isOutward ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7),
+                                  color: isReceive ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
                                   borderRadius: BorderRadius.circular(6),
+                                  border: Border.all(
+                                    color: isReceive ? const Color(0xFFBBF7D0) : const Color(0xFFFECACA),
+                                  ),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
-                                      isOutward ? LucideIcons.arrowUpRight : LucideIcons.arrowDownLeft,
+                                      isReceive ? LucideIcons.arrowDownLeft : LucideIcons.arrowUpRight,
                                       size: 11,
-                                      color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
+                                      color: isReceive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      item.flowTypeLabel,
+                                      isReceive ? 'INWARD' : 'OUTWARD',
                                       style: TextStyle(
-                                        fontSize: 10,
+                                        fontSize: 11,
                                         fontWeight: FontWeight.w800,
-                                        color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
-                                        letterSpacing: 0.5,
+                                        color: isReceive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                                        letterSpacing: 0.3,
                                       ),
                                     ),
                                   ],
@@ -1148,19 +1135,14 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                               ),
                             ),
 
-                            // 4. TITLE / DESCRIPTION
+                            // 4. PARTY (CUSTOMER / SUPPLIER)
                             DataCell(
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 220),
-                                child: Text(
-                                  item.displayTitle,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF0F172A),
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
+                              Text(
+                                item.partyName,
+                                style: const TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0F172A),
                                 ),
                               ),
                             ),
@@ -1169,69 +1151,35 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                             DataCell(
                               Text(
                                 item.displayReference,
-                                style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
-                              ),
-                            ),
-
-                            // 6. AMOUNT
-                            DataCell(
-                              Text(
-                                '${isOutward ? '-' : '+'}₹${_fmt(item.amount)}',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: isOutward ? const Color(0xFFDC2626) : const Color(0xFF16A34A),
-                                ),
-                              ),
-                            ),
-
-                            // 7. CATEGORY
-                            DataCell(
-                              Text(
-                                item.displayCategory,
                                 style: const TextStyle(
-                                  fontSize: 12,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w500,
+                                  color: Color(0xFF475569),
+                                ),
+                              ),
+                            ),
+
+                            // 6. ORIGINAL AMOUNT
+                            DataCell(
+                              Text(
+                                '₹${_fmt(item.displayOriginalAmount)}',
+                                style: const TextStyle(
+                                  fontSize: 12.5,
                                   fontWeight: FontWeight.w600,
-                                  color: Color(0xFF166534),
+                                  color: Color(0xFF1E293B),
                                 ),
                               ),
                             ),
 
-                            // 8. STATUS
+                            // 7. TRANSACTED AMOUNT
                             DataCell(
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFEFF6FF),
-                                  borderRadius: BorderRadius.circular(4),
+                              Text(
+                                '${isReceive ? '+' : '-'}₹${_fmt(item.displayTransactedAmount)}',
+                                style: TextStyle(
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: isReceive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
                                 ),
-                                child: const Text(
-                                  'POSTED',
-                                  style: TextStyle(
-                                    fontSize: 10.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                ),
-                              ),
-                            ),
-
-                            // 9. ACTIONS (Edit & Delete)
-                            DataCell(
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(LucideIcons.pencil, size: 14, color: Color(0xFF2563EB)),
-                                    tooltip: 'Edit Transaction',
-                                    onPressed: () => _openEditTransactionModal(item),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(LucideIcons.trash2, size: 14, color: Color(0xFFEF4444)),
-                                    tooltip: 'Delete Transaction',
-                                    onPressed: () => _confirmDeleteTransaction(item),
-                                  ),
-                                ],
                               ),
                             ),
                           ],
@@ -1276,6 +1224,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
   Widget _buildInwardOutwardStatCard({
     required String label,
+    String prefixSign = '',
     required String value,
     required Color valueColor,
     required IconData icon,
@@ -1297,6 +1246,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
         ],
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
@@ -1314,7 +1264,19 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 6),
+                if (prefixSign.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    prefixSign,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      color: valueColor,
+                      height: 1.0,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 2),
                 FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
@@ -1333,11 +1295,11 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
           const SizedBox(width: 8),
           Container(
-            width: 36,
-            height: 36,
+            width: 38,
+            height: 38,
             decoration: BoxDecoration(
               color: iconBg,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
               child: Icon(icon, size: 18, color: iconColor),
@@ -2142,14 +2104,67 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
   // ══════════════════════════════════════════════════════════════════════════
   // MODAL 1: RECEIVE CUSTOMER PAYMENT (POST /api/v1/payments/receive)
+  // Matching Web App Design (Image 4)
   // ══════════════════════════════════════════════════════════════════════════
   void _openCustomerPaymentModal() {
-    final customerCtrl = TextEditingController(text: 'Walk-in Customer');
-    final invoiceIdCtrl = TextEditingController();
-    final amountCtrl = TextEditingController(text: '1000');
-    final refNoCtrl = TextEditingController(text: 'REC-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}');
-    final notesCtrl = TextEditingController();
-    String paymentMode = 'UPI';
+    // Collect distinct customer profiles from real invoices & reports
+    final customerProfiles = <String>{};
+    for (final inv in _rawInvoices) {
+      final name = (inv['client_name'] ?? inv['customer_name'] ?? inv['party_name'] ?? '').toString().trim();
+      if (name.isNotEmpty) customerProfiles.add(name);
+    }
+    for (final rec in _reportsLedger) {
+      if (rec.isReceive && rec.partyName.trim().isNotEmpty) {
+        customerProfiles.add(rec.partyName.trim());
+      }
+    }
+    if (customerProfiles.isEmpty) {
+      customerProfiles.add('Walk-in Customer');
+    }
+
+    String selectedCustomer = customerProfiles.first;
+
+    Map<String, dynamic>? findMatchingInvoice(String customer) {
+      for (final inv in _rawInvoices) {
+        final name = (inv['client_name'] ?? inv['customer_name'] ?? inv['party_name'] ?? '').toString().trim();
+        if (name.toLowerCase() == customer.toLowerCase()) return inv;
+      }
+      return null;
+    }
+
+    PaymentLedgerItem? findMatchingLedgerItem(String customer) {
+      for (final rec in _reportsLedger) {
+        if (rec.isReceive && rec.partyName.toLowerCase() == customer.toLowerCase()) return rec;
+      }
+      return null;
+    }
+
+    final initialInv = findMatchingInvoice(selectedCustomer);
+    final initialLedger = findMatchingLedgerItem(selectedCustomer);
+
+    final initialInvNo = (initialInv?['invoice_number'] ??
+        initialInv?['invoiceNo'] ??
+        initialInv?['invoice_id'] ??
+        initialLedger?.displayReference ??
+        '')
+        .toString();
+
+    final rawOrigAmt = initialInv?['total_amount'] ??
+        initialInv?['grand_total'] ??
+        initialInv?['amount'] ??
+        initialLedger?.displayOriginalAmount;
+
+    final initialOriginalAmt = rawOrigAmt != null && rawOrigAmt != 0
+        ? (rawOrigAmt is double && rawOrigAmt == rawOrigAmt.roundToDouble()
+            ? rawOrigAmt.toInt().toString()
+            : rawOrigAmt.toString())
+        : '';
+
+    final invoiceIdCtrl = TextEditingController(text: initialInvNo);
+    final originalAmountCtrl = TextEditingController(text: initialOriginalAmt);
+    final amountCtrl = TextEditingController();
+    final refNoCtrl = TextEditingController();
+    String paymentMode = 'Cash';
     dynamic selectedAccId = _accounts.isNotEmpty ? _accounts.first.id : 1;
     bool isSubmitting = false;
 
@@ -2161,7 +2176,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           builder: (context, setModalState) {
             return Dialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Container(
                 width: 480,
@@ -2172,12 +2187,13 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header Row: Title & Close Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Expanded(
                             child: Text(
-                              'Receive Customer Payment',
+                              'Record Customer Payment',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w800,
@@ -2185,178 +2201,243 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                               ),
                             ),
                           ),
-                          IconButton(
-                            key: const Key('close_customer_payment_dialog'),
-                            onPressed: () => Navigator.pop(ctx),
-                            icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF64748B)),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: IconButton(
+                              key: const Key('close_customer_payment_dialog'),
+                              onPressed: () => Navigator.pop(ctx),
+                              icon: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                              padding: EdgeInsets.zero,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 20),
 
-                      const Text('Customer Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: customerCtrl,
-                        decoration: _inputDecoration('e.g. Acme Retail Ltd'),
+                      // 1. Select Customer Profile
+                      const Text(
+                        'Select Customer Profile',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: customerProfiles.contains(selectedCustomer) ? selectedCustomer : customerProfiles.first,
+                            isExpanded: true,
+                            icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                            items: customerProfiles.map((c) {
+                              return DropdownMenuItem(
+                                value: c,
+                                child: Text(
+                                  c,
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setModalState(() {
+                                  selectedCustomer = val;
+                                  final matchInv = findMatchingInvoice(val);
+                                  final matchLedger = findMatchingLedgerItem(val);
+                                  invoiceIdCtrl.text = (matchInv?['invoice_number'] ??
+                                          matchInv?['invoiceNo'] ??
+                                          matchInv?['invoice_id'] ??
+                                          matchLedger?.displayReference ??
+                                          '')
+                                      .toString();
+                                  final origAmt = matchInv?['total_amount'] ??
+                                      matchInv?['grand_total'] ??
+                                      matchInv?['amount'] ??
+                                      matchLedger?.displayOriginalAmount;
+                                  if (origAmt != null && origAmt != 0) {
+                                    originalAmountCtrl.text = origAmt is double && origAmt == origAmt.roundToDouble()
+                                        ? origAmt.toInt().toString()
+                                        : origAmt.toString();
+                                  } else {
+                                    originalAmountCtrl.clear();
+                                  }
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
+                      // 2. Invoice Linked ID & Original Amount (₹) in Row
                       Row(
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Amount (₹)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const Text(
+                                  'Invoice Linked ID',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
                                 const SizedBox(height: 6),
                                 TextField(
-                                  controller: amountCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: _inputDecoration('0.00'),
+                                  controller: invoiceIdCtrl,
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                  decoration: _inputDecoration('e.g. MS--527682'),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Payment Mode', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const Text(
+                                  'Original Amount (₹)',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: originalAmountCtrl,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                  decoration: _inputDecoration('0'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 3. Paid amount (Receipt worth, ₹)
+                      const Text(
+                        'Paid amount (Receipt worth, ₹)',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: amountCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                        decoration: _inputDecoration('0'),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 4. Payment Mode & Ref ID / UPI reference in Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Payment Mode',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
                                 const SizedBox(height: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: const Color(0xFFE2E8F0)),
                                   ),
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: paymentMode,
                                       isExpanded: true,
-                                      items: ['UPI', 'Cash', 'Bank Transfer', 'Card', 'Cheque'].map((m) {
-                                        return DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13)));
+                                      icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                                      items: ['Cash', 'Bank Transfer', 'UPI', 'Cheque'].map((m) {
+                                        return DropdownMenuItem(
+                                          value: m,
+                                          child: Text(m, style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A))),
+                                        );
                                       }).toList(),
-                                      onChanged: (v) => setModalState(() => paymentMode = v ?? 'UPI'),
+                                      onChanged: (v) => setModalState(() => paymentMode = v ?? 'Cash'),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      Row(
-                        children: [
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Invoice # (Optional)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 6),
-                                TextField(
-                                  controller: invoiceIdCtrl,
-                                  decoration: _inputDecoration('e.g. INV-1042'),
+                                const Text(
+                                  'Ref ID / UPI reference',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Reference / UPI Ref', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 6),
                                 TextField(
                                   controller: refNoCtrl,
-                                  decoration: _inputDecoration('e.g. UPI-984729184'),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                  decoration: _inputDecoration('e.g. REF-151'),
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-
-                      const Text('Deposit To Account', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<dynamic>(
-                            value: selectedAccId,
-                            isExpanded: true,
-                            items: _accounts.isNotEmpty
-                                ? _accounts.map((a) {
-                                    return DropdownMenuItem(
-                                      value: a.id,
-                                      child: Text('${a.displayName} (₹${_fmt(a.currentBalance)})', style: const TextStyle(fontSize: 13)),
-                                    );
-                                  }).toList()
-                                : [
-                                    DropdownMenuItem(
-                                      value: selectedAccId,
-                                      child: const Text('Default Cash Register', style: TextStyle(fontSize: 13)),
-                                    ),
-                                  ],
-                            onChanged: (v) => setModalState(() => selectedAccId = v),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      const Text('Notes / Description', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: notesCtrl,
-                        decoration: _inputDecoration('Optional settlement remarks'),
-                      ),
                       const SizedBox(height: 24),
 
+                      // 5. Finalize Payment Collection Button
                       SizedBox(
                         width: double.infinity,
-                        height: 46,
+                        height: 48,
                         child: ElevatedButton(
                           onPressed: isSubmitting
                               ? null
                               : () async {
-                                  final customer = customerCtrl.text.trim();
+                                  final customer = selectedCustomer.trim();
                                   final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
+                                  final origAmt = double.tryParse(originalAmountCtrl.text.trim()) ?? amt;
                                   final refNo = refNoCtrl.text.trim();
                                   final inv = invoiceIdCtrl.text.trim();
 
                                   if (customer.isEmpty) {
-                                    AppSnackbar.show(context, 'Customer name is required', type: SnackType.error);
+                                    AppSnackbar.show(context, 'Customer profile is required', type: SnackType.error);
                                     return;
                                   }
                                   if (amt <= 0) {
-                                    AppSnackbar.show(context, 'Enter a valid payment amount', type: SnackType.error);
+                                    AppSnackbar.show(context, 'Enter a valid paid amount', type: SnackType.error);
                                     return;
                                   }
 
                                   setModalState(() => isSubmitting = true);
                                   try {
                                     final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+                                    final notesPayload = jsonEncode({
+                                      'customerProfile': customer,
+                                      'invoiceLinkedId': inv,
+                                      'totalOriginalAmount': origAmt,
+                                      'paidAmount': amt,
+                                      'total_original': origAmt,
+                                      'paid_amount': amt,
+                                    });
+
                                     await PaymentTransactionRepository.receivePayment(
                                       ReceivePaymentRequest(
                                         customerName: customer,
                                         invoiceId: inv.isNotEmpty ? inv : null,
-                                        amount: amt,
+                                        amount: origAmt > 0 ? origAmt : amt,
                                         paidAmount: amt,
                                         paymentMode: paymentMode,
                                         referenceNumber: refNo.isNotEmpty ? refNo : 'REC-${DateTime.now().millisecondsSinceEpoch}',
                                         accountId: selectedAccId,
-                                        notes: notesCtrl.text.trim(),
+                                        notes: notesPayload,
                                       ),
                                       email: activeEmail,
                                     );
@@ -2373,14 +2454,14 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF166534),
+                            backgroundColor: const Color(0xFF14532D), // Web App Dark Forest Green
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
                           child: isSubmitting
                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Record Customer Payment', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                              : const Text('Finalize Payment Collection', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
@@ -2396,14 +2477,67 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
   // ══════════════════════════════════════════════════════════════════════════
   // MODAL 2: PAY SUPPLIER / DISBURSEMENT (POST /api/v1/payments/pay)
+  // Matching Web App Design (Image 3)
   // ══════════════════════════════════════════════════════════════════════════
   void _openSupplierDisbursementModal() {
-    final supplierCtrl = TextEditingController(text: 'General Supplier');
-    final purchaseIdCtrl = TextEditingController();
-    final amountCtrl = TextEditingController(text: '1000');
-    final refNoCtrl = TextEditingController(text: 'NEFT-${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}');
-    final notesCtrl = TextEditingController();
-    String disbursementMode = 'Bank Transfer';
+    // Collect distinct supplier profiles from real purchases & reports
+    final supplierProfiles = <String>{};
+    for (final p in _rawPurchases) {
+      final name = (p['supplier_name'] ?? p['vendor_name'] ?? p['party_name'] ?? '').toString().trim();
+      if (name.isNotEmpty) supplierProfiles.add(name);
+    }
+    for (final pay in _reportsLedger) {
+      if (pay.isPay && pay.partyName.trim().isNotEmpty) {
+        supplierProfiles.add(pay.partyName.trim());
+      }
+    }
+    if (supplierProfiles.isEmpty) {
+      supplierProfiles.add('General Supplier');
+    }
+
+    String selectedSupplier = supplierProfiles.first;
+
+    Map<String, dynamic>? findMatchingPurchase(String supplier) {
+      for (final p in _rawPurchases) {
+        final name = (p['supplier_name'] ?? p['vendor_name'] ?? p['party_name'] ?? '').toString().trim();
+        if (name.toLowerCase() == supplier.toLowerCase()) return p;
+      }
+      return null;
+    }
+
+    PaymentLedgerItem? findMatchingPayableItem(String supplier) {
+      for (final pay in _reportsLedger) {
+        if (pay.isPay && pay.partyName.toLowerCase() == supplier.toLowerCase()) return pay;
+      }
+      return null;
+    }
+
+    final initialPur = findMatchingPurchase(selectedSupplier);
+    final initialPayable = findMatchingPayableItem(selectedSupplier);
+
+    final initialPurNo = (initialPur?['purchase_number'] ??
+        initialPur?['purchase_id'] ??
+        initialPur?['invoice_id'] ??
+        initialPayable?.displayReference ??
+        '')
+        .toString();
+
+    final rawDueAmt = initialPur?['due_amount'] ??
+        initialPur?['pending_amount'] ??
+        initialPur?['grand_total'] ??
+        initialPayable?.displayOriginalAmount;
+
+    final initialDueAmt = rawDueAmt != null
+        ? (rawDueAmt is double && rawDueAmt == rawDueAmt.roundToDouble()
+            ? rawDueAmt.toInt().toString()
+            : rawDueAmt.toString())
+        : '0';
+
+    final purchaseIdCtrl = TextEditingController(text: initialPurNo);
+    final dueAmountCtrl = TextEditingController(text: initialDueAmt);
+    final amountCtrl = TextEditingController(text: '0');
+    final refNoCtrl = TextEditingController(text: 'REF-207');
+    String disbursementMode = 'Cash';
     dynamic selectedAccId = _accounts.isNotEmpty ? _accounts.first.id : 1;
     bool isSubmitting = false;
 
@@ -2415,7 +2549,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           builder: (context, setModalState) {
             return Dialog(
               backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
               insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Container(
                 width: 480,
@@ -2426,6 +2560,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Header Row: Title & Close Button
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -2439,168 +2574,233 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                               ),
                             ),
                           ),
-                          IconButton(
-                            key: const Key('close_supplier_disbursement_dialog'),
-                            onPressed: () => Navigator.pop(ctx),
-                            icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF64748B)),
-                            padding: EdgeInsets.zero,
-                            constraints: const BoxConstraints(),
+                          Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: IconButton(
+                              key: const Key('close_supplier_disbursement_dialog'),
+                              onPressed: () => Navigator.pop(ctx),
+                              icon: const Icon(LucideIcons.x, size: 16, color: Color(0xFF64748B)),
+                              padding: EdgeInsets.zero,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 20),
 
-                      const Text('Supplier / Vendor Name', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: supplierCtrl,
-                        decoration: _inputDecoration('e.g. Apex Fabricators'),
+                      // 1. Select Supplier Profile
+                      const Text(
+                        'Select Supplier Profile',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: supplierProfiles.contains(selectedSupplier) ? selectedSupplier : supplierProfiles.first,
+                            isExpanded: true,
+                            icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                            items: supplierProfiles.map((s) {
+                              return DropdownMenuItem(
+                                value: s,
+                                child: Text(
+                                  s,
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600, color: Color(0xFF0F172A)),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setModalState(() {
+                                  selectedSupplier = val;
+                                  final matchPur = findMatchingPurchase(val);
+                                  final matchPayable = findMatchingPayableItem(val);
+                                  purchaseIdCtrl.text = (matchPur?['purchase_number'] ??
+                                          matchPur?['purchase_id'] ??
+                                          matchPur?['invoice_id'] ??
+                                          matchPayable?.displayReference ??
+                                          '')
+                                      .toString();
+                                  final dueAmt = matchPur?['due_amount'] ??
+                                      matchPur?['pending_amount'] ??
+                                      matchPur?['grand_total'] ??
+                                      matchPayable?.displayOriginalAmount;
+                                  if (dueAmt != null) {
+                                    dueAmountCtrl.text = dueAmt is double && dueAmt == dueAmt.roundToDouble()
+                                        ? dueAmt.toInt().toString()
+                                        : dueAmt.toString();
+                                  } else {
+                                    dueAmountCtrl.text = '0';
+                                  }
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
+                      // 2. Purchase Bill Linked ID & Original Due Amount (₹) in Row
                       Row(
                         children: [
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Disbursement Amount (₹)', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const Text(
+                                  'Purchase Bill Linked ID',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
                                 const SizedBox(height: 6),
                                 TextField(
-                                  controller: amountCtrl,
-                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                                  decoration: _inputDecoration('0.00'),
+                                  controller: purchaseIdCtrl,
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                  decoration: _inputDecoration('e.g. PB-2026-0019'),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Payment Mode', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
+                                const Text(
+                                  'Original Due Amount (₹)',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
+                                const SizedBox(height: 6),
+                                TextField(
+                                  controller: dueAmountCtrl,
+                                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                  decoration: _inputDecoration('0'),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 3. Paid Amount (Outflow worth, ₹)
+                      const Text(
+                        'Paid Amount (Outflow worth, ₹)',
+                        style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                      ),
+                      const SizedBox(height: 6),
+                      TextField(
+                        controller: amountCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                        decoration: _inputDecoration('0'),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // 4. Disbursement Mode & Cheque / Ref No in Row
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Disbursement Mode',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
+                                ),
                                 const SizedBox(height: 6),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
                                   decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(10),
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
                                     border: Border.all(color: const Color(0xFFE2E8F0)),
                                   ),
                                   child: DropdownButtonHideUnderline(
                                     child: DropdownButton<String>(
                                       value: disbursementMode,
                                       isExpanded: true,
-                                      items: ['Bank Transfer', 'Cash', 'UPI', 'Cheque'].map((m) {
-                                        return DropdownMenuItem(value: m, child: Text(m, style: const TextStyle(fontSize: 13)));
+                                      icon: const Icon(LucideIcons.chevronDown, size: 16, color: Color(0xFF64748B)),
+                                      items: ['Cash', 'Bank Transfer', 'UPI', 'Cheque'].map((m) {
+                                        return DropdownMenuItem(
+                                          value: m,
+                                          child: Text(m, style: const TextStyle(fontSize: 13.5, color: Color(0xFF0F172A))),
+                                        );
                                       }).toList(),
-                                      onChanged: (v) => setModalState(() => disbursementMode = v ?? 'Bank Transfer'),
+                                      onChanged: (v) => setModalState(() => disbursementMode = v ?? 'Cash'),
                                     ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-
-                      Row(
-                        children: [
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('Purchase / Bill ID', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                                const SizedBox(height: 6),
-                                TextField(
-                                  controller: purchaseIdCtrl,
-                                  decoration: _inputDecoration('e.g. PUR-2026-089'),
+                                const Text(
+                                  'Cheque / Ref No',
+                                  style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.w600, color: Color(0xFF475569)),
                                 ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text('Cheque / Ref No', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
                                 const SizedBox(height: 6),
                                 TextField(
                                   controller: refNoCtrl,
-                                  decoration: _inputDecoration('e.g. NEFT-88492041'),
+                                  style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w500, color: Color(0xFF0F172A)),
+                                  decoration: _inputDecoration('e.g. REF-207'),
                                 ),
                               ],
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 14),
-
-                      const Text('Deduct From Account', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: DropdownButtonHideUnderline(
-                          child: DropdownButton<dynamic>(
-                            value: selectedAccId,
-                            isExpanded: true,
-                            items: _accounts.isNotEmpty
-                                ? _accounts.map((a) {
-                                    return DropdownMenuItem(
-                                      value: a.id,
-                                      child: Text('${a.displayName} (₹${_fmt(a.currentBalance)})', style: const TextStyle(fontSize: 13)),
-                                    );
-                                  }).toList()
-                                : [
-                                    DropdownMenuItem(
-                                      value: selectedAccId,
-                                      child: const Text('Default Cash Register', style: TextStyle(fontSize: 13)),
-                                    ),
-                                  ],
-                            onChanged: (v) => setModalState(() => selectedAccId = v),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-
-                      const Text('Notes / Description', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 6),
-                      TextField(
-                        controller: notesCtrl,
-                        decoration: _inputDecoration('Optional procurement remarks'),
-                      ),
                       const SizedBox(height: 24),
 
+                      // 5. Disburse Supplier Funds Button
                       SizedBox(
                         width: double.infinity,
-                        height: 46,
+                        height: 48,
                         child: ElevatedButton(
                           onPressed: isSubmitting
                               ? null
                               : () async {
-                                  final supplier = supplierCtrl.text.trim();
+                                  final supplier = selectedSupplier.trim();
                                   final amt = double.tryParse(amountCtrl.text.trim()) ?? 0.0;
+                                  final dueAmt = double.tryParse(dueAmountCtrl.text.trim()) ?? 0.0;
                                   final refNo = refNoCtrl.text.trim();
                                   final pur = purchaseIdCtrl.text.trim();
 
                                   if (supplier.isEmpty) {
-                                    AppSnackbar.show(context, 'Supplier name is required', type: SnackType.error);
+                                    AppSnackbar.show(context, 'Supplier profile is required', type: SnackType.error);
                                     return;
                                   }
-                                  if (amt <= 0) {
-                                    AppSnackbar.show(context, 'Enter a valid disbursement amount', type: SnackType.error);
+                                  if (amt < 0) {
+                                    AppSnackbar.show(context, 'Enter a valid paid amount', type: SnackType.error);
                                     return;
                                   }
 
                                   setModalState(() => isSubmitting = true);
                                   try {
                                     final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
+                                    final notesPayload = jsonEncode({
+                                      'supplierProfile': supplier,
+                                      'purchaseBillLinkedId': pur,
+                                      'originalDueAmount': dueAmt,
+                                      'paidAmount': amt,
+                                      'original_due_amount': dueAmt,
+                                      'paid_amount': amt,
+                                    });
+
                                     await PaymentTransactionRepository.paySupplier(
                                       PaySupplierRequest(
                                         supplierName: supplier,
@@ -2609,7 +2809,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                         paymentMode: disbursementMode,
                                         referenceNumber: refNo.isNotEmpty ? refNo : 'PAY-${DateTime.now().millisecondsSinceEpoch}',
                                         accountId: selectedAccId,
-                                        notes: notesCtrl.text.trim(),
+                                        notes: notesPayload,
                                       ),
                                       email: activeEmail,
                                     );
@@ -2626,14 +2826,14 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                   }
                                 },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF166534),
+                            backgroundColor: const Color(0xFF14532D), // Web App Dark Forest Green
                             foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             elevation: 0,
                           ),
                           child: isSubmitting
                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                              : const Text('Disburse Supplier Funds', style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700)),
+                              : const Text('Disburse Supplier Funds', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
