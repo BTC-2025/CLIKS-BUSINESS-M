@@ -1216,27 +1216,11 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
     });
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMobile = screenWidth < 700;
+    final paddingVal = isMobile ? 12.0 : 32.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      floatingActionButton: isMobile
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: 130),
-              child: FloatingActionButton.extended(
-                onPressed: _openSetupTargetWalletDialog,
-                backgroundColor: const Color(0xFF0F5B2E),
-                foregroundColor: Colors.white,
-                elevation: 4,
-                icon: const Icon(LucideIcons.plus, size: 18),
-                label: const Text(
-                  'Setup Purpose Wallet',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-              ),
-            )
-          : null,
       body: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
           paddingVal,
@@ -1247,9 +1231,17 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Top Section Header (matching screenshot)
-            _buildPageHeader(context, isMobile, isRefreshing: isRefreshing),
-            const SizedBox(height: 12),
+            if (isMobile) ...[
+              // Mobile Hero Summary & Compact Action Row (Expenses-style)
+              _buildMobileHeroSummary(isRefreshing),
+              const SizedBox(height: 12),
+              _buildMobileActionRow(context, isMobile, isRefreshing),
+              const SizedBox(height: 14),
+            ] else ...[
+              // Top Section Header (matching screenshot)
+              _buildPageHeader(context, isMobile, isRefreshing: isRefreshing),
+              const SizedBox(height: 12),
+            ],
 
             // Optional Expandable Search Input
             if (_isSearchExpanded) ...[
@@ -1309,6 +1301,257 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
           ],
         ),
       ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MOBILE OS REDESIGN: HERO SUMMARY & COMPACT ACTION ROW (Expenses-style)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileHeroSummary(bool isRefreshing) {
+    double totalAllocated = 0;
+    double totalTarget = 0;
+    for (final w in _wallets) {
+      totalAllocated += w.currentAmount;
+      totalTarget += w.targetAmount;
+    }
+    final progress = totalTarget > 0
+        ? ((totalAllocated / totalTarget) * 100).clamp(0, 100).toStringAsFixed(1)
+        : '100';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.shieldCheck,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'PURPOSE WALLETS & RESERVES',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'TREASURY ACTIVE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'Active',
+                  '${_wallets.length} Wallets',
+                  LucideIcons.wallet,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Allocated',
+                  '₹${_formatCurrency(totalAllocated)}',
+                  LucideIcons.shieldCheck,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Target',
+                  '₹${_formatCurrency(totalTarget)}',
+                  LucideIcons.target,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Progress',
+                  '$progress%',
+                  LucideIcons.trendingUp,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileActionRow(BuildContext context, bool isMobile, bool isRefreshing) {
+    return Row(
+      children: [
+        IconButton(
+          key: const Key('header_reload_segregation_button'),
+          onPressed: () => _loadData(isManualReload: true),
+          icon: isRefreshing
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F5B2E)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 14, color: Color(0xFF0F5B2E)),
+          tooltip: 'Reload Wallets',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        IconButton(
+          onPressed: () {
+            setState(() {
+              _isSearchExpanded = !_isSearchExpanded;
+            });
+          },
+          icon: Icon(
+            _isSearchExpanded ? LucideIcons.x : LucideIcons.search,
+            size: 14,
+            color: _isSearchExpanded ? const Color(0xFF0F5B2E) : const Color(0xFF475569),
+          ),
+          tooltip: 'Search wallets',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _openSetupTargetWalletDialog,
+            icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Setup Purpose Wallet',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: Colors.white),
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0F5B2E),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

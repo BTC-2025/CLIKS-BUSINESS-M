@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../data/models/people_models.dart';
 import '../../../models/account_model.dart';
@@ -150,7 +151,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final availableWidth = constraints.maxWidth;
-        final isMobile = availableWidth < 850;
+        final isMobile = availableWidth < 700;
         final groupInvs = _resolveGroupInvitations(peopleState);
         final directReqs = peopleState.incomingRequests;
         final double horizontalPadding = availableWidth >= 1200
@@ -174,13 +175,21 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Top Header Row (Matching Image 2)
-                    _buildHeaderRow(context, isMobile, peopleState),
-                    const SizedBox(height: 22),
+                    if (isMobile) ...[
+                      // Mobile Hero Summary & Compact Action Row (Expenses-style)
+                      _buildMobileHeroSummary(peopleState, groupInvs.length + directReqs.length),
+                      const SizedBox(height: 12),
+                      _buildMobileActionRow(isMobile, peopleState),
+                      const SizedBox(height: 14),
+                    ] else ...[
+                      // 1. Top Header Row (Matching Image 2)
+                      _buildHeaderRow(context, isMobile, peopleState),
+                      const SizedBox(height: 22),
 
-                    // 2. Top Metric KPI Cards (TO RECEIVE / TO PAY)
-                    _buildTopMetricsRow(availableWidth, peopleState),
-                    const SizedBox(height: 20),
+                      // 2. Top Metric KPI Cards (TO RECEIVE / TO PAY)
+                      _buildTopMetricsRow(availableWidth, peopleState),
+                      const SizedBox(height: 20),
+                    ],
 
                     // Pending Invitations Banner (Matching Image 1, 2, 3)
                     if (groupInvs.isNotEmpty || directReqs.isNotEmpty) ...[
@@ -218,6 +227,274 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           ),
         );
       },
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MOBILE OS REDESIGN: HERO SUMMARY & COMPACT ACTION ROW (Expenses-style)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileHeroSummary(PeopleState peopleState, int pendingCount) {
+    final activeGroupsCount = peopleState.groups
+        .where((g) => !g.isPendingInvitation && !g.isRejectedOrDeclined)
+        .length;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.users,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'PEOPLE NETWORK & ESCROW',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE SYNC',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'To Receive',
+                  '₹5,20,056',
+                  LucideIcons.trendingUp,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'To Pay',
+                  '₹0',
+                  LucideIcons.trendingDown,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Contacts',
+                  '${peopleState.contacts.length} Active',
+                  LucideIcons.user,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Groups',
+                  '$activeGroupsCount Groups',
+                  LucideIcons.walletCards,
+                ),
+                if (pendingCount > 0) ...[
+                  const SizedBox(width: 6),
+                  _buildHeroKpiChip(
+                    'Pending',
+                    '$pendingCount Requests',
+                    LucideIcons.userPlus,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileActionRow(bool isMobile, PeopleState state) {
+    return Row(
+      children: [
+        IconButton(
+          key: const Key('header_reload_people_button'),
+          onPressed: () => ref.read(peopleProvider.notifier).loadAll(isRefresh: true),
+          icon: state.isRefreshing
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF166534)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 14, color: Color(0xFF166534)),
+          tooltip: 'Reload People Network',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton.icon(
+            key: const Key('header_log_transaction_button'),
+            onPressed: () => _openGeneralLogModal(isMobile),
+            icon: const Icon(
+              LucideIcons.arrowLeftRight,
+              size: 13,
+              color: Color(0xFF166534),
+            ),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Log Transaction',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11.5,
+                  color: Color(0xFF166534),
+                ),
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: 0,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            key: const Key('header_add_people_contact_button'),
+            onPressed: _openAddContactDialog,
+            icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Add Contact',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11.5,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -1219,22 +1496,24 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   _activeTab = idx;
                 });
               },
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 180),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9.5),
+                padding: isMobile
+                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 5.5)
+                    : const EdgeInsets.symmetric(horizontal: 16, vertical: 9.5),
                 decoration: BoxDecoration(
                   color: isSelected ? const Color(0xFF166534) : Colors.white,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                   border: isSelected
                       ? null
                       : Border.all(color: const Color(0xFFE2E8F0)),
                   boxShadow: isSelected
-                      ? const [
+                      ? [
                           BoxShadow(
-                            color: Color(0x20166534),
+                            color: const Color(0xFF166534).withValues(alpha: 0.2),
                             blurRadius: 6,
-                            offset: Offset(0, 2),
+                            offset: const Offset(0, 2),
                           ),
                         ]
                       : null,
@@ -1244,24 +1523,24 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   children: [
                     Icon(
                       t.icon,
-                      size: 14.5,
+                      size: isMobile ? 12 : 14.5,
                       color: isSelected ? Colors.white : const Color(0xFF64748B),
                     ),
-                    const SizedBox(width: 7),
+                    SizedBox(width: isMobile ? 5 : 7),
                     Text(
                       t.title,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: isMobile ? 10.5 : 12.5,
                         fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                         color: isSelected ? Colors.white : const Color(0xFF0F172A),
                         letterSpacing: -0.2,
                       ),
                     ),
                     if (t.hasNotificationBadge) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 5),
                       Container(
-                        width: 7,
-                        height: 7,
+                        width: isMobile ? 6 : 7,
+                        height: isMobile ? 6 : 7,
                         decoration: const BoxDecoration(
                           color: Color(0xFFDC2626), // Red notification dot from Image 2
                           shape: BoxShape.circle,
@@ -1288,19 +1567,19 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           }
         });
       },
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
       child: Container(
-        width: 38,
-        height: 38,
+        width: isMobile ? 32 : 38,
+        height: isMobile ? 32 : 38,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         child: Center(
           child: Icon(
             _isSearchVisible ? LucideIcons.x : LucideIcons.search,
-            size: 16,
+            size: isMobile ? 14 : 16,
             color: const Color(0xFF64748B),
           ),
         ),
@@ -1308,11 +1587,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
 
     if (isMobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      return Row(
         children: [
-          tabsListWidget,
-          const SizedBox(height: 8),
+          Expanded(child: tabsListWidget),
+          const SizedBox(width: 6),
           searchButton,
         ],
       );
@@ -1409,7 +1687,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   Widget _buildTabContent(double availableWidth, bool isMobile, PeopleState state) {
     switch (_activeTab) {
       case 0:
-        return _buildContactsTableCard(availableWidth, state);
+        return _buildContactsTableCard(availableWidth, state, isMobile);
       case 1:
         return _buildFinancialGroupsView(availableWidth, isMobile, state);
       case 2:
@@ -1419,15 +1697,19 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       case 4:
         return _buildRepaymentAlertsView(availableWidth, isMobile, state);
       default:
-        return _buildContactsTableCard(availableWidth, state);
+        return _buildContactsTableCard(availableWidth, state, isMobile);
     }
   }
 
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 0: CONTACTS TABLE CARD (Matching Image 2 exactly)
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildContactsTableCard(double availableWidth, PeopleState state) {
+  Widget _buildContactsTableCard(double availableWidth, PeopleState state, bool isMobile) {
     final list = _getFilteredContacts(state.contacts);
+
+    if (isMobile) {
+      return _buildMobileContactsList(list);
+    }
 
     if (list.isEmpty) {
       return Container(
@@ -1905,6 +2187,263 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
+  Widget _buildMobileContactsList(List<PersonContact> list) {
+    if (list.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          _searchQuery.isNotEmpty
+              ? "No contact matches '$_searchQuery'. Try clearing the search."
+              : 'Zero network contacts found. Start adding!',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF64748B),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: list.map((c) {
+        final name = c.name;
+        final connected = c.isConnected;
+        final classification = c.classification;
+        final company = (c.company != null && c.company!.isNotEmpty)
+            ? c.company!
+            : (c.displayCompany != '-' ? c.displayCompany : 'Individual');
+        final phone = c.formattedPhone;
+        final email = c.email;
+        final stand = c.netBalance;
+        final avatarBg = c.avatarBg;
+        final avatarFg = c.avatarColor;
+        final initial = c.initials;
+
+        final exposureColor = stand < 0 ? const Color(0xFFDC2626) : const Color(0xFF15803D);
+        final exposureBg = stand < 0 ? const Color(0xFFFEE2E2) : const Color(0xFFDCFCE7);
+        final exposureLabel = stand < 0 ? 'PAYABLE' : 'RECEIVABLE';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x05000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () async {
+                final detail = await ref.read(peopleProvider.notifier).selectContactForDetail(c.id);
+                setState(() => _selectedContactForDetail = detail ?? c);
+              },
+              borderRadius: BorderRadius.circular(12),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Row 1: Avatar + Name & Verification + Net Exposure Pill
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        CircleAvatar(
+                          radius: 17,
+                          backgroundColor: avatarBg,
+                          child: Text(
+                            initial,
+                            style: TextStyle(
+                              color: avatarFg,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12.5,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              if (connected)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(LucideIcons.check, size: 10.5, color: Color(0xFF16A34A)),
+                                    SizedBox(width: 3),
+                                    Text(
+                                      'Connected',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF16A34A),
+                                      ),
+                                    ),
+                                  ],
+                                )
+                              else
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFEF3C7),
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  child: const Text(
+                                    'Pending Request',
+                                    style: TextStyle(
+                                      fontSize: 9.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFFB45309),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: exposureBg,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                exposureLabel,
+                                style: TextStyle(
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: exposureColor,
+                                  letterSpacing: 0.3,
+                                ),
+                              ),
+                              Text(
+                                '₹${_fmt(stand.abs())}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  color: exposureColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                    const SizedBox(height: 8),
+
+                    // Row 2: Classification + Company + Quick Action
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            classification.toUpperCase(),
+                            style: const TextStyle(
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1D4ED8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            company,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 11.5,
+                              color: Color(0xFF64748B),
+                            ),
+                          ),
+                        ),
+                        if (email.isNotEmpty || phone != '-')
+                          Text(
+                            email.isNotEmpty ? email : phone,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10.5,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ),
+                        const SizedBox(width: 4),
+                        PopupMenuButton<String>(
+                          icon: const Icon(LucideIcons.ellipsisVertical, size: 14, color: Color(0xFF94A3B8)),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          onSelected: (val) async {
+                            if (val == 'ledger') {
+                              final detail = await ref.read(peopleProvider.notifier).selectContactForDetail(c.id);
+                              setState(() => _selectedContactForDetail = detail ?? c);
+                            } else if (val == 'edit') {
+                              _openEditContactDialog(c);
+                            } else if (val == 'delete') {
+                              _confirmDeletePerson(c);
+                            }
+                          },
+                          itemBuilder: (ctx) => [
+                            const PopupMenuItem(
+                              value: 'ledger',
+                              child: Text('View Ledger', style: TextStyle(fontSize: 12)),
+                            ),
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Text('Edit Contact', style: TextStyle(fontSize: 12)),
+                            ),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Text('Delete Contact', style: TextStyle(fontSize: 12, color: Color(0xFFEF4444))),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 1: FINANCIAL GROUPS & SYNDICATES (Matching Images 3 & 4)
   // ══════════════════════════════════════════════════════════════════════════
@@ -2103,7 +2642,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                         children: [
                           // Card Top Row (Tag + members active)
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Container(
                                 padding: const EdgeInsets.symmetric(
@@ -2124,40 +2663,48 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                   ),
                                 ),
                               ),
-                              Row(
-                                children: [
-                                  const Icon(
-                                    LucideIcons.users,
-                                    size: 13,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                  const SizedBox(width: 4),
-                                  RichText(
-                                    text: TextSpan(
-                                      children: [
-                                        TextSpan(
-                                          text: '${grp.memberCount} active',
-                                          style: const TextStyle(
-                                            fontSize: 11.5,
-                                            fontWeight: FontWeight.w600,
-                                            color: Color(0xFF64748B),
-                                          ),
-                                        ),
-                                        if (grp.pendingMemberCount > 0) ...[
-                                          const TextSpan(text: ' '),
-                                          TextSpan(
-                                            text: '(${grp.pendingMemberCount} pending)',
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFFD97706),
+                              const Spacer(),
+                              Flexible(
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerRight,
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        LucideIcons.users,
+                                        size: 13,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      RichText(
+                                        text: TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text: '${grp.memberCount} active',
+                                              style: const TextStyle(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF64748B),
+                                              ),
                                             ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
+                                            if (grp.pendingMemberCount > 0) ...[
+                                              const TextSpan(text: ' '),
+                                              TextSpan(
+                                                text: '(${grp.pendingMemberCount} pending)',
+                                                style: const TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFFD97706),
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ],
+                                ),
                               ),
                             ],
                           ),
@@ -2247,13 +2794,17 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                         ),
                                       ),
                                       const SizedBox(height: 3),
-                                      Text(
-                                        '₹${_fmt(contributed)}',
-                                        style: const TextStyle(
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFF0F172A),
-                                          fontFeatures: [FontFeature.tabularFigures()],
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          '₹${_fmt(contributed)}',
+                                          style: const TextStyle(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF0F172A),
+                                            fontFeatures: [FontFeature.tabularFigures()],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -2285,13 +2836,17 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                                         ),
                                       ),
                                       const SizedBox(height: 3),
-                                      Text(
-                                        '₹${_fmt(expenses)}',
-                                        style: const TextStyle(
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w800,
-                                          color: Color(0xFFDC2626),
-                                          fontFeatures: [FontFeature.tabularFigures()],
+                                      FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          '₹${_fmt(expenses)}',
+                                          style: const TextStyle(
+                                            fontSize: 14.5,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFFDC2626),
+                                            fontFeatures: [FontFeature.tabularFigures()],
+                                          ),
                                         ),
                                       ),
                                     ],
@@ -4028,6 +4583,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       );
     }
 
+    if (isMobile) {
+      return _buildMobileGlobalLedgerList(list);
+    }
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -4224,6 +4783,104 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     );
   }
 
+  Widget _buildMobileGlobalLedgerList(List<PersonTransaction> list) {
+    return Column(
+      children: list.map((tx) {
+        final isLent = tx.isLent;
+        final classification = (isLent ? 'LENT' : 'BORROWED').toUpperCase();
+        final flowSign = isLent ? '+' : '-';
+        final flowColor = isLent ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+        final flowBg = isLent ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2);
+        final amt = tx.amount;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x05000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Flow Badge + Date + Amount
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
+                        decoration: BoxDecoration(
+                          color: flowBg,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          classification,
+                          style: TextStyle(
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w800,
+                            color: flowColor,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        tx.date,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '$flowSign₹${_fmt(amt)}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: flowColor,
+                      fontFeatures: const [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Row 2: Target Network Contact
+              Text(
+                tx.personName.isNotEmpty ? tx.personName : 'Peer Contact',
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              if (tx.notes != null && tx.notes!.isNotEmpty && tx.notes != '-') ...[
+                const SizedBox(height: 4),
+                Text(
+                  tx.notes!,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   // ══════════════════════════════════════════════════════════════════════════
   // TAB 4: REPAYMENT ALERTS VIEW (Matching Image 2)
   // ══════════════════════════════════════════════════════════════════════════
@@ -4299,6 +4956,8 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             actionLabel: 'Dispatch Alert',
             onAction: () => _openDispatchAlertModal(isMobile, state.contacts),
           )
+        else if (isMobile)
+          _buildMobileRemindersList(list)
         else
           Container(
             decoration: BoxDecoration(
@@ -4508,6 +5167,151 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildMobileRemindersList(List<RepaymentAlert> list) {
+    return Column(
+      children: list.map((alert) {
+        final amt = alert.claimCap;
+        final contactName = alert.targetContact;
+        final memo = alert.memoLabel;
+        final date = alert.maturityDate;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x05000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Contact + Amount
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      contactName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '₹${_fmt(amt)}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Row 2: Memo + Due Date
+              Row(
+                children: [
+                  const Icon(LucideIcons.calendar, size: 12, color: Color(0xFFEF4444)),
+                  const SizedBox(width: 4),
+                  Text(
+                    date,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFFEF4444),
+                    ),
+                  ),
+                  if (memo.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        memo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+              // Row 3: Action Buttons
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  InkWell(
+                    onTap: () {
+                      AppSnackbar.show(
+                        context,
+                        "Notification dispatch (SMS/Push) is not yet exposed by the backend for reminder ID ${alert.id}.",
+                        type: SnackType.info,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(6),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        'Send Alert',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF059669),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => _confirmDeleteAlert(alert),
+                    icon: const Icon(LucideIcons.trash2, size: 15, color: Color(0xFF94A3B8)),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: 'Delete Reminder',
+                  ),
+                  const SizedBox(width: 10),
+                  IconButton(
+                    onPressed: () => _confirmSettleAlert(alert),
+                    icon: Icon(
+                      alert.isSettled ? LucideIcons.checkCheck : LucideIcons.circleCheck,
+                      size: 16,
+                      color: const Color(0xFF10B981),
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    tooltip: alert.isSettled ? 'Already Settled' : 'Mark Settled',
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 

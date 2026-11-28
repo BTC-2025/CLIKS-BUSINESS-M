@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/account_provider.dart';
 import '../../../models/account_model.dart';
 import '../../../data/models/payment_models.dart';
@@ -512,8 +513,8 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
     });
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final paddingVal = isMobile ? 16.0 : 32.0;
+    final isMobile = screenWidth < 700;
+    final paddingVal = isMobile ? 12.0 : 32.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -527,13 +528,21 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Top Header Row (Matches Image 1)
-            _buildTopHeader(context, isMobile),
-            const SizedBox(height: 20),
+            if (isMobile) ...[
+              // Mobile Hero Summary & Compact Action Row (Expenses-style)
+              _buildMobileHeroSummary(),
+              const SizedBox(height: 12),
+              _buildMobileActionRow(context, isMobile),
+              const SizedBox(height: 14),
+            ] else ...[
+              // 1. Top Header Row (Matches Image 1)
+              _buildTopHeader(context, isMobile),
+              const SizedBox(height: 20),
 
-            // 2. Four Summary Stat Cards (Matches Image 1)
-            _buildFourSummaryCards(context, isMobile),
-            const SizedBox(height: 24),
+              // 2. Four Summary Stat Cards (Matches Image 1)
+              _buildFourSummaryCards(context, isMobile),
+              const SizedBox(height: 24),
+            ],
 
             // 3. Filter Tabs & Search Bar (Matches Image 1)
             _buildTabsAndSearchRow(isMobile),
@@ -554,6 +563,219 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
           ],
         ),
       ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MOBILE OS REDESIGN: HERO SUMMARY & COMPACT ACTION ROW (Expenses-style)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileHeroSummary() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.calendarDays,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'RECURRING PAYMENT PLANNER',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'AUTO-SCHEDULE',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'Scheduled',
+                  '$_totalScheduled Plans',
+                  LucideIcons.calendar,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Outward',
+                  '₹${_fmt(_totalOutward)}',
+                  LucideIcons.arrowUpRight,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Inward',
+                  '₹${_fmt(_totalInward)}',
+                  LucideIcons.arrowDownLeft,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Monthly Plans',
+                  '$_monthlyRentPlansCount Active',
+                  LucideIcons.repeat,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileActionRow(BuildContext context, bool isMobile) {
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Refresh Schedules',
+          icon: const Icon(LucideIcons.refreshCw, size: 14, color: Color(0xFF166534)),
+          onPressed: () {
+            ApiClient.clearCliksToken();
+            _loadData();
+          },
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _openScheduleDialog,
+            icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'Schedule Payment',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 11.5, color: Colors.white),
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF166534),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -876,31 +1098,42 @@ class _PlannerPageState extends ConsumerState<PlannerPage> {
             padding: const EdgeInsets.only(right: 8),
             child: InkWell(
               onTap: () => setState(() => _activeFilter = index),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(isMobile ? 8 : 20),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                padding: isMobile
+                    ? const EdgeInsets.symmetric(horizontal: 10, vertical: 5.5)
+                    : const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
                 decoration: BoxDecoration(
-                  color: isActive ? const Color(0xFFECFDF5) : Colors.white,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isActive ? const Color(0xFF166534) : Colors.white,
+                  borderRadius: BorderRadius.circular(isMobile ? 8 : 20),
                   border: Border.all(
-                    color: isActive ? const Color(0xFF10B981) : const Color(0xFFE2E8F0),
-                    width: isActive ? 1.4 : 1,
+                    color: isActive ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
+                    width: 1,
                   ),
+                  boxShadow: isActive
+                      ? [
+                          BoxShadow(
+                            color: const Color(0xFF166534).withValues(alpha: 0.2),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (icon != null) ...[
-                      Icon(icon, size: 13, color: isActive ? const Color(0xFF065F46) : const Color(0xFF64748B)),
-                      const SizedBox(width: 5),
+                      Icon(icon, size: isMobile ? 11 : 13, color: isActive ? Colors.white : const Color(0xFF64748B)),
+                      SizedBox(width: isMobile ? 4 : 5),
                     ],
                     Text(
                       item['label'] as String,
                       style: TextStyle(
-                        fontSize: 12.5,
+                        fontSize: isMobile ? 10.5 : 12.5,
                         fontWeight: isActive ? FontWeight.w800 : FontWeight.w600,
-                        color: isActive ? const Color(0xFF065F46) : const Color(0xFF475569),
+                        color: isActive ? Colors.white : const Color(0xFF475569),
                       ),
                     ),
                   ],

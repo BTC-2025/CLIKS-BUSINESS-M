@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/account_provider.dart';
 import '../../../models/account_model.dart';
 import '../../../data/models/payment_transaction_models.dart';
@@ -442,8 +443,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     });
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 900;
-    final paddingVal = isMobile ? 16.0 : 28.0;
+    final isMobile = screenWidth < 700;
+    final paddingVal = isMobile ? 12.0 : 28.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -456,13 +457,21 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header Row
-              _buildHeaderRow(isMobile, isRefreshing: isRefreshing),
-              const SizedBox(height: 22),
+              if (isMobile) ...[
+                // Mobile Hero Summary & Compact Action Row (Expenses-style)
+                _buildMobileHeroSummary(isRefreshing),
+                const SizedBox(height: 12),
+                _buildMobileActionRow(isMobile, isRefreshing: isRefreshing),
+                const SizedBox(height: 14),
+              ] else ...[
+                // 1. Header Row
+                _buildHeaderRow(isMobile, isRefreshing: isRefreshing),
+                const SizedBox(height: 22),
 
-              // 2. Top 4 KPI Metrics Row
-              _buildTopKpiRow(screenWidth),
-              const SizedBox(height: 22),
+                // 2. Top 4 KPI Metrics Row
+                _buildTopKpiRow(screenWidth),
+                const SizedBox(height: 22),
+              ],
 
               // 3. Segmented 3 Tabs Row + Search
               _buildTabsRow(isMobile),
@@ -513,6 +522,269 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
         ],
       ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MOBILE OS REDESIGN: HERO SUMMARY & COMPACT ACTION ROW (Expenses-style)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileHeroSummary(bool isRefreshing) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Audit Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.creditCard,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'PAYMENTS & CASH FLOW ENGINE',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE AUDIT',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'Receivables',
+                  '₹${_fmt(_outstandingReceivables)}',
+                  LucideIcons.trendingUp,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Collections',
+                  '₹${_fmt(_dailyCollections)}',
+                  LucideIcons.trendingDown,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Combined',
+                  '₹${_fmt(_combinedBalances)}',
+                  LucideIcons.calendar,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'Efficiency',
+                  _efficiencyRate,
+                  LucideIcons.checkCircle2,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileActionRow(bool isMobile, {bool isRefreshing = false}) {
+    return Row(
+      children: [
+        IconButton(
+          key: const Key('header_reload_transactions_button'),
+          onPressed: () => _loadData(isManualReload: true),
+          icon: isRefreshing
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF166534)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 14, color: Color(0xFF166534)),
+          tooltip: 'Reload Transactions',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton(
+            key: const Key('header_send_payment_button'),
+            onPressed: _openSupplierDisbursementModal,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(LucideIcons.arrowUpRight, size: 13, color: Color(0xFF0F172A)),
+                SizedBox(width: 4),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Send Payment',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton(
+            key: const Key('header_receive_payment_button'),
+            onPressed: _openCustomerPaymentModal,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF14532D),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(LucideIcons.arrowDownLeft, size: 13, color: Colors.white),
+                SizedBox(width: 4),
+                Flexible(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'Receive Payment',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -879,29 +1151,40 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                         _activeTab = index;
                       });
                     },
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      padding: isMobile
+                          ? const EdgeInsets.symmetric(horizontal: 10, vertical: 5.5)
+                          : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       decoration: BoxDecoration(
                         color: isSelected ? const Color(0xFF166534) : Colors.white,
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                         border: Border.all(
                           color: isSelected ? const Color(0xFF166534) : const Color(0xFFE2E8F0),
                         ),
+                        boxShadow: isSelected
+                            ? [
+                                BoxShadow(
+                                  color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ]
+                            : null,
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Icon(
                             t['icon'] as IconData,
-                            size: 15,
+                            size: isMobile ? 12 : 15,
                             color: isSelected ? Colors.white : const Color(0xFF64748B),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: isMobile ? 5 : 8),
                           Text(
                             t['label'] as String,
                             style: TextStyle(
-                              fontSize: 12.5,
+                              fontSize: isMobile ? 10.5 : 12.5,
                               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                               color: isSelected ? Colors.white : const Color(0xFF334155),
                             ),
@@ -925,24 +1208,24 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                 _isSearchOpen = true;
               });
             },
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
             child: Container(
-              width: 38,
-              height: 38,
+              width: isMobile ? 32 : 38,
+              height: isMobile ? 32 : 38,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(isMobile ? 8 : 10),
                 border: Border.all(color: const Color(0xFFE2E8F0)),
               ),
-              child: const Center(
-                child: Icon(LucideIcons.search, size: 16, color: Color(0xFF64748B)),
+              child: Center(
+                child: Icon(LucideIcons.search, size: isMobile ? 14 : 16, color: const Color(0xFF64748B)),
               ),
             ),
           )
         else
           Container(
-            width: isMobile ? 160 : 230,
-            height: 38,
+            width: isMobile ? 150 : 230,
+            height: isMobile ? 32 : 38,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(10),
@@ -1079,10 +1362,12 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                   actionLabel: 'Receive Payment',
                   onAction: _openCustomerPaymentModal,
                 )
-              : SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  child: ConstrainedBox(
+              : isMobile
+                  ? _buildMobileTransactionCardsList(list)
+                  : SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minWidth: screenWidth >= 900 ? screenWidth - 64 : 880,
                     ),
@@ -1219,6 +1504,140 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                 ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMobileTransactionCardsList(List<PaymentLedgerItem> list) {
+    return Column(
+      children: list.map((item) {
+        final isReceive = item.isReceive;
+        final flowColor = isReceive ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+        final flowBg = isReceive ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2);
+        final flowLabel = isReceive ? 'INWARD' : 'OUTWARD';
+        final flowIcon = isReceive ? LucideIcons.arrowDownLeft : LucideIcons.arrowUpRight;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x06000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Party Name & Transacted Amount (Modeled after Expenses Registry)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.partyName.isNotEmpty ? item.partyName : 'Direct Customer',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${isReceive ? '+' : '-'}₹${_fmt(item.displayTransactedAmount)}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: flowColor,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+
+              // Row 2: Entry ID pill, Flow Type badge, Ref & Date (Clean inline metadata)
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF1F5F9),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      item.entryDisplayId,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: flowBg,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(flowIcon, size: 9, color: flowColor),
+                        const SizedBox(width: 2.5),
+                        Text(
+                          flowLabel,
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            color: flowColor,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (item.displayReference.isNotEmpty && item.displayReference != '-') ...[
+                    const SizedBox(width: 6),
+                    Flexible(
+                      child: Text(
+                        'Ref: ${item.displayReference}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
+                  Text(
+                    item.dateFormatted,
+                    style: const TextStyle(
+                      fontSize: 10.5,
+                      color: Color(0xFF94A3B8),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -1512,7 +1931,9 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                       actionLabel: 'Receive Payment',
                       onAction: _openCustomerPaymentModal,
                     )
-                  : SingleChildScrollView(
+                  : isMobile
+                      ? _buildMobileOverdueCardsList(list)
+                      : SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
                       physics: const BouncingScrollPhysics(),
                       child: ConstrainedBox(
@@ -1683,6 +2104,163 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildMobileOverdueCardsList(List<Map<String, dynamic>> list) {
+    return Column(
+      children: list.map((item) {
+        final total = ((item['total_amount'] ?? item['totalBill'] ?? item['grand_total'] ?? item['amount'] ?? 0) as num).toDouble();
+        final paid = ((item['paid_amount'] ?? item['paidAmount'] ?? 0) as num).toDouble();
+        final due = ((item['due_amount'] ?? item['dueBalance'] ?? item['pending_amount'] ?? (total - paid)) as num).toDouble();
+        final customerName = (item['customer_name'] ?? item['customerName'] ?? item['client_name'] ?? item['party_name'] ?? 'Walk-in Customer').toString();
+        final invNo = (item['invoice_number'] ?? item['invoiceNo'] ?? item['invoice_id'] ?? item['id'] ?? 'INV-001').toString();
+        final dueDate = (item['due_date'] ?? item['dueDate'] ?? item['created_at'] ?? '—').toString().split('T').first;
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x05000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Invoice # + Due Amount
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      invNo,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '₹${_fmt(due)} Due',
+                      style: const TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Row 2: Customer Name
+              Text(
+                customerName,
+                style: const TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF334155),
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 6),
+              // Row 3: Total Bill / Paid / Due Date
+              Row(
+                children: [
+                  Flexible(
+                    child: Text(
+                      'Total: ₹${_fmt(total)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      'Paid: ₹${_fmt(paid)}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF16A34A)),
+                    ),
+                  ),
+                  const Spacer(),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(LucideIcons.calendar, size: 11, color: Color(0xFF64748B)),
+                      const SizedBox(width: 3),
+                      Text(
+                        dueDate,
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 8),
+              // Row 4: Status + Send Reminder
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildOverdueStatusCell(item, due, dueDate),
+                  InkWell(
+                    onTap: () {
+                      HapticFeedback.lightImpact();
+                      AppSnackbar.show(
+                        context,
+                        "Overdue reminder dispatched to '$customerName' for invoice $invNo!",
+                        type: SnackType.success,
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFE8FDF3),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFA7F3D0)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: const [
+                          Icon(LucideIcons.send, size: 11, color: Color(0xFF059669)),
+                          SizedBox(width: 4),
+                          Text(
+                            'Send Reminder',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF059669),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 
@@ -1966,6 +2544,8 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
               actionLabel: '+ Post Entry',
               onAction: _openAddTransactionModal,
             )
+          else if (isMobile)
+            _buildMobileBankRegisterCardsList(accountTx)
           else
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
@@ -2064,6 +2644,108 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildMobileBankRegisterCardsList(List<CashFlowTransaction> accountTx) {
+    return Column(
+      children: accountTx.map((row) {
+        final isIncome = row.isIncome;
+        final amtStr = isIncome ? '+₹${_fmt(row.amount)}' : '-₹${_fmt(row.amount)}';
+        final amtColor = isIncome ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+        final amtBg = isIncome ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2);
+        final flowLabel = isIncome ? 'CREDIT' : 'DEBIT';
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x05000000),
+                blurRadius: 4,
+                offset: Offset(0, 1),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Row 1: Description + Amount
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      row.displayTitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      amtStr,
+                      style: TextStyle(
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: amtColor,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              // Row 2: Date + Type Badge + Ref
+              Row(
+                children: [
+                  Text(
+                    row.formattedDate.isNotEmpty ? row.formattedDate : '—',
+                    style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: amtBg,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      flowLabel,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        fontWeight: FontWeight.w800,
+                        color: amtColor,
+                      ),
+                    ),
+                  ),
+                  if (row.reference != null && row.reference!.isNotEmpty && row.reference != '-') ...[
+                    const Spacer(),
+                    Flexible(
+                      child: Text(
+                        'Ref: ${row.reference}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 

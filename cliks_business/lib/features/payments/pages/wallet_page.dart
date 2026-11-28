@@ -296,43 +296,44 @@ class WalletPage extends StatelessWidget {
           ),
           const Divider(height: 1, color: AppColors.tableBorder),
 
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = math.max(constraints.maxWidth, 800.0);
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: SizedBox(
-                  width: tableWidth,
-                  child: Table(
-                    defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-                    columnWidths: const {
-                      0: FlexColumnWidth(1.8), // TRANSACTION ID
-                      1: FlexColumnWidth(1.6), // DATE & TIME
-                      2: FlexColumnWidth(2.6), // DESCRIPTION
-                      3: FlexColumnWidth(1.4), // DIRECTION
-                      4: FlexColumnWidth(1.4), // AMOUNT
-                    },
-                    children: const [
-                      TableRow(
-                        decoration: BoxDecoration(
-                          color: Color(0xFFF8FAFC),
-                          border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+          if (!isMobile)
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final tableWidth = math.max(constraints.maxWidth, 800.0);
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Table(
+                      defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                      columnWidths: const {
+                        0: FlexColumnWidth(1.8), // TRANSACTION ID
+                        1: FlexColumnWidth(1.6), // DATE & TIME
+                        2: FlexColumnWidth(2.6), // DESCRIPTION
+                        3: FlexColumnWidth(1.4), // DIRECTION
+                        4: FlexColumnWidth(1.4), // AMOUNT
+                      },
+                      children: const [
+                        TableRow(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFF8FAFC),
+                            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+                          ),
+                          children: [
+                            Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('TRANSACTION ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                            Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DATE & TIME', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                            Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DESCRIPTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                            Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DIRECTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                            Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
+                          ],
                         ),
-                        children: [
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('TRANSACTION ID', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DATE & TIME', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DESCRIPTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('DIRECTION', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 20, vertical: 16), child: Text('AMOUNT', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: AppColors.darkText))),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
+                );
+              },
+            ),
 
           // No records indicator
           Container(

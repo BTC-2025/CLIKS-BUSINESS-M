@@ -8,83 +8,119 @@ import 'package:clicks_business_frontend/features/payments/pages/transaction_pag
 import 'package:clicks_business_frontend/features/payments/pages/segregation_page.dart';
 
 void main() {
-  testWidgets('PeoplePage renders cleanly on mobile screen (360x800) without overflow', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(360, 800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+  const testWidths = [320.0, 360.0, 390.0];
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(body: PeoplePage()),
-        ),
-      ),
-    );
-    await tester.pump();
+  for (final width in testWidths) {
+    group('Viewport width: ${width}px', () {
+      testWidgets('PeoplePage renders without overflow', (tester) async {
+        tester.view.physicalSize = Size(width, 740);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.binding.setSurfaceSize(Size(width, 740));
+        addTearDown(() async {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          await tester.binding.setSurfaceSize(null);
+        });
 
-    expect(tester.takeException(), isNull);
-  });
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(body: PeoplePage()),
+            ),
+          ),
+        );
+        await tester.pump();
 
-  testWidgets('SplitCollectPage renders cleanly on mobile screen (360x800) without overflow', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(360, 800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+        expect(tester.takeException(), isNull);
+      });
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(body: SplitCollectPage()),
-        ),
-      ),
-    );
-    await tester.pump();
+      testWidgets('SplitCollectPage renders without overflow', (tester) async {
+        tester.view.physicalSize = Size(width, 740);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.binding.setSurfaceSize(Size(width, 740));
+        addTearDown(() async {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          await tester.binding.setSurfaceSize(null);
+        });
 
-    expect(tester.takeException(), isNull);
-  });
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(body: SplitCollectPage()),
+            ),
+          ),
+        );
+        await tester.pump();
 
-  testWidgets('PlannerPage renders cleanly on mobile screen (360x800) without overflow', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(360, 800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+        expect(tester.takeException(), isNull);
+      });
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(body: PlannerPage()),
-        ),
-      ),
-    );
-    await tester.pump();
+      testWidgets('PlannerPage renders without overflow', (tester) async {
+        tester.view.physicalSize = Size(width, 740);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.binding.setSurfaceSize(Size(width, 740));
+        addTearDown(() async {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          await tester.binding.setSurfaceSize(null);
+        });
 
-    expect(tester.takeException(), isNull);
-  });
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(body: PlannerPage()),
+            ),
+          ),
+        );
+        await tester.pump();
 
-  testWidgets('TransactionPage renders cleanly on mobile screen (360x800) without overflow', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(360, 800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+        expect(tester.takeException(), isNull);
+      });
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(body: TransactionPage()),
-        ),
-      ),
-    );
-    await tester.pump();
+      testWidgets('TransactionPage renders without overflow', (tester) async {
+        tester.view.physicalSize = Size(width, 740);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.binding.setSurfaceSize(Size(width, 740));
+        addTearDown(() async {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          await tester.binding.setSurfaceSize(null);
+        });
 
-    expect(tester.takeException(), isNull);
-  });
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(body: TransactionPage()),
+            ),
+          ),
+        );
+        await tester.pump();
 
-  testWidgets('SegregationPage renders cleanly on mobile screen (360x800) without overflow', (tester) async {
-    await tester.binding.setSurfaceSize(const Size(360, 800));
-    addTearDown(() async => await tester.binding.setSurfaceSize(null));
+        expect(tester.takeException(), isNull);
+      });
 
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: Scaffold(body: SegregationPage()),
-        ),
-      ),
-    );
-    await tester.pump();
+      testWidgets('SegregationPage renders without overflow', (tester) async {
+        tester.view.physicalSize = Size(width, 740);
+        tester.view.devicePixelRatio = 1.0;
+        await tester.binding.setSurfaceSize(Size(width, 740));
+        addTearDown(() async {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+          await tester.binding.setSurfaceSize(null);
+        });
 
-    expect(tester.takeException(), isNull);
-  });
+        await tester.pumpWidget(
+          const ProviderScope(
+            child: MaterialApp(
+              home: Scaffold(body: SegregationPage()),
+            ),
+          ),
+        );
+        await tester.pump();
+
+        expect(tester.takeException(), isNull);
+      });
+    });
+  }
 }

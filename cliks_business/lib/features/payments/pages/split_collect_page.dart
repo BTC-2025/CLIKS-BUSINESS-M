@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../models/account_model.dart';
 import '../../../data/account_provider.dart';
@@ -2594,8 +2595,8 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
     });
 
     final screenWidth = MediaQuery.of(context).size.width;
-    final isMobile = screenWidth < 950;
-    final paddingVal = isMobile ? 16.0 : 28.0;
+    final isMobile = screenWidth < 700;
+    final paddingVal = isMobile ? 12.0 : 28.0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
@@ -2613,8 +2614,18 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildTopHeader(context, isMobile, isRefreshing: isRefreshing),
-              const SizedBox(height: 20),
+              if (isMobile) ...[
+                // Mobile Hero Summary & Compact Action Row (Expenses-style)
+                _buildMobileHeroSummary(isRefreshing),
+                const SizedBox(height: 12),
+                if (_selectedTicket == null) ...[
+                  _buildMobileActionRow(isMobile, isRefreshing),
+                  const SizedBox(height: 14),
+                ],
+              ] else ...[
+                _buildTopHeader(context, isMobile, isRefreshing: isRefreshing),
+                const SizedBox(height: 20),
+              ],
 
               _selectedTicket != null
                   ? _buildTicketDetailView(context, isMobile, _selectedTicket!)
@@ -2623,6 +2634,230 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
           ),
         ),
       ),
+    );
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // MOBILE OS REDESIGN: HERO SUMMARY & COMPACT ACTION ROW (Expenses-style)
+  // ══════════════════════════════════════════════════════════════════════════
+  Widget _buildMobileHeroSummary(bool isRefreshing) {
+    final ticketsCount = SplitExpenseStore.tickets.length;
+    double totalOwed = 0;
+    double totalOwe = 0;
+    for (final f in _friendSummaries) {
+      if (f.totalOwed > 0) totalOwed += f.totalOwed;
+      if (f.totalOwed < 0) totalOwe += f.totalOwed.abs();
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: AppColors.heroGradientColors,
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.heroShadowColor,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Top Row: Section Category + Live Sync Pill
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Icon(
+                        LucideIcons.users,
+                        color: Colors.white,
+                        size: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    const Expanded(
+                      child: Text(
+                        'SPLIT & COLLECT EXPENSES',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.activity,
+                      size: 11,
+                      color: Colors.greenAccent.shade100,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'LIVE SYNC',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.greenAccent.shade100,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                _buildHeroKpiChip(
+                  'Sessions',
+                  '$ticketsCount Active',
+                  LucideIcons.receipt,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'You are Owed',
+                  '₹${totalOwed.toStringAsFixed(0)}',
+                  LucideIcons.trendingUp,
+                ),
+                const SizedBox(width: 6),
+                _buildHeroKpiChip(
+                  'You Owe',
+                  '₹${totalOwe.toStringAsFixed(0)}',
+                  LucideIcons.trendingDown,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroKpiChip(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Colors.white.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: Colors.white),
+          const SizedBox(width: 5),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.75),
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMobileActionRow(bool isMobile, bool isRefreshing) {
+    return Row(
+      children: [
+        IconButton(
+          onPressed: () => _loadData(isManualReload: true),
+          icon: isRefreshing
+              ? const SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0E4D34)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 14, color: Color(0xFF0E4D34)),
+          tooltip: 'Reload Split Tickets',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(8),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: const BorderSide(color: Color(0xFFE2E8F0)),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: _createNewTicket,
+            icon: const Icon(LucideIcons.plus, size: 14, color: Colors.white),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                'New Split Ticket',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11.5,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0E4D34),
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -4053,17 +4288,17 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                     child: InkWell(
                       onTap: () =>
                           setState(() => _selectedCategoryFilter = cat),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(isMobile ? 8 : 20),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 5,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isMobile ? 10 : 12,
+                          vertical: isMobile ? 4.5 : 5,
                         ),
                         decoration: BoxDecoration(
                           color: isSelected
                               ? const Color(0xFF0E4D34)
                               : Colors.white,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(isMobile ? 8 : 20),
                           border: Border.all(
                             color: isSelected
                                 ? const Color(0xFF0E4D34)
@@ -4073,7 +4308,7 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                         child: Text(
                           cat,
                           style: TextStyle(
-                            fontSize: 11.5,
+                            fontSize: isMobile ? 10.5 : 11.5,
                             fontWeight: FontWeight.w700,
                             color: isSelected
                                 ? Colors.white
@@ -4608,46 +4843,57 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
               // Header Row
               Row(
                 children: [
-                  Text(
-                    'Members & Balances (${members.length})',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Members & Balances (${members.length})',
+                            style: const TextStyle(
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            ticket['currency'] as String? ?? 'INR',
+                            style: const TextStyle(
+                              color: Color(0xFF2563EB),
+                              fontSize: 9.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      ticket['currency'] as String? ?? 'INR',
-                      style: const TextStyle(
-                        color: Color(0xFF2563EB),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
+                  const SizedBox(width: 6),
                   OutlinedButton.icon(
                     onPressed: () => _showInviteMemberDialog(ticket),
                     icon: const Icon(
                       LucideIcons.userPlus,
-                      size: 12,
+                      size: 11,
                       color: Color(0xFF059669),
                     ),
                     label: const Text(
                       'Invite',
                       style: TextStyle(
                         color: Color(0xFF059669),
-                        fontSize: 11.5,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -4655,15 +4901,15 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                       side: const BorderSide(color: Color(0xFF10B981)),
                       backgroundColor: const Color(0xFFECFDF5),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
+                        horizontal: 8,
+                        vertical: 5,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 6),
                   InkWell(
                     onTap: () => setState(
                       () => _isMembersExpanded = !_isMembersExpanded,
@@ -4712,62 +4958,74 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              Row(
-                                children: [
-                                  Text(
-                                    name,
-                                    style: const TextStyle(
-                                      fontSize: 14.5,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFF065F46),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: const Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          LucideIcons.crown,
-                                          size: 11,
-                                          color: Colors.white,
+                              Expanded(
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        name,
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF0F172A),
                                         ),
-                                        SizedBox(width: 4),
-                                        Text(
-                                          'Creator & Admin',
-                                          style: TextStyle(
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2.5,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF065F46),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: const Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            LucideIcons.crown,
+                                            size: 10,
                                             color: Colors.white,
-                                            fontSize: 10.5,
-                                            fontWeight: FontWeight.w700,
                                           ),
-                                        ),
-                                      ],
+                                          SizedBox(width: 3),
+                                          Text(
+                                            'Creator & Admin',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 9.5,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                              Text(
-                                balance.abs() <= 0.005
-                                    ? 'Settled'
-                                    : '${balance > 0 ? '+' : '-'}₹${_formatAmount(balance.abs())}',
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w800,
-                                  color: balance > 0.005
-                                      ? const Color(0xFF059669)
-                                      : (balance < -0.005
+                              const SizedBox(width: 8),
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                alignment: Alignment.centerRight,
+                                child: Text(
+                                  balance.abs() <= 0.005
+                                      ? 'Settled'
+                                      : '${balance > 0 ? '+' : '-'}₹${_formatAmount(balance.abs())}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: balance > 0.005
+                                        ? const Color(0xFF059669)
+                                        : (balance < -0.005
                                             ? const Color(0xFFEF4444)
                                             : const Color(0xFF64748B)),
+                                  ),
                                 ),
                               ),
                             ],
