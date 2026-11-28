@@ -827,8 +827,6 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     cursor: SystemMouseCursors.click,
                     child: GestureDetector(
                       onTap: () {
-                        ref.read(macosBetaAppsVisibleProvider.notifier).state =
-                            false;
                         ref.read(macosAccountMenuVisibleProvider.notifier).state =
                             false;
                         ref
@@ -1004,8 +1002,6 @@ class _TopNavBarState extends ConsumerState<TopNavBar> {
                     height: (screenWidth < 1250) ? 32.0 : 36.0,
                     tooltip: 'Account Settings',
                     onTap: () {
-                      ref.read(macosBetaAppsVisibleProvider.notifier).state =
-                          false;
                       ref.read(macosShowroomMenuVisibleProvider.notifier).state =
                           false;
                       ref

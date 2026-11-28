@@ -596,7 +596,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -1006,7 +1005,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -1245,7 +1243,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -1710,7 +1707,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -2481,7 +2477,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -2865,7 +2860,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 18, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,
@@ -3460,7 +3454,6 @@ class _MacOSRightUtilityRailState extends ConsumerState<MacOSRightUtilityRail> {
                 icon: const Icon(LucideIcons.x, size: 16, color: Color(0xFF6B7280)),
                 onPressed: () {
                   setState(() => _activeTool = null);
-                  ref.read(macosBetaAppsVisibleProvider.notifier).state = false;
                 },
                 tooltip: 'Close panel',
                 padding: EdgeInsets.zero,

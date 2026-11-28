@@ -421,74 +421,86 @@ class _BentoMetricCardState extends State<BentoMetricCard> {
                       ),
                     ),
                     if (widget.hasLiveBadge)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 9, vertical: 3.5),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFDCF2E4),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: const Color(0xFF166534).withValues(alpha: 0.2),
-                            width: 0.5,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 9, vertical: 3.5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCF2E4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFF166534).withValues(alpha: 0.2),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 6,
+                                  height: 6,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF166534),
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Live',
+                                  style: GoogleFonts.inter(
+                                    color: const Color(0xFF166534),
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF166534),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              'Live',
-                              style: GoogleFonts.inter(
-                                color: const Color(0xFF166534),
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ],
                         ),
                       )
                     else if (widget.trendText != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: widget.isTrendPositive
-                              ? const Color(0xFFDCF2E4)
-                              : const Color(0xFFFFE4E6),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              widget.isTrendPositive
-                                  ? LucideIcons.trendingUp
-                                  : LucideIcons.trendingDown,
-                              size: 11,
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          alignment: Alignment.centerRight,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
                               color: widget.isTrendPositive
-                                  ? const Color(0xFF166534)
-                                  : const Color(0xFFE11D48),
+                                  ? const Color(0xFFDCF2E4)
+                                  : const Color(0xFFFFE4E6),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.trendText!,
-                              style: GoogleFonts.inter(
-                                fontSize: 10.5,
-                                fontWeight: FontWeight.w700,
-                                color: widget.isTrendPositive
-                                  ? const Color(0xFF166534)
-                                  : const Color(0xFFE11D48),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  widget.isTrendPositive
+                                      ? LucideIcons.trendingUp
+                                      : LucideIcons.trendingDown,
+                                  size: 11,
+                                  color: widget.isTrendPositive
+                                      ? const Color(0xFF166534)
+                                      : const Color(0xFFE11D48),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  widget.trendText!,
+                                  style: GoogleFonts.inter(
+                                    fontSize: 10.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: widget.isTrendPositive
+                                      ? const Color(0xFF166534)
+                                      : const Color(0xFFE11D48),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
                   ],

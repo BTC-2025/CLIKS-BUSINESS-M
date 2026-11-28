@@ -331,7 +331,10 @@ class DashboardPage extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
                 children: [
                   const Text(
                     'Business Overview',
@@ -342,7 +345,6 @@ class DashboardPage extends ConsumerWidget {
                       letterSpacing: -0.4,
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2.5),
                     decoration: BoxDecoration(
@@ -392,8 +394,10 @@ class DashboardPage extends ConsumerWidget {
   }
 
   Widget _buildHeaderControlsSection(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 10,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         // FY and Date Selector Pill (Reference 1)
         Container(
@@ -419,7 +423,6 @@ class DashboardPage extends ConsumerWidget {
             ],
           ),
         ),
-        const SizedBox(width: 10),
 
         // Customize Dashboard Button (Reference 1)
         OutlinedButton.icon(
@@ -548,50 +551,61 @@ class DashboardPage extends ConsumerWidget {
       animationDelayMs: 200,
     );
 
-    if (isMobile) {
-      return Column(
-        children: [
-          revenueCard,
-          const SizedBox(height: 12),
-          purchasesCard,
-          const SizedBox(height: 12),
-          expensesCard,
-          const SizedBox(height: 12),
-          netProfitCard,
-        ],
-      );
-    } else if (isTablet) {
-      return Column(
-        children: [
-          Row(
-            children: [
-              Expanded(child: revenueCard),
-              const SizedBox(width: 14),
-              Expanded(child: purchasesCard),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(child: expensesCard),
-              const SizedBox(width: 14),
-              Expanded(child: netProfitCard),
-            ],
-          ),
-        ],
-      );
-    }
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth;
 
-    return Row(
-      children: [
-        Expanded(child: revenueCard),
-        const SizedBox(width: 14),
-        Expanded(child: purchasesCard),
-        const SizedBox(width: 14),
-        Expanded(child: expensesCard),
-        const SizedBox(width: 14),
-        Expanded(child: netProfitCard),
-      ],
+        // Single column for narrow viewports
+        if (isMobile || availableWidth < 600) {
+          return Column(
+            children: [
+              revenueCard,
+              const SizedBox(height: 12),
+              purchasesCard,
+              const SizedBox(height: 12),
+              expensesCard,
+              const SizedBox(height: 12),
+              netProfitCard,
+            ],
+          );
+        }
+
+        // 2x2 grid when space is constrained (e.g. tablet or desktop with side panel open)
+        if (isTablet || availableWidth < 1050) {
+          return Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: revenueCard),
+                  const SizedBox(width: 14),
+                  Expanded(child: purchasesCard),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(child: expensesCard),
+                  const SizedBox(width: 14),
+                  Expanded(child: netProfitCard),
+                ],
+              ),
+            ],
+          );
+        }
+
+        // 4 columns in 1 row for spacious desktops
+        return Row(
+          children: [
+            Expanded(child: revenueCard),
+            const SizedBox(width: 14),
+            Expanded(child: purchasesCard),
+            const SizedBox(width: 14),
+            Expanded(child: expensesCard),
+            const SizedBox(width: 14),
+            Expanded(child: netProfitCard),
+          ],
+        );
+      },
     );
   }
 
