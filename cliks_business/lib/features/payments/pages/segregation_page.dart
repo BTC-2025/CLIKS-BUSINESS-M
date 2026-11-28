@@ -12,6 +12,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../data/models/goal_wallet_models.dart';
 import '../../../data/repositories/goal_wallet_repository.dart';
 import '../../navigation/widgets/macos_showroom_menu_card.dart';
+import '../providers/payments_refresh_coordinator.dart';
 
 class SegregationPage extends ConsumerStatefulWidget {
   const SegregationPage({super.key});
@@ -33,6 +34,10 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
   @override
   void initState() {
     super.initState();
+    final cached = ref.read(paymentsSegregationDataProvider);
+    if (cached != null) {
+      _wallets = cached.wallets;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -66,36 +71,41 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
     return isNegative ? '-$result' : result;
   }
 
-  Future<void> _loadData([String? accountEmail]) async {
+  Future<void> _loadData({bool isManualReload = false}) async {
     final version = ++_loadVersion;
-    final activeEmail = (accountEmail != null && accountEmail.trim().isNotEmpty)
-        ? accountEmail.trim().toLowerCase()
-        : ref.read(activeAccountProvider).email.trim().toLowerCase();
 
     if (mounted) {
       setState(() {
-        _isLoading = true;
+        _isLoading = _wallets.isEmpty;
         _errorMessage = null;
       });
     }
 
     try {
-      final fetched = await GoalWalletRepository.getGoalWallets(
-        email: activeEmail,
-      );
+      await ref.read(paymentsRefreshCoordinatorProvider.notifier).loadModule(
+            PaymentsModule.segregation,
+            isManualReload: isManualReload,
+          );
+      final data = ref.read(paymentsSegregationDataProvider);
       if (version != _loadVersion || !mounted) return;
 
-      setState(() {
-        _wallets = fetched;
-        _isLoading = false;
-        _errorMessage = null;
-      });
+      if (data != null) {
+        setState(() {
+          _wallets = data.wallets;
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
     } catch (e) {
       if (version != _loadVersion || !mounted) return;
       setState(() {
         _isLoading = false;
         _errorMessage = e is ApiException ? e.message : e.toString();
       });
+    } finally {
+      if (version == _loadVersion && mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -124,7 +134,8 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
       builder: (context) => SetupTargetWalletDialog(
         activeEmail: activeEmail,
         onWalletCreated: (created) {
-          _loadData();
+          _loadData(isManualReload: true);
+          ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.segregation);
         },
       ),
     );
@@ -267,7 +278,8 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
                                     "Successfully extracted ₹$savedFormatted for \"$title\" into reserves!",
                                     type: SnackType.success,
                                   );
-                                  _loadData();
+                                  _loadData(isManualReload: true);
+                                  ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.segregation);
                                 } catch (e) {
                                   setModalState(() => isClaiming = false);
                                   final msg = e is ApiException
@@ -765,7 +777,8 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
                                       type: SnackType.success,
                                     );
                                   }
-                                  _loadData();
+                                  _loadData(isManualReload: true);
+                                  ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.segregation);
                                 } catch (e) {
                                   setSheetState(() => isSubmitting = false);
                                   final msg = e is ApiException
@@ -1026,7 +1039,8 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
                                   "Purpose wallet '$newTitle' updated successfully!",
                                   type: SnackType.success,
                                 );
-                                _loadData();
+                                _loadData(isManualReload: true);
+                                ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.segregation);
                               } catch (e) {
                                 setEditState(() => isSaving = false);
                                 final msg = e is ApiException
@@ -1123,7 +1137,8 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
                             "Purpose wallet '$title' deleted.",
                             type: SnackType.info,
                           );
-                          _loadData();
+                          _loadData(isManualReload: true);
+                          ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.segregation);
                         } catch (e) {
                           setDialogState(() => isDeleting = false);
                           final msg = e is ApiException
@@ -1170,16 +1185,33 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final coordinatorState = ref.watch(paymentsRefreshCoordinatorProvider);
+    final isRefreshing = coordinatorState.statusOf(PaymentsModule.segregation) == ModuleLoadStatus.refreshing;
+    final cached = coordinatorState.segregationData;
+    if (cached != null && _wallets.isEmpty) {
+      _wallets = cached.wallets;
+    }
+
     ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
-      if (previous?.email != next.email || previous?.id != next.id) {
+      final prevEmail = previous?.email.trim().toLowerCase() ?? '';
+      final nextEmail = next.email.trim().toLowerCase();
+      if (prevEmail.isNotEmpty && nextEmail.isNotEmpty && prevEmail != nextEmail) {
         ApiClient.clearCliksToken();
-        _loadData(next.email);
+        setState(() {
+          _wallets = [];
+          _isLoading = true;
+        });
+        _loadData(isManualReload: true);
       }
     });
 
     ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
-      if (previous != next) {
-        _loadData();
+      if (previous != null && previous.isNotEmpty && previous != next) {
+        setState(() {
+          _wallets = [];
+          _isLoading = true;
+        });
+        _loadData(isManualReload: true);
       }
     });
 
@@ -1216,7 +1248,7 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Top Section Header (matching screenshot)
-            _buildPageHeader(context, isMobile),
+            _buildPageHeader(context, isMobile, isRefreshing: isRefreshing),
             const SizedBox(height: 12),
 
             // Optional Expandable Search Input
@@ -1283,7 +1315,7 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
   // ══════════════════════════════════════════════════════════════════════════
   // PAGE HEADER
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildPageHeader(BuildContext context, bool isMobile) {
+  Widget _buildPageHeader(BuildContext context, bool isMobile, {bool isRefreshing = false}) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1347,6 +1379,27 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
         ),
         if (!isMobile) ...[
           const SizedBox(width: 16),
+          IconButton(
+            key: const Key('header_reload_segregation_button'),
+            onPressed: () => _loadData(isManualReload: true),
+            icon: isRefreshing
+                ? const SizedBox(
+                    width: 15,
+                    height: 15,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0F5B2E)),
+                  )
+                : const Icon(LucideIcons.refreshCw, size: 15, color: Color(0xFF0F5B2E)),
+            tooltip: 'Reload Wallets',
+            style: IconButton.styleFrom(
+              backgroundColor: Colors.white,
+              padding: const EdgeInsets.all(10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+                side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
           ElevatedButton.icon(
             onPressed: _openSetupTargetWalletDialog,
             icon: const Icon(LucideIcons.plus, size: 16),

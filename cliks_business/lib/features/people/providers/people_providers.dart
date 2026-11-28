@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/network/api_exception.dart';
 import '../../../data/models/people_models.dart';
 import '../../../data/repositories/people_repository.dart';
+import '../../payments/providers/payments_refresh_coordinator.dart';
 
 @immutable
 class PeopleState {
@@ -69,10 +70,20 @@ class PeopleState {
 }
 
 class PeopleNotifier extends StateNotifier<PeopleState> {
-  PeopleNotifier() : super(const PeopleState());
+  final Ref? ref;
+  int _generation = 0;
+
+  PeopleNotifier([this.ref]) : super(const PeopleState());
+
+  void resetAndReload() {
+    _generation++;
+    state = const PeopleState(isLoading: true);
+    loadAll();
+  }
 
   /// Load all 5 sub-sections in parallel on initial load or manual refresh
   Future<void> loadAll({bool isRefresh = false}) async {
+    final currentGen = _generation;
     if (isRefresh) {
       state = state.copyWith(isRefreshing: true, clearError: true);
     } else {
@@ -88,6 +99,8 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         PeopleRepository.getFinancialGroups(),
         PeopleRepository.getIncomingGroupRequests(),
       ]);
+
+      if (currentGen != _generation) return; // Stale account response discarded
 
       final contacts = results[0] as List<PersonContact>;
       final transactions = results[1] as List<PersonTransaction>;
@@ -112,6 +125,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         groups: groups,
       );
     } catch (e) {
+      if (currentGen != _generation) return;
       state = state.copyWith(
         isLoading: false,
         isRefreshing: false,
@@ -135,6 +149,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
       );
       // Background sync to ensure all server balances are consistent
       await loadContacts();
+      ref?.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.people);
       return created;
     } catch (e) {
       state = state.copyWith(
@@ -266,6 +281,10 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         loadContacts(),
         loadTransactions(),
       ]);
+      ref?.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(
+        PaymentsModule.people,
+        alsoRefresh: [PaymentsModule.transactions],
+      );
       return tx;
     } catch (e) {
       state = state.copyWith(
@@ -429,6 +448,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
         groups: [created, ...state.groups],
       );
       await loadGroups();
+      ref?.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.people);
       return created;
     } catch (e) {
       state = state.copyWith(
@@ -625,6 +645,7 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
       final ok = await PeopleRepository.respondToGroupRequest(membershipId, apiAction);
       await loadGroups();
       await loadContacts();
+      ref?.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.people);
       return ok;
     } catch (e) {
       state = state.copyWith(
@@ -771,5 +792,5 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
 }
 
 final peopleProvider = StateNotifierProvider<PeopleNotifier, PeopleState>((ref) {
-  return PeopleNotifier();
+  return PeopleNotifier(ref);
 });

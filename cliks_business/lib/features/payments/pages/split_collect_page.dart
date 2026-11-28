@@ -11,6 +11,7 @@ import '../../../data/repositories/split_collect_repository.dart';
 import '../../../core/network/api_client.dart';
 import '../../navigation/widgets/macos_showroom_menu_card.dart';
 import '../widgets/create_split_ticket_dialog.dart';
+import '../providers/payments_refresh_coordinator.dart';
 
 // Persistent In-Memory Store for Split Expenses across navigation tabs
 class SplitExpenseStore {
@@ -40,41 +41,48 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
   @override
   void initState() {
     super.initState();
+    final cached = ref.read(paymentsSplitCollectDataProvider);
+    if (cached != null) {
+      _applySplitData(cached);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
   }
 
-  Future<void> _loadData([String? accountEmail]) async {
-    final version = ++_loadVersion;
-    final activeEmail = (accountEmail != null && accountEmail.trim().isNotEmpty)
-        ? accountEmail.trim().toLowerCase()
-        : ref.read(activeAccountProvider).email.trim().toLowerCase();
+  void _applySplitData(SplitCollectModuleData data) {
+    SplitExpenseStore.tickets = data.tickets.map((t) => t.toMap()).toList();
+    _friendSummaries = data.friendSummaries;
+    if (SplitExpenseStore.tickets.isEmpty) {
+      _selectedTicketId = null;
+    } else if (_selectedTicketId != null &&
+        !SplitExpenseStore.tickets.any((t) => t['id'] == _selectedTicketId)) {
+      _selectedTicketId = SplitExpenseStore.tickets.first['id'];
+    }
+  }
 
-    if (mounted) setState(() => _isLoading = true);
+  Future<void> _loadData({bool isManualReload = false}) async {
+    final version = ++_loadVersion;
+    if (mounted) setState(() => _isLoading = SplitExpenseStore.tickets.isEmpty);
     try {
-      final futures = await Future.wait([
-        SplitCollectRepository.getSplitExpenses(email: activeEmail),
-        SplitCollectRepository.getFriendOwedSummary(email: activeEmail),
-      ]);
+      await ref.read(paymentsRefreshCoordinatorProvider.notifier).loadModule(
+            PaymentsModule.splitCollect,
+            isManualReload: isManualReload,
+          );
+      final data = ref.read(paymentsSplitCollectDataProvider);
       if (version != _loadVersion || !mounted) return;
 
-      final fetchedTickets = futures[0] as List<SplitTicket>;
-      final fetchedSummaries = futures[1] as List<FriendOwedSummary>;
-
-      setState(() {
-        SplitExpenseStore.tickets =
-            fetchedTickets.map((t) => t.toMap()).toList();
-        _friendSummaries = fetchedSummaries;
-        if (SplitExpenseStore.tickets.isEmpty) {
-          _selectedTicketId = null;
-        } else if (_selectedTicketId != null &&
-            !SplitExpenseStore.tickets.any((t) => t['id'] == _selectedTicketId)) {
-          _selectedTicketId = SplitExpenseStore.tickets.first['id'];
-        }
-        _isLoading = false;
-      });
+      if (data != null) {
+        setState(() {
+          _applySplitData(data);
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      if (version == _loadVersion && mounted) {
+        setState(() => _isLoading = false);
+      }
+    } finally {
       if (version == _loadVersion && mounted) {
         setState(() => _isLoading = false);
       }
@@ -328,6 +336,7 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
           _tickets.insert(0, createdTicket.toMap());
           _selectedTicketId = createdTicket.id;
         });
+        ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.splitCollect);
         AppSnackbar.show(
           context,
           "Split ticket '${createdTicket.title}' created successfully!",
@@ -667,6 +676,7 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
 
     try {
       await SplitCollectRepository.settleFriend(debtor, email: activeEmail);
+      ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.splitCollect);
     } catch (e) {
       print('Settle friend note: $e');
     }
@@ -2549,19 +2559,37 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
 
   @override
   Widget build(BuildContext context) {
+    final coordinatorState = ref.watch(paymentsRefreshCoordinatorProvider);
+    final isRefreshing = coordinatorState.statusOf(PaymentsModule.splitCollect) == ModuleLoadStatus.refreshing;
+    final cached = coordinatorState.splitCollectData;
+    if (cached != null && SplitExpenseStore.tickets.isEmpty) {
+      _applySplitData(cached);
+    }
+
     ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
-      if (previous?.email != next.email || previous?.id != next.id) {
+      final prevEmail = previous?.email.trim().toLowerCase() ?? '';
+      final nextEmail = next.email.trim().toLowerCase();
+      if (prevEmail.isNotEmpty && nextEmail.isNotEmpty && prevEmail != nextEmail) {
         ApiClient.clearCliksToken();
         setState(() {
+          SplitExpenseStore.tickets = [];
+          _friendSummaries = [];
           _selectedTicketId = null;
+          _isLoading = true;
         });
-        _loadData(next.email);
+        _loadData(isManualReload: true);
       }
     });
 
     ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
-      if (previous != next) {
-        _loadData();
+      if (previous != null && previous.isNotEmpty && previous != next) {
+        setState(() {
+          SplitExpenseStore.tickets = [];
+          _friendSummaries = [];
+          _selectedTicketId = null;
+          _isLoading = true;
+        });
+        _loadData(isManualReload: true);
       }
     });
 
@@ -2571,29 +2599,34 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FB),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          paddingVal,
-          20,
-          paddingVal,
-          isMobile ? 100 : 36,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildTopHeader(context, isMobile),
-            const SizedBox(height: 20),
+      body: RefreshIndicator(
+        onRefresh: () => _loadData(isManualReload: true),
+        color: const Color(0xFF0E4D34),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(
+            paddingVal,
+            20,
+            paddingVal,
+            isMobile ? 100 : 36,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildTopHeader(context, isMobile, isRefreshing: isRefreshing),
+              const SizedBox(height: 20),
 
-            _selectedTicket != null
-                ? _buildTicketDetailView(context, isMobile, _selectedTicket!)
-                : _buildTicketsListView(context, isMobile),
-          ],
+              _selectedTicket != null
+                  ? _buildTicketDetailView(context, isMobile, _selectedTicket!)
+                  : _buildTicketsListView(context, isMobile),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildTopHeader(BuildContext context, bool isMobile) {
+  Widget _buildTopHeader(BuildContext context, bool isMobile, {bool isRefreshing = false}) {
     if (isMobile) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2715,8 +2748,15 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
           ),
         ),
         IconButton(
-          onPressed: () => _loadData(),
-          icon: const Icon(LucideIcons.refreshCw, size: 16, color: Color(0xFF0E4D34)),
+          key: const Key('header_reload_split_collect_button'),
+          onPressed: () => _loadData(isManualReload: true),
+          icon: isRefreshing
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF0E4D34)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 16, color: Color(0xFF0E4D34)),
           tooltip: 'Refresh Tickets',
           style: IconButton.styleFrom(
             backgroundColor: const Color(0xFFF1F5F9),
@@ -2858,7 +2898,8 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                               try {
                                 await SplitCollectRepository.settleFriend(f.name, email: activeEmail);
                                 AppSnackbar.show(context, 'Settled all shares for ${f.name}!', type: SnackType.success);
-                                _loadData();
+                                _loadData(isManualReload: true);
+                                ref.read(paymentsRefreshCoordinatorProvider.notifier).notifyMutation(PaymentsModule.splitCollect);
                               } catch (e) {
                                 AppSnackbar.show(context, 'Failed to settle: $e', type: SnackType.error);
                               }

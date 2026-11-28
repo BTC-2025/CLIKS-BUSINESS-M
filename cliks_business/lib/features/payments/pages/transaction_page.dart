@@ -9,6 +9,7 @@ import '../../../data/models/payment_transaction_models.dart';
 import '../../../data/repositories/payment_transaction_repository.dart';
 import '../../navigation/widgets/macos_showroom_menu_card.dart';
 import '../../../widgets/app_ui_kit.dart';
+import '../providers/payments_refresh_coordinator.dart';
 
 /// Payments & Cash Flow Engine Page
 /// Complete end-to-end backend API integration with https://cliks.beta-softnet.com/api
@@ -48,6 +49,10 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
   @override
   void initState() {
     super.initState();
+    final cached = ref.read(paymentsTransactionsDataProvider);
+    if (cached != null) {
+      _applyTransactionsData(cached);
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadData();
     });
@@ -59,179 +64,150 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     super.dispose();
   }
 
-  /// Loads all live backend records for the active business account.
-  Future<void> _loadData() async {
+  void _applyTransactionsData(TransactionsModuleData data) {
+    final txList = data.transactions;
+    final reports = data.reports;
+    final bankAccounts = data.bankAccounts;
+    final stats = data.stats ?? OutstandingSummaryStats(receivables: 0, payables: 0, totalProcessed: 0);
+    final combinedAccounts = List<CashFlowAccount>.from(data.combinedAccounts);
+    final overdue = List<Map<String, dynamic>>.from(data.overdueInvoices);
+
+    // Check invoices from reports API for outstanding or overdue balances
+    final invoicesRaw = reports['invoices'];
+    final rawInvoicesList = <Map<String, dynamic>>[];
+    if (invoicesRaw is List) {
+      for (final inv in invoicesRaw) {
+        if (inv is Map<String, dynamic>) {
+          rawInvoicesList.add(inv);
+          final total = ((inv['total_amount'] ?? inv['grand_total'] ?? inv['totalBill'] ?? inv['amount'] ?? 0) as num).toDouble();
+          final paid = ((inv['paid_amount'] ?? inv['paidAmount'] ?? 0) as num).toDouble();
+          final due = ((inv['due_amount'] ?? inv['dueBalance'] ?? inv['pending_amount'] ?? (total - paid)) as num).toDouble();
+          final dueDateStr = (inv['due_date'] ?? inv['dueDate'])?.toString();
+          DateTime? dueDate;
+          if (dueDateStr != null && dueDateStr.isNotEmpty && dueDateStr != '—') {
+            dueDate = DateTime.tryParse(dueDateStr);
+          }
+          final isPastDue = dueDate != null && dueDate.isBefore(DateTime.now());
+          final isOverdue = inv['isOverdue'] == true || (due > 0 && isPastDue);
+
+          if (due > 0 || isOverdue) {
+            final invNo = (inv['invoice_number'] ?? inv['invoiceNo'] ?? inv['invoice_id'] ?? inv['id'] ?? '').toString();
+            if (!overdue.any((existing) =>
+                (existing['invoiceNo'] ?? existing['invoice_number'] ?? existing['invoice_id'] ?? existing['id'] ?? '').toString() == invNo)) {
+              overdue.add(inv);
+            }
+          }
+        }
+      }
+    }
+
+    // Check purchases from reports API
+    final purchasesRaw = reports['purchases'];
+    final rawPurchasesList = <Map<String, dynamic>>[];
+    if (purchasesRaw is List) {
+      for (final p in purchasesRaw) {
+        if (p is Map<String, dynamic>) {
+          rawPurchasesList.add(p);
+        }
+      }
+    }
+
+    // Also ingest receivables with outstanding customer balance
+    final recRawList = reports['receivables'];
+    if (recRawList is List) {
+      for (final rec in recRawList) {
+        if (rec is Map<String, dynamic>) {
+          final pending = ((rec['pending_amount'] ?? rec['pendingAmount'] ?? 0) as num).toDouble();
+          if (pending > 0) {
+            final refNo = (rec['invoice_id'] ?? rec['invoiceLinkedId'] ?? rec['reference_number'] ?? rec['id'] ?? '').toString();
+            if (!overdue.any((existing) =>
+                (existing['invoiceNo'] ?? existing['invoice_number'] ?? existing['invoice_id'] ?? existing['id'] ?? '').toString() == refNo)) {
+              overdue.add({
+                'customerName': rec['party_name'] ?? rec['customer_name'] ?? 'Customer',
+                'invoiceNo': refNo,
+                'totalBill': ((rec['total_original'] ?? rec['total_amount'] ?? rec['amount'] ?? pending) as num).toDouble(),
+                'paidAmount': ((rec['paid_amount'] ?? 0) as num).toDouble(),
+                'dueBalance': pending,
+                'dueDate': rec['due_date'] ?? rec['created_at'] ?? '—',
+                'status': rec['status'] ?? 'Credit Due',
+                'isOverdue': rec['isOverdue'] ?? false,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Extract unified payment ledger
+    final ledgerItems = <PaymentLedgerItem>[];
+    final ledgerRaw = reports['ledger'];
+    if (ledgerRaw is List) {
+      for (final l in ledgerRaw) {
+        if (l is Map<String, dynamic>) {
+          ledgerItems.add(PaymentLedgerItem.fromJson(l));
+        }
+      }
+    }
+    final recRaw = reports['receivables'];
+    if (recRaw is List) {
+      for (final r in recRaw) {
+        if (r is Map<String, dynamic>) {
+          ledgerItems.add(PaymentLedgerItem.fromJson(r, defaultType: 'receive'));
+        }
+      }
+    }
+    final payRaw = reports['payables'];
+    if (payRaw is List) {
+      for (final p in payRaw) {
+        if (p is Map<String, dynamic>) {
+          ledgerItems.add(PaymentLedgerItem.fromJson(p, defaultType: 'pay'));
+        }
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _transactions = txList;
+        _accounts = combinedAccounts;
+        _overdueInvoices = overdue;
+        _reportsLedger = ledgerItems;
+        _rawInvoices = rawInvoicesList;
+        _rawPurchases = rawPurchasesList;
+        _outstandingStats = stats;
+        _isLoading = false;
+        if (_selectedCardId.isEmpty && combinedAccounts.isNotEmpty) {
+          _selectedCardId = combinedAccounts.first.id.toString();
+        }
+      });
+    }
+  }
+
+  /// Loads or reloads all live backend records for the active business account via coordinator.
+  Future<void> _loadData({bool isManualReload = false}) async {
     if (!mounted) return;
     setState(() {
-      _isLoading = true;
+      _isLoading = _transactions.isEmpty && _accounts.isEmpty;
       _errorMessage = null;
     });
 
     try {
-      final activeEmail = ref.read(activeAccountProvider).email.trim().toLowerCase();
-
-      final results = await Future.wait([
-        PaymentTransactionRepository.getTransactions(email: activeEmail),
-        PaymentTransactionRepository.getPaymentReports(email: activeEmail),
-        PaymentTransactionRepository.getBankAccounts(email: activeEmail),
-        PaymentTransactionRepository.getOutstandingStats(email: activeEmail),
-      ]);
-
-      final txList = results[0] as List<CashFlowTransaction>;
-      final reports = results[1] as Map<String, dynamic>;
-      final bankAccounts = results[2] as List<CashFlowAccount>;
-      final stats = results[3] as OutstandingSummaryStats;
-
-      // Extract unified accounts
-      final combinedAccounts = <CashFlowAccount>[];
-      final reportAccountsRaw = reports['accounts'];
-      if (reportAccountsRaw is List) {
-        for (final a in reportAccountsRaw) {
-          if (a is Map<String, dynamic>) {
-            combinedAccounts.add(CashFlowAccount.fromJson(a));
-          }
-        }
-      }
-      for (final b in bankAccounts) {
-        if (!combinedAccounts.any((a) => a.id.toString() == b.id.toString())) {
-          combinedAccounts.add(b);
-        }
-      }
-      if (combinedAccounts.isEmpty) {
-        combinedAccounts.add(CashFlowAccount(
-          id: 'cash-register',
-          bankName: 'Cash Register (Cash in Hand)',
-          accountHolder: activeEmail.isNotEmpty ? activeEmail.split('@').first : 'Cash Counter',
-          accountNumber: 'Cash Counter',
-          currentBalance: 0.0,
-          type: 'cash',
-          status: 'Active',
-        ));
-      }
-
-      // Extract overdue invoices directly from backend reports API (Strictly Live Data)
-      final overdue = <Map<String, dynamic>>[];
-      final overdueRaw = reports['overdueInvoices'];
-      if (overdueRaw is List) {
-        for (final o in overdueRaw) {
-          if (o is Map<String, dynamic>) {
-            overdue.add(o);
-          }
-        }
-      }
-
-      // Check invoices from reports API for outstanding or overdue balances
-      final invoicesRaw = reports['invoices'];
-      final rawInvoicesList = <Map<String, dynamic>>[];
-      if (invoicesRaw is List) {
-        for (final inv in invoicesRaw) {
-          if (inv is Map<String, dynamic>) {
-            rawInvoicesList.add(inv);
-            final total = ((inv['total_amount'] ?? inv['grand_total'] ?? inv['totalBill'] ?? inv['amount'] ?? 0) as num).toDouble();
-            final paid = ((inv['paid_amount'] ?? inv['paidAmount'] ?? 0) as num).toDouble();
-            final due = ((inv['due_amount'] ?? inv['dueBalance'] ?? inv['pending_amount'] ?? (total - paid)) as num).toDouble();
-            final dueDateStr = (inv['due_date'] ?? inv['dueDate'])?.toString();
-            DateTime? dueDate;
-            if (dueDateStr != null && dueDateStr.isNotEmpty && dueDateStr != '—') {
-              dueDate = DateTime.tryParse(dueDateStr);
-            }
-            final isPastDue = dueDate != null && dueDate.isBefore(DateTime.now());
-            final isOverdue = inv['isOverdue'] == true || (due > 0 && isPastDue);
-
-            if (due > 0 || isOverdue) {
-              final invNo = (inv['invoice_number'] ?? inv['invoiceNo'] ?? inv['invoice_id'] ?? inv['id'] ?? '').toString();
-              if (!overdue.any((existing) =>
-                  (existing['invoiceNo'] ?? existing['invoice_number'] ?? existing['invoice_id'] ?? existing['id'] ?? '').toString() == invNo)) {
-                overdue.add(inv);
-              }
-            }
-          }
-        }
-      }
-
-      // Check purchases from reports API
-      final purchasesRaw = reports['purchases'];
-      final rawPurchasesList = <Map<String, dynamic>>[];
-      if (purchasesRaw is List) {
-        for (final p in purchasesRaw) {
-          if (p is Map<String, dynamic>) {
-            rawPurchasesList.add(p);
-          }
-        }
-      }
-
-      // Also ingest receivables with outstanding customer balance
-      final recRawList = reports['receivables'];
-      if (recRawList is List) {
-        for (final rec in recRawList) {
-          if (rec is Map<String, dynamic>) {
-            final pending = ((rec['pending_amount'] ?? rec['pendingAmount'] ?? 0) as num).toDouble();
-            if (pending > 0) {
-              final refNo = (rec['invoice_id'] ?? rec['invoiceLinkedId'] ?? rec['reference_number'] ?? rec['id'] ?? '').toString();
-              if (!overdue.any((existing) =>
-                  (existing['invoiceNo'] ?? existing['invoice_number'] ?? existing['invoice_id'] ?? existing['id'] ?? '').toString() == refNo)) {
-                overdue.add({
-                  'customerName': rec['party_name'] ?? rec['customer_name'] ?? 'Customer',
-                  'invoiceNo': refNo,
-                  'totalBill': ((rec['total_original'] ?? rec['total_amount'] ?? rec['amount'] ?? pending) as num).toDouble(),
-                  'paidAmount': ((rec['paid_amount'] ?? 0) as num).toDouble(),
-                  'dueBalance': pending,
-                  'dueDate': rec['due_date'] ?? rec['created_at'] ?? '—',
-                  'status': rec['status'] ?? 'Credit Due',
-                  'isOverdue': rec['isOverdue'] ?? false,
-                });
-              }
-            }
-          }
-        }
-      }
-
-      // Extract unified payment ledger
-      final ledgerItems = <PaymentLedgerItem>[];
-      final ledgerRaw = reports['ledger'];
-      if (ledgerRaw is List) {
-        for (final l in ledgerRaw) {
-          if (l is Map<String, dynamic>) {
-            ledgerItems.add(PaymentLedgerItem.fromJson(l));
-          }
-        }
-      }
-      final recRaw = reports['receivables'];
-      if (recRaw is List) {
-        for (final r in recRaw) {
-          if (r is Map<String, dynamic>) {
-            ledgerItems.add(PaymentLedgerItem.fromJson(r, defaultType: 'receive'));
-          }
-        }
-      }
-      final payRaw = reports['payables'];
-      if (payRaw is List) {
-        for (final p in payRaw) {
-          if (p is Map<String, dynamic>) {
-            ledgerItems.add(PaymentLedgerItem.fromJson(p, defaultType: 'pay'));
-          }
-        }
-      }
-
-      if (mounted) {
-        setState(() {
-          _transactions = txList;
-          _accounts = combinedAccounts;
-          _overdueInvoices = overdue;
-          _reportsLedger = ledgerItems;
-          _rawInvoices = rawInvoicesList;
-          _rawPurchases = rawPurchasesList;
-          _outstandingStats = stats;
-          _isLoading = false;
-          if (_selectedCardId.isEmpty && combinedAccounts.isNotEmpty) {
-            _selectedCardId = combinedAccounts.first.id.toString();
-          }
-        });
+      await ref.read(paymentsRefreshCoordinatorProvider.notifier).loadModule(
+            PaymentsModule.transactions,
+            isManualReload: isManualReload,
+          );
+      final data = ref.read(paymentsTransactionsDataProvider);
+      if (data != null && mounted) {
+        _applyTransactionsData(data);
       }
     } catch (e) {
       if (mounted) {
         setState(() {
           _errorMessage = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
           _isLoading = false;
         });
       }
@@ -426,15 +402,42 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final coordinatorState = ref.watch(paymentsRefreshCoordinatorProvider);
+    final isRefreshing = coordinatorState.statusOf(PaymentsModule.transactions) == ModuleLoadStatus.refreshing;
+    final cachedData = coordinatorState.transactionsData;
+    if (cachedData != null && _transactions.isEmpty && _accounts.isEmpty) {
+      _applyTransactionsData(cachedData);
+    }
+
     ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
-      if (previous?.email != next.email) {
-        _loadData();
+      final prevEmail = previous?.email.trim().toLowerCase() ?? '';
+      final nextEmail = next.email.trim().toLowerCase();
+      if (prevEmail.isNotEmpty && nextEmail.isNotEmpty && prevEmail != nextEmail) {
+        setState(() {
+          _transactions = [];
+          _accounts = [];
+          _reportsLedger = [];
+          _overdueInvoices = [];
+          _rawInvoices = [];
+          _rawPurchases = [];
+          _isLoading = true;
+        });
+        _loadData(isManualReload: true);
       }
     });
 
     ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
-      if (previous != next) {
-        _loadData();
+      if (previous != null && previous.isNotEmpty && previous != next) {
+        setState(() {
+          _transactions = [];
+          _accounts = [];
+          _reportsLedger = [];
+          _overdueInvoices = [];
+          _rawInvoices = [];
+          _rawPurchases = [];
+          _isLoading = true;
+        });
+        _loadData(isManualReload: true);
       }
     });
 
@@ -445,7 +448,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: RefreshIndicator(
-        onRefresh: _loadData,
+        onRefresh: () => _loadData(isManualReload: true),
         color: const Color(0xFF166534),
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -454,7 +457,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // 1. Header Row
-              _buildHeaderRow(isMobile),
+              _buildHeaderRow(isMobile, isRefreshing: isRefreshing),
               const SizedBox(height: 22),
 
               // 2. Top 4 KPI Metrics Row
@@ -516,7 +519,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
   // ══════════════════════════════════════════════════════════════════════════
   // 1. HEADER ROW
   // ══════════════════════════════════════════════════════════════════════════
-  Widget _buildHeaderRow(bool isMobile) {
+  Widget _buildHeaderRow(bool isMobile, {bool isRefreshing = false}) {
     final titleWidget = Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -576,6 +579,27 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        // Reload / Refresh Button with spinning indicator
+        IconButton(
+          key: const Key('header_reload_transactions_button'),
+          onPressed: () => _loadData(isManualReload: true),
+          icon: isRefreshing
+              ? const SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF166534)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 15, color: Color(0xFF166534)),
+          tooltip: 'Reload Transactions',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
+            ),
+          ),
+        ),
         // Outlined "Send Payment" Button matching Web App (Image 2)
         OutlinedButton(
           key: const Key('header_send_payment_button'),
@@ -2444,7 +2468,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                     if (context.mounted) {
                                       Navigator.pop(ctx);
                                       AppSnackbar.show(context, "Payment receipt of ₹${_fmt(amt)} recorded successfully!", type: SnackType.success);
-                                      _loadData();
+                                      _loadData(isManualReload: true);
                                     }
                                   } catch (e) {
                                     setModalState(() => isSubmitting = false);
@@ -2816,7 +2840,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                     if (context.mounted) {
                                       Navigator.pop(ctx);
                                       AppSnackbar.show(context, "Supplier disbursement of ₹${_fmt(amt)} recorded successfully!", type: SnackType.success);
-                                      _loadData();
+                                      _loadData(isManualReload: true);
                                     }
                                   } catch (e) {
                                     setModalState(() => isSubmitting = false);
@@ -3004,7 +3028,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                   if (context.mounted) {
                                     Navigator.pop(ctx);
                                     AppSnackbar.show(context, "Transferred ₹${_fmt(amt)} successfully!", type: SnackType.success);
-                                    _loadData();
+                                    _loadData(isManualReload: true);
                                   }
                                 } catch (e) {
                                   setModalState(() => isSubmitting = false);
@@ -3310,7 +3334,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                     if (context.mounted) {
                                       Navigator.pop(ctx);
                                       AppSnackbar.show(context, "Transaction of ₹${_fmt(amt)} recorded successfully!", type: SnackType.success);
-                                      _loadData();
+                                      _loadData(isManualReload: true);
                                     }
                                   } catch (e) {
                                     setModalState(() => isSubmitting = false);
@@ -3439,7 +3463,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                                   if (context.mounted) {
                                     Navigator.pop(ctx);
                                     AppSnackbar.show(context, "Transaction TX-${tx.id} updated successfully!", type: SnackType.success);
-                                    _loadData();
+                                    _loadData(isManualReload: true);
                                   }
                                 } catch (e) {
                                   setModalState(() => isSubmitting = false);
@@ -3494,7 +3518,7 @@ class _TransactionPageState extends ConsumerState<TransactionPage> {
                   await PaymentTransactionRepository.deleteTransaction(tx.id, email: activeEmail);
                   if (context.mounted) {
                     AppSnackbar.show(context, "Transaction TX-${tx.id} deleted successfully!", type: SnackType.success);
-                    _loadData();
+                    _loadData(isManualReload: true);
                   }
                 } catch (e) {
                   if (context.mounted) {

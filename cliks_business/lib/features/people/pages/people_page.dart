@@ -3,6 +3,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../widgets/app_ui_kit.dart';
 import '../../../data/models/people_models.dart';
+import '../../../models/account_model.dart';
+import '../../../data/account_provider.dart';
+import '../../navigation/widgets/macos_showroom_menu_card.dart';
 import '../providers/people_providers.dart';
 import '../widgets/enroll_contact_dialog.dart';
 import '../widgets/record_transaction_dialog.dart';
@@ -124,6 +127,20 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AccountModel>(activeAccountProvider, (previous, next) {
+      final prevEmail = previous?.email.trim().toLowerCase() ?? '';
+      final nextEmail = next.email.trim().toLowerCase();
+      if (prevEmail.isNotEmpty && nextEmail.isNotEmpty && prevEmail != nextEmail) {
+        ref.read(peopleProvider.notifier).resetAndReload();
+      }
+    });
+
+    ref.listen<String>(selectedShowroomScopeProvider, (previous, next) {
+      if (previous != null && previous.isNotEmpty && previous != next) {
+        ref.read(peopleProvider.notifier).resetAndReload();
+      }
+    });
+
     final peopleState = ref.watch(peopleProvider);
 
     if (_selectedContactForDetail != null) {
@@ -268,6 +285,29 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
     final actionButtons = Row(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Reload / Refresh Button with spinning indicator
+        IconButton(
+          key: const Key('header_reload_people_button'),
+          onPressed: () => ref.read(peopleProvider.notifier).loadAll(isRefresh: true),
+          icon: state.isRefreshing
+              ? const SizedBox(
+                  width: 15,
+                  height: 15,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF166534)),
+                )
+              : const Icon(LucideIcons.refreshCw, size: 15, color: Color(0xFF166534)),
+          tooltip: 'Reload People Network',
+          style: IconButton.styleFrom(
+            backgroundColor: Colors.white,
+            padding: const EdgeInsets.all(10),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+              side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+
         // Outlined "Log Transaction" Button
         OutlinedButton.icon(
           key: const Key('header_log_transaction_button'),

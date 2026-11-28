@@ -13,6 +13,11 @@ class _TestPeopleNotifier extends PeopleNotifier {
   }
 
   @override
+  void resetAndReload() {
+    // Preserve test state for deterministic widget testing
+  }
+
+  @override
   Future<void> loadAll({bool isRefresh = false}) async {
     // No-op for deterministic widget testing
   }
