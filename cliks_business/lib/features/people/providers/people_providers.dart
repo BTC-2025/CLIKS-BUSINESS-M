@@ -243,6 +243,39 @@ class PeopleNotifier extends StateNotifier<PeopleState> {
 
   // ── Transactions (Global Ledger) ────────────────────────────────────────
 
+  Future<PersonTransaction?> recordPeerTransaction({
+    required dynamic personId,
+    required String type,
+    required double amount,
+    required String date,
+    String? description,
+  }) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final tx = await PeopleRepository.recordPersonTransaction(
+        personId,
+        type: type,
+        amount: amount,
+        date: date,
+        description: description,
+      );
+      final updated = [tx, ...state.transactions];
+      state = state.copyWith(isLoading: false, transactions: updated);
+      // Reload contacts & transactions to sync ledger totals
+      await Future.wait([
+        loadContacts(),
+        loadTransactions(),
+      ]);
+      return tx;
+    } catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: e is ApiException ? e.message : e.toString(),
+      );
+      rethrow;
+    }
+  }
+
   Future<void> loadTransactions() async {
     try {
       final txs = await PeopleRepository.getPeopleTransactions();

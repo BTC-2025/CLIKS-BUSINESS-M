@@ -208,6 +208,74 @@ class PeopleRepository {
     return [];
   }
 
+  /// 6b. Record Peer Transaction
+  /// POST `/api/v1/people/:id/transactions`
+  static Future<PersonTransaction> recordPersonTransaction(
+    dynamic personId, {
+    required String type,
+    required double amount,
+    required String date,
+    String? description,
+    String? email,
+  }) async {
+    final res = await ApiClient.post(
+      '/api/v1/people/$personId/transactions',
+      body: {
+        'type': type,
+        'amount': amount,
+        'date': date,
+        if (description != null && description.isNotEmpty)
+          'description': description,
+      },
+      email: email,
+    );
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] == false || map['status'] == 'error') {
+        throw ApiException(
+          statusCode: 400,
+          message: map['error']?['message']?.toString() ??
+              map['message']?.toString() ??
+              'Failed to record peer transaction',
+        );
+      }
+      final data = map['data'];
+      if (data is Map) {
+        return PersonTransaction.fromJson(Map<String, dynamic>.from(data));
+      }
+    }
+    throw ApiException(
+      statusCode: 500,
+      message: 'Invalid response from peer transaction recording',
+    );
+  }
+
+  /// 6c. Delete Peer Transaction
+  /// DELETE `/api/v1/people/:id/transactions/:txId`
+  static Future<bool> deletePersonTransaction(
+    dynamic personId,
+    dynamic txId, {
+    String? email,
+  }) async {
+    final res = await ApiClient.delete(
+      '/api/v1/people/$personId/transactions/$txId',
+      email: email,
+    );
+    if (res is Map) {
+      final map = Map<String, dynamic>.from(res);
+      if (map['success'] == false || map['status'] == 'error') {
+        throw ApiException(
+          statusCode: 400,
+          message: map['error']?['message']?.toString() ??
+              map['message']?.toString() ??
+              'Failed to delete peer transaction',
+        );
+      }
+      return true;
+    }
+    return true;
+  }
+
   // ───────────────────────────────────────────────────────────────────────────
   // 7–10: REPAYMENT ALERTS / REMINDERS
   // ───────────────────────────────────────────────────────────────────────────

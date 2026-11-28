@@ -317,7 +317,7 @@ void main() {
       expect(find.text('Angel advance Q1'), findsOneWidget);
     });
 
-    testWidgets('9. Log Transaction button displays informational guidance dialog', (tester) async {
+    testWidgets('9. Log Transaction button displays Record Peer Transaction dialog', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1400, 1000));
 
       await tester.pumpWidget(
@@ -333,16 +333,27 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Tap Log Transaction
-      final logBtn = find.text('Log Transaction');
+      final logBtn = find.byKey(const Key('header_log_transaction_button'));
       await tester.tap(logBtn);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
-      expect(find.text('Log Transaction Notice'), findsOneWidget);
-      expect(find.text('Understood'), findsOneWidget);
+      expect(find.text('Record Peer Transaction'), findsOneWidget);
+      expect(find.text('Target Network User'), findsOneWidget);
+      expect(find.text('Entry Direction'), findsOneWidget);
+      expect(find.text('Ledger Date'), findsOneWidget);
+      expect(find.text('Value Cap Amount (₹)'), findsOneWidget);
+      expect(find.text('Asset narrative / Memo'), findsOneWidget);
+      expect(find.text('Authorize Entry Log'), findsOneWidget);
+
+      // Close dialog
+      await tester.tap(find.byKey(const Key('close_record_peer_tx_dialog')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Record Peer Transaction'), findsNothing);
     });
 
-    testWidgets('10. Add People Contact opens dialog and enforces @bnxmail.com', (tester) async {
+    testWidgets('10. Add People Contact opens Enroll New Contact dialog and enforces @bnxmail.com', (tester) async {
       await tester.binding.setSurfaceSize(const Size(1400, 1000));
 
       await tester.pumpWidget(
@@ -358,21 +369,32 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Tap Add People Contact
-      final addBtn = find.text('Add People Contact');
+      final addBtn = find.byKey(const Key('header_add_people_contact_button'));
       await tester.tap(addBtn);
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
 
       // Dialog is open
-      expect(find.text('Add People Contact'), findsWidgets);
-      expect(find.text('Enroll Contact'), findsOneWidget);
+      expect(find.text('Enroll New Contact'), findsOneWidget);
+      expect(find.text('Full Identity Name *'), findsOneWidget);
+      expect(find.text('Network Role'), findsOneWidget);
+      expect(find.text('Company Label'), findsOneWidget);
+      expect(find.text('Phone Contact *'), findsOneWidget);
+      expect(find.text('E-Mail Address (bnxmail) *'), findsOneWidget);
+      expect(find.text('Create Contact Node'), findsOneWidget);
 
       // Tap save without filling form - validation triggers
-      await tester.ensureVisible(find.text('Enroll Contact'));
-      await tester.tap(find.text('Enroll Contact'));
+      await tester.ensureVisible(find.text('Create Contact Node'));
+      await tester.tap(find.text('Create Contact Node'));
       await tester.pump();
 
-      expect(find.text('Full name is required'), findsOneWidget);
+      expect(find.text('Full identity name is required'), findsOneWidget);
+
+      // Close dialog
+      await tester.tap(find.byKey(const Key('close_enroll_contact_dialog')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Enroll New Contact'), findsNothing);
     });
 
     testWidgets('11. Pending Invitations banner displays request and Review All switches tabs', (tester) async {

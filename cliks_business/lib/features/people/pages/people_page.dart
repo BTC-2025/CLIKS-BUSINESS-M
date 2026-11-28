@@ -5,6 +5,7 @@ import '../../../widgets/app_ui_kit.dart';
 import '../../../data/models/people_models.dart';
 import '../providers/people_providers.dart';
 import '../widgets/enroll_contact_dialog.dart';
+import '../widgets/record_transaction_dialog.dart';
 
 /// People Network & Escrow Page
 /// Pixel-perfect matching of the Modern Escrow & People Network UI
@@ -269,6 +270,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
       children: [
         // Outlined "Log Transaction" Button
         OutlinedButton.icon(
+          key: const Key('header_log_transaction_button'),
           onPressed: () => _openGeneralLogModal(isMobile),
           icon: const Icon(
             LucideIcons.arrowLeftRight,
@@ -298,6 +300,7 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
 
         // Solid "+ Add People Contact" Button
         ElevatedButton.icon(
+          key: const Key('header_add_people_contact_button'),
           onPressed: _openAddContactDialog,
           icon: const Icon(LucideIcons.plus, size: 15, color: Colors.white),
           label: const Text(
@@ -4582,28 +4585,29 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
   }
 
   void _openGeneralLogModal(bool isMobile) {
-    // Section 6 restriction: The People API does not document POST /people/transactions
+    final contacts = ref.read(peopleProvider).contacts;
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(LucideIcons.info, size: 20, color: Color(0xFF166534)),
-            SizedBox(width: 8),
-            Text('Log Transaction Notice', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-          ],
-        ),
-        content: const Text(
-          'Individual People direct transaction creation is not currently exposed by the backend People API. Peer ledger movements are recorded through verified business settlements, order transactions, or group pools.',
-          style: TextStyle(fontSize: 13, color: Color(0xFF475569), height: 1.4),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF166534), foregroundColor: Colors.white),
-            child: const Text('Understood'),
-          ),
-        ],
+      builder: (ctx) => RecordTransactionDialog(
+        contacts: contacts,
+        onSubmit: (personId, type, amount, date, description) async {
+          final tx = await ref
+              .read(peopleProvider.notifier)
+              .recordPeerTransaction(
+                personId: personId,
+                type: type,
+                amount: amount,
+                date: date,
+                description: description,
+              );
+          if (tx != null && mounted) {
+            AppSnackbar.show(
+              context,
+              'Peer transaction recorded successfully!',
+              type: SnackType.success,
+            );
+          }
+        },
       ),
     );
   }
