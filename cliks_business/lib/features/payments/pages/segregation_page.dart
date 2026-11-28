@@ -1336,13 +1336,15 @@ class _SegregationPageState extends ConsumerState<SegregationPage> {
             children: [
               Row(
                 children: [
-                  const Text(
-                    'Segregation Wallets',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F5B2E),
-                      letterSpacing: -0.3,
+                  const Flexible(
+                    child: Text(
+                      'Segregation Wallets',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F5B2E),
+                        letterSpacing: -0.3,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 8),

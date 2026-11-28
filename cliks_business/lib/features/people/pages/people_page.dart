@@ -372,7 +372,89 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
         children: [
           titleWidget,
           const SizedBox(height: 14),
-          actionButtons,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              // Reload / Refresh Button with spinning indicator
+              IconButton(
+                key: const Key('header_reload_people_button'),
+                onPressed: () => ref.read(peopleProvider.notifier).loadAll(isRefresh: true),
+                icon: state.isRefreshing
+                    ? const SizedBox(
+                        width: 15,
+                        height: 15,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFF166534)),
+                      )
+                    : const Icon(LucideIcons.refreshCw, size: 15, color: Color(0xFF166534)),
+                tooltip: 'Reload People Network',
+                style: IconButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  padding: const EdgeInsets.all(10),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+                  ),
+                ),
+              ),
+
+              // Outlined "Log Transaction" Button
+              OutlinedButton.icon(
+                key: const Key('header_log_transaction_button'),
+                onPressed: () => _openGeneralLogModal(isMobile),
+                icon: const Icon(
+                  LucideIcons.arrowLeftRight,
+                  size: 14,
+                  color: Color(0xFF166534),
+                ),
+                label: const Text(
+                  'Log Transaction',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: Color(0xFF166534),
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  side: const BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+
+              // Solid "+ Add People Contact" Button
+              ElevatedButton.icon(
+                key: const Key('header_add_people_contact_button'),
+                onPressed: _openAddContactDialog,
+                icon: const Icon(LucideIcons.plus, size: 15, color: Colors.white),
+                label: const Text(
+                  'Add People Contact',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12.5,
+                    color: Colors.white,
+                    letterSpacing: -0.2,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF166534),
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  shadowColor: const Color(0x33166534),
+                ),
+              ),
+            ],
+          ),
         ],
       );
     }
@@ -500,8 +582,10 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Row(
-                  mainAxisSize: MainAxisSize.min,
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 2,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       label,
@@ -512,7 +596,6 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                         letterSpacing: 0.6,
                       ),
                     ),
-                    const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 6,
@@ -686,6 +769,72 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
           // Group Invitations cards inside banner (Matching Image 1 & 3)
           ...groupInvitations.map((grp) {
             final inviter = grp.invitedByName ?? (grp.members.isNotEmpty ? grp.members.first.name : 'Partner');
+
+            final joinBtn = ElevatedButton.icon(
+              onPressed: () async {
+                try {
+                  await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.membershipId ?? grp.id);
+                  if (mounted) {
+                    AppSnackbar.show(context, "Joined '${grp.name}' group successfully!", type: SnackType.success);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                  }
+                }
+              },
+              icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
+              label: const Text(
+                'Join',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4F46E5), // Purple/indigo matching Image 1
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+
+            final declineBtn = OutlinedButton.icon(
+              onPressed: () async {
+                try {
+                  await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.membershipId ?? grp.id);
+                  if (mounted) {
+                    AppSnackbar.show(context, "Declined invitation to '${grp.name}'", type: SnackType.info);
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    AppSnackbar.show(context, e.toString(), type: SnackType.error);
+                  }
+                }
+              },
+              icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
+              label: const Text(
+                'Decline',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFDC2626),
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -701,120 +850,160 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF4F46E5), // Indigo matching Image 1
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Center(
-                      child: Icon(
-                        LucideIcons.walletCards,
-                        size: 18,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
+              child: isMobile
+                  ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          grp.groupType.isEmpty ? grp.name : grp.groupType,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4F46E5),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  LucideIcons.walletCards,
+                                  size: 18,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    grp.groupType.isEmpty ? grp.name : grp.groupType,
+                                    style: const TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Invited by $inviter',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'Invited by $inviter',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                          ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(child: joinBtn),
+                            const SizedBox(width: 8),
+                            Expanded(child: declineBtn),
+                          ],
                         ),
                       ],
+                    )
+                  : Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF4F46E5), // Indigo matching Image 1
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              LucideIcons.walletCards,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                grp.groupType.isEmpty ? grp.name : grp.groupType,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Invited by $inviter',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        joinBtn,
+                        const SizedBox(width: 8),
+                        declineBtn,
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      try {
-                        await ref.read(peopleProvider.notifier).joinFinancialGroup(grp.membershipId ?? grp.id);
-                        if (mounted) {
-                          AppSnackbar.show(context, "Joined '${grp.name}' group successfully!", type: SnackType.success);
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          AppSnackbar.show(context, e.toString(), type: SnackType.error);
-                        }
-                      }
-                    },
-                    icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
-                    label: const Text(
-                      'Join',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4F46E5), // Purple/indigo matching Image 1
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      try {
-                        await ref.read(peopleProvider.notifier).declineFinancialGroup(grp.membershipId ?? grp.id);
-                        if (mounted) {
-                          AppSnackbar.show(context, "Declined invitation to '${grp.name}'", type: SnackType.info);
-                        }
-                      } catch (e) {
-                        if (mounted) {
-                          AppSnackbar.show(context, e.toString(), type: SnackType.error);
-                        }
-                      }
-                    },
-                    icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
-                    label: const Text(
-                      'Decline',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFDC2626),
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             );
           }),
 
           // Request cards inside banner
           ...requests.map((req) {
+            final acceptBtn = ElevatedButton.icon(
+              onPressed: () => _handleRespondRequest(req, 'accept'),
+              icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
+              label: const Text(
+                'Accept',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF16A34A),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+
+            final declineBtn = OutlinedButton.icon(
+              onPressed: () => _handleRespondRequest(req, 'reject'),
+              icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
+              label: const Text(
+                'Decline',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFDC2626),
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                backgroundColor: Colors.white,
+                side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            );
+
             return Container(
               margin: const EdgeInsets.only(bottom: 8),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -830,96 +1019,118 @@ class _PeoplePageState extends ConsumerState<PeoplePage> {
                   ),
                 ],
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E40AF), // Deep Blue from screenshot
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Center(
-                      child: Text(
-                        req.fromName.isNotEmpty ? req.fromName[0].toUpperCase() : 'U',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
+              child: isMobile
+                  ? Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          req.fromName,
-                          style: const TextStyle(
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF0F172A),
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E40AF),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  req.fromName.isNotEmpty ? req.fromName[0].toUpperCase() : 'U',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    req.fromName,
+                                    style: const TextStyle(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    req.fromEmail,
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          req.fromEmail,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Color(0xFF64748B),
-                          ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            Expanded(child: acceptBtn),
+                            const SizedBox(width: 8),
+                            Expanded(child: declineBtn),
+                          ],
                         ),
                       ],
+                    )
+                  : Row(
+                      children: [
+                        Container(
+                          width: 38,
+                          height: 38,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1E40AF), // Deep Blue from screenshot
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              req.fromName.isNotEmpty ? req.fromName[0].toUpperCase() : 'U',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                req.fromName,
+                                style: const TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF0F172A),
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                req.fromEmail,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        acceptBtn,
+                        const SizedBox(width: 8),
+                        declineBtn,
+                      ],
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: () => _handleRespondRequest(req, 'accept'),
-                    icon: const Icon(LucideIcons.check, size: 14, color: Colors.white),
-                    label: const Text(
-                      'Accept',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF16A34A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  OutlinedButton.icon(
-                    onPressed: () => _handleRespondRequest(req, 'reject'),
-                    icon: const Icon(LucideIcons.x, size: 14, color: Color(0xFFDC2626)),
-                    label: const Text(
-                      'Decline',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFFDC2626),
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: const BorderSide(color: Color(0xFFFCA5A5), width: 1.0),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
             );
           }),
         ],

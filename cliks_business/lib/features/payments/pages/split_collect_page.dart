@@ -3362,11 +3362,11 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Sub-navigation: Back to all tickets & Right Action Buttons
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Flexible(
-              child: InkWell(
+        if (isMobile)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              InkWell(
                 onTap: () => setState(() => _selectedTicketId = null),
                 child: const Padding(
                   padding: EdgeInsets.symmetric(vertical: 4.0),
@@ -3379,77 +3379,165 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                         color: Color(0xFF0E4D34),
                       ),
                       SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          'Back to all tickets',
-                          style: TextStyle(
-                            color: Color(0xFF0E4D34),
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                      Text(
+                        'Back to all tickets',
+                        style: TextStyle(
+                          color: Color(0xFF0E4D34),
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
                         ),
                       ),
                     ],
                   ),
                 ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => _showInviteMemberDialog(ticket),
-                  icon: const Icon(LucideIcons.userPlus, size: 14),
-                  label: const Text(
-                    'Invite Member',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () => _showInviteMemberDialog(ticket),
+                      icon: const Icon(LucideIcons.userPlus, size: 14),
+                      label: const Text(
+                        'Invite Member',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0E4D34),
+                        side: const BorderSide(color: Color(0xFF0E4D34)),
+                        backgroundColor: const Color(0xFFF0FDF4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
                     ),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF0E4D34),
-                    side: const BorderSide(color: Color(0xFF0E4D34)),
-                    backgroundColor: const Color(0xFFF0FDF4),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () => _showRecordExpenseDialog(ticket),
+                      icon: const Icon(LucideIcons.plus, size: 14),
+                      label: const Text(
+                        'Add Expense',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF0E4D34),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 0,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                  ),
+                ],
+              ),
+            ],
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Flexible(
+                child: InkWell(
+                  onTap: () => setState(() => _selectedTicketId = null),
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 4.0),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.chevronLeft,
+                          size: 16,
+                          color: Color(0xFF0E4D34),
+                        ),
+                        SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Back to all tickets',
+                            style: TextStyle(
+                              color: Color(0xFF0E4D34),
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton.icon(
-                  onPressed: () => _showRecordExpenseDialog(ticket),
-                  icon: const Icon(LucideIcons.plus, size: 15),
-                  label: const Text(
-                    'Add Expense',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
+              ),
+              const SizedBox(width: 8),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: () => _showInviteMemberDialog(ticket),
+                    icon: const Icon(LucideIcons.userPlus, size: 14),
+                    label: const Text(
+                      'Invite Member',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF0E4D34),
+                      side: const BorderSide(color: Color(0xFF0E4D34)),
+                      backgroundColor: const Color(0xFFF0FDF4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF0E4D34),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
+                  const SizedBox(width: 10),
+                  ElevatedButton.icon(
+                    onPressed: () => _showRecordExpenseDialog(ticket),
+                    icon: const Icon(LucideIcons.plus, size: 15),
+                    label: const Text(
+                      'Add Expense',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12.5,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0E4D34),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
                   ),
-                ),
-              ],
-            ),
-          ],
-        ),
+                ],
+              ),
+            ],
+          ),
         const SizedBox(height: 18),
 
         // Group Banner Outlay Card (with Budget bar)
@@ -3464,147 +3552,287 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFDCFCE7),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${ticket['currency'] ?? 'INR'} GROUP',
-                                style: const TextStyle(
-                                  color: Color(0xFF15803D),
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.w800,
-                                ),
+              if (isMobile) ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              '${ticket['currency'] ?? 'INR'} GROUP',
+                              style: const TextStyle(
+                                color: Color(0xFF15803D),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFF3E8FF),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    LucideIcons.crown,
-                                    size: 11,
-                                    color: Color(0xFF7E22CE),
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'ADMIN / CREATOR',
-                                    style: TextStyle(
-                                      color: Color(0xFF7E22CE),
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w800,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          ticket['title'] as String,
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
                           ),
-                        ),
-                        if ((ticket['description'] as String? ?? '')
-                            .isNotEmpty) ...[
-                          const SizedBox(height: 3),
-                          Text(
-                            ticket['description'] as String,
-                            style: const TextStyle(
-                              fontSize: 12.5,
-                              color: Color(0xFF64748B),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF3E8FF),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  LucideIcons.crown,
+                                  size: 11,
+                                  color: Color(0xFF7E22CE),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'ADMIN / CREATOR',
+                                  style: TextStyle(
+                                    color: Color(0xFF7E22CE),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'TOTAL GROUP OUTLAY',
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF64748B),
-                          letterSpacing: 0.5,
-                        ),
                       ),
-                      const SizedBox(height: 3),
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          '₹$totalOutlayStr',
-                          style: const TextStyle(
-                            fontSize: 24,
+                    ),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'TOTAL GROUP OUTLAY',
+                          style: TextStyle(
+                            fontSize: 10,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
                           ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '₹$totalOutlayStr',
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  ticket['title'] as String,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                if ((ticket['description'] as String? ?? '').isNotEmpty) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    ticket['description'] as String,
+                    style: const TextStyle(
+                      fontSize: 12.5,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                 ],
-              ),
+              ] else ...[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFDCFCE7),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  '${ticket['currency'] ?? 'INR'} GROUP',
+                                  style: const TextStyle(
+                                    color: Color(0xFF15803D),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF3E8FF),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      LucideIcons.crown,
+                                      size: 11,
+                                      color: Color(0xFF7E22CE),
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'ADMIN / CREATOR',
+                                      style: TextStyle(
+                                        color: Color(0xFF7E22CE),
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            ticket['title'] as String,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                          if ((ticket['description'] as String? ?? '')
+                              .isNotEmpty) ...[
+                            const SizedBox(height: 3),
+                            Text(
+                              ticket['description'] as String,
+                              style: const TextStyle(
+                                fontSize: 12.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          'TOTAL GROUP OUTLAY',
+                          style: TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF64748B),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            '₹$totalOutlayStr',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
               if (budget > 0) ...[
                 const SizedBox(height: 16),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
                 const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Budget Utilization: ${(budgetPercent * 100).toInt()}% of ₹${_formatAmount(budget)}',
-                      style: const TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF64748B),
+                if (isMobile)
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [
+                      Text(
+                        'Budget Utilization: ${(budgetPercent * 100).toInt()}% of ₹${_formatAmount(budget)}',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
-                    ),
-                    Text(
-                      totalOutlay > budget
-                          ? 'Over budget by ₹${_formatAmount(totalOutlay - budget)}'
-                          : 'Remaining: ₹${_formatAmount(budget - totalOutlay)}',
-                      style: TextStyle(
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w700,
-                        color: totalOutlay > budget
-                            ? const Color(0xFFEF4444)
-                            : const Color(0xFF059669),
+                      Text(
+                        totalOutlay > budget
+                            ? 'Over budget by ₹${_formatAmount(totalOutlay - budget)}'
+                            : 'Remaining: ₹${_formatAmount(budget - totalOutlay)}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: totalOutlay > budget
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF059669),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Budget Utilization: ${(budgetPercent * 100).toInt()}% of ₹${_formatAmount(budget)}',
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      Text(
+                        totalOutlay > budget
+                            ? 'Over budget by ₹${_formatAmount(totalOutlay - budget)}'
+                            : 'Remaining: ₹${_formatAmount(budget - totalOutlay)}',
+                        style: TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w700,
+                          color: totalOutlay > budget
+                              ? const Color(0xFFEF4444)
+                              : const Color(0xFF059669),
+                        ),
+                      ),
+                    ],
+                  ),
                 const SizedBox(height: 6),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(4),
@@ -3911,167 +4139,336 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                         horizontal: 16,
                         vertical: 14,
                       ),
-                      child: Row(
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              setState(() {
-                                if (isExpanded) {
-                                  _expandedExpenseIds.remove(exp['id']);
-                                } else {
-                                  _expandedExpenseIds.add(exp['id'] as String);
-                                }
-                              });
-                            },
-                            child: Icon(
-                              isExpanded
-                                  ? LucideIcons.chevronDown
-                                  : LucideIcons.chevronRight,
-                              size: 16,
-                              color: const Color(0xFF94A3B8),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            child: const Icon(
-                              LucideIcons.receipt,
-                              size: 16,
-                              color: Color(0xFF64748B),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      child: isMobile
+                          ? Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Row(
-                                  children: [
-                                    Flexible(
-                                      child: Text(
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isExpanded) {
+                                        _expandedExpenseIds.remove(exp['id']);
+                                      } else {
+                                        _expandedExpenseIds.add(exp['id'] as String);
+                                      }
+                                    });
+                                  },
+                                  child: Icon(
+                                    isExpanded
+                                        ? LucideIcons.chevronDown
+                                        : LucideIcons.chevronRight,
+                                    size: 16,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  width: 32,
+                                  height: 32,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.receipt,
+                                    size: 14,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
                                         exp['description'] as String,
                                         style: const TextStyle(
-                                          fontSize: 14,
+                                          fontSize: 13.5,
                                           fontWeight: FontWeight.w800,
                                           color: Color(0xFF0F172A),
                                         ),
+                                        maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFEFF6FF),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        exp['splitMode'] as String? ??
-                                            'Equal Split',
-                                        style: const TextStyle(
-                                          color: Color(0xFF2563EB),
-                                          fontSize: 9.5,
-                                          fontWeight: FontWeight.w700,
-                                        ),
-                                      ),
-                                    ),
-                                    if (hasReceipt) ...[
-                                      const SizedBox(width: 6),
-                                      InkWell(
-                                        onTap: () =>
-                                            _showReceiptPreviewDialog(exp),
-                                        child: Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 6,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFDCFCE7),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
+                                      const SizedBox(height: 2),
+                                      Wrap(
+                                        spacing: 6,
+                                        runSpacing: 2,
+                                        crossAxisAlignment: WrapCrossAlignment.center,
+                                        children: [
+                                          Text(
+                                            'Paid by ${exp['paidBy']}',
+                                            style: const TextStyle(
+                                              fontSize: 11,
+                                              color: Color(0xFF64748B),
                                             ),
                                           ),
-                                          child: const Row(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              Icon(
-                                                LucideIcons.paperclip,
-                                                size: 10,
-                                                color: Color(0xFF15803D),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 6,
+                                              vertical: 1.5,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius: BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              exp['splitMode'] as String? ?? 'Equal Split',
+                                              style: const TextStyle(
+                                                color: Color(0xFF2563EB),
+                                                fontSize: 9,
+                                                fontWeight: FontWeight.w700,
                                               ),
-                                              SizedBox(width: 2),
-                                              Text(
-                                                'Receipt',
-                                                style: TextStyle(
-                                                  fontSize: 9,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF15803D),
+                                            ),
+                                          ),
+                                          if (hasReceipt)
+                                            InkWell(
+                                              onTap: () => _showReceiptPreviewDialog(exp),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 5,
+                                                  vertical: 1.5,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFDCFCE7),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      LucideIcons.paperclip,
+                                                      size: 9,
+                                                      color: Color(0xFF15803D),
+                                                    ),
+                                                    SizedBox(width: 2),
+                                                    Text(
+                                                      'Receipt',
+                                                      style: TextStyle(
+                                                        fontSize: 8.5,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Color(0xFF15803D),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                        ),
+                                            ),
+                                        ],
                                       ),
                                     ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '₹$amtFormatted',
+                                      style: const TextStyle(
+                                        fontSize: 14.5,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF0F172A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 3),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InkWell(
+                                          onTap: () => _showRecordExpenseDialog(ticket, exp),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(3),
+                                            child: Icon(
+                                              LucideIcons.pencil,
+                                              size: 13,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        InkWell(
+                                          onTap: () => _deleteExpense(ticket, exp['id'] as String),
+                                          child: const Padding(
+                                            padding: EdgeInsets.all(3),
+                                            child: Icon(
+                                              LucideIcons.x,
+                                              size: 13,
+                                              color: Color(0xFF94A3B8),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'Paid by ${exp['paidBy']} • ${exp['date']} • ${exp['category'] ?? 'Misc'}',
-                                  style: const TextStyle(
-                                    fontSize: 11.5,
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      if (isExpanded) {
+                                        _expandedExpenseIds.remove(exp['id']);
+                                      } else {
+                                        _expandedExpenseIds.add(exp['id'] as String);
+                                      }
+                                    });
+                                  },
+                                  child: Icon(
+                                    isExpanded
+                                        ? LucideIcons.chevronDown
+                                        : LucideIcons.chevronRight,
+                                    size: 16,
+                                    color: const Color(0xFF94A3B8),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Container(
+                                  width: 36,
+                                  height: 36,
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: const Icon(
+                                    LucideIcons.receipt,
+                                    size: 16,
                                     color: Color(0xFF64748B),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              exp['description'] as String,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w800,
+                                                color: Color(0xFF0F172A),
+                                              ),
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 2,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: const Color(0xFFEFF6FF),
+                                              borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Text(
+                                              exp['splitMode'] as String? ??
+                                                  'Equal Split',
+                                              style: const TextStyle(
+                                                color: Color(0xFF2563EB),
+                                                fontSize: 9.5,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          if (hasReceipt) ...[
+                                            const SizedBox(width: 6),
+                                            InkWell(
+                                              onTap: () =>
+                                                  _showReceiptPreviewDialog(exp),
+                                              child: Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 6,
+                                                  vertical: 2,
+                                                ),
+                                                decoration: BoxDecoration(
+                                                  color: const Color(0xFFDCFCE7),
+                                                  borderRadius: BorderRadius.circular(
+                                                    8,
+                                                  ),
+                                                ),
+                                                child: const Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      LucideIcons.paperclip,
+                                                      size: 10,
+                                                      color: Color(0xFF15803D),
+                                                    ),
+                                                    SizedBox(width: 2),
+                                                    Text(
+                                                      'Receipt',
+                                                      style: TextStyle(
+                                                        fontSize: 9,
+                                                        fontWeight: FontWeight.bold,
+                                                        color: Color(0xFF15803D),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        'Paid by ${exp['paidBy']} • ${exp['date']} • ${exp['category'] ?? 'Misc'}',
+                                        style: const TextStyle(
+                                          fontSize: 11.5,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  '₹$amtFormatted',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF0F172A),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                IconButton(
+                                  icon: const Icon(
+                                    LucideIcons.pencil,
+                                    size: 15,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () =>
+                                      _showRecordExpenseDialog(ticket, exp),
+                                ),
+                                const SizedBox(width: 6),
+                                IconButton(
+                                  icon: const Icon(
+                                    LucideIcons.x,
+                                    size: 15,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  padding: const EdgeInsets.all(4),
+                                  constraints: const BoxConstraints(),
+                                  onPressed: () =>
+                                      _deleteExpense(ticket, exp['id'] as String),
                                 ),
                               ],
                             ),
-                          ),
-                          Text(
-                            '₹$amtFormatted',
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          IconButton(
-                            icon: const Icon(
-                              LucideIcons.pencil,
-                              size: 15,
-                              color: Color(0xFF94A3B8),
-                            ),
-                            padding: const EdgeInsets.all(4),
-                            constraints: const BoxConstraints(),
-                            onPressed: () =>
-                                _showRecordExpenseDialog(ticket, exp),
-                          ),
-                          const SizedBox(width: 6),
-                          IconButton(
-                            icon: const Icon(
-                              LucideIcons.x,
-                              size: 15,
-                              color: Color(0xFF94A3B8),
-                            ),
-                            padding: const EdgeInsets.all(4),
-                            constraints: const BoxConstraints(),
-                            onPressed: () =>
-                                _deleteExpense(ticket, exp['id'] as String),
-                          ),
-                        ],
-                      ),
                     ),
 
                     // Expandable Shares Breakdown Drawer
@@ -4593,7 +4990,10 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
 
                         // Row 2: Action links if pending
                         if (isPending) ...[
-                          Row(
+                          Wrap(
+                            spacing: 12,
+                            runSpacing: 6,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               InkWell(
                                 onTap: () {
@@ -4615,7 +5015,6 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 14),
                               InkWell(
                                 onTap: () {
                                   AppSnackbar.show(
@@ -4633,7 +5032,6 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 14),
                               InkWell(
                                 onTap: () {
                                   if (paid > 0) {
@@ -4791,117 +5189,231 @@ class _SplitCollectPageState extends ConsumerState<SplitCollectPage> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFF334155)),
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
+                      child: isMobile
+                          ? Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                RichText(
-                                  text: TextSpan(
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.white,
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.white,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: debtor,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const TextSpan(text: ' owes '),
+                                            TextSpan(
+                                              text: creditor,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                    children: [
-                                      TextSpan(
-                                        text: debtor,
-                                        style: const TextStyle(
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      '₹$amtFormatted',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF38BDF8),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    IconButton(
+                                      tooltip: 'Send Payment Reminder',
+                                      icon: const Icon(
+                                        LucideIcons.bell,
+                                        size: 15,
+                                        color: Color(0xFF38BDF8),
+                                      ),
+                                      padding: const EdgeInsets.all(6),
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () =>
+                                          _sendDebtReminder(debtor, creditor, amt),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    OutlinedButton(
+                                      onPressed: () =>
+                                          _showCustomPayDialog(ticket, d),
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF1E293B),
+                                        side: const BorderSide(
+                                          color: Color(0xFF475569),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Custom Pay',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _settleDebt(ticket, debtor, creditor, amt),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0284C7),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child: const Text(
+                                        'Settle',
+                                        style: TextStyle(
+                                          fontSize: 11,
                                           fontWeight: FontWeight.w700,
                                         ),
                                       ),
-                                      const TextSpan(text: ' owes '),
-                                      TextSpan(
-                                        text: creditor,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            )
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      RichText(
+                                        text: TextSpan(
+                                          style: const TextStyle(
+                                            fontSize: 13,
+                                            color: Colors.white,
+                                          ),
+                                          children: [
+                                            TextSpan(
+                                              text: debtor,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                            const TextSpan(text: ' owes '),
+                                            TextSpan(
+                                              text: creditor,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '₹$amtFormatted',
                                         style: const TextStyle(
-                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w800,
+                                          color: Color(0xFF38BDF8),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '₹$amtFormatted',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w800,
-                                    color: Color(0xFF38BDF8),
-                                  ),
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    IconButton(
+                                      tooltip: 'Send Payment Reminder',
+                                      icon: const Icon(
+                                        LucideIcons.bell,
+                                        size: 15,
+                                        color: Color(0xFF38BDF8),
+                                      ),
+                                      padding: const EdgeInsets.all(6),
+                                      constraints: const BoxConstraints(),
+                                      onPressed: () =>
+                                          _sendDebtReminder(debtor, creditor, amt),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    OutlinedButton(
+                                      onPressed: () =>
+                                          _showCustomPayDialog(ticket, d),
+                                      style: OutlinedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF1E293B),
+                                        side: const BorderSide(
+                                          color: Color(0xFF475569),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 8,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Custom Pay',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          _settleDebt(ticket, debtor, creditor, amt),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF0284C7),
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        elevation: 0,
+                                      ),
+                                      child: const Text(
+                                        'Settle',
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'Send Payment Reminder',
-                                icon: const Icon(
-                                  LucideIcons.bell,
-                                  size: 15,
-                                  color: Color(0xFF38BDF8),
-                                ),
-                                padding: const EdgeInsets.all(6),
-                                constraints: const BoxConstraints(),
-                                onPressed: () =>
-                                    _sendDebtReminder(debtor, creditor, amt),
-                              ),
-                              const SizedBox(width: 6),
-                              OutlinedButton(
-                                onPressed: () =>
-                                    _showCustomPayDialog(ticket, d),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1E293B),
-                                  side: const BorderSide(
-                                    color: Color(0xFF475569),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 8,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Custom Pay',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              ElevatedButton(
-                                onPressed: () =>
-                                    _settleDebt(ticket, debtor, creditor, amt),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF0284C7),
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  elevation: 0,
-                                ),
-                                child: const Text(
-                                  'Settle',
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
                     );
                   }).toList(),
                 ),
