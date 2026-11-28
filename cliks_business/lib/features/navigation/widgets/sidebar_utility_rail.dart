@@ -7,6 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../../widgets/calculator/beta_calculator.dart';
 import '../../../core/navigation/navigation_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/bit_tool_provider.dart';
+import '../../../data/account_provider.dart';
 
 class UtilityRailState {
   final int displayState; // 0 = Closed (C only), 1 = Show pinned, 2 = Show all
@@ -20,7 +22,8 @@ class UtilityRailState {
     this.expandedTab,
     Set<String>? pinnedUtilityNames,
   }) : pinnedUtilityNames =
-           pinnedUtilityNames ?? {'Calculator', 'Calendar', 'Contacts'};
+           pinnedUtilityNames ??
+           {'Calculator', 'Calendar', 'Contacts', 'Notes', 'Shortcuts', 'Weather'};
 
   UtilityRailState copyWith({
     int? displayState,
@@ -85,37 +88,13 @@ class SidebarUtilityRail extends ConsumerStatefulWidget {
 class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   DateTime _selectedCalendarDate = DateTime.now();
 
-  final List<String> _keepNotes = [
-    'Review Q3 invoices',
-    'Finalize tax filings',
-    'Call vendor team',
-  ];
-  final List<Map<String, String>> _contacts = [
-    {'name': 'Sarah Jenkins', 'email': 'sarah@cliks.com'},
-    {'name': 'Alex Rivera', 'email': 'alex@cliks.com'},
-    {'name': 'James Miller', 'email': 'james@cliks.com'},
-  ];
-
   final List<Map<String, String>> _shortcuts = [
     {'keys': 'Ctrl + I', 'action': 'New Invoice'},
     {'keys': 'Ctrl + P', 'action': 'Payment Setup'},
     {'keys': 'Shift + S', 'action': 'Split Billing'},
   ];
 
-  String _targetLanguage = 'Spanish';
-  String _translationResult = '';
-
-  String _ocrOutputText = 'Extracted invoice details: Total due ₹24,500.00.';
-  bool _ocrScanRunning = false;
-
-  final List<String> _newsItems = [
-    'Cliks Business launches automated GST reconciliation',
-    'New real-time payout capabilities rolled out',
-    'Financial trends shifting towards hybrid credit terms',
-  ];
-
   late final TextEditingController _noteInputController;
-  late final TextEditingController _translateInputController;
 
   bool _logoLoaded = false;
   File? _logoFile;
@@ -124,8 +103,16 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   void initState() {
     super.initState();
     _noteInputController = TextEditingController();
-    _translateInputController = TextEditingController();
     _loadCustomLogo();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(bitToolContactsProvider.notifier).loadContacts();
+        ref.read(bitToolNotesProvider.notifier).loadNotes();
+        ref.read(bitToolCalendarProvider.notifier).loadForMonth(_selectedCalendarDate);
+        ref.read(bitToolCalculatorProvider.notifier).loadSessions();
+      }
+    });
   }
 
   void _loadCustomLogo() {
@@ -148,7 +135,6 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   @override
   void dispose() {
     _noteInputController.dispose();
-    _translateInputController.dispose();
     super.dispose();
   }
 
@@ -258,6 +244,17 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(activeAccountProvider, (prev, next) {
+      if (prev?.email != next.email || prev?.id != next.id) {
+        ref.invalidate(bitToolApiModuleProvider);
+        ref.invalidate(bitToolContactsProvider);
+        ref.invalidate(bitToolNotesProvider);
+        ref.invalidate(bitToolCalendarProvider);
+        ref.invalidate(bitToolCalculatorProvider);
+        ref.invalidate(bitToolConnectionProvider);
+      }
+    });
+
     final railState = ref.watch(utilityRailProvider);
     final utilityDisplayState = railState.displayState;
     final isEditingUtilities = railState.isEditing;
@@ -277,14 +274,14 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         'label': 'Calendar',
       },
       {
-        'icon': LucideIcons.users,
+        'icon': LucideIcons.contact,
         'color': const Color(0xFF2F80ED),
         'label': 'Contacts',
       },
       {
-        'icon': LucideIcons.messageSquare,
-        'color': const Color(0xFF56CCF2),
-        'label': 'Messages',
+        'icon': LucideIcons.stickyNote,
+        'color': const Color(0xFFDB2777),
+        'label': 'Notes',
       },
       {
         'icon': LucideIcons.keyboard,
@@ -292,24 +289,9 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         'label': 'Shortcuts',
       },
       {
-        'icon': LucideIcons.languages,
-        'color': const Color(0xFFEB5757),
-        'label': 'Translate',
-      },
-      {
-        'icon': LucideIcons.scan,
-        'color': const Color(0xFF8E44AD),
-        'label': 'Lens OCR',
-      },
-      {
         'icon': LucideIcons.cloudSun,
-        'color': const Color(0xFFF2C94C),
+        'color': const Color(0xFF0284C7),
         'label': 'Weather',
-      },
-      {
-        'icon': LucideIcons.newspaper,
-        'color': const Color(0xFF56CCF2),
-        'label': 'News',
       },
     ];
 
@@ -317,29 +299,24 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     if (isEditingUtilities) {
       displayList.addAll(utilities);
     } else {
-      // 1. Keep the first 3 default icons always
-      displayList.add(utilities[0]); // Calculator
-      displayList.add(utilities[1]); // Calendar
-      displayList.add(utilities[2]); // Contacts
-
-      // 2. Append other user-pinned items (excluding the default 3)
-      final Set<String> defaultLabels = {'Calculator', 'Calendar', 'Contacts'};
-      final customPinned = utilities.where(
-        (u) =>
-            pinnedUtilityNames.contains(u['label']) &&
-            !defaultLabels.contains(u['label']),
-      );
-      displayList.addAll(customPinned);
+      for (final u in utilities) {
+        if (pinnedUtilityNames.contains(u['label'])) {
+          displayList.add(u);
+        }
+      }
+      if (displayList.isEmpty) {
+        displayList.addAll(utilities);
+      }
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Horizontal Rail Bar - Shifted slightly to the left
+        // Horizontal Rail Bar - Aligned flush with compact margin
         Container(
           height: 44,
-          margin: const EdgeInsets.only(left: 0, right: 16, top: 2, bottom: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
           decoration: const BoxDecoration(color: Colors.transparent),
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -531,30 +508,22 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
       case 'Contacts':
         content = _buildContactsTab();
         break;
+      case 'Notes':
       case 'Messages':
-        content = _buildMessagesTab();
+        content = _buildNotesTab();
         break;
       case 'Shortcuts':
         content = _buildShortcutsTab();
         break;
-      case 'Translate':
-        content = _buildTranslateTab();
-        break;
-      case 'Lens OCR':
-        content = _buildOcrTab();
-        break;
       case 'Weather':
         content = _buildWeatherTab();
-        break;
-      case 'News':
-        content = _buildNewsTab();
         break;
       default:
         content = const SizedBox.shrink();
     }
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      margin: const EdgeInsets.only(top: 8, bottom: 4),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -562,8 +531,8 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
             offset: const Offset(0, 3),
           ),
         ],
@@ -576,7 +545,7 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                expandedUtilityTab,
+                expandedUtilityTab == 'Messages' ? 'Notes' : expandedUtilityTab,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
@@ -650,9 +619,40 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   }
 
   Widget _buildCalendarTab() {
-    final now = DateTime.now();
-    final monthLabel = "July ${now.year}";
+    final calendarState = ref.watch(bitToolCalendarProvider);
+    const months = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    final monthLabel = "${months[_selectedCalendarDate.month - 1]} ${_selectedCalendarDate.year}";
     final weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+
+    final daysInMonth = DateUtils.getDaysInMonth(
+      _selectedCalendarDate.year,
+      _selectedCalendarDate.month,
+    );
+    final firstWeekday = DateTime(
+      _selectedCalendarDate.year,
+      _selectedCalendarDate.month,
+      1,
+    ).weekday;
+    final totalCells = ((firstWeekday - 1) + daysInMonth + 6) ~/ 7 * 7;
+    final totalWeeks = totalCells ~/ 7;
+
+    final dayEvents = calendarState.events.where((e) =>
+      e.startTime.year == _selectedCalendarDate.year &&
+      e.startTime.month == _selectedCalendarDate.month &&
+      e.startTime.day == _selectedCalendarDate.day
+    ).toList();
+
+    String eventText = 'No business scheduled for today.';
+    if (dayEvents.isNotEmpty) {
+      final ev = dayEvents.first;
+      final hr = ev.startTime.hour % 12 == 0 ? 12 : ev.startTime.hour % 12;
+      final mn = ev.startTime.minute.toString().padLeft(2, '0');
+      final ampm = ev.startTime.hour >= 12 ? 'PM' : 'AM';
+      eventText = '${ev.title} @ $hr:$mn $ampm';
+    }
 
     return Column(
       children: [
@@ -663,11 +663,33 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
               monthLabel,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
             ),
-            const Row(
+            Row(
               children: [
-                Icon(LucideIcons.chevronLeft, size: 14, color: Colors.black54),
-                SizedBox(width: 8),
-                Icon(LucideIcons.chevronRight, size: 14, color: Colors.black54),
+                GestureDetector(
+                  onTap: () {
+                    final prevMonth = DateTime(
+                      _selectedCalendarDate.year,
+                      _selectedCalendarDate.month - 1,
+                      1,
+                    );
+                    setState(() => _selectedCalendarDate = prevMonth);
+                    ref.read(bitToolCalendarProvider.notifier).loadForMonth(prevMonth);
+                  },
+                  child: const Icon(LucideIcons.chevronLeft, size: 14, color: Colors.black54),
+                ),
+                const SizedBox(width: 8),
+                GestureDetector(
+                  onTap: () {
+                    final nextMonth = DateTime(
+                      _selectedCalendarDate.year,
+                      _selectedCalendarDate.month + 1,
+                      1,
+                    );
+                    setState(() => _selectedCalendarDate = nextMonth);
+                    ref.read(bitToolCalendarProvider.notifier).loadForMonth(nextMonth);
+                  },
+                  child: const Icon(LucideIcons.chevronRight, size: 14, color: Colors.black54),
+                ),
               ],
             ),
           ],
@@ -678,12 +700,12 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
           children: weekdays
               .map(
                 (w) => SizedBox(
-                  width: 24,
+                  width: 28,
                   child: Text(
                     w,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 10,
+                      fontSize: 10.5,
                       color: Colors.grey,
                       fontWeight: FontWeight.bold,
                     ),
@@ -694,29 +716,43 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
         ),
         const SizedBox(height: 6),
         Column(
-          children: List.generate(4, (weekIndex) {
+          children: List.generate(totalWeeks > 5 ? 5 : totalWeeks, (weekIndex) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 2.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(7, (dayIndex) {
-                  final dayNumber = weekIndex * 7 + dayIndex + 1;
-                  final isSelected = _selectedCalendarDate.day == dayNumber;
-                  if (dayNumber > 31) return const SizedBox(width: 24);
+                  final cellIndex = weekIndex * 7 + dayIndex;
+                  final dayNumber = cellIndex - (firstWeekday - 1) + 1;
+                  if (dayNumber < 1 || dayNumber > daysInMonth) {
+                    return const SizedBox(width: 28, height: 28);
+                  }
+
+                  final isSelected = _selectedCalendarDate.day == dayNumber &&
+                      _selectedCalendarDate.month == calendarState.selectedDate.month &&
+                      _selectedCalendarDate.year == calendarState.selectedDate.year;
+
+                  final hasEventOnDay = calendarState.events.any((e) =>
+                    e.startTime.year == _selectedCalendarDate.year &&
+                    e.startTime.month == _selectedCalendarDate.month &&
+                    e.startTime.day == dayNumber
+                  );
 
                   return GestureDetector(
                     onTap: () {
+                      final selected = DateTime(
+                        _selectedCalendarDate.year,
+                        _selectedCalendarDate.month,
+                        dayNumber,
+                      );
                       setState(() {
-                        _selectedCalendarDate = DateTime(
-                          now.year,
-                          now.month,
-                          dayNumber,
-                        );
+                        _selectedCalendarDate = selected;
                       });
+                      ref.read(bitToolCalendarProvider.notifier).selectDate(selected);
                     },
                     child: Container(
-                      width: 24,
-                      height: 24,
+                      width: 28,
+                      height: 28,
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppColors.primaryGreen
@@ -725,18 +761,20 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                         border: Border.all(
                           color: isSelected
                               ? Colors.transparent
-                              : Colors.grey.shade200,
-                          width: 0.8,
+                              : (hasEventOnDay
+                                  ? Colors.amber.shade400
+                                  : Colors.grey.shade200),
+                          width: hasEventOnDay ? 1.2 : 0.8,
                         ),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         '$dayNumber',
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           fontWeight: isSelected
                               ? FontWeight.bold
-                              : FontWeight.normal,
+                              : (hasEventOnDay ? FontWeight.bold : FontWeight.normal),
                           color: isSelected ? Colors.white : Colors.black87,
                         ),
                       ),
@@ -753,13 +791,15 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
           padding: const EdgeInsets.only(top: 4.0),
           child: Row(
             children: [
-              const Icon(Icons.circle, size: 8, color: Colors.amber),
+              Icon(
+                Icons.circle,
+                size: 8,
+                color: dayEvents.isNotEmpty ? Colors.amber : Colors.grey.shade400,
+              ),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  _selectedCalendarDate.day % 2 == 0
-                      ? 'No business scheduled for today.'
-                      : 'Payout run execution @ 3:00 PM',
+                  eventText,
                   style: const TextStyle(fontSize: 10, color: Colors.grey),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -773,19 +813,85 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
   }
 
   Widget _buildContactsTab() {
+    final contactsState = ref.watch(bitToolContactsProvider);
+
+    if (contactsState.isLoading && contactsState.contacts.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(
+          child: SizedBox(
+            width: 18,
+            height: 18,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final contactsList = contactsState.filteredContacts.isNotEmpty
+        ? contactsState.filteredContacts
+        : contactsState.contacts;
+
+    if (contactsList.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        child: Column(
+          children: [
+            const Text(
+              'No contacts in BitTool directory.',
+              style: TextStyle(fontSize: 10, color: Colors.grey),
+            ),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => ref.read(bitToolContactsProvider.notifier).loadContacts(),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(LucideIcons.refreshCw, size: 11, color: AppColors.primaryGreen),
+                  SizedBox(width: 4),
+                  Text(
+                    'Sync Contacts',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryGreen,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Column(
-      children: _contacts.map((c) {
+      children: contactsList.take(5).map((c) {
+        final initial = (c.fullName.isNotEmpty
+                ? c.fullName[0]
+                : (c.email.isNotEmpty ? c.email[0] : '?'))
+            .toUpperCase();
+        final name = c.fullName.isNotEmpty
+            ? c.fullName
+            : (c.email.isNotEmpty ? c.email : 'Contact');
+        final subtitle = c.email.isNotEmpty
+            ? c.email
+            : (c.phone.isNotEmpty ? c.phone : c.role);
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 12,
+                radius: 13,
                 backgroundColor: AppColors.hoverBackground,
                 child: Text(
-                  c['name']![0],
+                  initial,
                   style: const TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                     color: AppColors.primaryGreen,
                   ),
@@ -797,24 +903,35 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      c['name']!,
+                      name,
                       style: const TextStyle(
-                        fontSize: 11,
+                        fontSize: 11.5,
                         fontWeight: FontWeight.bold,
                         color: AppColors.darkText,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                     Text(
-                      c['email']!,
-                      style: const TextStyle(fontSize: 9, color: Colors.grey),
+                      subtitle,
+                      style: const TextStyle(fontSize: 9.5, color: Colors.grey),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
-              const Icon(
-                LucideIcons.messageSquare,
-                size: 14,
-                color: AppColors.primaryGreen,
+              Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryGreen.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Icon(
+                  LucideIcons.messageSquare,
+                  size: 13,
+                  color: AppColors.primaryGreen,
+                ),
               ),
             ],
           ),
@@ -823,43 +940,168 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     );
   }
 
-  Widget _buildMessagesTab() {
+  Widget _buildNotesTab() {
+    final notesState = ref.watch(bitToolNotesProvider);
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0),
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 12,
-                backgroundColor: AppColors.hoverBackground,
-                child: const Text(
-                  'S',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primaryGreen,
-                  ),
+        if (notesState.isLoading && notesState.notes.isEmpty)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12.0),
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: AppColors.primaryGreen,
                 ),
               ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Support Team',
-                      style: TextStyle(
-                        fontSize: 11,
+            ),
+          )
+        else if (notesState.notes.isNotEmpty)
+          ...notesState.notes.take(4).map((n) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4.0),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundColor: const Color(0xFFFCE7F3),
+                    child: Text(
+                      n.title.isNotEmpty ? n.title[0].toUpperCase() : 'N',
+                      style: const TextStyle(
+                        fontSize: 10,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.darkText,
+                        color: Color(0xFFDB2777),
                       ),
                     ),
-                    Text(
-                      'How can we help you today?',
-                      style: TextStyle(fontSize: 9, color: Colors.grey),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          n.title,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.darkText,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          n.content.isNotEmpty ? n.content : 'No details',
+                          style: const TextStyle(fontSize: 9, color: Colors.grey),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
+                  GestureDetector(
+                    onTap: () => ref.read(bitToolNotesProvider.notifier).deleteNote(n.id),
+                    child: const Icon(
+                      LucideIcons.trash2,
+                      size: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          })
+        else
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 4.0),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 12,
+                  backgroundColor: Color(0xFFFCE7F3),
+                  child: Text(
+                    'N',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFDB2777),
+                    ),
+                  ),
+                ),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'BitTool Notes',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.darkText,
+                        ),
+                      ),
+                      Text(
+                        'No saved notes yet.',
+                        style: TextStyle(fontSize: 9, color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        const SizedBox(height: 8),
+        Container(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _noteInputController,
+                  style: const TextStyle(fontSize: 10),
+                  decoration: const InputDecoration(
+                    hintText: 'Add a quick note...',
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(vertical: 8),
+                  ),
+                  onSubmitted: (val) {
+                    final txt = val.trim();
+                    if (txt.isNotEmpty) {
+                      ref.read(bitToolNotesProvider.notifier).createNote(
+                            title: 'Quick Note',
+                            content: txt,
+                          );
+                      _noteInputController.clear();
+                    }
+                  },
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  final txt = _noteInputController.text.trim();
+                  if (txt.isNotEmpty) {
+                    ref.read(bitToolNotesProvider.notifier).createNote(
+                          title: 'Quick Note',
+                          content: txt,
+                        );
+                    _noteInputController.clear();
+                  }
+                },
+                child: const Icon(
+                  LucideIcons.sendHorizontal,
+                  size: 13,
+                  color: AppColors.primaryGreen,
                 ),
               ),
             ],
@@ -904,175 +1146,77 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     );
   }
 
-  Widget _buildTranslateTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Translate to: ',
-              style: TextStyle(fontSize: 10, color: Colors.grey),
-            ),
-            DropdownButton<String>(
-              value: _targetLanguage,
-              style: const TextStyle(fontSize: 11, color: AppColors.darkText),
-              underline: const SizedBox.shrink(),
-              items: ['Spanish', 'French', 'German', 'Chinese'].map((lang) {
-                return DropdownMenuItem<String>(value: lang, child: Text(lang));
-              }).toList(),
-              onChanged: (val) {
-                setState(() => _targetLanguage = val!);
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Container(
-          height: 36,
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          decoration: BoxDecoration(
-            color: Colors.grey.shade50,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: TextField(
-            controller: _translateInputController,
-            style: const TextStyle(fontSize: 11),
-            decoration: const InputDecoration(
-              hintText: 'Enter text to translate...',
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(vertical: 8),
-            ),
-          ),
-        ),
-        if (_translationResult.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.all(6),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Text(
-              _translationResult,
-              style: const TextStyle(fontSize: 11, fontStyle: FontStyle.italic),
-            ),
-          ),
-        ],
-        const SizedBox(height: 8),
-        Align(
-          alignment: Alignment.centerRight,
-          child: ElevatedButton(
-            onPressed: () {
-              final txt = _translateInputController.text.trim();
-              if (txt.isNotEmpty) {
-                setState(() {
-                  _translationResult = "Result: [Mock Translation of '$txt']";
-                });
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primaryGreen,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            ),
-            child: const Text(
-              'Translate',
-              style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildOcrTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          _ocrScanRunning ? 'Analyzing image details...' : _ocrOutputText,
-          style: const TextStyle(fontSize: 11, color: AppColors.darkText),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _ocrScanRunning = true;
-                });
-                Future.delayed(const Duration(milliseconds: 1500), () {
-                  if (mounted) {
-                    setState(() {
-                      _ocrScanRunning = false;
-                      _ocrOutputText =
-                          "Extracted: 'Amount: ₹24,500.00, Date: 08-Jul-2026'";
-                    });
-                  }
-                });
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primaryGreen,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-              ),
-              child: Text(
-                _ocrScanRunning ? 'Analyzing...' : 'Scan invoice',
-                style: const TextStyle(
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
   Widget _buildWeatherTab() {
-    return const Row(
+    final weatherAsync = ref.watch(bitToolWeatherProvider);
+
+    return weatherAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 8.0),
+        child: Center(
+          child: SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: AppColors.primaryGreen,
+            ),
+          ),
+        ),
+      ),
+      error: (err, stack) => _buildWeatherRow(
+        city: 'Mumbai',
+        condition: 'Clear',
+        icon: LucideIcons.sun,
+        temp: '29°C',
+      ),
+      data: (weather) {
+        final city = weather?.city ?? 'Tiruvallur';
+        final temp = weather?.current.temperature != null
+            ? '${weather!.current.temperature.round()}°C'
+            : '29°C';
+        final code = weather?.current.weatherCode ?? 0;
+        final condition = _getWeatherCondition(code);
+        final icon = _getWeatherIcon(code);
+        return _buildWeatherRow(
+          city: city,
+          condition: condition,
+          icon: icon,
+          temp: temp,
+        );
+      },
+    );
+  }
+
+  Widget _buildWeatherRow({
+    required String city,
+    required String condition,
+    required IconData icon,
+    required String temp,
+  }) {
+    return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Mumbai',
-              style: TextStyle(
+              city,
+              style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: AppColors.darkText,
               ),
             ),
-            Text('Rainy', style: TextStyle(fontSize: 10, color: Colors.grey)),
+            Text(condition, style: const TextStyle(fontSize: 10, color: Colors.grey)),
           ],
         ),
         Row(
           children: [
-            Icon(LucideIcons.cloudRain, size: 20, color: Colors.blueAccent),
-            SizedBox(width: 8),
+            Icon(icon, size: 20, color: Colors.blueAccent),
+            const SizedBox(width: 8),
             Text(
-              '29°C',
-              style: TextStyle(
+              temp,
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: AppColors.darkText,
@@ -1084,39 +1228,23 @@ class _SidebarUtilityRailState extends ConsumerState<SidebarUtilityRail> {
     );
   }
 
-  Widget _buildNewsTab() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: _newsItems.map((item) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 3.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(top: 3.0),
-                child: Icon(
-                  LucideIcons.newspaper,
-                  size: 10,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  item,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.darkText,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
+  String _getWeatherCondition(int code) {
+    if (code == 0) return 'Clear';
+    if (code <= 3) return 'Partly Cloudy';
+    if (code <= 48) return 'Foggy';
+    if (code <= 65) return 'Rainy';
+    if (code <= 75) return 'Snowy';
+    if (code >= 95) return 'Thunderstorm';
+    return 'Cloudy';
+  }
+
+  IconData _getWeatherIcon(int code) {
+    if (code == 0) return LucideIcons.sun;
+    if (code <= 3) return LucideIcons.cloudSun;
+    if (code <= 48) return LucideIcons.cloudFog;
+    if (code <= 65) return LucideIcons.cloudRain;
+    if (code <= 75) return LucideIcons.cloudSnow;
+    if (code >= 95) return LucideIcons.cloudLightning;
+    return LucideIcons.cloud;
   }
 }

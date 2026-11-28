@@ -50,7 +50,7 @@ class Sidebar extends ConsumerWidget {
                 // Top section - stays fixed curvy green gradient card
                 Container(
                   width: double.infinity,
-                  padding: EdgeInsets.fromLTRB(16, 24 + topPadding, 16, 20),
+                  padding: EdgeInsets.fromLTRB(12, 20 + topPadding, 12, 16),
                   decoration: const BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,

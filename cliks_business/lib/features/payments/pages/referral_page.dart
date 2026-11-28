@@ -37,9 +37,12 @@ class _ReferralPageState extends State<ReferralPage> {
           children: [
             const Icon(LucideIcons.check, color: Colors.white, size: 16),
             const SizedBox(width: 8),
-            Text(
-              isCode ? 'Referral code copied to clipboard!' : 'Referral link copied to clipboard!',
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            Expanded(
+              child: Text(
+                isCode ? 'Referral code copied to clipboard!' : 'Referral link copied to clipboard!',
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
             ),
           ],
         ),
@@ -77,9 +80,12 @@ class _ReferralPageState extends State<ReferralPage> {
           children: [
             Icon(LucideIcons.check, color: Colors.white, size: 16),
             SizedBox(width: 8),
-            Text(
-              'Invitation message copied! Ready to paste & send.',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            Expanded(
+              child: Text(
+                'Invitation message copied! Ready to paste & send.',
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
             ),
           ],
         ),
@@ -101,9 +107,12 @@ class _ReferralPageState extends State<ReferralPage> {
             children: [
               Icon(LucideIcons.sparkles, color: Colors.white, size: 16),
               SizedBox(width: 8),
-              Text(
-                'Referral stats refreshed',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              Expanded(
+                child: Text(
+                  'Referral stats refreshed',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
               ),
             ],
           ),
@@ -256,13 +265,16 @@ class _ReferralPageState extends State<ReferralPage> {
                   children: [
                     Icon(LucideIcons.sparkles, size: 12, color: Color(0xFFFBBF24)),
                     SizedBox(width: 6),
-                    Text(
-                      'CLIKS PARTNER REWARDS',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
-                        letterSpacing: 0.6,
+                    Flexible(
+                      child: Text(
+                        'CLIKS PARTNER REWARDS',
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.6,
+                        ),
                       ),
                     ),
                   ],
@@ -433,13 +445,17 @@ class _ReferralPageState extends State<ReferralPage> {
             child: Icon(icon, color: iconColor, size: 16),
           ),
           const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Color(0xFF0F172A),
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-              letterSpacing: -0.2,
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Color(0xFF0F172A),
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                letterSpacing: -0.2,
+              ),
             ),
           ),
           const SizedBox(height: 2),
@@ -718,12 +734,17 @@ class _ReferralPageState extends State<ReferralPage> {
             children: [
               Icon(icon, size: 15, color: Colors.white),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -757,12 +778,17 @@ class _ReferralPageState extends State<ReferralPage> {
             children: [
               Icon(icon, size: 15, color: const Color(0xFF334155)),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Color(0xFF334155),
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      color: Color(0xFF334155),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1010,12 +1036,15 @@ class _ReferralPageState extends State<ReferralPage> {
             children: [
               Icon(icon, size: 14, color: iconColor),
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: iconColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: iconColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
