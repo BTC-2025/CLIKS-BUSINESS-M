@@ -60,7 +60,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
   // Section Navigation Tabs (BUSINESS, FIN-PRO, PARTNER LAUNCH DESK)
   int _selectedMainTab = 0; // 0: BUSINESS, 1: FIN-PRO, 2: PARTNER LAUNCH DESK
-  int _selectedBusinessSubTab = 0; // 0: Standard Tiers, 1: ✦ Customizable Plan & Add-Ons
+  int _selectedBusinessSubTab =
+      0; // 0: Standard Tiers, 1: ✦ Customizable Plan & Add-Ons
   int _selectedPartnerTab = 0; // 0: Investor Club, 1: Products & Ideas
 
   // Active optional capability add-ons
@@ -185,11 +186,15 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   };
 
   // Tier tracking for Upgrade logic:
-  int _currentBusinessTier = 5; // 1: Micro, 2: Starter, 3: Standard, 4: Growth, 5: Elite Suite (Active in screenshot)
-  int _currentFinProTier = 1; // 1: Solo (Active), 2: Firm (Top tier with Gold UI)
+  int _currentBusinessTier =
+      5; // 1: Micro, 2: Starter, 3: Standard, 4: Growth, 5: Elite Suite (Active in screenshot)
+  int _currentFinProTier =
+      1; // 1: Solo (Active), 2: Firm (Top tier with Gold UI)
   int _finProTeamMembers = 3; // Stepper counter in Fin-Pro Firm
-  int _currentInvestorTier = 1; // 1: Basic Investor, 2: Pro Investor (Top tier with Gold UI)
-  int _currentProductsTier = 1; // 1: Monthly Innovator, 2: Yearly Founder (Top tier with Gold UI)
+  int _currentInvestorTier =
+      1; // 1: Basic Investor, 2: Pro Investor (Top tier with Gold UI)
+  int _currentProductsTier =
+      1; // 1: Monthly Innovator, 2: Yearly Founder (Top tier with Gold UI)
 
   // Scroll Controller & GlobalKeys for seamless section navigation
   final ScrollController _scrollController = ScrollController();
@@ -249,7 +254,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             final pLower = planName.toLowerCase();
             if (pLower.contains('elite')) {
               resolvedTier = 5;
-            } else if (pLower.contains('growth') || pLower.contains('premium')) {
+            } else if (pLower.contains('growth') ||
+                pLower.contains('premium')) {
               resolvedTier = 4;
             } else if (pLower.contains('standard')) {
               resolvedTier = 3;
@@ -316,8 +322,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       tierNumber: 2,
       topTag: '',
       name: 'Starter',
-      headline:
-          'Ideal for emerging single-branch retail & growing SMBs.',
+      headline: 'Ideal for emerging single-branch retail & growing SMBs.',
       originalMonthlyPrice: '₹9,999',
       offerMonthlyPrice: '₹583',
       fullAnnualPrice: '₹6,996',
@@ -367,8 +372,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       tierNumber: 4,
       topTag: 'SCALING SMB',
       name: 'Growth',
-      headline:
-          'Built for scaling businesses and multi-site operations.',
+      headline: 'Built for scaling businesses and multi-site operations.',
       originalMonthlyPrice: '₹24,999',
       offerMonthlyPrice: '₹1,499',
       fullAnnualPrice: '₹17,988',
@@ -392,8 +396,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       tierNumber: 5,
       topTag: 'TIER 5: ELITE (₹2,499/MO)',
       name: 'Elite',
-      headline:
-          'Absolute control for national distribution networks.',
+      headline: 'Absolute control for national distribution networks.',
       originalMonthlyPrice: '₹39,999',
       offerMonthlyPrice: '₹2,499',
       fullAnnualPrice: '₹29,988',
@@ -419,7 +422,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isMobile = screenWidth < 950;
-    final isDesktop = !isMobile || screenWidth >= 950 || Theme.of(context).platform == TargetPlatform.macOS;
+    final isDesktop =
+        !isMobile ||
+        screenWidth >= 950 ||
+        Theme.of(context).platform == TargetPlatform.macOS;
     final paddingVal = isMobile ? 16.0 : 32.0;
 
     return Scaffold(
@@ -461,7 +467,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             const SizedBox(height: 36),
 
             // ─── BILLING & STATEMENT HISTORY ───
-            Container(key: _billingHistoryKey, child: _buildBillingHistorySection()),
+            Container(
+              key: _billingHistoryKey,
+              child: _buildBillingHistorySection(),
+            ),
           ],
         ),
       ),
@@ -665,12 +674,17 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               );
             },
             icon: const Icon(LucideIcons.fileText, size: 13),
-            label: const Text('Invoices', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Invoices',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF166534),
               side: const BorderSide(color: Color(0xFFBBF7D0)),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
           const SizedBox(width: 8),
@@ -683,13 +697,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               );
             },
             icon: const Icon(LucideIcons.arrowUpRight, size: 13),
-            label: const Text('Upgrade Tier', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Upgrade Tier',
+              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF166534),
               foregroundColor: Colors.white,
               elevation: 0,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
           ),
         ],
@@ -799,7 +818,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
 
     final rightBox = Container(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 20, vertical: 12),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 20,
+        vertical: 12,
+      ),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(14),
@@ -810,7 +832,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       ),
       child: Row(
         mainAxisSize: isMobile ? MainAxisSize.max : MainAxisSize.min,
-        mainAxisAlignment: isMobile ? MainAxisAlignment.spaceAround : MainAxisAlignment.start,
+        mainAxisAlignment: isMobile
+            ? MainAxisAlignment.spaceAround
+            : MainAxisAlignment.start,
         children: [
           isMobile
               ? Expanded(
@@ -930,7 +954,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 16 : 22, vertical: 18),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 16 : 22,
+        vertical: 18,
+      ),
       decoration: BoxDecoration(
         color: _darkForestGreen,
         borderRadius: BorderRadius.circular(20),
@@ -1084,7 +1111,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     );
   }
 
-  Widget _buildFourTierCards([bool isMobile = false]) => _buildTierCards(isMobile);
+  Widget _buildFourTierCards([bool isMobile = false]) =>
+      _buildTierCards(isMobile);
 
   // ═══════════════════════════════════════════════════════════════
   // INDIVIDUAL SUBSCRIPTION CARD (Enterprise SaaS Aesthetic)
@@ -1114,9 +1142,13 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               : (isTier2
                     ? const Color(0xFF16A34A) // Clean Green (Starter)
                     : (isTier3
-                          ? const Color(0xFF2563EB) // Vibrant Royal Blue (Standard)
+                          ? const Color(
+                              0xFF2563EB,
+                            ) // Vibrant Royal Blue (Standard)
                           : (isTier4
-                                ? const Color(0xFF0284C7) // Cyan / Sky Blue (Growth)
+                                ? const Color(
+                                    0xFF0284C7,
+                                  ) // Cyan / Sky Blue (Growth)
                                 : const Color(0xFFB45309)))));
 
     // Gold UI ONLY for higher plan (All Top Tiers)!
@@ -1129,7 +1161,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     ? const Color(0xFF2563EB) // Royal Blue border
                     : const Color(0xFFE2E8F0)));
 
-    final double borderWidth = isGold ? 2.4 : (isCurrent ? 2.0 : (isTier3 ? 1.8 : 1.2));
+    final double borderWidth = isGold
+        ? 2.4
+        : (isCurrent ? 2.0 : (isTier3 ? 1.8 : 1.2));
 
     final List<BoxShadow> cardShadow = isGold
         ? [
@@ -1145,43 +1179,47 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             ),
           ]
         : (isCurrent
-            ? [
-                BoxShadow(
-                  color: _darkForestGreen.withValues(alpha: 0.15),
-                  blurRadius: 18,
-                  offset: const Offset(0, 4),
-                ),
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ]
-            : (isTier3
-                  ? [
-                      BoxShadow(
-                        color: const Color(0xFF2563EB).withValues(alpha: 0.14),
-                        blurRadius: 22,
-                        offset: const Offset(0, 6),
-                      ),
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ]));
+              ? [
+                  BoxShadow(
+                    color: _darkForestGreen.withValues(alpha: 0.15),
+                    blurRadius: 18,
+                    offset: const Offset(0, 4),
+                  ),
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : (isTier3
+                    ? [
+                        BoxShadow(
+                          color: const Color(
+                            0xFF2563EB,
+                          ).withValues(alpha: 0.14),
+                          blurRadius: 22,
+                          offset: const Offset(0, 6),
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ]
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.03),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]));
 
     return Container(
       decoration: BoxDecoration(
         color: isGold
-            ? const Color(0xFFFFFDF5) // Luxury Gold background ONLY for top tiers
+            ? const Color(
+                0xFFFFFDF5,
+              ) // Luxury Gold background ONLY for top tiers
             : (isCurrent ? const Color(0xFFF9FDF9) : Colors.white),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: cardBorderColor, width: borderWidth),
@@ -1252,7 +1290,13 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             Container(
               height: 32,
               alignment: Alignment.centerLeft,
-              child: _buildBlinkingOfferButton(tier, days, hours, mins, isCurrent),
+              child: _buildBlinkingOfferButton(
+                tier,
+                days,
+                hours,
+                mins,
+                isCurrent,
+              ),
             ),
             const SizedBox(height: 8),
 
@@ -1379,7 +1423,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                         ? const Color(0xFF1D4ED8)
                         : (isTier4
                               ? const Color(0xFF0284C7)
-                              : (isTier2 ? const Color(0xFF0F766E) : const Color(0xFF334155)))));
+                              : (isTier2
+                                    ? const Color(0xFF0F766E)
+                                    : const Color(0xFF334155)))));
 
         final Color glowColor = isGold
             ? const Color(0xFFF59E0B)
@@ -1387,13 +1433,17 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   ? const Color(0xFF10B981)
                   : (isTier3
                         ? const Color(0xFF3B82F6)
-                        : (isTier2 ? const Color(0xFF14B8A6) : const Color(0xFF64748B))));
+                        : (isTier2
+                              ? const Color(0xFF14B8A6)
+                              : const Color(0xFF64748B))));
 
         final Color dotColor = isGold
             ? const Color(0xFFEA580C)
             : (isCurrent
                   ? const Color(0xFF059669)
-                  : (isTier3 ? const Color(0xFF2563EB) : const Color(0xFFEF4444)));
+                  : (isTier3
+                        ? const Color(0xFF2563EB)
+                        : const Color(0xFFEF4444)));
 
         return Tooltip(
           message: 'Special Promotional Discount Active • ${tier.discountTag}',
@@ -1405,17 +1455,41 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 gradient: LinearGradient(
                   colors: isGold
                       ? [
-                          Color.lerp(const Color(0xFFFFFBEB), const Color(0xFFFEF3C7), t)!,
-                          Color.lerp(const Color(0xFFFDE68A), const Color(0xFFFCD34D), t)!,
+                          Color.lerp(
+                            const Color(0xFFFFFBEB),
+                            const Color(0xFFFEF3C7),
+                            t,
+                          )!,
+                          Color.lerp(
+                            const Color(0xFFFDE68A),
+                            const Color(0xFFFCD34D),
+                            t,
+                          )!,
                         ]
                       : (isTier3
                             ? [
-                                Color.lerp(const Color(0xFFEFF6FF), const Color(0xFFDBEAFE), t)!,
-                                Color.lerp(const Color(0xFFBFDBFE), const Color(0xFF93C5FD), t)!,
+                                Color.lerp(
+                                  const Color(0xFFEFF6FF),
+                                  const Color(0xFFDBEAFE),
+                                  t,
+                                )!,
+                                Color.lerp(
+                                  const Color(0xFFBFDBFE),
+                                  const Color(0xFF93C5FD),
+                                  t,
+                                )!,
                               ]
                             : [
-                                Color.lerp(const Color(0xFFF0FDF4), const Color(0xFFDCFCE7), t)!,
-                                Color.lerp(const Color(0xFFBBF7D0), const Color(0xFF86EFAC), t)!,
+                                Color.lerp(
+                                  const Color(0xFFF0FDF4),
+                                  const Color(0xFFDCFCE7),
+                                  t,
+                                )!,
+                                Color.lerp(
+                                  const Color(0xFFBBF7D0),
+                                  const Color(0xFF86EFAC),
+                                  t,
+                                )!,
                               ]),
                 ),
                 borderRadius: BorderRadius.circular(20),
@@ -1458,11 +1532,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                       ),
                     ),
                     const SizedBox(width: 5),
-                    Icon(
-                      LucideIcons.flame,
-                      size: 11.5,
-                      color: baseColor,
-                    ),
+                    Icon(LucideIcons.flame, size: 11.5, color: baseColor),
                     const SizedBox(width: 4),
                     Text(
                       'Offer • ${days}d left',
@@ -1514,7 +1584,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(LucideIcons.crown, size: 12, color: Color(0xFFFEF3C7)),
+                const Icon(
+                  LucideIcons.crown,
+                  size: 12,
+                  color: Color(0xFFFEF3C7),
+                ),
                 const SizedBox(width: 5),
                 Text(
                   'CURRENTLY ACTIVE PLAN',
@@ -1711,7 +1785,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     return const SizedBox.shrink();
   }
 
-  Widget _buildTierIcon(_SubscriptionTierData tier, Color accentColor, bool isCurrent) {
+  Widget _buildTierIcon(
+    _SubscriptionTierData tier,
+    Color accentColor,
+    bool isCurrent,
+  ) {
     final bool isGold = tier.isTopTier;
     final bool isTier3 = tier.tierNumber == 3;
     final bool isTier2 = tier.tierNumber == 2;
@@ -1723,7 +1801,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ? const Color(0xFFECFDF5) // Clean mint for active plan
               : (isTier3
                     ? const Color(0xFFEFF6FF)
-                    : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9))));
+                    : (isTier2
+                          ? const Color(0xFFF0FDFA)
+                          : const Color(0xFFF1F5F9))));
 
     final Color borderColor = isGold
         ? const Color(0xFFD4AF37) // Gold border for top tiers
@@ -1731,7 +1811,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ? const Color(0xFFA7F3D0) // Emerald border for active plan
               : (isTier3
                     ? const Color(0xFFBFDBFE)
-                    : (isTier2 ? const Color(0xFF99F6E4) : const Color(0xFFCBD5E1))));
+                    : (isTier2
+                          ? const Color(0xFF99F6E4)
+                          : const Color(0xFFCBD5E1))));
 
     return Container(
       width: 44,
@@ -1739,7 +1821,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: isGold || isCurrent ? 1.5 : 1.2),
+        border: Border.all(
+          color: borderColor,
+          width: isGold || isCurrent ? 1.5 : 1.2,
+        ),
         boxShadow: isGold
             ? [
                 BoxShadow(
@@ -1749,14 +1834,14 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 ),
               ]
             : (isCurrent
-                ? [
-                    BoxShadow(
-                      color: const Color(0xFF10B981).withValues(alpha: 0.15),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null),
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ]
+                  : null),
       ),
       child: Center(
         child: Icon(
@@ -1782,7 +1867,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ? const Color(0xFFECFDF5)
               : (isTier3
                     ? const Color(0xFFEFF6FF)
-                    : (isTier2 ? const Color(0xFFF0FDFA) : const Color(0xFFF1F5F9))));
+                    : (isTier2
+                          ? const Color(0xFFF0FDFA)
+                          : const Color(0xFFF1F5F9))));
 
     final Color textColor = isGold
         ? const Color(0xFF78350F)
@@ -1790,7 +1877,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ? const Color(0xFF065F46)
               : (isTier3
                     ? const Color(0xFF2563EB)
-                    : (isTier2 ? const Color(0xFF0D9488) : const Color(0xFF475569))));
+                    : (isTier2
+                          ? const Color(0xFF0D9488)
+                          : const Color(0xFF475569))));
 
     final Color borderColor = isGold
         ? const Color(0xFFD4AF37)
@@ -1798,7 +1887,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               ? const Color(0xFFA7F3D0)
               : (isTier3
                     ? const Color(0xFFBFDBFE)
-                    : (isTier2 ? const Color(0xFFCCFBF1) : const Color(0xFFE2E8F0))));
+                    : (isTier2
+                          ? const Color(0xFFCCFBF1)
+                          : const Color(0xFFE2E8F0))));
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
@@ -1886,7 +1977,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
 
           // Billed annually at ₹X / yr
           Text(
-            tier.billingCycleText ?? 'Billed annually at ${tier.fullAnnualPrice} / yr',
+            tier.billingCycleText ??
+                'Billed annually at ${tier.fullAnnualPrice} / yr',
             style: GoogleFonts.inter(
               fontSize: 11.5,
               fontWeight: FontWeight.w500,
@@ -2014,7 +2106,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           elevation: isGold || tier.tierNumber == 3 ? 2 : 0,
           shadowColor: isGold
               ? const Color(0xFFD4AF37).withValues(alpha: 0.4)
-              : (tier.tierNumber == 3 ? accentColor.withValues(alpha: 0.35) : null),
+              : (tier.tierNumber == 3
+                    ? accentColor.withValues(alpha: 0.35)
+                    : null),
           padding: const EdgeInsets.symmetric(horizontal: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -2262,10 +2356,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: (activeGradient != null
-                            ? const Color(0xFF0F5132)
-                            : activeColor)
-                        .withValues(alpha: 0.35),
+                    color:
+                        (activeGradient != null
+                                ? const Color(0xFF0F5132)
+                                : activeColor)
+                            .withValues(alpha: 0.35),
                     blurRadius: 10,
                     offset: const Offset(0, 3),
                   ),
@@ -2334,7 +2429,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
           // ─── 4. UPGRADE WORKSPACE TIER SECTION TITLE ───
           Container(
             key: _upgradeTiersKey,
-            child: _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
+            child: _buildUpgradeSectionHeader(
+              'Upgrade Workspace Tier',
+              isMobile,
+            ),
           ),
           const SizedBox(height: 18),
 
@@ -2528,7 +2626,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 ),
               );
             },
-            icon: const Icon(LucideIcons.arrowUpRight, size: 16, color: Colors.white),
+            icon: const Icon(
+              LucideIcons.arrowUpRight,
+              size: 16,
+              color: Colors.white,
+            ),
             label: Text(
               'Upgrade to Standard (Tier 3)',
               style: GoogleFonts.inter(fontWeight: FontWeight.w700),
@@ -2537,7 +2639,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
               backgroundColor: const Color(0xFF135029),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],
@@ -2548,17 +2652,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
   void _showAddOnDetailsDialog(Map<String, String> item) {
     final String moduleName = item['module']!;
     final bool isAdded = _activeAddOns.contains(moduleName);
-    final spec = _addOnSpecs[moduleName] ?? {
-      'unit': 'unit',
-      'unitPlural': 'units',
-      'monthlyRate': 199,
-      'annualRate': 2388,
-      'defaultQty': 1,
-      'minQty': 1,
-      'maxQty': 50,
-      'step': 1,
-      'isQuantifiable': false,
-    };
+    final spec =
+        _addOnSpecs[moduleName] ??
+        {
+          'unit': 'unit',
+          'unitPlural': 'units',
+          'monthlyRate': 199,
+          'annualRate': 2388,
+          'defaultQty': 1,
+          'minQty': 1,
+          'maxQty': 50,
+          'step': 1,
+          'isQuantifiable': false,
+        };
     final bool isQuantifiable = spec['isQuantifiable'] as bool? ?? false;
     final int minQty = spec['minQty'] as int? ?? 1;
     final int maxQty = spec['maxQty'] as int? ?? 50;
@@ -2568,7 +2674,8 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     final int monthlyRate = spec['monthlyRate'] as int? ?? 199;
     final int annualRate = spec['annualRate'] as int? ?? 2388;
 
-    int selectedQty = _activeAddOnQuantities[moduleName] ?? (spec['defaultQty'] as int? ?? 1);
+    int selectedQty =
+        _activeAddOnQuantities[moduleName] ?? (spec['defaultQty'] as int? ?? 1);
     bool isAnnual = _activeAddOnIsAnnual[moduleName] ?? false;
 
     showDialog(
@@ -2576,11 +2683,15 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) {
           final int unitPrice = isAnnual ? annualRate : monthlyRate;
-          final int calculatedTotal = isQuantifiable ? (unitPrice * selectedQty) : unitPrice;
+          final int calculatedTotal = isQuantifiable
+              ? (unitPrice * selectedQty)
+              : unitPrice;
           final String billingPeriodText = isAnnual ? '/ yr' : '/ mo';
 
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
             contentPadding: const EdgeInsets.symmetric(horizontal: 24),
             actionsPadding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
@@ -2645,12 +2756,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                             onTap: () => setDialogState(() => isAnnual = false),
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
-                                color: !isAnnual ? const Color(0xFFDCFCE7) : const Color(0xFFF8FAFC),
+                                color: !isAnnual
+                                    ? const Color(0xFFDCFCE7)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: !isAnnual ? const Color(0xFF16A34A) : const Color(0xFFE2E8F0),
+                                  color: !isAnnual
+                                      ? const Color(0xFF16A34A)
+                                      : const Color(0xFFE2E8F0),
                                   width: !isAnnual ? 1.5 : 1.0,
                                 ),
                               ),
@@ -2660,9 +2778,13 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                   Row(
                                     children: [
                                       Icon(
-                                        !isAnnual ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                                        !isAnnual
+                                            ? LucideIcons.checkCircle2
+                                            : LucideIcons.circle,
                                         size: 14,
-                                        color: !isAnnual ? const Color(0xFF16A34A) : const Color(0xFF94A3B8),
+                                        color: !isAnnual
+                                            ? const Color(0xFF16A34A)
+                                            : const Color(0xFF94A3B8),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -2670,7 +2792,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
-                                          color: !isAnnual ? const Color(0xFF15803D) : const Color(0xFF475569),
+                                          color: !isAnnual
+                                              ? const Color(0xFF15803D)
+                                              : const Color(0xFF475569),
                                         ),
                                       ),
                                     ],
@@ -2695,12 +2819,19 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                             onTap: () => setDialogState(() => isAnnual = true),
                             borderRadius: BorderRadius.circular(8),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 10,
+                                horizontal: 12,
+                              ),
                               decoration: BoxDecoration(
-                                color: isAnnual ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+                                color: isAnnual
+                                    ? const Color(0xFFEFF6FF)
+                                    : const Color(0xFFF8FAFC),
                                 borderRadius: BorderRadius.circular(8),
                                 border: Border.all(
-                                  color: isAnnual ? const Color(0xFF2563EB) : const Color(0xFFE2E8F0),
+                                  color: isAnnual
+                                      ? const Color(0xFF2563EB)
+                                      : const Color(0xFFE2E8F0),
                                   width: isAnnual ? 1.5 : 1.0,
                                 ),
                               ),
@@ -2710,9 +2841,13 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                   Row(
                                     children: [
                                       Icon(
-                                        isAnnual ? LucideIcons.checkCircle2 : LucideIcons.circle,
+                                        isAnnual
+                                            ? LucideIcons.checkCircle2
+                                            : LucideIcons.circle,
                                         size: 14,
-                                        color: isAnnual ? const Color(0xFF2563EB) : const Color(0xFF94A3B8),
+                                        color: isAnnual
+                                            ? const Color(0xFF2563EB)
+                                            : const Color(0xFF94A3B8),
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
@@ -2720,7 +2855,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                         style: GoogleFonts.inter(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
-                                          color: isAnnual ? const Color(0xFF1E40AF) : const Color(0xFF475569),
+                                          color: isAnnual
+                                              ? const Color(0xFF1E40AF)
+                                              : const Color(0xFF475569),
                                         ),
                                       ),
                                     ],
@@ -2760,14 +2897,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: const Color(0xFFCBD5E1)),
+                              border: Border.all(
+                                color: const Color(0xFFCBD5E1),
+                              ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
                                   onPressed: selectedQty > minQty
-                                      ? () => setDialogState(() => selectedQty -= step)
+                                      ? () => setDialogState(
+                                          () => selectedQty -= step,
+                                        )
                                       : null,
                                   icon: const Icon(LucideIcons.minus, size: 14),
                                   padding: const EdgeInsets.all(6),
@@ -2776,7 +2917,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                   color: const Color(0xFF475569),
                                 ),
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
                                   child: Text(
                                     '$selectedQty ${selectedQty == 1 ? unit : unitPlural}',
                                     style: GoogleFonts.inter(
@@ -2788,7 +2931,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                 ),
                                 IconButton(
                                   onPressed: selectedQty < maxQty
-                                      ? () => setDialogState(() => selectedQty += step)
+                                      ? () => setDialogState(
+                                          () => selectedQty += step,
+                                        )
                                       : null,
                                   icon: const Icon(LucideIcons.plus, size: 14),
                                   padding: const EdgeInsets.all(6),
@@ -2854,7 +2999,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        const Icon(LucideIcons.checkCircle2, size: 14, color: Color(0xFF16A34A)),
+                        const Icon(
+                          LucideIcons.checkCircle2,
+                          size: 14,
+                          color: Color(0xFF16A34A),
+                        ),
                         const SizedBox(width: 6),
                         Expanded(
                           child: Text(
@@ -2909,7 +3058,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFFDC2626),
                     side: const BorderSide(color: Color(0xFFFCA5A5)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                   child: Text(
                     'Remove Add-On',
@@ -2943,7 +3094,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF135029),
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: Text(
                   isAdded ? 'Update Add-on' : 'Confirm & Add to Plan',
@@ -2966,19 +3119,22 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         'module': 'Extra Sub IDs',
         'monthly': '₹199 / user / mo',
         'annual': '₹2,388 / user / yr',
-        'includes': 'Add more user logins with custom role permissions (Billing, Stock, Accountant)',
+        'includes':
+            'Add more user logins with custom role permissions (Billing, Stock, Accountant)',
       },
       {
         'module': 'Extra Branches',
         'monthly': '₹399 / branch / mo',
         'annual': '₹4,788 / branch / yr',
-        'includes': 'Expand to additional showrooms with isolated stock & consolidated HQ reports',
+        'includes':
+            'Expand to additional showrooms with isolated stock & consolidated HQ reports',
       },
       {
         'module': 'Cloud Storage',
         'monthly': '₹149 / mo (50 GB)',
         'annual': '₹1,788 / yr',
-        'includes': 'Additional 50 GB secure cloud storage for receipts, invoices & documents',
+        'includes':
+            'Additional 50 GB secure cloud storage for receipts, invoices & documents',
       },
       {
         'module': 'E-Way Bill Packs',
@@ -2990,31 +3146,36 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         'module': 'Sales E-Invoice',
         'monthly': '₹299 / pack (500 APIs)',
         'annual': '₹299 / pack (500 APIs)',
-        'includes': 'On-demand credit packs for government IRP portal E-Invoicing (IRN & QR)',
+        'includes':
+            'On-demand credit packs for government IRP portal E-Invoicing (IRN & QR)',
       },
       {
         'module': 'Priority Support',
         'monthly': '₹799 / mo',
         'annual': '₹9,588 / yr',
-        'includes': 'Dedicated support queue with prioritized ticketing and fast response SLA',
+        'includes':
+            'Dedicated support queue with prioritized ticketing and fast response SLA',
       },
       {
         'module': 'Advanced Analytics',
         'monthly': '₹599 / mo',
         'annual': '₹7,188 / yr',
-        'includes': 'AI-powered cohort analytics, cashflow forecasts, and margin intelligence',
+        'includes':
+            'AI-powered cohort analytics, cashflow forecasts, and margin intelligence',
       },
       {
         'module': 'Custom Domain Portals',
         'monthly': '₹999 / mo',
         'annual': '₹11,988 / yr',
-        'includes': 'Run your customer billing and supplier portal on your own company domain',
+        'includes':
+            'Run your customer billing and supplier portal on your own company domain',
       },
       {
         'module': 'Employees (HR Headcount)',
         'monthly': '₹60 / employee / mo',
         'annual': '₹720 / employee / yr',
-        'includes': 'Scale employee database and automated payroll processing capacity',
+        'includes':
+            'Scale employee database and automated payroll processing capacity',
       },
     ];
 
@@ -3072,7 +3233,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                             ),
                           ),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: isApplicable
                                   ? const Color(0xFFDCFCE7)
@@ -3126,7 +3290,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                       if (_activeAddOns.isNotEmpty) ...[
                         const SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
                           decoration: BoxDecoration(
                             color: const Color(0xFFF0FDF4),
                             borderRadius: BorderRadius.circular(10),
@@ -3134,7 +3301,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                           ),
                           child: Row(
                             children: [
-                              const Icon(LucideIcons.checkCheck, size: 16, color: Color(0xFF16A34A)),
+                              const Icon(
+                                LucideIcons.checkCheck,
+                                size: 16,
+                                color: Color(0xFF16A34A),
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Wrap(
@@ -3151,13 +3322,21 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                       ),
                                     ),
                                     ..._activeAddOns.map((name) {
-                                      final qty = _activeAddOnQuantities[name] ?? 1;
+                                      final qty =
+                                          _activeAddOnQuantities[name] ?? 1;
                                       return Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 3,
+                                        ),
                                         decoration: BoxDecoration(
                                           color: Colors.white,
-                                          borderRadius: BorderRadius.circular(6),
-                                          border: Border.all(color: const Color(0xFF86EFAC)),
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          border: Border.all(
+                                            color: const Color(0xFF86EFAC),
+                                          ),
                                         ),
                                         child: Text(
                                           qty > 1 ? '$name (${qty}x)' : name,
@@ -3195,12 +3374,18 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   children: [
                     // Table Header Bar
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 14,
+                      ),
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
                         border: Border(
                           top: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
-                          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                          bottom: BorderSide(
+                            color: Color(0xFFE2E8F0),
+                            width: 1.0,
+                          ),
                         ),
                       ),
                       child: Row(
@@ -3283,16 +3468,24 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     ...addOns.asMap().entries.map((entry) {
                       final item = entry.value;
                       final isLast = entry.key == addOns.length - 1;
-                      final bool isAdded = _activeAddOns.contains(item['module']);
+                      final bool isAdded = _activeAddOns.contains(
+                        item['module'],
+                      );
 
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 14,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           border: isLast
                               ? null
                               : const Border(
-                                  bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.0),
+                                  bottom: BorderSide(
+                                    color: Color(0xFFF1F5F9),
+                                    width: 1.0,
+                                  ),
                                 ),
                         ),
                         child: Row(
@@ -3361,8 +3554,15 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                 alignment: Alignment.centerRight,
                                 child: !isApplicable
                                     ? OutlinedButton.icon(
-                                        onPressed: () => _showTier3RequiredDialog(item['module']!),
-                                        icon: const Icon(LucideIcons.lock, size: 12, color: Color(0xFF64748B)),
+                                        onPressed: () =>
+                                            _showTier3RequiredDialog(
+                                              item['module']!,
+                                            ),
+                                        icon: const Icon(
+                                          LucideIcons.lock,
+                                          size: 12,
+                                          color: Color(0xFF64748B),
+                                        ),
                                         label: Text(
                                           'Requires Tier 3+',
                                           style: GoogleFonts.inter(
@@ -3372,59 +3572,94 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                                           ),
                                         ),
                                         style: OutlinedButton.styleFrom(
-                                          backgroundColor: const Color(0xFFF8FAFC),
-                                          side: const BorderSide(color: Color(0xFFCBD5E1)),
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                                          backgroundColor: const Color(
+                                            0xFFF8FAFC,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFCBD5E1),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 7,
+                                          ),
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(7),
+                                            borderRadius: BorderRadius.circular(
+                                              7,
+                                            ),
                                           ),
                                         ),
                                       )
                                     : isAdded
-                                        ? ElevatedButton.icon(
-                                            onPressed: () => _showAddOnDetailsDialog(item),
-                                            icon: const Icon(LucideIcons.check, size: 12, color: Colors.white),
-                                            label: Text(
-                                              (_activeAddOnQuantities[item['module']] ?? 1) > 1
-                                                  ? 'Added (${_activeAddOnQuantities[item['module']]}x) ✓'
-                                                  : 'Added ✓',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFF16A34A),
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(7),
-                                              ),
-                                              elevation: 0,
-                                            ),
-                                          )
-                                        : ElevatedButton.icon(
-                                            onPressed: () => _showAddOnDetailsDialog(item),
-                                            icon: const Icon(LucideIcons.plus, size: 12, color: Colors.white),
-                                            label: Text(
-                                              'Add to Plan',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 11.5,
-                                                fontWeight: FontWeight.w700,
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            style: ElevatedButton.styleFrom(
-                                              backgroundColor: const Color(0xFF135029),
-                                              foregroundColor: Colors.white,
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(7),
-                                              ),
-                                              elevation: 0,
+                                    ? ElevatedButton.icon(
+                                        onPressed: () =>
+                                            _showAddOnDetailsDialog(item),
+                                        icon: const Icon(
+                                          LucideIcons.check,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                        label: Text(
+                                          (_activeAddOnQuantities[item['module']] ??
+                                                      1) >
+                                                  1
+                                              ? 'Added (${_activeAddOnQuantities[item['module']]}x) ✓'
+                                              : 'Added ✓',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF16A34A,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 7,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              7,
                                             ),
                                           ),
+                                          elevation: 0,
+                                        ),
+                                      )
+                                    : ElevatedButton.icon(
+                                        onPressed: () =>
+                                            _showAddOnDetailsDialog(item),
+                                        icon: const Icon(
+                                          LucideIcons.plus,
+                                          size: 12,
+                                          color: Colors.white,
+                                        ),
+                                        label: Text(
+                                          'Add to Plan',
+                                          style: GoogleFonts.inter(
+                                            fontSize: 11.5,
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF135029,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12,
+                                            vertical: 7,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              7,
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                      ),
                               ),
                             ),
                           ],
@@ -3449,8 +3684,6 @@ class _SubscriptionPageState extends State<SubscriptionPage>
       ),
     );
   }
-
-
 
   // ═══════════════════════════════════════════════════════════════
   // FIN-PRO SECTION (Completely matching Business section SaaS UI)
@@ -3570,7 +3803,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     border: Border.all(color: const Color(0xFFCBD5E1)),
                   ),
                   child: const Center(
-                    child: Icon(LucideIcons.minus, size: 12, color: Color(0xFF334155)),
+                    child: Icon(
+                      LucideIcons.minus,
+                      size: 12,
+                      color: Color(0xFF334155),
+                    ),
                   ),
                 ),
               ),
@@ -3599,7 +3836,11 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                     border: Border.all(color: const Color(0xFFCBD5E1)),
                   ),
                   child: const Center(
-                    child: Icon(LucideIcons.plus, size: 12, color: Color(0xFF334155)),
+                    child: Icon(
+                      LucideIcons.plus,
+                      size: 12,
+                      color: Color(0xFF334155),
+                    ),
                   ),
                 ),
               ),
@@ -3638,13 +3879,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         _buildUpgradeSectionHeader('Upgrade Fin-Pro Practice Tier', isMobile),
         const SizedBox(height: 18),
         if (isMobile)
-          Column(
-            children: [
-              cards[0],
-              const SizedBox(height: 18),
-              cards[1],
-            ],
-          )
+          Column(children: [cards[0], const SizedBox(height: 18), cards[1]])
         else
           Center(
             child: ConstrainedBox(
@@ -3714,8 +3949,9 @@ class _SubscriptionPageState extends State<SubscriptionPage>
     bool isMobile = false,
   }) {
     final bool isSelected = _selectedPartnerTab == index;
-    final Color activeColor =
-        index == 1 ? const Color(0xFFE11D48) : _darkForestGreen;
+    final Color activeColor = index == 1
+        ? const Color(0xFFE11D48)
+        : _darkForestGreen;
 
     return InkWell(
       onTap: () {
@@ -3850,13 +4086,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         _buildUpgradeSectionHeader('Upgrade Investor Club Tier', isMobile),
         const SizedBox(height: 18),
         if (isMobile)
-          Column(
-            children: [
-              cards[0],
-              const SizedBox(height: 18),
-              cards[1],
-            ],
-          )
+          Column(children: [cards[0], const SizedBox(height: 18), cards[1]])
         else
           Center(
             child: ConstrainedBox(
@@ -3952,13 +4182,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         _buildUpgradeSectionHeader('Upgrade Workspace Tier', isMobile),
         const SizedBox(height: 18),
         if (isMobile)
-          Column(
-            children: [
-              cards[0],
-              const SizedBox(height: 18),
-              cards[1],
-            ],
-          )
+          Column(children: [cards[0], const SizedBox(height: 18), cards[1]])
         else
           Center(
             child: ConstrainedBox(
@@ -3989,11 +4213,7 @@ class _SubscriptionPageState extends State<SubscriptionPage>
         // Title & History Icon OUTSIDE on top of container
         Row(
           children: [
-            const Icon(
-              LucideIcons.history,
-              color: _darkForestGreen,
-              size: 19,
-            ),
+            const Icon(LucideIcons.history, color: _darkForestGreen, size: 19),
             const SizedBox(width: 9),
             Expanded(
               child: Text(
@@ -4032,21 +4252,48 @@ class _SubscriptionPageState extends State<SubscriptionPage>
                   children: [
                     // Table Header Bar (#F8FAFC)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 16,
+                      ),
                       decoration: const BoxDecoration(
                         color: Color(0xFFF8FAFC),
                         border: Border(
-                          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1.0),
+                          bottom: BorderSide(
+                            color: Color(0xFFE5E7EB),
+                            width: 1.0,
+                          ),
                         ),
                       ),
                       child: Row(
                         children: [
-                          Expanded(flex: 3, child: _buildTableHeaderText('INVOICE ID')),
-                          Expanded(flex: 3, child: _buildTableHeaderText('BILLING DATE')),
-                          Expanded(flex: 3, child: _buildTableHeaderText('TIER DETAILS')),
-                          Expanded(flex: 3, child: _buildTableHeaderText('PAYMENT MODE')),
-                          Expanded(flex: 2, child: _buildTableHeaderText('STATUS')),
-                          Expanded(flex: 2, child: _buildTableHeaderText('AMOUNT PAID', alignRight: true)),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTableHeaderText('INVOICE ID'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTableHeaderText('BILLING DATE'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTableHeaderText('TIER DETAILS'),
+                          ),
+                          Expanded(
+                            flex: 3,
+                            child: _buildTableHeaderText('PAYMENT MODE'),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: _buildTableHeaderText('STATUS'),
+                          ),
+                          Expanded(
+                            flex: 2,
+                            child: _buildTableHeaderText(
+                              'AMOUNT PAID',
+                              alignRight: true,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -4186,7 +4433,10 @@ class _SubscriptionPageState extends State<SubscriptionPage>
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3.5,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFECFDF5),
                     borderRadius: BorderRadius.circular(6),
